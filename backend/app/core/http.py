@@ -57,3 +57,39 @@ POLAND_BBOX = (14.0, 49.0, 24.2, 55.0)  # lon_min, lat_min, lon_max, lat_max
 
 def in_poland(lon: float, lat: float) -> bool:
     return POLAND_BBOX[0] <= lon <= POLAND_BBOX[2] and POLAND_BBOX[1] <= lat <= POLAND_BBOX[3]
+
+
+async def get_with_retry(
+    url: str,
+    params: dict,
+    *,
+    source: str,
+    timeout_s: float,
+    retries: int = 1,
+):
+    """GET z timeoutem i ponowną próbą przy błędzie sieci / timeoucie / 5xx.
+
+    429 (limit zapytań) i pozostałe 4xx = niedostępność źródła bez ponawiania.
+    Każda porażka kończy się SourceError(source, komunikat po polsku).
+    """
+    import httpx
+
+    last = "brak odpowiedzi"
+    for attempt in range(retries + 1):
+        try:
+            resp = await get_client().get(url, params=params, timeout=httpx.Timeout(timeout_s))
+        except httpx.TimeoutException:
+            last = f"usługa nie odpowiada (przekroczono {timeout_s:.0f} s)"
+            continue
+        except httpx.TransportError as exc:
+            last = f"brak połączenia z usługą ({exc.__class__.__name__})"
+            continue
+        if resp.status_code == 429:
+            raise SourceError(source, "przekroczony limit zapytań (HTTP 429)")
+        if resp.status_code >= 500:
+            last = f"usługa zwróciła błąd HTTP {resp.status_code}"
+            continue
+        if resp.status_code >= 400:
+            raise SourceError(source, f"usługa zwróciła błąd HTTP {resp.status_code}")
+        return resp
+    raise SourceError(source, last)

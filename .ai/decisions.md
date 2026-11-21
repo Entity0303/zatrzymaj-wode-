@@ -54,3 +54,23 @@ Wpis: data · decyzja · uzasadnienie · konsekwencje. Zmieniany w osobnym mały
 ### D13 · 2026-11-21 · Ortofotomapa przez WMTS (EPSG:3857) zamiast WMS
 **Uzasadnienie:** WMS Geoportalu obsługuje EPSG:3857, ale kafel ~4,5 s; WMTS tej samej usługi (te same zdjęcia, kafle z cache) ~2,3 s.
 **Konsekwencje:** `features/map/ParcelMap.tsx` – szablon KVP GetTile; OSM jako zapas.
+
+### D14 · 2026-11-21 · Sezon bilansu domyślnie od 1 marca
+**Uzasadnienie:** początek okresu wegetacyjnego i okres oceny w metodyce suszy rolniczej (KBW liczony od wiosny). Reguła liczona względem **ostatniego dnia z danymi** (data analizy − 1): jeśli jest przed 1 marca, sezon zaczyna się 1 marca roku poprzedniego. Dla daty analizy 1 marca daje to sezon poprzedni (bieżący miałby 0 dni).
+**Konsekwencje:** `analysis/water_balance.default_season_start`; parametr `season_start` pozwala to zmienić (np. per uprawa w A3).
+
+### D15 · 2026-11-21 · Dane pogodowe tylko do dnia przed datą analizy; zakres od 1 stycznia (rok początku sezonu − 10)
+**Uzasadnienie:** zasada „tylko dane sprzed daty analizy”. Dla dat przed 1 marca sezon zaczyna się rok wcześniej, więc 10 poprzednich sezonów wymaga danych od roku daty − 11 (o rok więcej niż „rok daty − 10”).
+**Konsekwencje:** `history_range()`; opóźnienie publikacji (NASA POWER ~2–4 dni) nie jest maskowane – „Dane pogodowe do dnia X” w ograniczeniach.
+
+### D16 · 2026-11-21 · ET0 przy źródle zapasowym: wartość z archiwum Open-Meteo przed Hargreavesem
+**Uzasadnienie:** archiwum nie podaje promieniowania, wilgotności ani wiatru (PM niemożliwe), ale podaje ET0 FAO-56 liczone z ERA5 – dokładniejsze niż Hargreaves z samej temperatury. Uzupełnia D2.
+**Konsekwencje:** kolejność metod na dzień: PM → OM → HG → brak; liczba dni wg metody w metadanych i ograniczeniach.
+
+### D17 · 2026-11-21 · Obsługa braków w bilansie
+**Uzasadnienie:** brak danych nie może udawać pełności ani zaniżać wyniku bez informacji.
+**Konsekwencje:** rok porównawczy z > 10% braków w okresie – pomijany (lista w ograniczeniach); pojedyncze dni bez danych w bieżącym sezonie – 0 mm w bilansie + ograniczenie „N dni bez danych”; miesiąc z > 20% braków – brak sumy (`null`); percentyl = % lat porównawczych z niższym bilansem (0 = najgorszy z 10 lat).
+
+### D18 · 2026-11-21 · Budżet czasu pobierania pogody
+**Uzasadnienie:** limit 30 s na całą analizę. NASA POWER zwykle ~1,6–1,9 s za 10 lat.
+**Konsekwencje:** NASA POWER: 9 s na próbę + 1 ponowna próba (sieć/timeout/5xx; 429 bez ponawiania); archiwum Open-Meteo: 10 s, bez ponawiania. Cache 6 h, klucz – współrzędne zaokrąglone do 0,1° (rozdzielczość źródła ~50 km) + zakres dat.

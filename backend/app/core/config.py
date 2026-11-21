@@ -15,6 +15,10 @@ class Settings(BaseSettings):
     iung_wms_url: str = "https://sgeo.iung.pl/geoserver/Susza/wms"
     iung_soil_layer: str = "Susza:katgl_landuse2024"
     nasa_power_url: str = "https://power.larc.nasa.gov/api/temporal/daily/point"
+    # na próbę; przy 1 ponownej próbie + zapasowym Open-Meteo całość mieści się w limicie 30 s
+    nasa_power_timeout_s: float = 9.0
+    open_meteo_archive_url: str = "https://archive-api.open-meteo.com/v1/archive"
+    open_meteo_archive_timeout_s: float = 10.0
     open_meteo_forecast_url: str = "https://api.open-meteo.com/v1/forecast"
 
     # ile punktów w obrysie działki sprawdzamy w mapie gleb IUNG
