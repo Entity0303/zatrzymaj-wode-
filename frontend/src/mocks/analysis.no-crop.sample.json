@@ -42,15 +42,15 @@
     "zrodlo": {
       "nazwa": "ULDK GUGiK",
       "url": "https://uldk.gugik.gov.pl/",
-      "pobrano": "2026-11-21T19:00:40+00:00",
-      "uwagi": "ZAPIS ODPOWIEDZI /api/analysis dla 201305_2.0038.6/1, BEZ UPRAWY (stan działki), 2026-11-21 (wygenerowano 2026-11-21, A5b-1; obrys z zapisanej odpowiedzi ULDK, pozostałe źródła na żywo). Plik służy tylko do pracy nad UI (?dane=przykladowe) – UI zawsze pokazuje napis „DANE PRZYKŁADOWE”."
+      "pobrano": "2026-11-21T16:47:28+00:00",
+      "uwagi": "ZAPIS ODPOWIEDZI /api/analysis dla 201305_2.0038.6/1, BEZ UPRAWY (stan działki), 2026-11-21 (wygenerowano 2026-11-21, A6; obrys z zapisanej odpowiedzi ULDK, teren z zapisanego wyniku NMT z 21.11 (NMT GUGiK blokował ruch), pozostałe źródła na żywo / z cache). Plik służy tylko do pracy nad UI (?dane=przykladowe) – UI zawsze pokazuje napis „DANE PRZYKŁADOWE”."
     }
   },
   "crop": null,
   "previous_crop": null,
   "analysis_date": "2026-11-21",
   "historical": false,
-  "generated_at": "2026-11-21T19:00:48Z",
+  "generated_at": "2026-11-21T19:46:04Z",
   "status": {
     "level": "risk",
     "score": 43,
@@ -4178,6 +4178,102 @@
       "source": "Model wody w glebie FAO-56 – pokrycie referencyjne"
     }
   },
+  "terrain": {
+    "zones": [
+      {
+        "key": "sucha_gorka",
+        "label": "górka – sucho",
+        "share_pct": 0.0,
+        "color": "#8B6B4A",
+        "rating": null,
+        "sentence": null
+      },
+      {
+        "key": "stok",
+        "label": "stok – woda ucieka",
+        "share_pct": 56.4,
+        "color": "#E8B931",
+        "rating": "uwaga",
+        "sentence": "56% działki to stok – po ulewie woda spływa po powierzchni i zabiera glebę."
+      },
+      {
+        "key": "plasko",
+        "label": "płasko – dobre warunki",
+        "share_pct": 11.5,
+        "color": "#5BB37F",
+        "rating": "dobrze",
+        "sentence": "12% działki jest płaska – tu są najlepsze warunki wodne."
+      },
+      {
+        "key": "mokry_dolek",
+        "label": "dołek – woda stoi",
+        "share_pct": 32.1,
+        "color": "#2F80C9",
+        "rating": "zle",
+        "sentence": "32% działki to dołek – na zwięzłej glebie wiosną i po ulewach stoi tu woda, uprawy mogą wymakać."
+      }
+    ],
+    "zone_share_pct": {
+      "sucha_gorka": 0.0,
+      "stok": 56.4,
+      "plasko": 11.5,
+      "mokry_dolek": 32.1
+    },
+    "soil_group": "zwiezla",
+    "soil_group_label": "gleba zwięzła (kat. III)",
+    "summary": "Działka jest lekko nachylona – różnica wysokości 2,0 m, średni spadek 3,1%. Woda spływa na południowy zachód i opuszcza działkę w jednym miejscu – tędy odpływa woda z całej działki; spływa tu też woda z ok. 3,6 ha pól i terenów powyżej. Nie ma zagłębień, w których woda stałaby dłużej po deszczu.",
+    "relief_m": 2.0,
+    "elev_min_m": 140.0,
+    "elev_max_m": 142.0,
+    "slope_mean_pct": 3.1,
+    "slope_max_pct": 6.1,
+    "main_flow_direction": "południowy zachód",
+    "main_flow_direction_short": "SW",
+    "main_flow_azimuth_deg": 211.0,
+    "outlets": [
+      {
+        "direction": "południowy zachód",
+        "direction_short": "SW",
+        "azimuth_deg": 210.0,
+        "share_of_parcel_pct": 100.0,
+        "location": [
+          22.6007243,
+          53.0498069
+        ]
+      }
+    ],
+    "inflow_from_outside_m2": 36328.0,
+    "inflow_from_outside_ratio": 6.25,
+    "depressions_count": 0,
+    "depressions_volume_m3": 0.0,
+    "largest_depression": null,
+    "details": {
+      "grid_step_m": 4.5,
+      "smoothing_sigma_m": 6.0,
+      "nmt_points": 4662,
+      "nmt_missing_pct": 0.0,
+      "twi_mean": 8.54,
+      "twi_p90": 10.69,
+      "steep_share_pct": 5.2,
+      "flow_consistency": 0.53,
+      "method": "flow: D8 (kierunki, wyjścia) + D-infinity (TWI), fill: priority-flood (Barnes 2014), slope: Horn 3×3"
+    },
+    "confidence": "wysoka",
+    "limitations": [
+      "Teren z zapisanego wyniku analizy NMT z 21.11.2026 (NMT GUGiK nie odpowiadał – ukształtowanie terenu się nie zmienia).",
+      "Siatka 4.5 m – formy mniejsze niż ~9 m (bruzdy, koleiny, rowki) są niewidoczne.",
+      "Wysokości podawane co 0,1 m – przy małych spadkach kierunek spływu jest niepewny; stosujemy wygładzenie σ = 6 m.",
+      "Bufor 100 m: zlewnia sięgająca dalej (długie stoki) jest niedoszacowana.",
+      "Model nie zna drenażu, rowów, przepustów, dróg ani orki wzdłuż/w poprzek stoku – rzeczywisty odpływ może iść inaczej.",
+      "Objętości zagłębień i dopływu to szacunek rzędu wielkości, nie projekt."
+    ],
+    "source_tag": {
+      "kind": "pomiar",
+      "date": null,
+      "source": "NMT GUGiK (wysokości ±0,1 m) + obliczenia"
+    }
+  },
+  "terrain_note": null,
   "suggestions": null,
   "history": {
     "period_start": "2014-08-01",
@@ -6897,7 +6993,7 @@
     {
       "factor": "opady",
       "title": "Mało opadów",
-      "share": 0.47,
+      "share": 0.38,
       "description": "od 1 marca spadło 418 mm, zwykle 541 mm",
       "source_tag": {
         "kind": "obliczenia",
@@ -6908,7 +7004,7 @@
     {
       "factor": "gleba",
       "title": "Gleba",
-      "share": 0.42,
+      "share": 0.34,
       "description": "kat. III, zmieści ok. 166 mm wody – średnio dużo",
       "source_tag": {
         "kind": "pomiar",
@@ -6917,25 +7013,25 @@
       }
     },
     {
+      "factor": "teren",
+      "title": "Teren i spływ",
+      "share": 0.19,
+      "description": "stoki i górki na 56% działki – tu woda z ulewy spływa lub szybko przesycha; dołki 32%",
+      "source_tag": {
+        "kind": "pomiar",
+        "date": null,
+        "source": "NMT GUGiK"
+      }
+    },
+    {
       "factor": "parowanie",
       "title": "Duże parowanie",
-      "share": 0.11,
+      "share": 0.09,
       "description": "parowanie od 1 marca: 646 mm, zwykle 615 mm",
       "source_tag": {
         "kind": "obliczenia",
         "date": null,
         "source": "NASA POWER, ET0 FAO-56"
-      }
-    },
-    {
-      "factor": "teren",
-      "title": "Teren i spływ",
-      "share": 0.0,
-      "description": "brak danych (analiza terenu w przygotowaniu)",
-      "source_tag": {
-        "kind": "brak_danych",
-        "date": null,
-        "source": "NMT GUGiK"
       }
     }
   ],
@@ -6983,8 +7079,8 @@
     {
       "id": "retencja.prochnica",
       "category": "retencja",
-      "title": "Zwiększaj próchnicę – lekka gleba trzyma mało wody",
-      "description": "Gleba (kat. III, glina lekka pylasta) zatrzymuje mało wody. Każdy dodatkowy procent próchnicy zwiększa jej pojemność wodną – mieszaj słomę z glebą, wysiewaj międzyplony, stosuj obornik lub kompost.",
+      "title": "Zwiększaj próchnicę – gleba zatrzyma więcej wody",
+      "description": "Gleba (kat. III, glina lekka pylasta) słabo zatrzymuje wodę w zasięgu korzeni – jest lekka albo woda szybko przesiąka w głąb. Każdy dodatkowy procent próchnicy zwiększa jej pojemność wodną – mieszaj słomę z glebą, wysiewaj międzyplony, stosuj obornik lub kompost.",
       "why": "Gleby ubogie w materię organiczną szybciej przesychają; wzrost próchnicy poprawia pojemność wodną. Gleba zmieści ok. 166 mm wody dostępnej dla roślin. Woda z ulewy: szybko wsiąka i ucieka w głąb (przepuszczalność ok. 85 mm/h). Dane: woda z ulewy: szybko wsiąka i ucieka w głąb.",
       "inputs": [
         {
@@ -7012,11 +7108,51 @@
         "code": "E_WSG",
         "note": "Sprawdź aktualne warunki w ARiMR."
       }
+    },
+    {
+      "id": "retencja.zastawka_na_rowie",
+      "category": "retencja",
+      "title": "Sprawdź rów przy miejscu odpływu – zastawka zatrzyma wodę",
+      "description": "Woda z 100% działki ucieka w jednym miejscu (kierunek: południowy zachód), a na działkę spływa woda z ok. 3,6 ha powyżej. Jeśli tam biegnie rów melioracyjny, zastawka (w porozumieniu ze spółką wodną) przytrzyma wodę w okolicy.",
+      "why": "Rowów jeszcze nie sprawdzamy na mapie (BDOT10k w przygotowaniu) – zobacz na miejscu, czy rów jest.",
+      "inputs": [],
+      "confidence": "ograniczona",
+      "location": null,
+      "rule_id": "retencja.zastawka_na_rowie",
+      "priority": 50,
+      "in_panel": false,
+      "when": "teraz",
+      "when_label": "teraz",
+      "permit": "maybe",
+      "permit_note": "Zastawka na rowie wymaga zgody właściciela rowu lub spółki wodnej i może wymagać zgłoszenia wodnoprawnego – sprawdź w Wodach Polskich.",
+      "permit_url": "https://www.gov.pl/web/wody-polskie",
+      "warning": "Obarczone dużym ryzykiem błędu – traktuj jako wskazówkę i sprawdź na polu.",
+      "eco_scheme": null
+    },
+    {
+      "id": "retencja.oczko_opcja",
+      "category": "retencja",
+      "title": "Do rozważenia: małe oczko przy odpływie",
+      "description": "Na działce nie ma wyraźnego zagłębienia, ale woda z ok. 1,9 ha zbiera się przy miejscu, którędy woda ucieka z działki. Jeśli to miejsce bywa podmokłe, małe oczko (ok. 76 m²) zatrzyma część wody – z ulewy 20 mm ok. 114 m³.",
+      "why": "To opcja, nie pierwsze działanie: najpierw zatrzymanie wody w glebie (resztki roślin, międzyplony, mniej uprawek). Teren działki: różnica wysokości 2 m, powierzchnia 0,6 ha.",
+      "inputs": [],
+      "confidence": "ograniczona",
+      "location": null,
+      "rule_id": "retencja.oczko_opcja",
+      "priority": 30,
+      "in_panel": false,
+      "when": "przed_sezonem",
+      "when_label": "przed następnym sezonem",
+      "permit": "maybe",
+      "permit_note": "Oczko lub zbiornik może wymagać zgłoszenia lub pozwolenia (Prawo wodne, Prawo budowlane) – zależy od wielkości, głębokości i miejsca. Przed pracami zapytaj w Wodach Polskich i w starostwie.",
+      "permit_url": "https://www.gov.pl/web/wody-polskie",
+      "warning": "Obarczone dużym ryzykiem błędu – traktuj jako wskazówkę i sprawdź na polu.",
+      "eco_scheme": null
     }
   ],
   "reliability": {
     "confidence": "srednia",
-    "reason": "Ograniczenia: brak zdjęć satelitarnych (kondycja roślin – w przygotowaniu); brak analizy terenu (spadki, spływ – w przygotowaniu); pogoda uśredniona dla obszaru ok. 50 km.",
+    "reason": "Ograniczenia: brak zdjęć satelitarnych (kondycja roślin – w przygotowaniu); pogoda uśredniona dla obszaru ok. 50 km.",
     "sources": [
       {
         "name": "ULDK GUGiK",
@@ -7056,7 +7192,7 @@
         "data_date": null,
         "resolution": null,
         "status": "brak",
-        "note": "brak odpowiedzi w 6 s (ponowna próba za ok. 5 min)"
+        "note": "usługa chwilowo ogranicza ruch (przekierowanie) – spróbuj za chwilę (ponowna próba za ok. 5 min)"
       },
       {
         "name": "SoilGrids (ISRIC)",
@@ -7086,9 +7222,9 @@
         "name": "NMT GUGiK",
         "used_for": "teren i spływ wody",
         "data_date": null,
-        "resolution": "1 m",
-        "status": "brak",
-        "note": "w przygotowaniu"
+        "resolution": "1 m (siatka 3–15 m)",
+        "status": "czesciowo",
+        "note": "zapisany wynik analizy z 21.11.2026"
       },
       {
         "name": "BDOT10k",
@@ -7100,7 +7236,7 @@
       }
     ],
     "completeness": {
-      "available": 5,
+      "available": 6,
       "total": 8
     },
     "limitations": [
@@ -7113,7 +7249,13 @@
       "Mapa glebowo-rolnicza opracowana ok. 1973 r. – stan gleby mógł się zmienić.",
       "Ostatnie 2 dni przed datą analizy uzupełnione danymi modelu Open-Meteo.",
       "Brak zdjęć satelitarnych – kondycja i wilgotność roślin w przygotowaniu.",
-      "Brak analizy terenu – spływ wody przyjęty w uproszczeniu (20% opadu powyżej 20 mm na dobę).",
+      "Teren z zapisanego wyniku analizy NMT z 21.11.2026 (NMT GUGiK nie odpowiadał – ukształtowanie terenu się nie zmienia).",
+      "Siatka 4.5 m – formy mniejsze niż ~9 m (bruzdy, koleiny, rowki) są niewidoczne.",
+      "Wysokości podawane co 0,1 m – przy małych spadkach kierunek spływu jest niepewny; stosujemy wygładzenie σ = 6 m.",
+      "Bufor 100 m: zlewnia sięgająca dalej (długie stoki) jest niedoszacowana.",
+      "Model nie zna drenażu, rowów, przepustów, dróg ani orki wzdłuż/w poprzek stoku – rzeczywisty odpływ może iść inaczej.",
+      "Objętości zagłębień i dopływu to szacunek rzędu wielkości, nie projekt.",
+      "Teren nie zmienia modelu wody w glebie – spływ w bilansie nadal uproszczony (20% opadu powyżej 20 mm na dobę); strefy terenu opisują, gdzie na działce jest sucho, a gdzie mokro.",
       "Model wody w glebie FAO-56 z parametrami tabelarycznymi upraw – nie uwzględnia odmiany, nawożenia ani poziomu wód gruntowych.",
       "Kategorie podatności IUNG opisują tylko gleby mineralne użytków rolnych."
     ]
@@ -7131,7 +7273,7 @@
       "label": "Pobieram pogodę z 10 lat (NASA POWER)",
       "state": "done",
       "note": null,
-      "duration_ms": 1665
+      "duration_ms": 0
     },
     {
       "id": "soil",
@@ -7144,7 +7286,7 @@
       "id": "egib",
       "label": "Klasy bonitacyjne (EGiB)",
       "state": "error",
-      "note": "brak odpowiedzi w 6 s (ponowna próba za ok. 5 min)",
+      "note": "usługa chwilowo ogranicza ruch (przekierowanie) – spróbuj za chwilę (ponowna próba za ok. 5 min)",
       "duration_ms": 0
     },
     {
@@ -7159,14 +7301,14 @@
       "label": "Mapa glebowo-rolnicza (GUGiK)",
       "state": "done",
       "note": null,
-      "duration_ms": 1
+      "duration_ms": 14
     },
     {
       "id": "forecast",
       "label": "Prognoza pogody (Open-Meteo)",
       "state": "done",
       "note": null,
-      "duration_ms": 177
+      "duration_ms": 0
     },
     {
       "id": "satellite",
@@ -7177,31 +7319,31 @@
     },
     {
       "id": "terrain",
-      "label": "Analizuję teren",
-      "state": "pending",
-      "note": "w przygotowaniu – brak danych",
-      "duration_ms": null
+      "label": "Analizuję teren (NMT GUGiK)",
+      "state": "done",
+      "note": "zapisany wynik analizy NMT",
+      "duration_ms": 14
     },
     {
       "id": "balance",
       "label": "Liczę bilans wody i wodę w glebie (FAO-56)",
       "state": "done",
       "note": null,
-      "duration_ms": 20
+      "duration_ms": 22
     },
     {
       "id": "scoring",
       "label": "Ocena, pewność, przyczyny i rekomendacje",
       "state": "done",
       "note": null,
-      "duration_ms": 1
+      "duration_ms": 2
     },
     {
       "id": "total",
       "label": "Cała analiza",
       "state": "done",
       "note": null,
-      "duration_ms": 1687
+      "duration_ms": 40
     }
   ]
 }

@@ -485,6 +485,87 @@ export type FieldState = {
   source_tag: SourceTag
 }
 
+// ── Teren i spływ wody z NMT (A6) ──────────────────────────────────────────────────────────
+
+export type TerrainZoneKey = 'sucha_gorka' | 'stok' | 'plasko' | 'mokry_dolek'
+export type TerrainRating = 'dobrze' | 'uwaga' | 'zle'
+
+/** strefa terenu z udziałem i oceną z glebą */
+export type TerrainZone = {
+  key: TerrainZoneKey
+  /** 'górka – sucho' | 'stok – woda ucieka' | 'płasko – dobre warunki' | 'dołek – woda stoi' */
+  label: string
+  /** 0–100 */
+  share_pct: number
+  /** kolor na pasku i mapie: górka #8B6B4A, stok #E8B931, płasko #5BB37F, dołek #2F80C9 */
+  color: string
+  /** null, gdy strefy praktycznie nie ma (< 1%) */
+  rating?: TerrainRating | null
+  /** jedno zdanie dla rolnika, np. '20% działki to dołek – wiosną stoi woda.' */
+  sentence?: string | null
+}
+
+/** miejsce, którędy woda opuszcza działkę („tu woda ucieka”) */
+export type TerrainOutlet = {
+  direction: string
+  direction_short: string
+  azimuth_deg?: number | null
+  share_of_parcel_pct: number
+  /** [lon, lat] */
+  location: number[]
+}
+
+export type TerrainDepression = {
+  area_m2?: number | null
+  max_depth_m?: number | null
+  volume_m3?: number | null
+  catchment_m2?: number | null
+  /** [lon, lat] najgłębszego miejsca */
+  location?: number[] | null
+}
+
+/** szczegóły „dla dociekliwych” */
+export type TerrainDetails = {
+  grid_step_m: number
+  smoothing_sigma_m: number
+  nmt_points?: number | null
+  nmt_missing_pct?: number | null
+  /** TWI = ln(a / tan β) */
+  twi_mean?: number | null
+  twi_p90?: number | null
+  steep_share_pct?: number | null
+  flow_consistency?: number | null
+  method: string
+}
+
+export type Terrain = {
+  /** zawsze 4 strefy w stałej kolejności: górka, stok, płasko, dołek */
+  zones: TerrainZone[]
+  zone_share_pct: Record<TerrainZoneKey, number>
+  soil_group: 'lekka' | 'zwiezla' | 'nieznana'
+  soil_group_label: string
+  /** 2–3 zdania o terenie prostym językiem */
+  summary: string
+  relief_m?: number | null
+  elev_min_m?: number | null
+  elev_max_m?: number | null
+  slope_mean_pct?: number | null
+  slope_max_pct?: number | null
+  main_flow_direction?: string | null
+  main_flow_direction_short?: string | null
+  main_flow_azimuth_deg?: number | null
+  outlets?: TerrainOutlet[]
+  inflow_from_outside_m2?: number | null
+  inflow_from_outside_ratio?: number | null
+  depressions_count?: number
+  depressions_volume_m3?: number | null
+  largest_depression?: TerrainDepression | null
+  details: TerrainDetails
+  confidence: Confidence
+  limitations?: string[]
+  source_tag: SourceTag
+}
+
 export type AnalysisResponse = {
   parcel: Parcel
   /** null = analiza bez uprawy („Stan działki”) */
@@ -506,6 +587,10 @@ export type AnalysisResponse = {
   field_state?: FieldState | null
   /** A5b-2: ranking „Co tu posiać?” – na razie zawsze null */
   suggestions?: null
+  /** A6: teren i spływ wody z NMT (null = brak danych, powód w terrain_note) */
+  terrain?: Terrain | null
+  /** A6: dlaczego brak analizy terenu */
+  terrain_note?: string | null
   history: History
   causes: Cause[]
   recommendations: Recommendation[]

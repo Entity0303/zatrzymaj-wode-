@@ -374,6 +374,85 @@ class FieldState(Contract):
     source_tag: SourceTag
 
 
+# ── Teren i spływ wody z NMT (A6) ───────────────────────────────────────────────────────────
+
+TerrainZoneKey = Literal["sucha_gorka", "stok", "plasko", "mokry_dolek"]
+TerrainRating = Literal["dobrze", "uwaga", "zle"]
+
+
+class TerrainZone(Contract):
+    """Strefa terenu z udziałem w działce i oceną z glebą (reguły: analysis/rules/teren_gleba.yaml)."""
+
+    key: TerrainZoneKey
+    label: str = Field(description="Dla rolnika: 'górka – sucho', 'stok – woda ucieka', 'płasko – dobre warunki', 'dołek – woda stoi'")
+    share_pct: float = Field(ge=0, le=100)
+    color: str = Field(description="Kolor strefy na pasku i mapie, np. '#8B6B4A'")
+    rating: TerrainRating | None = Field(None, description="Ocena strefy z glebą; null, gdy strefy praktycznie nie ma (< 1%)")
+    sentence: str | None = Field(None, description="Jedno zdanie dla rolnika, np. '20% działki to dołek – wiosną stoi woda.'")
+
+
+class TerrainOutlet(Contract):
+    """Miejsce, którędy woda opuszcza działkę („tu woda ucieka”)."""
+
+    direction: str = Field(description="Np. 'południowy zachód'")
+    direction_short: str = Field(description="Np. 'SW'")
+    azimuth_deg: float | None = None
+    share_of_parcel_pct: float = Field(description="Jaka część działki odprowadza wodę tym miejscem, %")
+    location: list[float] = Field(description="[lon, lat] (EPSG:4326)")
+
+
+class TerrainDepression(Contract):
+    """Największe zagłębienie bez odpływu (tu zbiera się woda)."""
+
+    area_m2: float | None = None
+    max_depth_m: float | None = None
+    volume_m3: float | None = None
+    catchment_m2: float | None = None
+    location: list[float] | None = Field(None, description="[lon, lat] najgłębszego miejsca")
+
+
+class TerrainDetails(Contract):
+    """Szczegóły „dla dociekliwych” – metoda i liczby techniczne."""
+
+    grid_step_m: float
+    smoothing_sigma_m: float
+    nmt_points: int | None = None
+    nmt_missing_pct: float | None = None
+    twi_mean: float | None = Field(None, description="Wskaźnik wilgotności topograficznej TWI = ln(a / tan β), średnia w działce")
+    twi_p90: float | None = None
+    steep_share_pct: float | None = Field(None, description="Udział działki o spadku > 5%")
+    flow_consistency: float | None = Field(None, description="1 = cała działka spada w jedną stronę")
+    method: str = Field(description="Np. 'priority-flood (Barnes 2014), D8 + D-infinity (TWI), spadek: Horn 3×3'")
+
+
+class Terrain(Contract):
+    """Teren i spływ wody z NMT GUGiK (A6) – strefy, spadki, odpływ, zagłębienia, ocena z glebą, zdania dla rolnika."""
+
+    zones: list[TerrainZone] = Field(description="Zawsze 4 strefy: górka, stok, płasko, dołek (kolejność stała)")
+    zone_share_pct: dict[str, float] = Field(description="Udziały stref, %: sucha_gorka, stok, plasko, mokry_dolek")
+    soil_group: Literal["lekka", "zwiezla", "nieznana"] = Field(description="Gleba użyta w ocenie stref (kat. I–II lekka, III–IV zwięzła)")
+    soil_group_label: str = Field(description="Np. 'gleba zwięzła (kat. III)'")
+    summary: str = Field(description="2–3 zdania o terenie prostym językiem")
+    relief_m: float | None = Field(None, description="Różnica wysokości w działce, m")
+    elev_min_m: float | None = None
+    elev_max_m: float | None = None
+    slope_mean_pct: float | None = None
+    slope_max_pct: float | None = None
+    main_flow_direction: str | None = Field(None, description="Główny kierunek spływu, np. 'południowy zachód'")
+    main_flow_direction_short: str | None = None
+    main_flow_azimuth_deg: float | None = None
+    outlets: list[TerrainOutlet] = Field(default_factory=list)
+    inflow_from_outside_m2: float | None = Field(None, description="Powierzchnia spoza działki, z której woda spływa na działkę")
+    inflow_from_outside_ratio: float | None = Field(None, description="Dopływ z zewnątrz / powierzchnia działki")
+    depressions_count: int = 0
+    depressions_volume_m3: float | None = None
+    largest_depression: TerrainDepression | None = None
+    details: TerrainDetails
+    confidence: Confidence
+    limitations: list[str] = Field(default_factory=list)
+    source_tag: SourceTag
+
+
 # ── C. Dlaczego? ────────────────────────────────────────────────────────────────────────────
 
 
@@ -481,6 +560,8 @@ class AnalysisResponse(Contract):
     irrigation: IrrigationPlan | None = Field(description="null bez uprawy")
     soil: Soil
     field_state: FieldState | None = Field(None, description="Stan działki bez względu na uprawę (null: grunt nierolny / brak danych)")
+    terrain: Terrain | None = Field(None, description="Teren i spływ wody z NMT (null = brak danych, powód w terrain_note)")
+    terrain_note: str | None = Field(None, description="Dlaczego brak analizy terenu, np. 'NMT GUGiK nie odpowiada'")
     suggestions: None = Field(None, description="A5b-2: ranking „Co tu posiać?” (symulacja 15 upraw) – na razie zawsze null")
     history: History
     causes: list[Cause] = Field(description="Od największego udziału")
