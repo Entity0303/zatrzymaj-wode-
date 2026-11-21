@@ -56,7 +56,7 @@ Aplikacja webowa dla rolnika (bez wiedzy GIS): podaje działkę ewidencyjną (nu
 - **P2:** teren z NMT (strefy: sucha górka / stok / mokry dołek, strzałki spływu, miejsce odpływu) + woda w okolicy (BDOT10k) + zgłoszenia rolników o stanie rowów i zbiorników (formularz, mapa stanu, generowane pismo do pobrania: ciek → Wody Polskie, rów → właściciel/spółka wodna; nic nie jest wysyłane automatycznie).
 - **P3:** symulator „co jeśli” (międzyplony → więcej próchnicy → mniej dni stresu), porównanie upraw, kontekst plonów z GUS, wiele działek, tryb rolnik/doradca.
 
-## Docelowy wygląd (`design/ref-desktop.png`, `design/ref-mobile.png`)
+## Docelowy wygląd (`design/ref-desktop.png`, `design/ref-mobile.png`, `design/ref-style.png`)
 
 - Jasny, czysty interfejs: lewy wąski pasek nawigacji; u góry wyszukiwarka działki, przycisk „Moja lokalizacja”, pogoda i wybór DATY ANALIZY.
 - Pełnoekranowa ortofotomapa z obrysem działki i kolorową mapą NDVI/strefami w obrysie.
@@ -69,6 +69,15 @@ Aplikacja webowa dla rolnika (bez wiedzy GIS): podaje działkę ewidencyjną (nu
 ## Wygląd
 
 Wygląd i zachowanie interfejsu definiuje **`design/SPEC_UI.md`** razem z grafikami w `design/` (`ref-desktop.png`, `ref-mobile.png`, `ref-style.png`). Przy każdej zmianie UI trzymaj się go dokładnie – niczego nie upraszczaj ani nie pomijaj. Jeśli czegoś nie da się zrobić, napisz to wprost.
+
+## Pamięć projektu (obowiązkowe)
+
+Katalog `.ai/` to wspólna pamięć między sesjami i osobami. Zasady szczegółowe: `backend/CLAUDE.md`, `frontend/CLAUDE.md`.
+
+- **Jeśli nie wiesz, która osoba pracuje (A – Dominik, backend / B – Mefju, frontend) – zapytaj na początku sesji.**
+- **NA POCZĄTKU każdego zadania** przeczytaj: `.ai/status/` (oba pliki), ostatnie 5 wpisów z `.ai/log/<twoja-osoba>.md` (wpisy od najnowszego), `.ai/decisions.md`, a przy pracy z API – `.ai/contract-changes.md`. Działki do testów: `.ai/test-parcels.md`.
+- **NA KOŃCU każdego zadania (przed commitem):** zaktualizuj `.ai/status/<twoja-osoba>.md`, dopisz wpis na górze `.ai/log/<twoja-osoba>.md` (data i godzina, gałąź, co zrobiono, zmienione pliki, czy zmieniono kontrakt API). Jeśli podjęto decyzję projektową – dopisz do `.ai/decisions.md`. Jeśli zmieniono kontrakt – dopisz do `.ai/contract-changes.md` i zaktualizuj oba pliki kontraktu (`backend/app/schemas/`, `frontend/src/api/types.ts`).
+- Osoba A edytuje tylko pliki `*a-backend.md`, osoba B tylko `*b-frontend.md` – żeby nie było konfliktów. `decisions.md` i `contract-changes.md` zmieniane w osobnym małym commicie.
 
 ## Praca zespołowa
 
