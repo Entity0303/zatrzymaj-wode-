@@ -4,6 +4,18 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-22 00:30 · `a/backend` · A5b-2b: werdykt działki, spójność gleba × teren, analiza po punkcie, PDF z werdyktem
+**Co:**
+- **1. Werdykt** (`analysis/verdict.py`, `rules/verdict.yaml`, D68): nagłówek + 4–6 zdań, poziomy ok/warn/bad, ✅/❌ uprawy, deterministycznie. 201305 (bez uprawy): „Dobra działka z wilgotnym obniżeniem”; Puszcza Notecka (punkt): „Słaba, sucha działka – siej rośliny odporne na suszę”.
+- **2. Spójność** (D66): `analysis/soil_label.py` – grupa gleby ważona udziałem (201305: 78% glp + 22% pgl → średnia); `teren_gleba.yaml` na grupach lekka/średnia/ciężka/organiczna; „obniżenie” zamiast „dołek”, bez „Nie ma zagłębień”; `retencja.prochnica` – z powrotem `light_soil`.
+- **3. Ranking** (D67, D70): wieloletnie w `suggestions.perennials`; kukurydza `informacyjne`; kompleks przydatności przed kategorią IUNG.
+- **4. Po punkcie** (D69): `lon`/`lat` w analizie i PDF, kwadrat 1 ha przy niedostępnym ULDK, pewność −15, KIEG pomijany. Test słabej ziemi (IUNG kod 1): Notecka 16,26/52,685 i Kurpie 21,43/53,27 → ❌ pszenica, rzepak, jęczmienie, kukurydza; ✅ żyto, łubin; owies ❌ (Ky 1,10, wrażliwość wysoka – nie zmieniane).
+- **5. PDF** (D71): str. 1 werdykt, str. 2 ranking, dalej szczegóły; 6 stron; przykłady `reports/examples/dobra-bez-uprawy`, `dobra-zboza-ozime`, `slaba-bez-uprawy`, `slaba-zboza-ozime`, `slaba-kurpie-bez-uprawy` (.pdf + `-p1.png`).
+- **6. Testy:** `tests/test_a5b2b.py` (20) + kontrakt werdyktu; poprawione asercje PDF w `test_a5b.py` (≤ 6 stron) i `test_a6.py`. 340 bez sieci.
+**Pliki:** `backend/app/analysis/{verdict,soil_label,approx_area}.py` (nowe), `rules/verdict.yaml` (nowy), `rules/teren_gleba.yaml`, `rules/retencja.yaml`, `analysis/{terrain_interpret,facts,suggestions,water_balance,confidence,causes}.py`, `routers/{analysis,reports}.py`, `schemas/analysis.py`, `report/{builder.py,report.css,templates/report.html}`, testy; frontend: `api/types.ts`, `IrrigationCard.tsx`, `i18n.en.ts`, mocki.
+**Kontrakt:** TAK (addytywnie) – `verdict`, `approximate_area`, `lon`/`lat`, `informacyjne`, `perennials` (`contract-changes.md`, „Dla Mefju”).
+**Uwaga:** `vite build` nie przechodzi lokalnie ani w kontenerze – brak zainstalowanej `@fontsource-variable/fraunces` (z `package.json`, commit B); `tsc -b` przechodzi.
+
 ## 2026-11-21 22:40 · `a/backend` · A5b-2a: ranking „Co tu posiać?”, historia upraw, powierzchnia, status z percentyli
 **Co:**
 - **0. Dane C** (`git show origin/c/research:research/data/…`, bez merge) → `backend/app/data/crops/`. Ky żyta 0,80 i pszenżyta 0,90 – już zgodne. `uldk_demo.json` – brak. W kopii: + kolumny `root_depth_m`, `typ`; ziemniak `irrigation_practice` → common (decyzja Dominika), burak → not_practiced (z pliku C). `crops.py` czyta CSV; parametry 15 upraw bez zmian (sprawdzone asercją i 296 testami).

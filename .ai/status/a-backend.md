@@ -1,6 +1,6 @@
 # Status – osoba A (Dominik), backend
 
-_Stan na: 2026-11-21 22:40_
+_Stan na: 2026-11-22 00:30_
 
 ## Zrobione
 - Wyszukiwanie działki ULDK: pełny identyfikator, „obręb numer”, punkt; `GET /api/parcel` (409 lista kandydatów, 404, 502 z nazwą źródła), timeout 10 s + jedna ponowna próba, cache 24 h.
@@ -42,10 +42,16 @@ _Stan na: 2026-11-21 22:40_
   - `analysis/suggestions.py` + `rules/ranking.yaml`: 17 upraw × 10 pełnych sezonów, plon FAO-33, Ym z GUS × gleba, kalibracja do „dobrego roku na przeciętnej glebie”, kategorie ✅/🟡/❌ z jednym zdaniem, grupa wieloletnich osobno – D61, D62;
   - `crop_history` (twarda przerwa, złe / dobre przedplony, zboże po zbożu) i `cultivated_area_ha` (plon w tonach) – D63;
   - kukurydza / tytoń bez dawek (D64); status poza sezonem i bez uprawy z percentyli tej samej daty, „zimowanie” dla ozimin, goła gleba po zbiorze w stanie działki (D65).
-- Testy: **320 bez sieci** (`docker run --network none`) + 5 live (A6: 296). Analiza z rankingiem z cache: 0,5 s pierwszy raz, 0,07 s kolejne; sam ranking 0,2–0,4 s na zimno, ~2 ms z pamięci.
+- **A5b-2b (gałąź `a/backend`) – werdykt działki + PDF:**
+  - `analysis/verdict.py` + `rules/verdict.yaml`: `verdict` w `/api/analysis` (z uprawą i bez) – nagłówek + 4–6 zdań z liczbami (gleba, opady z KBW V–VI, teren × gleba, ✅/❌ uprawy z jednym powodem, 1–3 działania wodne, wybrana uprawa); progi w YAML (D68);
+  - spójność: etykieta gleby ważona udziałem (`analysis/soil_label.py`; 201305 = gleba średnia, nie „zwięzła”), „obniżenie” vs „zagłębienie bez odpływu”, reguła próchnicy tylko dla lekkiej gleby (D66);
+  - ranking: uprawy wieloletnie osobno (`suggestions.perennials`), kukurydza – status `informacyjne` (D67); kompleks przydatności rozstrzyga przydatność gleby (D70);
+  - analiza po punkcie `lon`/`lat` – obszar przybliżony 1 ha, gdy ULDK nie odpowiada (`analysis/approx_area.py`, D69); test słabej ziemi: Puszcza Notecka i Kurpie – ❌ pszenica, rzepak; ✅ żyto, łubin (owies ❌ – D70);
+  - PDF: str. 1 „Werdykt”, str. 2 „Co tu posiać?”, maks. 6 stron (D71); przykłady i PNG pierwszych stron: `reports/examples/{dobra,slaba}-*-p1.png`.
+- Testy: **340 bez sieci** (`docker run --network none`) + 5 live. Analiza z cache: 0,04–0,2 s; PDF 1–2 s (punkt przy blokadzie ULDK ~5 s – ponowienia ULDK).
 
 ## W trakcie (gałąź)
-- `a/backend` – A5b-2a gotowe (commit + push); **do `main` nie mergowane**.
+- `a/backend` – A5b-2b gotowe (commit + push); **do `main` nie mergowane**.
 
 ## Przed prezentacją (na dobrej sieci; w Git Bash poprzedź komendy `MSYS_NO_PATHCONV=1`)
 1. `docker compose up -d --build` – backend z wolumenem cache (`/data/cache.sqlite`).
@@ -63,16 +69,17 @@ _Stan na: 2026-11-21 22:40_
 6. **NMT GUGiK też odsyła 302** (A6) – porównanie na żywo 201305 z `research/terrain/out/201305_2.0038.6-1.facts.json` nie było możliwe; offline: ten sam kod rdzenia (testy prototypu przechodzą), siatka i liczba punktów identyczne z wynikiem C (test), zapisany wynik C używany jako zapas. Na dobrej sieci: `warm_demo.py` pobierze NMT do cache – potem porównać `terrain.zone_share_pct` z plikiem C.
 
 ## Następne
-1. **A5b-2b „Werdykt działki” + PDF:** ranking w raporcie PDF (dziś PDF go nie pokazuje), werdykt łączący stan wody, teren × gleba i ranking w 3–4 zdaniach.
-2. Ranking – do weryfikacji z agronomem / mentorem: współczynniki gleby (1,08 / 1,00 / 0,75), progi kategorii, przerwy i przedplony (szacunki C), Ky szacunkowe; drzewa owocowe zawyżone względem GUS (+10…+33%); ceny skupu (`price`).
-3. Rowy i cieki BDOT10k (zastawka potwierdzona na mapie, warstwa „Spływ” z rowami), Sentinel-2; pas buforowy po warstwicy (dziś linia prosta – prototyp).
-4. README, `/api/layers`, sprzątanie `/api/dev/*`.
+1. Werdykt i ranking – do weryfikacji z agronomem / mentorem: owies na piasku (dziś ❌), współczynniki gleby, progi kategorii, próg KBW V–VI < −100 mm i 3 / 5 lat; norma opadów (NASA POWER zawyża względem IMGW).
+2. Obszar przybliżony: województwo z granic administracyjnych zamiast najbliższego środka (dziś przy granicy może być sąsiednie).
+3. Rowy i cieki BDOT10k (zastawka potwierdzona na mapie, warstwa „Spływ” z rowami), Sentinel-2; pas buforowy po warstwicy.
+4. README, `/api/layers`, sprzątanie `/api/dev/*`; ceny skupu (`price`).
 
 ## Blokery / pytania do drugiej osoby
 - **B (Mefju): panel działki pokazuje „Stan działki” od razu po wybraniu działki – `GET /api/analysis` bez `crop` → `field_state`, `soil.consistency`, rekomendacje retencyjne** (szczegóły i lista plików frontendu zmienionych przez A: `contract-changes.md`, wpis A5b-1, „Dla Mefju”).
 - B: `IrrigationCard` – status `nie_praktykowane` (dziś etykieta „Nie stosuje się”); `status.scope_label` („poza sezonem”) przy karcie stanu; `storage.ts` – czy zapamiętywać analizę bez uprawy.
 - B: obraz kontenera frontendu nie ma `@fontsource-variable/fraunces` – `docker compose build frontend`.
 - **B (A5b-2a): ranking „Co tu posiać?”, pola historii 1–3 lat i powierzchni** – `contract-changes.md`, wpis A5b-2a „Dla Mefju”.
+- **B (A5b-2b): karta „Werdykt” na samej górze panelu, pasek stref, oznaczenie obszaru przybliżonego, klik na mapie → `?lon=&lat=`, sekcja wieloletnich, status `informacyjne`** – `contract-changes.md`, wpis A5b-2b „Dla Mefju”.
 - **B (A6): pasek stref terenu, warstwy Teren i Spływ wody** – `contract-changes.md`, wpis A6 „Dla Mefju” (kolory, `kind`, dymki); w Terrain.tsx zmienić kolory stoku i płasko na #E8B931 i #5BB37F.
 - **B: przykłady na ekranie startowym brać z `GET /api/demo/examples`** – w trybie offline i przy blokadzie ULDK backend zwraca tylko przykłady, które działają (dziś: Susza 2018, Mokry rok 2021); lista lokalna pokaże jury przykłady, które skończą się błędem.
 - Wcześniejsze prośby A5 (pola rekomendacji, gleba, `previous_crop`, `/api/demo/examples`, raport PDF) – bez zmian.
