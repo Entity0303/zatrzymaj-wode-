@@ -710,6 +710,22 @@ class LoadingStep(Contract):
 # ── Odpowiedź ───────────────────────────────────────────────────────────────────────────────
 
 
+class AnalysisRequest(Contract):
+    """Treść POST /api/analysis i POST /api/report.pdf (A5c, D75): to samo co zapytanie GET, plus własny obrys pola.
+    Dokładnie jedno z: `parcel_id`, para `lon` + `lat`, `geometry`."""
+
+    parcel_id: str | None = Field(None, description="Pełny identyfikator działki ULDK (albo „obręb numer”)")
+    lon: float | None = Field(None, description="Punkt na mapie (WGS84) – zamiast parcel_id")
+    lat: float | None = None
+    geometry: dict[str, Any] | None = Field(
+        None, description="Własny obrys pola: GeoJSON Polygon w WGS84 ([lon, lat]), 0,05–200 ha, w Polsce, bez samoprzecięć")
+    crop: str | None = None
+    date: dt.date | None = None
+    previous_crop: str | None = None
+    crop_history: str | None = None
+    cultivated_area_ha: float | None = None
+
+
 class AnalysisResponse(Contract):
     parcel: Parcel
     crop: CropId | None = Field(description="null = analiza bez uprawy („Stan działki”)")
