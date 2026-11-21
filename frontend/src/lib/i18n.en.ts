@@ -6,8 +6,7 @@
 export const EN: Record<string, string> = {
   // ── marka, nawigacja ──
   'Zatrzymaj wodę': 'Keep the Water',
-  Zatrzymaj: 'Keep the',
-  wodę: 'Water',
+  'prześwietl swoją działkę pod kątem suszy': 'check your parcel for drought risk',
   'Oszczędzaj wodę. Chroń plony.': 'Save water. Protect your crops.',
   'Nawigacja główna': 'Main navigation',
   Start: 'Start',

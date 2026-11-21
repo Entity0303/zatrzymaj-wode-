@@ -24,6 +24,7 @@ import { MobileSheet, snapHeights, type Snap } from '@/layout/MobileSheet'
 import { Sidebar } from '@/layout/Sidebar'
 import { TopBar } from '@/layout/TopBar'
 import { todayIso } from '@/lib/dates'
+import { BRAND_NAME, BRAND_TAGLINE } from '@/lib/brand'
 import { readLink, shareLink, writeLink } from '@/lib/deepLink'
 import { useReportDownload } from '@/features/reports/useReportDownload'
 import { useMediaQuery, useOnline, usePrefersReducedMotion, useSavedParcels } from '@/lib/hooks'
@@ -218,6 +219,12 @@ export default function Start() {
     if (isMobile) setSnap('collapsed')
     document.querySelector<HTMLInputElement>('input[data-parcel-search]')?.focus()
   }
+
+  // tytuł karty przeglądarki: nazwa produktu + podtytuł w bieżącym języku
+  const tagline = t(BRAND_TAGLINE)
+  useEffect(() => {
+    document.title = `${BRAND_NAME} – ${tagline}`
+  }, [tagline])
 
   // ── link: otwarcie adresu z ?dzialka= od razu wyszukuje działkę (i liczy analizę, gdy jest uprawa) ──
   const linkStarted = useRef(false)

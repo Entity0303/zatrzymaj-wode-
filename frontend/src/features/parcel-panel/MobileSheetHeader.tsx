@@ -1,6 +1,8 @@
 import { FileDown, Leaf, Loader2 } from 'lucide-react'
 import type { Parcel, StatusLevel } from '@/api/types'
+import { LogoMark } from '@/components/LogoMark'
 import { StatusBadge } from '@/components/StatusBadge'
+import { BRAND_NAME, BRAND_TAGLINE } from '@/lib/brand'
 import { formatHa, shortCounty } from '@/lib/format'
 import { ParcelActions } from './ParcelActions'
 import type { SearchPhase } from './types'
@@ -77,6 +79,16 @@ export function MobileSheetHeader({
           : t('Pobieram dane z ewidencji (ULDK GUGiK)')
   return (
     <div className="min-h-12">
+      {/* nagłówek wersji mobilnej: nazwa produktu, dopóki nie wybrano działki */}
+      {search.phase === 'idle' && (
+        <p className="mb-2.5 flex items-center gap-2.5">
+          <LogoMark className="size-9 shrink-0" />
+          <span className="min-w-0">
+            <span className="block text-base leading-5 font-bold tracking-tight text-brand">{BRAND_NAME}</span>
+            <span className="block text-sm leading-5 text-text-muted">{t(BRAND_TAGLINE)}</span>
+          </span>
+        </p>
+      )}
       <h2 className="text-lg leading-6 font-semibold">{title}</h2>
       <p className="text-sm leading-5 text-text-muted">{sub}</p>
     </div>

@@ -5,7 +5,7 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* ── Tokeny „Zatrzymaj wodę” – design/SPEC_UI.md, sekcja 2 ───────────────────────────────── */
+/* ── Tokeny WodoSkop – design/SPEC_UI.md, sekcja 2 ───────────────────────────────── */
 @theme {
   /* 2.2 Paleta */
   --color-brand: #2f6b47;

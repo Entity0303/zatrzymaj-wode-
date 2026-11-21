@@ -4,6 +4,7 @@ import { LogoMark } from '@/components/LogoMark'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import { ACTIVE, SECTIONS } from './sections'
+import { BRAND_NAME, BRAND_TAGLINE } from '@/lib/brand'
 import { useLang } from '@/lib/i18n'
 
 /** Lewy pasek: 96 px z podpisami (≥ 1280 px), 64 px same ikony (tablet). SPEC 4.1, 12. */
@@ -14,13 +15,14 @@ export function Sidebar() {
       aria-label={t('Nawigacja główna')}
       className="relative z-[1200] hidden h-full w-16 shrink-0 flex-col items-center border-r bg-surface py-4 md:flex xl:w-24"
     >
-      <div className="mb-5 flex flex-col items-center gap-1.5 px-1 text-center">
+      <div
+        className="mb-5 flex flex-col items-center gap-1.5 px-1 text-center"
+        title={`${BRAND_NAME} – ${t(BRAND_TAGLINE)}`}
+        aria-label={`${BRAND_NAME} – ${t(BRAND_TAGLINE)}`}
+        role="img"
+      >
         <LogoMark className="size-10 xl:size-11" />
-        <span className="hidden text-xs leading-4 font-semibold text-brand xl:block">
-          {t('Zatrzymaj')}
-          <br />
-          {t('wodę')}
-        </span>
+        <span className="hidden text-sm leading-4 font-bold tracking-tight text-brand xl:block">{BRAND_NAME}</span>
       </div>
       <ul className="flex w-full flex-col gap-1.5 px-1.5 xl:px-2">
         {SECTIONS.map((s) => {
