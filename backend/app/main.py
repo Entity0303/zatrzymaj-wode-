@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.geo import geojson
 from app.http import NotFoundError, SourceError, close_client
-from app.sources import iung, nasa_power, uldk
+from app.sources import iung, nasa_power, open_meteo, uldk
 
 
 @asynccontextmanager
@@ -157,6 +157,56 @@ async def weather(
             for d, p, e in zip(w.dates[-60:], w.precip[-60:], w.et0[-60:])
         ],
         "source": nasa_power.SOURCE,
+    }
+
+
+@app.get("/api/forecast")
+async def forecast(lon: float, lat: float, days: int = Query(7, ge=1, le=16)) -> dict:
+    """Pogoda teraz + prognoza dobowa (Open-Meteo) – do paska pogody i karty „Prognoza 7 dni”."""
+    if not (14.0 <= lon <= 24.2 and 49.0 <= lat <= 55.0):
+        raise HTTPException(status_code=404, detail={
+            "source": open_meteo.SOURCE, "message": "Punkt leży poza Polską."})
+    try:
+        fc = await open_meteo.fetch(lon, lat)
+    except SourceError as exc:
+        raise _source_error(exc) from exc
+    desc, icon = open_meteo.describe(fc.current_code)
+    out_days = []
+    for d in fc.days[:days]:
+        d_desc, d_icon = open_meteo.describe(d.code)
+        balance = (
+            None if d.precip_mm is None or d.et0_mm is None else round(d.precip_mm - d.et0_mm, 2)
+        )
+        out_days.append({
+            "data": d.day.isoformat(),
+            "opis": d_desc,
+            "ikona": d_icon,
+            "temp_max": d.tmax,
+            "temp_min": d.tmin,
+            "opad_mm": d.precip_mm,
+            "parowanie_mm": d.et0_mm,
+            "bilans_mm": balance,
+        })
+    balances = [d["bilans_mm"] for d in out_days]
+    return {
+        "lon": fc.lon,
+        "lat": fc.lat,
+        "teraz": {
+            "czas": fc.current_time.isoformat() if fc.current_time else None,
+            "temperatura": fc.current_temp,
+            "opis": desc,
+            "ikona": icon,
+            "dzien": fc.is_day,
+        },
+        "dni": out_days,
+        # suma tylko gdy wszystkie dni mają dane – brak danych nie może udawać zera
+        "bilans_okresu_mm": round(sum(balances), 1) if balances and None not in balances else None,
+        "zrodlo": {
+            "nazwa": open_meteo.SOURCE,
+            "url": open_meteo.SOURCE_URL,
+            "uwagi": "Parowanie: ET0 FAO-56 z modelu Open-Meteo. Prognoza dla punktu, "
+            "rozdzielczość modelu kilka km.",
+        },
     }
 
 

@@ -1,0 +1,63 @@
+import { cn } from '@/lib/utils'
+
+/**
+ * Okrąg 0–100 z liczbą w środku (SPEC 14, styl ref-style).
+ * value = null -> przerywany szary okrąg i „—” (brak danych, nigdy zero).
+ */
+export function ScoreRing({
+  value,
+  size = 64,
+  stroke = 7,
+  color = 'var(--color-ok)',
+  caption,
+  className,
+}: {
+  value: number | null
+  size?: number
+  stroke?: number
+  color?: string
+  caption?: string
+  className?: string
+}) {
+  const r = (size - stroke) / 2
+  const c = 2 * Math.PI * r
+  const v = value === null ? 0 : Math.max(0, Math.min(100, value))
+  return (
+    <div
+      className={cn('relative inline-flex shrink-0 items-center justify-center', className)}
+      style={{ width: size, height: size }}
+      role="img"
+      aria-label={value === null ? 'Brak danych' : `${Math.round(v)} na 100`}
+    >
+      <svg width={size} height={size} className="-rotate-90">
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          stroke={value === null ? 'var(--color-nodata)' : 'var(--color-surface-2)'}
+          strokeWidth={stroke}
+          strokeDasharray={value === null ? '4 5' : undefined}
+        />
+        {value !== null && (
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={r}
+            fill="none"
+            stroke={color}
+            strokeWidth={stroke}
+            strokeLinecap="round"
+            strokeDasharray={`${(v / 100) * c} ${c}`}
+          />
+        )}
+      </svg>
+      <span className="absolute inset-0 flex flex-col items-center justify-center leading-none">
+        <span className={cn('tabular font-semibold', size >= 80 ? 'text-2xl' : 'text-base', value === null && 'text-text-muted')}>
+          {value === null ? '—' : Math.round(v)}
+        </span>
+        {caption && <span className="mt-0.5 text-xs text-text-muted">{caption}</span>}
+      </span>
+    </div>
+  )
+}

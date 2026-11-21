@@ -1,37 +1,77 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
+@import '@fontsource-variable/inter';
 @import 'leaflet/dist/leaflet.css';
 
 @custom-variant dark (&:is(.dark *));
 
-/* Jasny, zielony, spokojny motyw „Zatrzymaj wodę” (tokeny w formacie shadcn/ui) */
+/* ── Tokeny „Zatrzymaj wodę” – design/SPEC_UI.md, sekcja 2 ───────────────────────────────── */
+@theme {
+  /* 2.2 Paleta */
+  --color-brand: #2f6b47;
+  --color-brand-dark: #1f4d33;
+  --color-ok: #5bb37f;
+  --color-ok-soft: #e6f4ea;
+  --color-bg: #f8f6f1;
+  --color-surface: #ffffff;
+  --color-surface-2: #efebe3;
+  --color-earth: #8b6b4a;
+  --color-water: #2f80c9;
+  --color-water-soft: #e3f0fb;
+  --color-warn: #e8b931;
+  --color-warn-soft: #fdf4d8;
+  --color-risk: #e07b39;
+  --color-danger: #c8453b;
+  --color-danger-soft: #fbe7e5;
+  --color-text: #1e2a23;
+  --color-text-muted: #5f6b64;
+  --color-line: #e3ded4;
+  --color-nodata: #b8bdb9;
+  --color-nodata-soft: #f1f2f1;
+  --color-legend: #1e2a23;
+
+  /* 2.3 Typografia */
+  --font-sans: 'Inter Variable', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  /* 2.4 Kształty: karty 16 px, przyciski i pola 12 px, pigułki 9999 px */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 16px;
+
+  /* 2.4 Cienie */
+  --shadow-card: 0 1px 2px rgba(30, 42, 35, 0.06), 0 4px 16px rgba(30, 42, 35, 0.06);
+  --shadow-float: 0 2px 4px rgba(30, 42, 35, 0.08), 0 8px 24px rgba(30, 42, 35, 0.14);
+
+  /* 2.4 Animacje 150–250 ms */
+  --default-transition-duration: 200ms;
+}
+
+/* Tokeny shadcn/ui zmapowane na paletę projektu */
 :root {
-  --radius: 0.875rem;
-  --background: oklch(0.985 0.006 145);
-  --foreground: oklch(0.24 0.03 150);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.24 0.03 150);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.24 0.03 150);
-  --primary: oklch(0.5 0.12 152);
-  --primary-foreground: oklch(0.985 0.01 150);
-  --secondary: oklch(0.95 0.03 150);
-  --secondary-foreground: oklch(0.32 0.07 152);
-  --muted: oklch(0.96 0.01 150);
-  --muted-foreground: oklch(0.5 0.02 150);
-  --accent: oklch(0.94 0.04 150);
-  --accent-foreground: oklch(0.3 0.07 152);
-  --destructive: oklch(0.58 0.2 27);
-  --border: oklch(0.91 0.015 150);
-  --input: oklch(0.89 0.02 150);
-  --ring: oklch(0.6 0.12 152);
+  --radius: 12px;
+  --background: #f8f6f1;
+  --foreground: #1e2a23;
+  --card: #ffffff;
+  --card-foreground: #1e2a23;
+  --popover: #ffffff;
+  --popover-foreground: #1e2a23;
+  --primary: #2f6b47;
+  --primary-foreground: #ffffff;
+  --secondary: #efebe3;
+  --secondary-foreground: #1e2a23;
+  --muted: #efebe3;
+  --muted-foreground: #5f6b64;
+  --accent: #e6f4ea;
+  --accent-foreground: #1f4d33;
+  --destructive: #c8453b;
+  --border: #e3ded4;
+  --input: #e3ded4;
+  --ring: #2f6b47;
 }
 
 @theme inline {
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -50,12 +90,11 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border;
   }
   html,
   body,
@@ -63,32 +102,105 @@
     height: 100%;
   }
   body {
-    @apply bg-background font-sans text-foreground antialiased;
+    @apply bg-bg font-sans text-base text-text antialiased;
     overscroll-behavior: none;
+  }
+  /* 16. Dostępność: widoczny focus – obrys brand 2 px */
+  :focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+  }
+  /* 2.4 Ikony lucide: obrys 1,75 px */
+  svg.lucide {
+    stroke-width: 1.75px;
   }
 }
 
-/* Leaflet: spójne z resztą UI */
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* „Brak danych” – szare kreskowanie (SPEC 2.2, 15.1) */
+@utility hatch-nodata {
+  background-color: var(--color-nodata-soft);
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgb(184 189 185 / 0.28) 0 6px,
+    transparent 6px 12px
+  );
+}
+
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* ── Leaflet ─────────────────────────────────────────────────────────────────────────────── */
 .leaflet-container {
   font-family: inherit;
-  background: oklch(0.93 0.02 150);
-}
-.leaflet-control-zoom {
-  border: none !important;
-  border-radius: 0.75rem !important;
-  overflow: hidden;
-  box-shadow: 0 4px 14px rgb(0 0 0 / 0.15) !important;
-}
-.leaflet-control-zoom a {
-  width: 38px !important;
-  height: 38px !important;
-  line-height: 38px !important;
-  color: var(--foreground) !important;
+  background: #dfe6dc;
+  cursor: crosshair;
 }
 .leaflet-control-attribution {
-  font-size: 10px;
-  border-radius: 6px 0 0 0;
+  font-size: 12px;
+  line-height: 16px;
+  padding: 2px 6px !important;
+  border-radius: 8px 0 0 0;
+  background: rgb(255 255 255 / 0.85) !important;
 }
-.leaflet-container.picking {
-  cursor: crosshair;
+.leaflet-control-scale-line {
+  border-color: var(--color-text);
+  color: var(--color-text);
+  background: rgb(255 255 255 / 0.85);
+  font-size: 12px;
+}
+.leaflet-bottom {
+  bottom: var(--map-bottom, 0px);
+}
+.leaflet-bottom .leaflet-control {
+  margin-bottom: 0;
+}
+.leaflet-left .leaflet-control {
+  margin-left: 16px;
+}
+.leaflet-right .leaflet-control {
+  margin-right: 16px;
+}
+@media (max-width: 767px) {
+  .leaflet-left .leaflet-control,
+  .leaflet-right .leaflet-control {
+    margin-left: 12px;
+    margin-right: 12px;
+  }
+}
+/* ParcelLabel – pigułka bez domyślnego dymka Leaflet */
+.leaflet-tooltip.parcel-label {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: 0;
+}
+.leaflet-tooltip.parcel-label::before {
+  display: none;
+}
+.leaflet-tooltip {
+  font-family: inherit;
+  font-size: 14px;
+  border-radius: 8px;
+}
+.leaflet-popup-content-wrapper {
+  border-radius: 12px;
+}
+
+/* 2.4 / 16: szanuj prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
 }

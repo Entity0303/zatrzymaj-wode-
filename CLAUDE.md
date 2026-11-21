@@ -45,7 +45,7 @@ Aplikacja webowa dla rolnika (bez wiedzy GIS): podaje działkę ewidencyjną (nu
 9. **Sentinel-2:** Earth Search STAC https://earth-search.aws.element84.com/v1/search, kolekcja `sentinel-2-l2a`, assety `red`, `nir`, `swir16`, `scl` (COG, odczyt fragmentów przez rasterio).
    - Dane od 2017 – rok 2016 brak; dla 2016 Copernicus Data Space STAC https://stac.dataspace.copernicus.eu/v1.
    - NDVI, NDMI, maska chmur SCL, anomalia względem tych samych okresów z poprzednich lat.
-10. **IUNG SMSR** https://susza.iung.pulawy.pl – oficjalna metodyka suszy (KBW, kategorie gleb, 15 upraw: zboża ozime, zboża jare, kukurydza na ziarno, kukurydza na kiszonkę, rzepak i rzepik, ziemniak, burak cukrowy, rośliny strączkowe, warzywa gruntowe, drzewa owocowe, krzewy owocowe, truskawki, chmiel, tytoń). Używamy tej listy upraw i kalibrujemy wyniki do tej metodyki.
+10. **IUNG SMSR** https://susza.iung.pulawy.pl – oficjalna metodyka suszy (KBW, kategorie gleb, 15 upraw: zboża ozime, zboża jare, kukurydza na ziarno, kukurydza na kiszonkę, rzepak i rzepik, rzepak i rzepik (jesień), ziemniak, burak cukrowy, rośliny strączkowe, warzywa gruntowe, drzewa owocowe, krzewy owocowe, truskawki, chmiel, tytoń). Używamy tej listy upraw i kalibrujemy wyniki do tej metodyki.
 11. **GUS BDL API** https://bdl.stat.gov.pl/api/v1 – plony z ha i ceny skupu wg województw (np. zmienna 4332 = plony pszenicy dt/ha; temat P2967 = miesięczne ceny pszenicy zł/dt). `/data/by-variable/{id}?unit-level=2&year=...&format=json`.
 12. **Ortofotomapa Geoportal** (WMS) jako podkład mapy.
 
@@ -65,6 +65,10 @@ Aplikacja webowa dla rolnika (bez wiedzy GIS): podaje działkę ewidencyjną (nu
 - Dolny pasek kart: przegląd gospodarstwa, trend, alerty, prognoza.
 - Wersja mobilna: mapa na pełnym ekranie, legendy warstw jako małe ciemne karty, panel działki wysuwany od dołu.
 - Zielona, spokojna kolorystyka, duże czytelne elementy. Własna marka „Zatrzymaj wodę” – nie kopiujemy nazw z grafik.
+
+## Wygląd
+
+Wygląd i zachowanie interfejsu definiuje **`design/SPEC_UI.md`** razem z grafikami w `design/` (`ref-desktop.png`, `ref-mobile.png`, `ref-style.png`). Przy każdej zmianie UI trzymaj się go dokładnie – niczego nie upraszczaj ani nie pomijaj. Jeśli czegoś nie da się zrobić, napisz to wprost.
 
 ## Zasady pracy
 
