@@ -72,8 +72,6 @@ const round1 = (v: number) => Math.round(v * 10) / 10
 // Widok 3D – osobny plik i biblioteka (MapLibre GL), pobierane dopiero po kliknięciu „3D”
 const Terrain3D = lazy(() => import('@/features/map3d/Terrain3D'))
 
-// Komputer: paszport wodny jako szeroki panel (SPEC 7)
-const PASSPORT_W = 640
 
 export default function Start() {
   const { t } = useLang()
@@ -153,7 +151,7 @@ export default function Start() {
   const sheetVisible = snapHeights(areaH, SHEET_COLLAPSED, SHEET_TOP)[snap]
   const insets: MapInsets = isMobile
     ? { top: 120, right: 64, bottom: SHEET_COLLAPSED + 130, left: 8 }
-    : { top: 128, right: (passportOpen ? PASSPORT_W : isDesktop ? 380 : 340) + 16, bottom: FLOAT_BOTTOM, left: 76 }
+    : { top: 128, right: (isDesktop ? 380 : 340) + 16, bottom: FLOAT_BOTTOM, left: 76 }
 
   // ── wyszukiwanie działki ──────────────────────────────────────────────────────────────────
   async function find(fn: () => Promise<Parcel>, kind: 'number' | 'point') {
@@ -386,7 +384,6 @@ export default function Start() {
   function openPassport() {
     if (!analysis) return
     setPassportFor(analysis)
-    if (isMobile) setSnap('full')
   }
   const closePassport = useCallback(() => setPassportFor(null), [])
   useEffect(() => {
@@ -400,7 +397,6 @@ export default function Start() {
     if (!analysis || !pendingPassport.current) return
     pendingPassport.current = false
     setPassportFor(analysis)
-    if (isMobile) setSnap('full')
   }, [analysis, isMobile])
   // adres pamięta otwarty paszport (link „Kopiuj” otworzy go od razu)
   useEffect(() => {
@@ -415,6 +411,7 @@ export default function Start() {
   useEffect(() => setHighlight(null), [analysis])
 
   function showOnMap(g: GeoJSON.Geometry) {
+    setPassportFor(null)
     setHighlight(g)
     if (isMobile) setSnap('collapsed')
     const map = mapRef.current
@@ -457,7 +454,7 @@ export default function Start() {
 
   // ── raport PDF: te same parametry co analiza ─────────────────────────────────────────────
   const report = useReportDownload(
-    parcel && crop && analysis ? { parcelId: parcel.id, numer: parcel.numer, crop, date: asOf } : null,
+    parcel && analysis ? { parcelId: parcel.id, numer: parcel.numer, crop: analysis.crop, date: asOf } : null,
   )
   const clearReportError = report.clearError
   useEffect(() => clearReportError(), [parcel?.id, crop, asOf, clearReportError])
@@ -751,9 +748,7 @@ export default function Start() {
               className={
                 isMobile
                   ? 'absolute left-3 z-[1000] w-56'
-                  : passportOpen
-                    ? 'absolute right-[672px] z-[1000]'
-                    : 'absolute right-[372px] z-[1000] xl:right-[412px]'
+                  : 'absolute right-[372px] z-[1000] xl:right-[412px]'
               }
               style={{ bottom: isMobile ? sheetVisible + 32 : FLOAT_BOTTOM }}
             />
@@ -762,16 +757,11 @@ export default function Start() {
           {/* ── prawy panel działki: 380 px komputer, 340 px tablet (SPEC 4.4, 12) ── */}
           {!isMobile && (
             <aside
-              aria-label={passportOpen ? t('Paszport wodny') : t('Panel działki')}
-              className={
-                passportOpen
-                  ? 'absolute top-[128px] right-4 z-[1100] flex flex-col overflow-hidden rounded-xl bg-surface shadow-float'
-                  : 'absolute top-[128px] right-4 z-[1100] flex w-[340px] flex-col overflow-hidden rounded-xl bg-surface shadow-float xl:w-[380px]'
-              }
+              aria-label={t('Panel działki')}
+              className="absolute top-[128px] right-4 z-[1100] flex w-[340px] flex-col overflow-hidden rounded-xl bg-surface shadow-float xl:w-[380px]"
               style={{
                 bottom: summaryOnly ? undefined : FLOAT_BOTTOM,
                 maxHeight: summaryOnly ? `calc(100% - 128px - ${FLOAT_BOTTOM}px)` : undefined,
-                width: passportOpen ? `min(${PASSPORT_W}px, calc(100% - 120px))` : undefined,
               }}
             >
               <div className="min-h-0 flex-1 overflow-y-auto p-5">
@@ -785,8 +775,6 @@ export default function Start() {
                       onSaved={() => setInfraRefresh((n) => n + 1)}
                     />
                   </div>
-                ) : passportOpen && analysis ? (
-                  <Passport analysis={analysis} onClose={closePassport} report={report} onCopyLink={copyLink} onShowOnMap={showOnMap} />
                 ) : summaryOnly && parcel ? (
                   <div className="-m-5">
                     <ParcelSummary
@@ -891,10 +879,6 @@ export default function Start() {
                     onSaved={() => setInfraRefresh((n) => n + 1)}
                   />
                 </div>
-              ) : passportOpen && analysis ? (
-                <div className="px-1 pt-5">
-                  <Passport analysis={analysis} onClose={closePassport} report={report} onCopyLink={copyLink} onShowOnMap={showOnMap} />
-                </div>
               ) : (
               <div className="space-y-5">
                 <div className="flex gap-2 [&>label]:min-w-0 [&>label]:flex-1">
@@ -933,6 +917,11 @@ export default function Start() {
                 {t('Anuluj')}
               </button>
             </div>
+          )}
+
+          {/* paszport wodny – pełny ekran nad mapą i panelem (nic nie prześwituje) */}
+          {passportOpen && analysis && (
+            <Passport analysis={analysis} onClose={closePassport} report={report} onCopyLink={copyLink} onShowOnMap={showOnMap} />
           )}
 
           {/* wydruk paszportu: osobna kopia poza układem mapy (window.print) */}

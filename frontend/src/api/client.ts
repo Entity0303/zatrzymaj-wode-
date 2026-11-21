@@ -93,8 +93,9 @@ export const api = {
   /** GET /api/demo/examples – przykłady „jednym klikiem” (działki rozgrzane w pamięci serwera) */
   demoExamples: (signal?: AbortSignal) => get<DemoExample[]>('/api/demo/examples', {}, signal),
   /** GET /api/report.pdf – te same parametry co analiza; odpowiedź to plik PDF */
-  reportPdf: async (parcelId: string, crop: CropId, date: string): Promise<Blob> => {
-    const params: Record<string, string> = { parcel_id: parcelId, crop, date }
+  reportPdf: async (parcelId: string, crop: CropId | null, date: string): Promise<Blob> => {
+    // bez uprawy = raport „Stan działki” (backend przyjmuje brak `crop`)
+    const params: Record<string, string> = { parcel_id: parcelId, date, ...(crop ? { crop } : {}) }
     let res: Response
     try {
       res = await fetch(`/api/report.pdf?${new URLSearchParams(params)}`)

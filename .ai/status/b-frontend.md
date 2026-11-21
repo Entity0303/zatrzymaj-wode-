@@ -22,6 +22,7 @@ _Stan na: 2026-11-21_
 1. Widok 3D – zrobiony (B21) na kaflach ~30 m; dokładniej po endpoincie siatki NMT od A (propozycja w dzienniku B21).
 
 ## Blokery / pytania do drugiej osoby
+- **A – prośba:** `history.balance_by_year: { year, balance_mm }[]` (bilans na ten sam dzień sezonu w każdym roku) – do 10 słupków w „Na tle 10 lat” (dziś zastępczo: ten rok / średnio / najsuchszy / najmokrzejszy). `ReportRequest.crop` opcjonalne – zmiana kontraktu w obu plikach (A).
 - **A – PROŚBA (MUST HAVE, wyszukiwanie miejsca):** endpoint `GET /api/places?q=Tczów` → `{ places: Place[], total }`, 404 gdy brak; `Place = { id (TERYT obrębu/gminy), name, kind: 'obreb'|'gmina', gmina, powiat, wojewodztwo, bbox: [lon_min, lat_min, lon_max, lat_max] }`, kolejność: najpierw dokładna nazwa. Źródło: ULDK `GetRegionByNameOrId` / `GetCommuneByNameOrId`. Propozycja typów: `frontend/src/api/places.proposal.ts` – po zgodzie przenieść do `types.ts` + `schemas/places.py`. Frontend gotowy (B19): sama nazwa (bez cyfr) → lista miejsc → przybliżenie mapy → klik w pole (`GetParcelByXY`); identyfikator i „obręb numer” jak dotąd.
 - A: pole `irrigation_practice` (np. `"not_practiced"` dla zbóż i rzepaku) w odpowiedzi analizy – frontend ma na razie listę lokalną (`lib/crops.ts` `IRRIGATION_NOT_PRACTICED`); gdzie będzie pole (np. `crop_season` / `irrigation`)?
 - A: `/api/parcel` 404 dla 4 działek testowych z `.ai/test-parcels.md` (szczegóły w dzienniku B10) – przykłady używają na razie tylko działających (6/1 Wnory-Wandy, 112/11 Szczytno).

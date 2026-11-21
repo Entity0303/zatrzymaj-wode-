@@ -742,4 +742,17 @@ export const EN: Record<string, string> = {
   'co zrobić': 'what to do',
   'Zwiń menu': 'Close menu',
   'Moje działki, raporty, ustawienia, język': 'My parcels, reports, settings, language',
+  // paszport – Na tle 10 lat
+  'Ten rok jest suchszy niż zwykle – suszej było tylko w {n} z ostatnich {of} lat.': 'This year is drier than usual – it was drier only in {n} of the last {of} years.',
+  'Ten rok jest wilgotniejszy niż zwykle – mokrzej było tylko w {n} z ostatnich {of} lat.': 'This year is wetter than usual – it was wetter only in {n} of the last {of} years.',
+  'Ten rok jest podobny do zwykłego – suszej było w {n} z ostatnich {of} lat.': 'This year is close to normal – it was drier in {n} of the last {of} years.',
+  'Brak porównania z poprzednimi latami dla tej działki.': 'No comparison with previous years for this parcel.',
+  'Średnio (10 lat)': 'Average (10 years)',
+  'Najsuchszy rok': 'Driest year',
+  'Najmokrzejszy rok': 'Wettest year',
+  'Ile wody zostało: spadło minus wyparowało': 'Water left: rain minus evaporation',
+  'od {a} · dane pogodowe do {b}': 'from {a} · weather data up to {b}',
+  'Porównanie z poprzednimi latami': 'Comparison with previous years',
+  'Na lewo od kreski – więcej wody wyparowało, niż spadło. 1 mm = 1 litr na m².': 'Left of the line – more water evaporated than fell. 1 mm = 1 litre per m².',
+  'Woda od początku sezonu, dzień po dniu': 'Water since the start of the season, day by day',
 }
