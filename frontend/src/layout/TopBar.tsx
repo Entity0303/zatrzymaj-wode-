@@ -3,7 +3,6 @@ import { DateField } from '@/components/DateField'
 import { LanguageToggle } from '@/components/LanguageToggle'
 import { LayerPills } from '@/features/map/LayerPills'
 import type { LayerKey } from '@/features/map/layers'
-import { ViewToggle } from '@/features/map/ViewToggle'
 import { LocateButton } from '@/features/search/LocateButton'
 
 /**
@@ -53,12 +52,11 @@ export function TopBar({
         <div className="ml-auto flex h-12 shrink-0 items-center divide-x divide-line rounded-full bg-surface pr-1 shadow-float">
           {weather}
           <DateField value={asOf} onChange={onAsOfChange} bare />
-          <LanguageToggle bare className="pl-2" />
+          <LanguageToggle compact className="ml-1 size-10 bg-transparent shadow-none" />
         </div>
       </div>
       <div className="flex max-w-full items-center gap-3 [&>*]:pointer-events-auto">
         <LayerPills value={layer} onChange={onLayerChange} className="min-w-0 py-1" />
-        <ViewToggle />
       </div>
     </div>
   )

@@ -1,4 +1,4 @@
-import { BookOpenText, FileDown, Link2, Loader2, Waves } from 'lucide-react'
+import { BookOpenText, ChevronDown, FileDown, Link2, ListChecks, Loader2, Waves } from 'lucide-react'
 import type { ErrorInfo } from '@/api/client'
 import type { CropId } from '@/api/types'
 import { EmptyState } from '@/components/EmptyState'
@@ -26,7 +26,8 @@ import { StatusCard } from './StatusCard'
 import type { AnalysisRun, ForecastState, SearchPhase } from './types'
 import { WhatToDo } from './WhatToDo'
 import { useLang } from '@/lib/i18n'
-import { useSettings } from '@/lib/storage'
+import { useSettings, useUiPrefs } from '@/lib/storage'
+import { cn } from '@/lib/utils'
 
 /** Panel działki (SPEC 6) – prawa karta na komputerze, treść szuflady na telefonie. */
 export function ParcelPanel({
@@ -82,6 +83,9 @@ export function ParcelPanel({
 }) {
   const { t } = useLang()
   const [settings] = useSettings()
+  const [ui, setUi] = useUiPrefs()
+  // tryb doradcy: szczegóły zawsze rozwinięte
+  const showDetails = ui.details || settings.mode === 'doradca'
   if (state.phase === 'idle') return <PanelEmpty onFocusSearch={onFocusSearch} onLocate={onLocate} onExample={onExample} />
 
   if (state.phase === 'loading')
@@ -159,39 +163,20 @@ export function ParcelPanel({
       )}
       {/* SPEC 15.1: grunt nierolny – zamiast oceny suszy komunikat, bez wskaźników i zaleceń */}
       {nonAgri ? <NonAgriculturalCard soil={analysis!.soil} /> : <StatusCard crop={crop} analysis={analysis} onOpen={analysis ? onOpenPassport : undefined} />}
-      {analysis && !nonAgri && <CropSeasonCard season={analysis.crop_season} analysisDate={analysis.analysis_date} />}
-      {crop && (
-        <details open={settings.mode === 'doradca' || undefined} className="group rounded-xl border bg-surface p-3.5">
-          <summary className="flex min-h-6 cursor-pointer list-none items-center justify-between text-sm font-medium">
-            {t('Postęp analizy')}
-            <span className="text-text-muted group-open:hidden">{t('pokaż')}</span>
-            <span className="hidden text-text-muted group-open:inline">{t('ukryj')}</span>
-          </summary>
-          <LoadingSteps steps={steps} className="mt-3" />
-        </details>
-      )}
+      {nonAgri && analysis && <SoilCard soil={analysis.soil} />}
       {!nonAgri && (
         <>
           <WaveDivider />
           <section className="space-y-3">
             <SectionTitle>{t('Kluczowe wskaźniki')}</SectionTitle>
             <Metrics analysis={analysis} />
-            {analysis && <SoilWaterCard state={analysis.soil_water} />}
           </section>
           <WaveDivider />
           <section className="space-y-3">
             <SectionTitle>{t('Co zrobić?')}</SectionTitle>
             <WhatToDo analysis={analysis} onShowOnMap={onShowOnMap} />
-            {analysis && <IrrigationCard plan={analysis.irrigation} />}
           </section>
         </>
-      )}
-      {analysis && <WaveDivider />}
-      {analysis && (
-        <section className="space-y-3">
-          <SectionTitle>{t('Gleba')}</SectionTitle>
-          <SoilCard soil={analysis.soil} />
-        </section>
       )}
       <div className="space-y-2">
         {report?.error && <ErrorNotice {...report.error} onRetry={report.error.retryable ? report.download : undefined} />}
@@ -236,6 +221,37 @@ export function ParcelPanel({
           <p className="text-center text-sm text-text-muted">{t('Pełny paszport wodny pojawi się po analizie')}</p>
         )}
       </div>
+      {crop && (
+        <section className="rounded-xl border bg-surface">
+          <button
+            type="button"
+            aria-expanded={showDetails}
+            onClick={() => setUi({ details: !ui.details })}
+            className="flex min-h-12 w-full items-center gap-2 px-4 py-2.5 text-left"
+          >
+            <ListChecks className="size-5 shrink-0 text-brand" aria-hidden />
+            <span className="min-w-0 flex-1">
+              <span className="block text-base leading-6 font-semibold">{t(showDetails ? 'Ukryj szczegóły' : 'Pokaż szczegóły')}</span>
+              <span className="block text-sm leading-5 text-text-muted">
+                {t(nonAgri ? 'Postęp analizy' : 'Faza uprawy, woda w glebie, nawadnianie, gleba, postęp analizy')}
+              </span>
+            </span>
+            <ChevronDown className={cn('size-5 shrink-0 text-text-muted transition-transform', showDetails && 'rotate-180')} aria-hidden />
+          </button>
+          {showDetails && (
+            <div className="space-y-3 border-t p-3">
+              {analysis && !nonAgri && <CropSeasonCard season={analysis.crop_season} analysisDate={analysis.analysis_date} />}
+              {analysis && !nonAgri && <SoilWaterCard state={analysis.soil_water} />}
+              {analysis && !nonAgri && <IrrigationCard plan={analysis.irrigation} />}
+              {analysis && !nonAgri && <SoilCard soil={analysis.soil} />}
+              <div className="rounded-xl border bg-surface p-3.5">
+                <p className="text-sm font-medium">{t('Postęp analizy')}</p>
+                <LoadingSteps steps={steps} className="mt-3" />
+              </div>
+            </div>
+          )}
+        </section>
+      )}
       {onReportInfra && (
         <button
           type="button"

@@ -1,6 +1,7 @@
 import type { Map as LeafletMap } from 'leaflet'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { ChevronDown, ChevronUp, LayoutPanelTop } from 'lucide-react'
 import L from 'leaflet'
 import { ApiError, api, describeError } from '@/api/client'
 import type { CropId, Parcel, ParcelCandidates } from '@/api/types'
@@ -33,7 +34,7 @@ import { todayIso } from '@/lib/dates'
 import { formatDatePl } from '@/lib/format'
 import { BRAND_NAME, BRAND_TAGLINE } from '@/lib/brand'
 import { readLink, shareLink, writeLink } from '@/lib/deepLink'
-import { rememberAnalysis, useSettings } from '@/lib/storage'
+import { rememberAnalysis, useSettings, useUiPrefs } from '@/lib/storage'
 import { useReportDownload } from '@/features/reports/useReportDownload'
 import { useMediaQuery, useOnline, usePrefersReducedMotion, useSavedParcels } from '@/lib/hooks'
 import { mockRequested } from '@/mocks/useMockAnalysis'
@@ -55,9 +56,9 @@ const SHEET_TOP = 116 // pod wyszukiwarką i pigułkami warstw
 // Komputer/tablet: dolny pasek kart i odstępy 16 px (SPEC 2.4, 4.5)
 const CARDS_H = 166
 
-const MAP_BOTTOM_DESKTOP = 16 + CARDS_H + 2 // skala i atrybucje – w szczelinie nad kartami
 
-const FLOAT_BOTTOM = 16 + CARDS_H + 24 // dół panelu, kontrolek i legendy
+// karty schowane: przycisk „Pogoda, gospodarstwo…” 44 px w lewym dolnym rogu
+const TOGGLE_H = 44
 
 const round1 = (v: number) => Math.round(v * 10) / 10
 
@@ -80,6 +81,7 @@ export default function Start() {
   const [asOf, setAsOf] = useState(link.data ?? todayIso())
   const [layer, setLayer] = useState<LayerKey>('kondycja')
   const [settings] = useSettings()
+  const [ui, setUi] = useUiPrefs()
   const [baseMap, setBaseMap] = useState<BaseMap>(settings.baseMap)
   const [pendingPoint, setPendingPoint] = useState<[number, number] | null>(null)
   const [userPoint, setUserPoint] = useState<[number, number] | null>(null)
@@ -127,6 +129,11 @@ export default function Start() {
     return () => ro.disconnect()
   }, [])
 
+  // komputer/tablet: dolny pasek kart tylko na życzenie (mniej rzeczy naraz na ekranie)
+  const cardsShown = !isMobile && ui.cards
+  const FLOAT_BOTTOM = cardsShown ? 16 + CARDS_H + 24 : 16 // dół panelu i legendy
+  const CONTROLS_BOTTOM = cardsShown ? FLOAT_BOTTOM + 28 : 16 + TOGGLE_H + 36 // kontrolki nad skalą mapy
+  const MAP_BOTTOM_DESKTOP = cardsShown ? 16 + CARDS_H + 2 : 16 + TOGGLE_H + 4 // skala i atrybucje
   const sheetVisible = snapHeights(areaH, SHEET_COLLAPSED, SHEET_TOP)[snap]
   const insets: MapInsets = isMobile
     ? { top: 120, right: 64, bottom: SHEET_COLLAPSED + 130, left: 8 }
@@ -539,7 +546,7 @@ export default function Start() {
           {/* ── kontrolki mapy: komputer – lewy dolny róg; telefon – po prawej (SPEC 5.2, 12) ── */}
           <MapControls
             className={isMobile ? 'absolute top-[120px] right-3 z-[1000]' : 'absolute left-4 z-[1000]'}
-            style={isMobile ? undefined : { bottom: FLOAT_BOTTOM }}
+            style={isMobile ? undefined : { bottom: CONTROLS_BOTTOM }}
             onZoomIn={() => mapRef.current?.zoomIn()}
             onZoomOut={() => mapRef.current?.zoomOut()}
             onBackToParcel={backToParcel}
@@ -557,6 +564,8 @@ export default function Start() {
               legend={legend.legend}
               status={legendStatus}
               compact={isMobile}
+              collapsed={!isMobile && !ui.legend}
+              onToggle={isMobile ? undefined : () => setUi({ legend: !ui.legend })}
               className={
                 isMobile
                   ? 'absolute left-3 z-[1000] w-56'
@@ -600,8 +609,29 @@ export default function Start() {
           )}
 
           {/* ── dolny pasek 5 kart (SPEC 4.5) ── */}
-          {!isMobile && (
+          {!isMobile && !cardsShown && (
+            <button
+              type="button"
+              onClick={() => setUi({ cards: true })}
+              aria-expanded={false}
+              className="absolute bottom-4 left-4 z-[1000] flex items-center gap-2 rounded-full bg-surface px-4 text-sm font-medium shadow-float hover:bg-sage-soft"
+              style={{ height: TOGGLE_H }}
+            >
+              <LayoutPanelTop className="size-4 text-brand" aria-hidden />
+              {t('Pogoda, gospodarstwo, oś czasu')}
+              <ChevronUp className="size-4 text-text-muted" aria-hidden />
+            </button>
+          )}
+          {cardsShown && (
             <div className="absolute inset-x-4 bottom-4 z-[1000]" style={{ height: CARDS_H }}>
+              <button
+                type="button"
+                onClick={() => setUi({ cards: false })}
+                aria-expanded
+                className="absolute -top-10 left-1/2 z-10 flex h-8 -translate-x-1/2 items-center gap-1.5 rounded-full bg-surface px-3 text-sm font-medium shadow-float hover:bg-sage-soft"
+              >
+                <ChevronDown className="size-4 text-text-muted" aria-hidden /> {t('Ukryj')}
+              </button>
               <BottomCards
                 saved={saved}
                 analysis={analysis}

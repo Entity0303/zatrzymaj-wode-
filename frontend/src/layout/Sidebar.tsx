@@ -1,5 +1,3 @@
-import { Droplet } from 'lucide-react'
-import { FieldIllustration } from '@/components/FieldIllustration'
 import { LogoMark } from '@/components/LogoMark'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
@@ -60,14 +58,6 @@ export function Sidebar() {
           )
         })}
       </ul>
-      <div className="mt-auto hidden w-full px-2 xl:block">
-        {/* karta z hasłem: kropla, hasło, pod spodem ilustracja pola (ref-desktop) */}
-        <div className="overflow-hidden rounded-xl bg-amber-soft text-center">
-          <Droplet className="mx-auto mt-3 size-5 fill-water/20 text-water" aria-hidden />
-          <p className="font-display mt-1 px-1 text-sm leading-[18px] font-semibold text-brand-dark [overflow-wrap:anywhere]">{t('Oszczędzaj wodę. Chroń plony.')}</p>
-          <FieldIllustration className="mt-2 w-full" />
-        </div>
-      </div>
     </nav>
   )
 }

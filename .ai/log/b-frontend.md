@@ -4,6 +4,11 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-21 · `b/frontend` · B12: mniej rzeczy naraz na ekranie komputera
+**Co:** na wierzchu: mapa, wyszukiwarka, pigułki warstw, panel działki (nagłówek, uprawa, karta stanu, 4 wskaźniki, „Co zrobić?”, przyciski). Schowane z przyciskiem: dolny pasek 5 kart (pigułka „Pogoda, gospodarstwo, oś czasu” w lewym dolnym rogu; „Ukryj” nad paskiem), legenda (zwinięta do pigułki z nazwą warstwy i paskiem kolorów), w panelu „Pokaż szczegóły” (faza uprawy, woda w glebie, plan nawadniania, gleba, postęp analizy; w trybie doradcy zawsze rozwinięte). Usunięte z widoku: nieaktywny przełącznik 2D|3D (wróci z 3D), karta z hasłem w lewym pasku; język jako mały przycisk w pigułce pogody. Stan rozwinięcia zapamiętany w przeglądarce (`zw.ui.v1`). Telefon bez zmian. Sprawdzone zrzutami 1440 px.
+**Pliki:** `frontend/src/pages/Start.tsx`, `frontend/src/features/parcel-panel/ParcelPanel.tsx`, `frontend/src/features/map/LegendCard.tsx`, `frontend/src/layout/{TopBar,Sidebar}.tsx`, `frontend/src/lib/{storage,i18n.en}.ts`.
+**Kontrakt API:** nie.
+
 ## 2026-11-21 · `b/frontend` · B11: wybrana działka w polu wyszukiwania
 **Co:** po wybraniu działki (link, „Zobacz przykład”, klik na mapie, lista kandydatów) pole wyszukiwania pokazuje „obręb numer”, np. „Szczytno 112/11” – ten sam tekst wyszukuje tę działkę ponownie (sprawdzone: 200). Wpisywanie innej działki działa jak wcześniej.
 **Pliki:** `frontend/src/features/search/SearchBar.tsx`, `frontend/src/pages/Start.tsx`.

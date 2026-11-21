@@ -650,4 +650,12 @@ export const EN: Record<string, string> = {
   'Stan wody w glebie na dziś i co robić teraz': 'Soil water today and what to do now',
   'Działka w większości leśna – aplikacja mówi to wprost': 'A mostly forested parcel – the app says so plainly',
   'Albo znajdź swoją działkę': 'Or find your parcel',
+  // mniej rzeczy na ekranie
+  'Legenda': 'Legend',
+  'Zwiń legendę': 'Collapse legend',
+  'Pogoda, gospodarstwo, oś czasu': 'Weather, farm, timeline',
+  'Ukryj': 'Hide',
+  'Pokaż szczegóły': 'Show details',
+  'Ukryj szczegóły': 'Hide details',
+  'Faza uprawy, woda w glebie, nawadnianie, gleba, postęp analizy': 'Crop stage, soil water, irrigation, soil, analysis progress',
 }
