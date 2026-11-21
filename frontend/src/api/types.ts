@@ -100,9 +100,9 @@ export type AnalysisRequest = {
   previous_crop?: string | null
   crop_history?: string | null
   cultivated_area_ha?: number | null
-  /** A5e: co planujesz posiać – 1–3 uprawy z rankingu (RankingCropId) */
+  /** A5e: co planujesz posiać – 1–3 uprawy z rankingu albo grupy (zboza_ozime, zboza_jare, straczkowe…) */
   planned_crops?: string[] | null
-  /** A5e: tylko POST /api/report.pdf – 'short' (domyślnie, 4–5 stron) | 'full' */
+  /** A5e: tylko POST /api/report.pdf – 'short' = raport skrócony (2 strony, domyślnie) | 'full' = raport szczegółowy */
   report_type?: 'short' | 'full' | null
 }
 
@@ -691,11 +691,11 @@ export type PerennialSection = {
 
 /** A5e: słupek wykresu „Na tle 10 lat” */
 export type SeasonalBalanceYear = {
-  rok: number
+  year: number
   /** mm, zaokrąglone do całości – ta sama liczba w tekstach i w raporcie */
-  bilans_mm: number
+  balance_mm: number
   /** true = bieżący rok (wyróżniony) */
-  biezacy?: boolean
+  current?: boolean
 }
 
 /** A5e: uprawa wybrana przez rolnika – ocena na tej działce */
@@ -706,6 +706,10 @@ export type ChoiceItem = {
   category?: SuggestionCategory | null
   category_label?: string | null
   perennial?: boolean
+  /** A5e-2: co rolnik podał – uprawa albo grupa (np. 'zboza_ozime') */
+  requested_id?: string | null
+  /** A5e-2: dla grupy – „Z grupy zboża ozime najlepiej wypada: żyto.” */
+  group_note?: string | null
   yield_typical_t_ha?: number | null
   /** typowo z całej powierzchni, t */
   total_typical_t?: number | null
@@ -757,6 +761,8 @@ export type CropSuggestions = {
   choice?: ChoiceItem[]
   /** A5e: jedno zdanie oceny wyboru, np. „Twój wybór pasuje do tej działki.” */
   choice_summary?: string | null
+  /** A5e-2: uprawy z planu, których nie ma w rankingu (chmiel, tytoń) */
+  choice_notes?: string[]
   /** A5e: 2–3 uprawy lepsze lub podobne od wyboru (puste bez wyboru albo gdy wybór jest najlepszy) */
   alternatives?: AlternativeItem[]
   /** A5e: uprawy odradzane (bez wybranych) – każda z jednym powodem („nie siej: …”) */
@@ -928,9 +934,9 @@ export type AnalysisResponse = {
   crop_history?: string[]
   /** powierzchnia uprawy użyta w rankingu, ha */
   cultivated_area_ha?: number | null
-  /** A5e: co rolnik planuje posiać (z zapytania) */
-  planned_crops?: RankingCropId[]
-  /** A5e: słupki „Na tle 10 lat” – bilans od początku sezonu do tego samego dnia: 10 lat + bieżący (biezacy = true) */
+  /** A5e: co rolnik planuje posiać (z zapytania) – uprawy z rankingu albo grupy (A5e-2) */
+  planned_crops?: string[]
+  /** A5e: słupki „Na tle 10 lat” – bilans od początku sezonu do tego samego dnia: 10 lat + bieżący (current = true) */
   seasonal_balance_by_year?: SeasonalBalanceYear[]
   /** A5e: średnia z lat porównawczych, mm – linia na wykresie */
   seasonal_balance_mean_mm?: number | null

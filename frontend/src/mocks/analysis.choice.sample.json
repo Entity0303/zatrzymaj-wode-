@@ -43,7 +43,7 @@
       "nazwa": "ULDK GUGiK",
       "url": "https://uldk.gugik.gov.pl/",
       "pobrano": "2026-11-21T16:47:28+00:00",
-      "uwagi": "Powierzchnia policzona z geometrii (EPSG:2180), może nieznacznie różnić się od powierzchni ewidencyjnej. [A5e: zapis prawdziwej odpowiedzi z 21.11.2026 (tryb demo offline – z cache): planned_crops = pszenica ozima, rok temu pszenica ozima]"
+      "uwagi": "Powierzchnia policzona z geometrii (EPSG:2180), może nieznacznie różnić się od powierzchni ewidencyjnej. [A5e-2: zapis prawdziwej odpowiedzi z 21.11.2026 (tryb demo offline – z cache): planned_crops = pszenica ozima + grupa zboża jare, rok temu pszenica ozima]"
     },
     "source": "uldk",
     "name": null
@@ -52,7 +52,7 @@
   "previous_crop": null,
   "analysis_date": "2026-11-21",
   "historical": false,
-  "generated_at": "2026-11-21T21:35:54Z",
+  "generated_at": "2026-11-21T21:54:01Z",
   "status": {
     "level": "ok",
     "score": 70,
@@ -4413,7 +4413,7 @@
             "rotation": {
               "status": "plus",
               "notes": [
-                "Dobry przedplon: rok temu pszenica ozima."
+                "Dobry przedplon – rok temu rosła tu pszenica ozima."
               ]
             },
             "irrigation_practice": "not_practiced",
@@ -4522,7 +4522,7 @@
             "rotation": {
               "status": "plus",
               "notes": [
-                "Dobry przedplon: rok temu pszenica ozima."
+                "Dobry przedplon – rok temu rosła tu pszenica ozima."
               ]
             },
             "irrigation_practice": "common",
@@ -4631,7 +4631,7 @@
             "rotation": {
               "status": "plus",
               "notes": [
-                "Dobry przedplon: rok temu pszenica ozima."
+                "Dobry przedplon – rok temu rosła tu pszenica ozima."
               ]
             },
             "irrigation_practice": "optional",
@@ -4742,7 +4742,7 @@
             "rotation": {
               "status": "ostrzezenie",
               "notes": [
-                "Zły przedplon: rok temu pszenica ozima – więcej chorób i szkodników, niższy plon."
+                "Słaby przedplon – rok temu rosła tu pszenica ozima; więcej chorób i szkodników, niższy plon."
               ]
             },
             "irrigation_practice": "not_practiced",
@@ -4851,7 +4851,7 @@
             "rotation": {
               "status": "ostrzezenie",
               "notes": [
-                "Zły przedplon: rok temu pszenica ozima – więcej chorób i szkodników, niższy plon."
+                "Słaby przedplon – rok temu rosła tu pszenica ozima; więcej chorób i szkodników, niższy plon."
               ]
             },
             "irrigation_practice": "not_practiced",
@@ -4960,7 +4960,7 @@
             "rotation": {
               "status": "plus",
               "notes": [
-                "Dobry przedplon: rok temu pszenica ozima."
+                "Dobry przedplon – rok temu rosła tu pszenica ozima."
               ]
             },
             "irrigation_practice": "not_practiced",
@@ -5071,7 +5071,7 @@
             "rotation": {
               "status": "ostrzezenie",
               "notes": [
-                "Zły przedplon: rok temu pszenica ozima – więcej chorób i szkodników, niższy plon."
+                "Słaby przedplon – rok temu rosła tu pszenica ozima; więcej chorób i szkodników, niższy plon."
               ]
             },
             "irrigation_practice": "not_practiced",
@@ -5180,7 +5180,7 @@
             "rotation": {
               "status": "plus",
               "notes": [
-                "Dobry przedplon: rok temu pszenica ozima."
+                "Dobry przedplon – rok temu rosła tu pszenica ozima."
               ]
             },
             "irrigation_practice": "optional",
@@ -5289,7 +5289,7 @@
             "rotation": {
               "status": "plus",
               "notes": [
-                "Dobry przedplon: rok temu pszenica ozima."
+                "Dobry przedplon – rok temu rosła tu pszenica ozima."
               ]
             },
             "irrigation_practice": "not_practiced",
@@ -5398,7 +5398,7 @@
             "rotation": {
               "status": "plus",
               "notes": [
-                "Dobry przedplon: rok temu pszenica ozima."
+                "Dobry przedplon – rok temu rosła tu pszenica ozima."
               ]
             },
             "irrigation_practice": "optional",
@@ -5507,7 +5507,7 @@
             "rotation": {
               "status": "ostrzezenie",
               "notes": [
-                "Zboże po zbożu – więcej chorób, niższy plon; to ostrzeżenie, nie zakaz."
+                "Zboże po zbożu – więcej chorób i niższy plon; można, ale lepiej zmienić uprawę."
               ]
             },
             "irrigation_practice": "not_practiced",
@@ -5616,7 +5616,7 @@
             "rotation": {
               "status": "plus",
               "notes": [
-                "Dobry przedplon: rok temu pszenica ozima."
+                "Dobry przedplon – rok temu rosła tu pszenica ozima."
               ]
             },
             "irrigation_practice": "not_practiced",
@@ -5725,7 +5725,7 @@
             "rotation": {
               "status": "ostrzezenie",
               "notes": [
-                "Zboże po zbożu – więcej chorób, niższy plon; to ostrzeżenie, nie zakaz."
+                "Zboże po zbożu – więcej chorób i niższy plon; można, ale lepiej zmienić uprawę."
               ]
             },
             "irrigation_practice": "not_practiced",
@@ -5816,7 +5816,7 @@
             "category_label": "odradzane",
             "rank": 14,
             "score": 98.1,
-            "reason": "Pszenica ozima – ta uprawa rosła tu rok temu, a potrzeba 1 roku przerwy.",
+            "reason": "Pszenica ozima rosła tu rok temu – po sobie częściej chorują, lepiej zrobić rok przerwy.",
             "yield_typical_t_ha": 4.5,
             "yield_weak_t_ha": 3.8,
             "weak_year": 2018,
@@ -5834,7 +5834,7 @@
             "rotation": {
               "status": "naruszenie",
               "notes": [
-                "Pszenica ozima – ta uprawa rosła tu rok temu, a potrzeba 1 roku przerwy."
+                "Pszenica ozima rosła tu rok temu – po sobie częściej chorują, lepiej zrobić rok przerwy."
               ]
             },
             "irrigation_practice": "not_practiced",
@@ -6022,6 +6022,8 @@
         "category": "odradzane",
         "category_label": "odradzane",
         "perennial": false,
+        "requested_id": "pszenica_ozima",
+        "group_note": null,
         "yield_typical_t_ha": 4.5,
         "total_typical_t": 2.6,
         "yield_weak_t_ha": 3.8,
@@ -6032,50 +6034,75 @@
         "rotation": {
           "status": "naruszenie",
           "notes": [
-            "Pszenica ozima – ta uprawa rosła tu rok temu, a potrzeba 1 roku przerwy."
+            "Pszenica ozima rosła tu rok temu – po sobie częściej chorują, lepiej zrobić rok przerwy."
           ]
         },
-        "why": "Ta sama uprawa rosła tu za niedawno – choroby i szkodniki zostają w glebie, potrzeba dłuższej przerwy.",
+        "why": "Pszenica ozima rosła tu rok temu – po sobie częściej chorują, lepiej zrobić przerwę.",
         "confidence": "srednia"
+      },
+      {
+        "crop_id": "jeczmien_jary",
+        "label": "Jęczmień jary",
+        "category": "polecane",
+        "category_label": "polecane",
+        "perennial": false,
+        "requested_id": "zboza_jare",
+        "group_note": "Z grupy zboża jare najlepiej wypada: jęczmień jary.",
+        "yield_typical_t_ha": 4.1,
+        "total_typical_t": 2.4,
+        "yield_weak_t_ha": 3.5,
+        "total_weak_t": 2.0,
+        "weak_year": 2018,
+        "drought_risk_years": 1,
+        "years_simulated": 10,
+        "rotation": {
+          "status": "ostrzezenie",
+          "notes": [
+            "Słaby przedplon – rok temu rosła tu pszenica ozima; więcej chorób i szkodników, niższy plon."
+          ]
+        },
+        "why": "Przedplon (pszenica ozima) nie jest dobry dla tej uprawy – więcej chorób i szkodników.",
+        "confidence": "ograniczona"
       }
     ],
-    "choice_summary": "Tej uprawy na tej działce nie polecamy – poniżej lepsze możliwości.",
+    "choice_summary": "Nie wszystkie wybrane uprawy pasują do tej działki – tutaj nie polecamy: pszenica ozima.",
+    "choice_notes": [],
     "alternatives": [
       {
         "crop_id": "rzepak",
         "label": "Rzepak i rzepik",
         "category": "polecane",
         "category_label": "polecane",
-        "relation": "lepsza",
+        "relation": "podobna",
         "yield_typical_t_ha": 3.5,
         "total_typical_t": 2.0,
         "drought_risk_years": 1,
         "years_simulated": 10,
-        "why": "Po pszenicy ozimej rzepak i rzepik – dobry przedplon."
+        "why": "Po pszenicy ozimej rzepak i rzepik – dobry przedplon i przerwa, której potrzebuje to pole; ryzyko suszy podobne (1 z 10 lat)."
       },
       {
         "crop_id": "warzywa",
         "label": "Warzywa gruntowe",
         "category": "polecane",
         "category_label": "polecane",
-        "relation": "lepsza",
+        "relation": "podobna",
         "yield_typical_t_ha": 22.1,
         "total_typical_t": 12.8,
         "drought_risk_years": 1,
         "years_simulated": 10,
-        "why": "Po pszenicy ozimej warzywa gruntowe – dobry przedplon."
+        "why": "Po pszenicy ozimej warzywa gruntowe – dobry przedplon i przerwa, której potrzebuje to pole; ryzyko suszy podobne (1 z 10 lat)."
       },
       {
         "crop_id": "kukurydza_kiszonka",
         "label": "Kukurydza na kiszonkę",
         "category": "polecane",
         "category_label": "polecane",
-        "relation": "lepsza",
+        "relation": "podobna",
         "yield_typical_t_ha": 49.3,
         "total_typical_t": 28.6,
         "drought_risk_years": 1,
         "years_simulated": 10,
-        "why": "Po pszenicy ozimej kukurydza na kiszonkę – dobry przedplon."
+        "why": "Po pszenicy ozimej kukurydza na kiszonkę – dobry przedplon i przerwa, której potrzebuje to pole; ryzyko suszy podobne (1 z 10 lat)."
       }
     ],
     "not_recommended": [],
@@ -6096,7 +6123,7 @@
       "Reakcja plonu na brak wody wg FAO-33 (Ky); dla części upraw Ky to szacunek (oznaczone niższą pewnością).",
       "Wymagania glebowe i płodozmian – ogólne zalecenia agrotechniczne (szacunek, do weryfikacji z doradcą)."
     ],
-    "compute_ms": 571,
+    "compute_ms": 3,
     "source_tag": {
       "kind": "szacunek_modelu",
       "date": "2026-11-20",
@@ -6108,63 +6135,64 @@
   ],
   "cultivated_area_ha": 0.58,
   "planned_crops": [
-    "pszenica_ozima"
+    "pszenica_ozima",
+    "zboza_jare"
   ],
   "seasonal_balance_by_year": [
     {
-      "rok": 2016,
-      "bilans_mm": 51.0,
-      "biezacy": false
+      "year": 2016,
+      "balance_mm": 51.0,
+      "current": false
     },
     {
-      "rok": 2017,
-      "bilans_mm": 173.0,
-      "biezacy": false
+      "year": 2017,
+      "balance_mm": 173.0,
+      "current": false
     },
     {
-      "rok": 2018,
-      "bilans_mm": -152.0,
-      "biezacy": false
+      "year": 2018,
+      "balance_mm": -152.0,
+      "current": false
     },
     {
-      "rok": 2019,
-      "bilans_mm": -228.0,
-      "biezacy": false
+      "year": 2019,
+      "balance_mm": -228.0,
+      "current": false
     },
     {
-      "rok": 2020,
-      "bilans_mm": 6.0,
-      "biezacy": false
+      "year": 2020,
+      "balance_mm": 6.0,
+      "current": false
     },
     {
-      "rok": 2021,
-      "bilans_mm": 48.0,
-      "biezacy": false
+      "year": 2021,
+      "balance_mm": 48.0,
+      "current": false
     },
     {
-      "rok": 2022,
-      "bilans_mm": -104.0,
-      "biezacy": false
+      "year": 2022,
+      "balance_mm": -104.0,
+      "current": false
     },
     {
-      "rok": 2023,
-      "bilans_mm": -104.0,
-      "biezacy": false
+      "year": 2023,
+      "balance_mm": -104.0,
+      "current": false
     },
     {
-      "rok": 2024,
-      "bilans_mm": -260.0,
-      "biezacy": false
+      "year": 2024,
+      "balance_mm": -260.0,
+      "current": false
     },
     {
-      "rok": 2025,
-      "bilans_mm": -176.0,
-      "biezacy": false
+      "year": 2025,
+      "balance_mm": -176.0,
+      "current": false
     },
     {
-      "rok": 2026,
-      "bilans_mm": -228.0,
-      "biezacy": true
+      "year": 2026,
+      "balance_mm": -228.0,
+      "current": true
     }
   ],
   "seasonal_balance_mean_mm": -74.0,
@@ -9164,7 +9192,7 @@
       "label": "Mapa glebowo-rolnicza (GUGiK)",
       "state": "done",
       "note": null,
-      "duration_ms": 13
+      "duration_ms": 35
     },
     {
       "id": "forecast",
@@ -9185,35 +9213,35 @@
       "label": "Analizuję teren (NMT GUGiK)",
       "state": "done",
       "note": "zapisany wynik analizy NMT",
-      "duration_ms": 12
+      "duration_ms": 35
     },
     {
       "id": "balance",
       "label": "Liczę bilans wody i wodę w glebie (FAO-56)",
       "state": "done",
       "note": null,
-      "duration_ms": 19
+      "duration_ms": 17
     },
     {
       "id": "scoring",
       "label": "Ocena, pewność, przyczyny i rekomendacje",
       "state": "done",
       "note": null,
-      "duration_ms": 2
+      "duration_ms": 1
     },
     {
       "id": "suggestions",
       "label": "Ranking „Co tu posiać?” (17 upraw × 10 sezonów)",
       "state": "done",
       "note": null,
-      "duration_ms": 572
+      "duration_ms": 3
     },
     {
       "id": "total",
       "label": "Cała analiza",
       "state": "done",
       "note": null,
-      "duration_ms": 610
+      "duration_ms": 60
     }
   ]
 }

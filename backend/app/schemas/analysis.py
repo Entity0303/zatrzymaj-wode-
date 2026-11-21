@@ -490,6 +490,8 @@ class ChoiceItem(Contract):
     category: SuggestionCategory | None = Field(None, description="null = uprawa wieloletnia (bez oceny ✅/🟡/❌)")
     category_label: str | None = None
     perennial: bool = False
+    requested_id: str | None = Field(None, description="Co rolnik podał – uprawa albo grupa (np. 'zboza_ozime')")
+    group_note: str | None = Field(None, description="Dla grupy: 'Z grupy zboża ozime najlepiej wypada: żyto.'")
     yield_typical_t_ha: float | None = None
     total_typical_t: float | None = Field(None, description="Typowy plon z całej powierzchni uprawy, t")
     yield_weak_t_ha: float | None = None
@@ -509,7 +511,9 @@ class AlternativeItem(Contract):
     label: str
     category: SuggestionCategory
     category_label: str
-    relation: AlternativeRelation = Field(description="lepsza | podobna – względem najlepszej z wybranych upraw")
+    relation: AlternativeRelation = Field(
+        description="lepsza = mniej lat ze stratą > 20% przy podobnym plonie względnym; podobna = tylko gdy wybór jest ❌ "
+                    "wyłącznie przez płodozmian (podobne ryzyko suszy, bez problemu z przerwą)")
     yield_typical_t_ha: float | None = None
     total_typical_t: float | None = None
     drought_risk_years: int = Field(ge=0)
@@ -532,6 +536,7 @@ class CropSuggestions(Contract):
     area: CultivatedArea
     choice: list[ChoiceItem] = Field(default_factory=list, description="Wybór rolnika (planned_crops) – pusta lista, gdy nie podano")
     choice_summary: str | None = Field(None, description="Jedno zdanie oceny wyboru, np. 'Twój wybór pasuje do tej działki.'")
+    choice_notes: list[str] = Field(default_factory=list, description="Uprawy z planu, których nie ma w rankingu (chmiel, tytoń)")
     alternatives: list[AlternativeItem] = Field(
         default_factory=list, description="2–3 uprawy lepsze lub podobne od wyboru (puste bez wyboru albo gdy wybór jest najlepszy)")
     not_recommended: list[NotRecommendedItem] = Field(
@@ -765,9 +770,9 @@ class LoadingStep(Contract):
 class SeasonalBalanceYear(Contract):
     """Bilans wody (spadło minus wyparowało) od początku sezonu do tego samego dnia – jeden słupek wykresu „Na tle 10 lat”."""
 
-    rok: int
-    bilans_mm: float = Field(description="mm, zaokrąglone do całości – ta sama liczba w tekstach, raporcie i na wykresie")
-    biezacy: bool = Field(False, description="true = bieżący rok (słupek wyróżniony)")
+    year: int
+    balance_mm: float = Field(description="mm, zaokrąglone do całości – ta sama liczba w tekstach, raporcie i na wykresie")
+    current: bool = Field(False, description="true = bieżący rok (słupek wyróżniony)")
 
 
 class AnalysisRequest(Contract):
@@ -809,7 +814,7 @@ class AnalysisResponse(Contract):
     suggestions: CropSuggestions | None = Field(None, description="Ranking „Co tu posiać?” (null: grunt nierolny / brak danych)")
     crop_history: list[str] = Field(default_factory=list, description="Historia upraw z zapytania: 1–3 lata, indeks 0 = rok temu (crop_id albo 'nie_wiem')")
     cultivated_area_ha: float | None = Field(None, description="Powierzchnia uprawy użyta w rankingu, ha (podana albo oszacowana)")
-    planned_crops: list[RankingCropId] = Field(default_factory=list, description="Co rolnik planuje posiać (z zapytania, A5e)")
+    planned_crops: list[str] = Field(default_factory=list, description="Co rolnik planuje posiać (z zapytania): uprawy z rankingu albo grupy (A5e)")
     seasonal_balance_by_year: list[SeasonalBalanceYear] = Field(
         default_factory=list, description="Bilans wody od początku sezonu do tego samego dnia: 10 lat + bieżący (słupki „Na tle 10 lat”)")
     seasonal_balance_mean_mm: float | None = Field(None, description="Średnia z lat porównawczych, mm (linia na wykresie)")
