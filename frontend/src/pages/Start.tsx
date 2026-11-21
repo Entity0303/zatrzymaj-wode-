@@ -35,7 +35,7 @@ import { MobileSheet, snapHeights, type Snap } from '@/layout/MobileSheet'
 import { Sidebar } from '@/layout/Sidebar'
 import { TopBar } from '@/layout/TopBar'
 import { todayIso } from '@/lib/dates'
-import { formatDatePl } from '@/lib/format'
+import { formatDatePl, formatNum } from '@/lib/format'
 import { BRAND_NAME, BRAND_TAGLINE } from '@/lib/brand'
 import { readLink, shareLink, writeLink } from '@/lib/deepLink'
 import { rememberAnalysis, useSettings, useUiPrefs } from '@/lib/storage'
@@ -491,7 +491,12 @@ export default function Start() {
             : t('Brak danych dla działki – warstwa w budowie')
           : layerState.phase === 'error'
             ? t('Nie udało się pobrać warstwy – mapa działa dalej')
-            : layerState.data.source_tag.date
+            : layerState.data.layer === 'teren' && layerState.data.value_range
+              ? t('Wysokość od {a} do {b} m n.p.m.', {
+                  a: formatNum(layerState.data.value_range[0], 1),
+                  b: formatNum(layerState.data.value_range[1], 1),
+                })
+              : layerState.data.source_tag.date
               ? t('Dane z {date}', { date: formatDatePl(layerState.data.source_tag.date) })
               : (layerState.data.source_tag.source ?? '')
   const panelProps = {

@@ -23,6 +23,7 @@ import { ParcelHeader } from './ParcelHeader'
 import { SectionTitle } from './SectionTitle'
 import { SoilCard } from './SoilCard'
 import { SoilWaterCard } from './SoilWaterCard'
+import { TerrainCard } from './TerrainCard'
 import { StatusCard } from './StatusCard'
 import type { AnalysisRun, ForecastState, SearchPhase } from './types'
 import { WhatToDo } from './WhatToDo'
@@ -236,10 +237,10 @@ export function ParcelPanel({
               <span className="block text-sm leading-5 text-text-muted">
                 {t(
                   nonAgri
-                    ? 'Postęp analizy'
+                    ? 'Teren, postęp analizy'
                     : irrigationPracticed(crop) && (!analysis || irrigationShown(analysis))
-                      ? 'Faza uprawy, woda w glebie, nawadnianie, gleba, postęp analizy'
-                      : 'Faza uprawy, woda w glebie, gleba, postęp analizy',
+                      ? 'Faza uprawy, woda w glebie, nawadnianie, gleba, teren, postęp analizy'
+                      : 'Faza uprawy, woda w glebie, gleba, teren, postęp analizy',
                 )}
               </span>
             </span>
@@ -251,6 +252,7 @@ export function ParcelPanel({
               {analysis && !nonAgri && <SoilWaterCard state={analysis.soil_water} />}
               {analysis && !nonAgri && analysis.irrigation && irrigationShown(analysis) && <IrrigationCard plan={analysis.irrigation} />}
               {analysis && !nonAgri && <SoilCard soil={analysis.soil} />}
+              {analysis && <TerrainCard terrain={analysis.terrain} note={analysis.terrain_note} />}
               <div className="rounded-xl border bg-surface p-3.5">
                 <p className="text-sm font-medium">{t('Postęp analizy')}</p>
                 <LoadingSteps steps={steps} className="mt-3" />

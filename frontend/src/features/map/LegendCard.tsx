@@ -6,7 +6,7 @@ import { useLang } from '@/lib/i18n'
 
 // LegendCard: ciemna karta z paskiem gradientu i opisami krańców (SPEC 5.3, 14)
 
-function Symbol({ symbol }: { symbol: 'arrow' | 'spot' | 'outflow' | 'line' | 'pin' }) {
+function Symbol({ symbol }: { symbol: 'arrow' | 'spot' | 'outflow' | 'line' | 'pin' | 'pond' }) {
   const common = { width: 22, height: 14, 'aria-hidden': true }
   switch (symbol) {
     case 'arrow':
@@ -31,6 +31,12 @@ function Symbol({ symbol }: { symbol: 'arrow' | 'spot' | 'outflow' | 'line' | 'p
       return (
         <svg {...common} viewBox="0 0 22 14">
           <path d="M1 10c5-6 9 2 20-6" stroke="#4fa3ec" strokeWidth="2.5" fill="none" />
+        </svg>
+      )
+    case 'pond':
+      return (
+        <svg {...common} viewBox="0 0 22 14">
+          <circle cx="11" cy="7" r="5" fill="#2E5B3F" stroke="#fff" strokeWidth="1.5" />
         </svg>
       )
     case 'pin':

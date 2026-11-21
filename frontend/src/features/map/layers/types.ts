@@ -15,7 +15,7 @@ export type LegendSpec =
       note?: string
     }
   | { kind: 'classes'; items: { color: string; label: string }[]; note?: string }
-  | { kind: 'symbols'; items: { symbol: 'arrow' | 'spot' | 'outflow' | 'line' | 'pin'; label: string }[] }
+  | { kind: 'symbols'; items: { symbol: 'arrow' | 'spot' | 'outflow' | 'line' | 'pin' | 'pond'; label: string }[] }
 
 /** Co dostaje warstwa rysowana wewnątrz mapy (react-leaflet). */
 export type LayerOverlayProps = { parcel: Parcel; analysisDate: string; data: LayerResponse }
