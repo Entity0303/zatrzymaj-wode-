@@ -4,6 +4,16 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-22 08:30 · `a/backend` · A7: opad ze stacji IMGW jako źródło główne
+**Co:** (GUGiK nieodpytywany; IMGW – tylko skrypt budujący magazyn; backend w DEMO_OFFLINE)
+- **Magazyn IMGW** (D82): `scripts/build_imgw.py` → `app/data/imgw/opady.npz` 1,09 MB (449 stacji, 2016-01-01 – 2026-10-31, 855 plików, 171 s; odświeżenie 10 s) – w repo. Parser i reguły z prototypu osoby C (`git show origin/c/research:research/precip/…`, bez merge).
+- **Opad dla działki** (D83): `sources/imgw.py`, `analysis/precip.py`, `rules/precip.yaml` – IDW ≤ 3 stacje ≤ 30 km, rezerwa 50 km / NASA, dni bez pomiaru = NASA × współczynnik, zgodność na sumach okien; podmiana w `load_weather_history` → bilans, status, ranking, werdykt, PDF na nowym opadzie; `precip_sources` w kontrakcie; pewność i źródła w `reliability`.
+- **Kalibracja GUS** (D84): `scripts/calibrate_ranking.py`; `ym_adjust` strączkowe 1,15, ziemniak 1,08, drzewa 0,85 → maks. odchylenie 14%.
+- **Przed / po (21.11.2026):** 201305 – opad 704 → 613 mm/rok (IV–IX 407 → 352), lata z niedoborem V–VI 3 → 4, ryzyko pszenica / żyto / rzepak 1 → 3 z 10; Notecka – 633 → 543 mm (346 → 300), 7 → 9 lat, ryzyko 7/7/7 bez zmian; Kurpie – 711 → 615 mm, 3 → 4 lata, pszenica 3 → 4, żyto 2 → 3. Susza 10.06.2018 (201305, zboża ozime): woda 17 → 14%, dni stresu 21 → 29; 15.07.2018 kukurydza: wynik 63 → 50, dni stresu 0 → 5.
+- **Teksty** (D85): „Pszenica ozima rosła tu rok temu – lepiej zrobić rok przerwy.”; strona 1 PDF ściśnięta (dłuższe zdanie o opadach) – raport skrócony nadal 2 strony.
+**Pliki:** `backend/app/{sources/imgw.py, analysis/precip.py, analysis/rules/precip.yaml, data/imgw/{opady.npz,index.json,stations.json}}` (nowe), `analysis/{confidence,verdict,suggestions,choice}.py`, `rules/{verdict,ranking,choice}.yaml`, `routers/analysis.py`, `schemas/analysis.py`, `core/config.py`, `report/{report.css,templates/report.html}`, `scripts/{build_imgw.py,calibrate_ranking.py}`, `tests/{test_a7.py (20 testów), conftest.py, test_a5e.py, test_contract.py, fixtures/imgw/}`; frontend: `api/types.ts`, `mocks/analysis.choice.sample.json`.
+**Kontrakt:** TAK (addytywnie) – `precip_sources` (`contract-changes.md`, wpis A7 „Dla Mefju”).
+
 ## 2026-11-22 06:00 · `a/backend` · A5e-2: raport skrócony 2 strony, alternatywy, grupy upraw, nazwy pól
 **Co:** (bez zapytań do GUGiK – backend w DEMO_OFFLINE)
 - **Raport skrócony = 2 strony** (D81): str. 2 = co tu posiać (wybór + lepsze możliwości / top 5, „Nie polecamy / Nie siej”) + 3 działania z wodą po 1–2 zdania + mały wykres słupkowy 10 lat ze zdaniem; dawne str. 2–5 → raport szczegółowy (8–9 stron); etykiety i pliki „skrocony” / „szczegolowy”.
