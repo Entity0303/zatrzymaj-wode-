@@ -183,3 +183,18 @@ Weryfikacja: `tsc -b` przechodzi; `vite build` – lokalnie i w kontenerze brak 
 - **Rekomendacje:** etykieta „Najważniejsze” tylko przy pierwszej (w panelu nadal `in_panel`, maks. 3).
 **Pliki frontendu zmienione przez A:** `src/api/types.ts` (typy powyżej), nowy mock `src/mocks/analysis.choice.sample.json`. (`tsc -b`: jedyny błąd – brak `maplibre-gl` w `features/map3d/Terrain3D.tsx`, kod B, wymaga `npm install`.)
 **Łamie zgodność:** nie dla typów (pola dodane / opcjonalne). Zmiana znaczenia: poza sezonem uprawy `status` i woda w glebie pochodzą ze stanu działki, a `irrigation` jest null – frontend już obsługuje null.
+
+### 2026-11-22 · gałąź `a/backend` · A5e-2 – raport skrócony 2 strony, alternatywy, grupy upraw, nazwy pól wykresu
+**Zmiany (`backend/app/schemas/analysis.py` + `frontend/src/api/types.ts` + `mocks/analysis.choice.sample.json`):**
+- **ZMIANA NAZW (łamie A5e – frontend jeszcze ich nie używał):** `seasonal_balance_by_year[]` → `{ year, balance_mm, current }` (było `rok`, `bilans_mm`, `biezacy`).
+- `planned_crops` przyjmuje też **grupy** (`zboza_ozime`, `zboza_jare`, `straczkowe`, `rzepak_jesien`, …) i uprawy spoza rankingu (chmiel, tytoń) – bez 422; `AnalysisResponse.planned_crops: string[]`. `crop` i `previous_crop` przyjmują gatunki (np. `pszenica_ozima`) – w odpowiedzi `crop` = grupa modelu (`zboza_ozime`).
+- `ChoiceItem` + **`requested_id`** (co podał rolnik) i **`group_note`** („Z grupy zboża ozime najlepiej wypada: żyto.”); `CropSuggestions` + **`choice_notes[]`** (uprawy bez danych w rankingu).
+- `AlternativeItem.relation`: „lepsza” = mniej lat ze stratą > 20% przy podobnym plonie względnym; „podobna” – tylko gdy wybór jest ❌ wyłącznie przez płodozmian. Lista może być pusta (wybór najlepszy).
+- `report_type`: `short` = **Raport skrócony (2 strony)**, `full` = **Raport szczegółowy**; nazwy plików `…-skrocony.pdf` / `…-szczegolowy.pdf`.
+
+**Dla Mefju:**
+- Wykres „Na tle 10 lat”: czytaj `year` (oś X), `balance_mm` (wysokość słupka), `current` (wyróżnienie) – zamiast `rok` / `bilans_mm` / `biezacy`.
+- Formularz „Przygotuj raport”: opcje „**Raport skrócony** (2 strony)” i „**Raport szczegółowy**” (zamiast „krótki / pełny”). Lista „Co planujesz posiać?” może zawierać grupy (np. „zboża ozime”, „zboża jare”, „rośliny strączkowe”) obok gatunków – wysyłaj `crop_id` grupy, backend wybierze najlepszy gatunek.
+- Karta wyboru: pod nazwą pokaż `group_note` (gdy jest), potem `why`; `rotation.notes` – nie powtarzaj, gdy `why` już mówi o płodozmianie (zawiera „po sobie”). `choice_notes` – drobnym szarym tekstem pod kartami.
+- „Lepsze możliwości”: chip `relation` (lepsza – zielony, podobna – szarozielony), nazwa, „X na 10 lat”, `why` (mówi, w czym lepsza). Pusta lista = nie pokazuj nagłówka.
+**Łamie zgodność:** tak – tylko nazwy pól `seasonal_balance_by_year` (dodane w A5e, nieużywane jeszcze przez frontend); reszta addytywna.
