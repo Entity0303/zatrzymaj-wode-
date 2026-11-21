@@ -67,21 +67,27 @@ def test_wheat_vs_rye_soils_and_drought():
         assert k in _kompleksy(by["zyto"]["gleby_odpowiednie"])
     assert {"1", "2", "3"} <= _kompleksy(by["pszenica_ozima"]["gleby_odpowiednie"])
     assert by["zyto"]["wrazliwosc_na_susze"] == "niska"
-    # po kalibracji GUS (C3) Ky żyta = Ky pszenicy – przewaga żyta wynika z gleby, nie z Ky
-    assert float(by["zyto"]["ky_total"]) <= float(by["pszenica_ozima"]["ky_total"])
+    # Ky żyta niższe niż pszenicy – kalibracja GUS (C3) celowo NIE podniosła go, bo GUS miesza
+    # gatunek z glebą, a backend liczy glebę osobno (WOD)
+    assert float(by["zyto"]["ky_total"]) < float(by["pszenica_ozima"]["ky_total"])
+    assert float(by["pszenzyto_ozime"]["ky_total"]) < float(by["pszenica_ozima"]["ky_total"])
 
 
 def test_ky_after_gus_calibration():
     by = {r["crop_id"]: r for r in CROPS}
-    expected = {"zyto": 1.00, "pszenzyto_ozime": 1.00, "jeczmien_ozimy": 1.00, "owies": 1.10,
+    expected = {"zyto": 0.80, "pszenzyto_ozime": 0.90,  # cofnięte – bez zmian w C3
+                "jeczmien_ozimy": 1.00, "owies": 1.10,
                 "rzepak": 0.95, "kukurydza_kiszonka": 1.10,
                 # zweryfikowane w FAO-33 – bez zmian
                 "pszenica_ozima": 1.00, "kukurydza_ziarno": 1.25, "ziemniak": 1.10,
                 "burak_cukrowy": 0.90, "straczkowe": 1.15}
     for cid, ky in expected.items():
         assert float(by[cid]["ky_total"]) == pytest.approx(ky), cid
-    for cid in ("zyto", "pszenzyto_ozime", "jeczmien_ozimy", "owies", "rzepak", "kukurydza_kiszonka"):
+    for cid in ("jeczmien_ozimy", "owies", "rzepak", "kukurydza_kiszonka"):
         assert "KY ZMIENIONE (C3" in by[cid]["zrodla"], cid
+    for cid in ("zyto", "pszenzyto_ozime"):
+        assert "KY ZMIENIONE (C3" not in by[cid]["zrodla"], cid
+        assert "NIE zmieniane w C3" in by[cid]["zrodla"], cid
     # owies nadal wśród najbardziej wrażliwych zbóż (ex aequo z jęczmieniem jarym)
     cereals = ["pszenica_ozima", "zyto", "pszenzyto_ozime", "jeczmien_ozimy", "jeczmien_jary", "owies"]
     assert float(by["owies"]["ky_total"]) == max(float(by[c]["ky_total"]) for c in cereals)

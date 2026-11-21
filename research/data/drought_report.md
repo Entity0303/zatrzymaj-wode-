@@ -39,11 +39,14 @@ Skrypt: `drought.py`.
 
    Prosta z 5 punktów jest słabo dopasowana i ściska Ky do zakresu 0,95–1,19. Traktuję ją jako kierunek zmian, nie jako wartości.
 
-## Propozycja poprawionych Ky – ZATWIERDZONA i wpisana do crops.csv (2026-11-21)
+## Ograniczenie kalibracji
+**GUS nie rozdziela efektu gatunku od efektu gleby, więc kalibracja jest tylko kierunkowa.** Średnie wojewódzkie łączą gatunek z glebą, na której zwykle rośnie: żyto i pszenżyto rosną głównie na najsłabszych piaskach, więc w suszy tracą dużo przez glebę, nie przez gatunek. Model backendu liczy glebę osobno (WOD z IUNG). Gdyby Ky żyta podnieść według GUS, model ukarałby żyto za piasek drugi raz i zepsułby werdykt „na piasku siej żyto, nie pszenicę”. Pytanie o żyto zostaje do mentora (`do_mentora.md`, pytanie 1).
+
+## Propozycja poprawionych Ky – wpisana do crops.csv 2026-11-21, żyto i pszenżyto cofnięte
 | Uprawa | teraz | proponuję | dlaczego |
 |---|---|---|---|
-| żyto | 0,80 | **1,00** | GUS: spadki ≥ pszenica; przewaga żyta przez glebę, nie Ky |
-| pszenżyto ozime | 0,90 | **1,00** | GUS: jak żyto/pszenica |
+| żyto | 0,80 | ~~1,00~~ **0,80 – cofnięte** | GUS miesza gatunek z glebą (żyto na najsłabszych piaskach); backend liczy glebę osobno (WOD) |
+| pszenżyto ozime | 0,90 | ~~1,00~~ **0,90 – cofnięte** | jak żyto |
 | jęczmień ozimy | 0,90 | **1,00** | GUS: jedna seria z jarym, spadek > pszenica |
 | owies | 1,15 | **1,10** | GUS: najbardziej wrażliwe zboże, ale bliżej jęczmienia |
 | rzepak | 1,00 | **0,95** | GUS: najmniejszy spadek |

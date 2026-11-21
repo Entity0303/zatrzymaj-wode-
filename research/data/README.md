@@ -40,7 +40,7 @@ Pobrano i sprawdzono: **2026-11-21**.
 - **Fazy gatunków**: proporcje FAO-56 grupy przeskalowane do terminów gatunku (np. jęczmień ozimy zbiór 5 VII, owies 10 VIII), tą samą metodą co w backendzie.
 - **`in_ranking`**: `nie` dla `zboza_ozime` i `zboza_jare` (zastąpione przez gatunki) oraz `rzepak_jesien`, `chmiel`, `tyton`. W rankingu jest 17 upraw.
   - `straczkowe` zostaje w rankingu jako groch, bobik i fasola, bo łubin ich nie zastępuje.
-- **`wrazliwosc_na_susze`** (niska / srednia / wysoka): nowa kolumna dla wszystkich upraw, szac. Ky zbóż po kalibracji GUS (C3): pszenica, żyto, pszenżyto, jęczmień ozimy 1,00 < jęczmień jary, owies 1,10. `wrazliwosc_na_susze` żyta zostaje „niska” (ocena agronomiczna – pytanie 1 do mentora), ale przewagę żyta w rankingu daje gleba, nie Ky.
+- **`wrazliwosc_na_susze`** (niska / srednia / wysoka): nowa kolumna dla wszystkich upraw, szac. Ky zbóż: żyto 0,80 < pszenżyto 0,90 < pszenica, jęczmień ozimy 1,00 < jęczmień jary, owies 1,10. Żyto i pszenżyto nie były zmieniane w C3 (patrz niżej); pytanie o żyto czeka na mentora.
 - **Ky**: FAO-33 zawiera tylko pszenicę. Ky żyta, pszenżyta, jęczmienia, owsa i łubinu to szacunki, które mają oddawać kolejność wrażliwości, a nie dokładne wartości.
 - **Gleby (kompleksy przydatności rolniczej)**:
   - pszenica: odpowiednie 1, 2, 3, 4, 8; nieodpowiednie 5, 6, 7, 9 i kat. IUNG I,
@@ -57,7 +57,8 @@ Pobrano i sprawdzono: **2026-11-21**.
   - **Łubinu nie ma w BDL**: wyszukiwanie „łubin”, „bobik” i „groch” daje 0 zmiennych. Zastępnikiem są rośliny strączkowe razem (47740), oznaczone „ZASTĘPNIK” w `uwagi`.
 
 ## C3 – kalibracja Ky z GUS (wpisana 2026-11-21)
-- **Zmienione Ky:** żyto 0,80 → 1,00, pszenżyto 0,90 → 1,00, jęczmień ozimy 0,90 → 1,00, owies 1,15 → 1,10, rzepak 1,00 → 0,95, kukurydza na kiszonkę 1,00 → 1,10.
+- **Zmienione Ky:** jęczmień ozimy 0,90 → 1,00, owies 1,15 → 1,10, rzepak 1,00 → 0,95, kukurydza na kiszonkę 1,00 → 1,10.
+- **Cofnięte (żyto 0,80, pszenżyto 0,90):** GUS nie rozdziela efektu gatunku od gleby, więc kalibracja jest tylko kierunkowa. Żyto i pszenżyto tracą w suszy przez słabe gleby, a backend liczy glebę osobno (WOD). Wyższe Ky karałoby je za glebę drugi raz.
 - **Podstawa:** spadki plonów GUS w latach suchych 2015/2018/2019 (`drought_report.md`). W `zrodla` każdej z tych upraw jest dopisek „KY ZMIENIONE (C3…)”.
 - **Bez zmian:** Ky zweryfikowane w FAO-33.
 - **Tabela dla mentora:** `do_mentora.md`.
