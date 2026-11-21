@@ -22,3 +22,17 @@ Pogoda/bilans (A1, live): `201305_2.0038.6/1`, data 15.07.2018 – bilans 1.03�
 | „Szczytno 112/11” | **1 wynik** (143203_2.0027.112/11) – nie lista |
 | „Wola 1” | 5 działek → HTTP 409, lista + numerowane znaczniki (Rogowo, Biłgoraj, Czerwińsk n. Wisłą, Kisielice, Kozłowo) |
 | „Nieistniejacy 1/1” | 404 → „Nie znaleziono działki” |
+
+## `GET /api/search` (A5c) – sprawdzone 2026-11-21 (ULDK blokowany – 302; PRNG i Nominatim działały)
+
+| `q` | Rozpoznano jako | Wynik | Czas (zimny cache → cache) |
+|---|---|---|---|
+| `201305_2.0038.6/1` | parcel_id | 1 działka (znana, bez ULDK) | 0,05 s |
+| `Wnory-Wandy 6/1` | obreb_numer | 1 działka (zapas: znane działki, ULDK 302) | 4,2 s (ponowienia ULDK) → 0,0 s |
+| `Tczów` | name | 1 miejscowość PRNG: Tczów, gm. Tczów, pow. zwoleński, mazowieckie (21,4458 E, 51,3261 N) | 2,3 s → 0,0 s |
+| `Tczów 123` | obreb_numer | ULDK niedostępne → miejscowość Tczów + podpowiedź „ewidencja działek nie odpowiada” (**do sprawdzenia na żywo z innej sieci**: czy działka 123 istnieje w obrębie Tczów) | 0,0–0,35 s |
+| `Nowa Wieś` | name | 190 miejscowości (lista 10 z gminami, `truncated`, „dopisz gminę”) | 2,5–5,7 s → 0,0 s |
+| `Nowa Wieś, Busko` | name | 1: gm. Busko-Zdrój, pow. buski, świętokrzyskie | 4,3 s |
+| `Brzezno` / `Brzeźno` | name | 37 miejscowości (bez ogonków – szeroki wzorzec) | 2,8–4,7 s |
+| `xyzabc` | name | 0 wyników, 200 + podpowiedź | 4–6 s (PRNG ścisły + szeroki + Nominatim) |
+| pole narysowane 3,6 ha (Puszcza Notecka) | `POST /api/analysis` | `narysowane_9d6cec913e`, gm. Wronki (Nominatim), „Słaba, sucha działka…” | 1,1 s |
