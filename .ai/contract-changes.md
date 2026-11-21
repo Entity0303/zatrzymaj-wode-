@@ -41,3 +41,6 @@ WOD jako wskaźnik dalej w `indicators.soil_capacity`.
 **`Recommendation` + `priority: int` i `in_panel: bool`** (`schemas/analysis.py` ↔ `types.ts`, mock).
 Silnik reguł zwraca pełną listę (retencja → agrotechnika → nawadnianie, w grupie od najważniejszej); `in_panel = true` ma maks. 3 rekomendacje – najważniejsza z każdej grupy (SPEC 6.5). Paszport pokazuje całą listę. **Dla B:** panel powinien filtrować po `in_panel`, a nie brać pierwszych 3.
 **Łamie zgodność:** nie (pola z wartościami domyślnymi).
+
+### 2026-11-21 · gałąź `a/backend` · A4 – przykład (bez zmiany kontraktu)
+`frontend/src/mocks/analysis.sample.json` zastąpiony **zapisem prawdziwej odpowiedzi** `/api/analysis` (201305_2.0038.6/1, zboża ozime, 2018-06-10: status „Susza”, plan nawadniania, 101 dni historii). Dopisek w `parcel.zrodlo.uwagi`; UI dalej pokazuje „DANE PRZYKŁADOWE”.
