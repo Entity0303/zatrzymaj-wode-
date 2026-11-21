@@ -109,6 +109,34 @@ class OverallStatus(Contract):
     summary: str = Field(description="Jedno zdanie z liczbami")
 
 
+# ── Gleba (IUNG + EGiB) ─────────────────────────────────────────────────────────────────────
+
+NonAgriculturalReason = Literal["las", "woda", "zabudowa", "drogi", "gleby_organiczne"]
+"""Dlaczego ocena suszy rolniczej nie ma zastosowania (kody IUNG 11, 12, 13, 14, 5 łącznie > 50%)."""
+
+
+class SoilShareItem(Contract):
+    code: int = Field(description="Kod IUNG: 1–4 kategorie podatności, 5 organiczne, 11 las, 12 woda, 13 zabudowa, 14 drogi/nieużytki")
+    label: str
+    share: float = Field(ge=0, le=1)
+
+
+class Soil(Contract):
+    """Gleba działki (SPEC 7.A „ile wody zmieści gleba”, 15.1 „to nie jest grunt rolny”, 15.3)."""
+
+    dominant_code: int | None
+    dominant_label: str | None
+    shares: list[SoilShareItem] = Field(description="Udziały kodów IUNG w obrysie, od największego")
+    agricultural_share: float | None = Field(None, ge=0, le=1, description="Udział gleb mineralnych użytków rolnych (kody 1–4)")
+    wod_mm: float | None = Field(None, description="Woda dostępna dla roślin (WOD), średnia ważona dla części mineralnej")
+    classes: list[str] | None = Field(None, description="Klasy bonitacyjne EGiB, np. ['RIIIa', 'PsIII'] – tylko informacyjnie")
+    classes_note: str | None = Field(None, description="Powód braku klas, np. 'Powiat nie udostępnia klas…'")
+    non_agricultural: bool = False
+    non_agricultural_reason: NonAgriculturalReason | None = None
+    non_agricultural_note: str | None = Field(None, description="Gotowy komunikat dla rolnika (SPEC 15.1)")
+    source_tag: SourceTag
+
+
 # ── B. Na tle 10 lat ────────────────────────────────────────────────────────────────────────
 
 
@@ -251,6 +279,7 @@ class AnalysisResponse(Contract):
     generated_at: dt.datetime
     status: OverallStatus
     indicators: Indicators
+    soil: Soil
     history: History
     causes: list[Cause] = Field(description="Od największego udziału")
     recommendations: list[Recommendation] = Field(description="retencja → agrotechnika → nawadnianie")

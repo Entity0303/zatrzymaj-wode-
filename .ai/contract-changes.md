@@ -22,3 +22,9 @@ Jednocześnie spisane jako kontrakt istniejące odpowiedzi: `GET /api/parcel` (`
 - `band_years: int[]` – lata użyte w paśmie porównawczym (lata z niepełnymi danymi pominięte).
 Wszystkie opcjonalne (brak danych = `null` / pusta lista). Liczone w `analysis/water_balance.py` od A1, wcześniej tylko w tekście `summary`.
 **Łamie zgodność:** nie (pola dodane, opcjonalne).
+
+### 2026-11-21 · gałąź `a/backend` · A + B (uzgodnione – propozycja z A2)
+**Nowa sekcja `soil: Soil` w `AnalysisResponse`** (`schemas/analysis.py` ↔ `types.ts`, przykład w `mocks/analysis.sample.json`):
+`dominant_code`, `dominant_label`, `shares[] {code, label, share}` (kody IUNG), `agricultural_share` (kody 1–4), `wod_mm`, `classes` (EGiB, informacyjnie) + `classes_note` (powód braku), `non_agricultural`, `non_agricultural_reason` (`las` | `woda` | `zabudowa` | `drogi` | `gleby_organiczne`), `non_agricultural_note` (komunikat SPEC 15.1), `source_tag`.
+WOD jako wskaźnik dalej w `indicators.soil_capacity`.
+**Łamie zgodność:** tak dla odpowiedzi – `soil` jest wymagane (endpoint `/api/analysis` dziś zwraca 501, więc nikt go jeszcze nie konsumuje; mock zaktualizowany).

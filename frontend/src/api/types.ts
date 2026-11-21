@@ -143,6 +143,37 @@ export type OverallStatus = {
   summary: string
 }
 
+/** Dlaczego ocena suszy rolniczej nie ma zastosowania (kody IUNG 11, 12, 13, 14, 5 łącznie > 50%) */
+export type NonAgriculturalReason = 'las' | 'woda' | 'zabudowa' | 'drogi' | 'gleby_organiczne'
+
+export type SoilShareItem = {
+  /** kod IUNG: 1–4 kategorie podatności, 5 organiczne, 11 las, 12 woda, 13 zabudowa, 14 drogi/nieużytki */
+  code: number
+  label: string
+  /** 0–1 */
+  share: number
+}
+
+/** Gleba działki (SPEC 7.A, 15.1 „to nie jest grunt rolny”, 15.3) */
+export type Soil = {
+  dominant_code: number | null
+  dominant_label: string | null
+  shares: SoilShareItem[]
+  /** udział gleb mineralnych użytków rolnych (kody 1–4), 0–1 */
+  agricultural_share?: number | null
+  /** woda dostępna dla roślin (WOD), mm */
+  wod_mm?: number | null
+  /** klasy bonitacyjne EGiB – tylko informacyjnie */
+  classes?: string[] | null
+  /** powód braku klas */
+  classes_note?: string | null
+  non_agricultural?: boolean
+  non_agricultural_reason?: NonAgriculturalReason | null
+  /** gotowy komunikat dla rolnika */
+  non_agricultural_note?: string | null
+  source_tag: SourceTag
+}
+
 export type SeriesPoint = { date: ISODate; value: number | null }
 
 export type BandPoint = { date: ISODate; min: number | null; max: number | null; mean: number | null }
@@ -245,6 +276,7 @@ export type AnalysisResponse = {
   generated_at: ISODateTime
   status: OverallStatus
   indicators: Indicators
+  soil: Soil
   history: History
   causes: Cause[]
   recommendations: Recommendation[]

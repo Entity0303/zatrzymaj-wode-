@@ -90,6 +90,19 @@
       "source_tag": { "kind": "pomiar", "date": null, "source": "IUNG-PIB SMSR" }
     }
   },
+  "soil": {
+    "dominant_code": 2,
+    "dominant_label": "Kategoria II – podatna na suszę",
+    "shares": [{ "code": 2, "label": "Kategoria II – podatna na suszę", "share": 1.0 }],
+    "agricultural_share": 1.0,
+    "wod_mm": 148.7,
+    "classes": null,
+    "classes_note": "Powiat nie udostępnia klas bonitacyjnych w usłudze KIEG.",
+    "non_agricultural": false,
+    "non_agricultural_reason": null,
+    "non_agricultural_note": null,
+    "source_tag": { "kind": "pomiar", "date": null, "source": "IUNG-PIB" }
+  },
   "history": {
     "period_start": "2016-01-01",
     "period_end": "2026-06-14",

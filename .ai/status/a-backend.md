@@ -22,4 +22,3 @@ _Stan na: 2026-11-21 16:10_
 ## Blokery / pytania do drugiej osoby
 - B: czy w panelu „Woda w glebie” duża liczba to `soil_water_pct` czy `soil_water_mm` (kontrakt ma oba)?
 - B: `stress_days_by_year` będzie pustą listą do czasu A3 – UI powinien pokazać „Brak danych”, nie zera.
-- **Propozycja zmiany kontraktu (do uzgodnienia z B, NIE wprowadzona):** kontrakt nie ma miejsca na szczegóły gleby, które już liczymy: udziały kategorii IUNG (kod, opis, udział), kategoria dominująca, klasy bonitacyjne EGiB, flaga „to nie jest grunt rolny” + powód. Dziś: WOD w `indicators.soil_capacity` (z klasami w `note`), reszta tylko w `/api/dev/soil`. Propozycja: sekcja `soil: { dominant_code, dominant_label, shares[], agricultural_share, classes[], not_agricultural, not_agricultural_reason }` w `AnalysisResponse`. SPEC 15.1 wymaga komunikatu „to nie jest grunt rolny” – bez tego pola UI nie ma skąd go wziąć.
