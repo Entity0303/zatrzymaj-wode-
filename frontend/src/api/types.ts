@@ -1,0 +1,299 @@
+/**
+ * KONTRAKT API – typy identyczne z backend/app/schemas/*.py (Pydantic).
+ * Zmiany tylko po uzgodnieniu i w obu miejscach naraz (CLAUDE.md – Praca zespołowa).
+ *
+ * Zasady: każda liczba ma `source_tag`; brak danych = `value: null` + `kind: 'brak_danych'`
+ * (nigdy 0 ani wymyślona wartość). Daty: 'YYYY-MM-DD', znaczniki czasu: ISO 8601.
+ */
+
+type ISODate = string
+type ISODateTime = string
+
+// ── schemas/parcel.py ───────────────────────────────────────────────────────────────────────
+
+export type DataSource = {
+  nazwa: string
+  url: string
+  pobrano?: string | null
+  uwagi?: string | null
+}
+
+export type Parcel = {
+  id: string
+  wojewodztwo: string
+  powiat: string
+  gmina: string
+  obreb: string
+  numer: string
+  teryt_gminy: string
+  powierzchnia_ha: number
+  geometria: GeoJSON.Polygon | GeoJSON.MultiPolygon
+  zrodlo: DataSource
+}
+
+/** `detail` przy HTTP 409 */
+export type ParcelCandidates = { message: string; total: number; candidates: Parcel[] }
+
+/** `detail` przy HTTP 404 / 502 */
+export type ErrorDetail = { source?: string | null; message: string }
+
+// ── schemas/weather.py ──────────────────────────────────────────────────────────────────────
+
+export type WeatherIcon = 'sun' | 'cloud-sun' | 'cloud' | 'fog' | 'drizzle' | 'rain' | 'snow' | 'storm' | 'unknown'
+
+export type CurrentWeather = {
+  czas: string | null
+  temperatura: number | null
+  opis: string
+  ikona: WeatherIcon
+  dzien: boolean
+}
+
+export type ForecastDay = {
+  data: string
+  opis: string
+  ikona: WeatherIcon
+  temp_max: number | null
+  temp_min: number | null
+  opad_mm: number | null
+  parowanie_mm: number | null
+  bilans_mm: number | null
+}
+
+export type Forecast = {
+  lon: number
+  lat: number
+  teraz: CurrentWeather
+  dni: ForecastDay[]
+  bilans_okresu_mm: number | null
+  zrodlo: DataSource
+}
+
+// ── schemas/analysis.py – GET /api/analysis?parcel_id=&crop=&date= ─────────────────────────
+
+/** Dobrze / Uwaga / Ryzyko / Susza / Brak danych (SPEC 2.2) */
+export type StatusLevel = 'ok' | 'warn' | 'risk' | 'danger' | 'no_data'
+
+/** Etykiety pochodzenia liczb (SPEC 15.2) */
+export type SourceKind = 'pomiar' | 'satelita' | 'obliczenia' | 'szacunek_modelu' | 'prognoza' | 'brak_danych'
+
+export type Confidence = 'wysoka' | 'srednia' | 'ograniczona'
+
+/** Kolejność w odpowiedzi zawsze: retencja → agrotechnika → nawadnianie */
+export type RecommendationCategory = 'retencja' | 'agrotechnika' | 'nawadnianie'
+
+/** 15 upraw IUNG SMSR (etykiety: lib/crops.ts) */
+export type CropId =
+  | 'zboza_ozime'
+  | 'zboza_jare'
+  | 'kukurydza_ziarno'
+  | 'kukurydza_kiszonka'
+  | 'rzepak'
+  | 'rzepak_jesien'
+  | 'ziemniak'
+  | 'burak_cukrowy'
+  | 'straczkowe'
+  | 'warzywa'
+  | 'drzewa_owocowe'
+  | 'krzewy_owocowe'
+  | 'truskawki'
+  | 'chmiel'
+  | 'tyton'
+
+export type StepState = 'done' | 'active' | 'error' | 'pending'
+export type SourceAvailability = 'ok' | 'czesciowo' | 'brak'
+export type CauseFactor = 'opady' | 'parowanie' | 'gleba' | 'teren' | 'uprawa' | 'inne'
+
+export type SourceTag = {
+  kind: SourceKind
+  /** data danych, np. zdjęcia satelitarnego (wymagana dla 'satelita') */
+  date?: ISODate | null
+  /** nazwa źródła, np. 'Sentinel-2 L2A' */
+  source?: string | null
+}
+
+export type Indicator = {
+  /** null = brak danych (nigdy 0 zamiast braku) */
+  value: number | null
+  unit?: string | null
+  label?: string | null
+  status?: StatusLevel
+  note?: string | null
+  source_tag: SourceTag
+}
+
+export type RiskIndicator = Indicator & { days_to_stress?: number | null }
+
+export type SatelliteIndicator = Indicator & { index_value?: number | null }
+
+export type Indicators = {
+  soil_water_pct: Indicator
+  soil_water_mm: Indicator
+  risk_7d: RiskIndicator
+  crop_health: SatelliteIndicator
+  plant_moisture: SatelliteIndicator
+  water_balance_season: Indicator
+  soil_capacity: Indicator
+}
+
+export type OverallStatus = {
+  level: StatusLevel
+  score?: number | null
+  headline: string
+  summary: string
+}
+
+export type SeriesPoint = { date: ISODate; value: number | null }
+
+export type BandPoint = { date: ISODate; min: number | null; max: number | null; mean: number | null }
+
+export type YearStress = { year: number; stress_days: number | null; is_current?: boolean }
+
+export type MonthlyPrecip = { month: number; current_mm: number | null; mean_mm: number | null }
+
+export type History = {
+  period_start: ISODate
+  period_end: ISODate
+  season_start: ISODate
+  balance_cumulative: SeriesPoint[]
+  balance_band: BandPoint[]
+  stress_days_by_year: YearStress[]
+  monthly_precip: MonthlyPrecip[]
+  summary?: string | null
+  source_tag: SourceTag
+}
+
+export type Cause = {
+  factor: CauseFactor
+  title: string
+  /** 0–1 */
+  share: number
+  description: string
+  source_tag: SourceTag
+}
+
+export type Evidence = {
+  name: string
+  value: number | string | null
+  unit?: string | null
+  source: string
+  date?: ISODate | null
+}
+
+export type Recommendation = {
+  id: string
+  category: RecommendationCategory
+  title: string
+  description: string
+  why: string
+  inputs: Evidence[]
+  confidence: Confidence
+  /** GeoJSON geometria miejsca (EPSG:4326) – „Pokaż na mapie” */
+  location?: GeoJSON.Geometry | null
+  rule_id?: string | null
+}
+
+export type SourceStatus = {
+  name: string
+  used_for: string
+  data_date: ISODate | null
+  resolution?: string | null
+  status: SourceAvailability
+  note?: string | null
+}
+
+export type Completeness = { available: number; total: number }
+
+export type Reliability = {
+  confidence: Confidence
+  reason: string
+  sources: SourceStatus[]
+  completeness: Completeness
+  limitations: string[]
+}
+
+export type LoadingStep = {
+  id: string
+  label: string
+  state: StepState
+  note?: string | null
+  duration_ms?: number | null
+}
+
+export type AnalysisResponse = {
+  parcel: Parcel
+  crop: CropId
+  analysis_date: ISODate
+  historical: boolean
+  generated_at: ISODateTime
+  status: OverallStatus
+  indicators: Indicators
+  history: History
+  causes: Cause[]
+  recommendations: Recommendation[]
+  reliability: Reliability
+  steps: LoadingStep[]
+}
+
+// ── schemas/layers.py – GET /api/layers/{layer} (szkielet) ─────────────────────────────────
+
+export type LayerKey = 'kondycja' | 'wilgotnosc' | 'teren' | 'splyw' | 'gleba'
+
+export type RasterOverlay = {
+  image_url: string
+  /** lon_min, lat_min, lon_max, lat_max (EPSG:4326) */
+  bbox: [number, number, number, number]
+}
+
+export type LayerResponse = {
+  parcel_id: string
+  layer: LayerKey
+  analysis_date: ISODate
+  raster?: RasterOverlay | null
+  features?: GeoJSON.FeatureCollection | null
+  value_range?: [number, number] | null
+  source_tag: SourceTag
+}
+
+export type PointValue = { layer: LayerKey; text: string; value: number | null; source_tag: SourceTag }
+
+// ── schemas/reports.py – raport PDF i zgłoszenia (szkielet) ────────────────────────────────
+
+export type ReportRequest = { parcel_id: string; crop: CropId; date: ISODate }
+
+export type ReportMeta = {
+  report_id: string
+  parcel_id: string
+  crop: CropId
+  analysis_date: ISODate
+  generated_at: ISODateTime
+  pdf_url: string
+}
+
+export type WaterObjectType = 'row' | 'ciek' | 'zbiornik'
+export type InfraProblem =
+  | 'drozny'
+  | 'zarosniety'
+  | 'zamulony'
+  | 'zatkany_przepust'
+  | 'uszkodzona_zastawka'
+  | 'uszkodzona_skarpa'
+  | 'zanieczyszczony'
+export type WaterLevel = 'brak' | 'niski' | 'normalny' | 'wysoki'
+
+export type InfraReportIn = {
+  object_type: WaterObjectType
+  object_id?: string | null
+  lon: number
+  lat: number
+  problem: InfraProblem
+  water_level?: WaterLevel | null
+  description?: string | null
+}
+
+export type InfraReport = InfraReportIn & {
+  id: string
+  created_at: ISODateTime
+  confirmations: number
+  addressee: string
+}

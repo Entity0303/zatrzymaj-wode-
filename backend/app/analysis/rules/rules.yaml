@@ -1,0 +1,5 @@
+# Reguły rekomendacji (analysis/recommendations.py).
+# Każda reguła: id, kategoria (retencja | agrotechnika | nawadnianie), warunek na wynikach
+# analizy, szablon tytułu/opisu z miejscami na liczby, lista danych wejściowych do „Dlaczego?”.
+# TODO (osoba A): pierwsze reguły dla P0.
+rules: []

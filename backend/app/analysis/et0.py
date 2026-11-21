@@ -2,6 +2,8 @@
 
 Główna metoda: Penman-Monteith (równanie 6). Gdy brakuje promieniowania, wilgotności
 lub wiatru — Hargreaves (równanie 52), co jest oznaczane w wyniku.
+
+TODO (osoba A): test porównujący Hargreavesa z Penmanem-Monteithem na danych NASA POWER.
 """
 
 import numpy as np

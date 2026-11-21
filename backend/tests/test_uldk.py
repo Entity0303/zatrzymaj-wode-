@@ -7,8 +7,8 @@ import pytest
 import respx
 from fastapi.testclient import TestClient
 
-from app.config import settings
-from app.http import NotFoundError, SourceError, close_client
+from app.core.config import settings
+from app.core.http import NotFoundError, SourceError, close_client
 from app.main import app
 from app.sources import uldk
 

@@ -1,0 +1,29 @@
+import { CalendarDays } from 'lucide-react'
+import { minAnalysisIso, todayIso } from '@/lib/dates'
+import { cn } from '@/lib/utils'
+
+/** „📅 Data analizy” – zakres dziś − 10 lat … dziś (SPEC 4.2). */
+export function DateField({ value, onChange, compact }: { value: string; onChange: (v: string) => void; compact?: boolean }) {
+  return (
+    <label
+      className={cn(
+        'flex h-12 shrink-0 items-center gap-2 rounded-full border bg-surface px-4 shadow-float',
+        compact && 'h-11 w-full rounded-md shadow-none',
+      )}
+    >
+      <CalendarDays className="size-5 shrink-0 text-brand" aria-hidden />
+      <span className={cn('text-sm whitespace-nowrap text-text-muted', compact ? 'max-[419px]:hidden' : 'hidden xl:inline')}>
+        Data analizy
+      </span>
+      <input
+        type="date"
+        aria-label="Data analizy"
+        value={value}
+        min={minAnalysisIso()}
+        max={todayIso()}
+        onChange={(e) => e.target.value && onChange(e.target.value)}
+        className="tabular min-w-0 flex-1 bg-transparent text-base font-semibold outline-none"
+      />
+    </label>
+  )
+}

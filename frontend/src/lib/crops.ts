@@ -1,6 +1,10 @@
+import type { CropId } from '@/api/types'
+
+export type { CropId }
+
 /**
  * 15 upraw wg IUNG SMSR (https://susza.iung.pulawy.pl – lista wyboru sprawdzona 21.11.2026).
- * CLAUDE.md wymienia 14; piętnasta pozycja w SMSR to „Rzepak i rzepik (jesień)”.
+ * Identyfikatory = kontrakt API (api/types.ts CropId, backend schemas/analysis.py CropId).
  */
 export const CROPS = [
   { id: 'zboza_ozime', label: 'Zboża ozime' },
@@ -18,8 +22,6 @@ export const CROPS = [
   { id: 'truskawki', label: 'Truskawki' },
   { id: 'chmiel', label: 'Chmiel' },
   { id: 'tyton', label: 'Tytoń' },
-] as const
-
-export type CropId = (typeof CROPS)[number]['id']
+] as const satisfies readonly { id: CropId; label: string }[]
 
 export const cropLabel = (id: CropId | null) => CROPS.find((c) => c.id === id)?.label ?? null

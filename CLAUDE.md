@@ -9,7 +9,7 @@ Aplikacja webowa dla rolnika (bez wiedzy GIS): podaje działkę ewidencyjną (nu
 - Wszystko LICZONE z pobranych danych – żadnych gotowych tekstów rekomendacji. LLM nie liczy niczego.
 - Przy każdym wyniku: źródło, data danych, ograniczenia i niepewność; braki danych komunikowane wprost.
 - Raport do zapisania jako PDF / wydruk. Działa w przeglądarce bez instalacji, mile widziany telefon.
-- Bez danych osobowych. Tylko licencje permisywne (MIT/BSD/Apache) – bez GPL/AGPL.
+- Bez danych osobowych. Tylko licencje permisywne (MIT/BSD/Apache) – bez GPL/AGPL; czcionki – dopuszczalna licencja SIL OFL 1.1 (Inter).
 - Kryteria: wartość praktyczna 25%, dane i wiarygodność 25%, innowacyjność 20%, prostota obsługi 15%, prototyp/jakość 15%.
 
 ## Stack
@@ -70,9 +70,42 @@ Aplikacja webowa dla rolnika (bez wiedzy GIS): podaje działkę ewidencyjną (nu
 
 Wygląd i zachowanie interfejsu definiuje **`design/SPEC_UI.md`** razem z grafikami w `design/` (`ref-desktop.png`, `ref-mobile.png`, `ref-style.png`). Przy każdej zmianie UI trzymaj się go dokładnie – niczego nie upraszczaj ani nie pomijaj. Jeśli czegoś nie da się zrobić, napisz to wprost.
 
+## Praca zespołowa
+
+- **Osoba A (Dominik) = `backend/`**, **osoba B (Mefju) = `frontend/`**.
+- **Kontrakt API** = `backend/app/schemas/` + `frontend/src/api/types.ts`. Zmiany tylko po uzgodnieniu i **w obu miejscach naraz**. Przykład odpowiedzi analizy: `frontend/src/mocks/analysis.sample.json` – test `backend/tests/test_contract.py` sprawdza go modelem Pydantic (`extra="forbid"`) i czy każde pole jest w `types.ts`.
+- **1 komponent / warstwa / sekcja = 1 plik.**
+- Każde zadanie na **osobnej gałęzi** (`a/...` lub `b/...`) i **Pull Request** – nigdy push na `main`.
+- Pliki wspólne (`backend/app/main.py`, `frontend/src/App.tsx`, `frontend/package.json`, `backend/requirements.txt`, `docker-compose.yml`, `CLAUDE.md`) zmieniane tylko w **osobnym małym commicie**.
+- Claude Code **nie używa przeglądarki bez wyraźnej prośby**. Weryfikacja: `pytest` (backend, bez sieci; testy na żywo tylko `pytest -m live`) i `npm run build` (frontend).
+
+### Struktura
+
+```
+backend/app/
+  main.py            tylko utworzenie app i rejestracja routerów
+  core/              config.py, http.py (klient, błędy źródeł, 404/502/501), cache.py (TTL), geo.py (2180 ↔ 4326)
+  schemas/           KONTRAKT: parcel.py, analysis.py, layers.py, reports.py, weather.py
+  sources/           jeden moduł na źródło: uldk, weather_power, weather_openmeteo, iung, kieg, nmt, bdot, sentinel, gus
+  analysis/          et0, crops, water_balance, soil, terrain, scoring, recommendations, rules/*.yaml
+  routers/           parcel, weather (działają); analysis, layers, reports, infra_reports (501 „w budowie”)
+  report/            raport PDF (WeasyPrint)
+frontend/src/
+  api/               client.ts (zapytania, błędy po polsku), types.ts (KONTRAKT)
+  mocks/             analysis.sample.json + useMockAnalysis – tylko `npm run dev` z `?dane=przykladowe`, z napisem „DANE PRZYKŁADOWE”
+  theme/             index.css (tokeny SPEC 2), status.ts, recommendations.ts
+  layout/            Sidebar, BottomTabs, TopBar, BottomCards (+ cards/), BottomCardsStack, MobileSheet
+  components/        komponenty wielokrotnego użytku (SPEC 14), components/ui = shadcn
+  features/          search, map (+ map/layers: CropHealth, PlantMoisture, Terrain, WaterFlow, Soil),
+                     parcel-panel, passport (SectionA–E), timeline, reports, infra-reports, weather
+  pages/             Start, MyParcels, Reports, Settings
+  lib/               utils (cn), dates, format, hooks, crops
+```
+
 ## Zasady pracy
 
-- Każda zmiana: testy (`pytest` dla backendu, `npm run build` dla frontendu) muszą przechodzić, potem commit z opisem po polsku i push na `main`.
-- Kod źródeł danych w `backend/app/sources/<źródło>.py`, obliczenia w `backend/app/analysis/`, endpointy w `backend/app/main.py` (lub `routers/`).
+- To jest działający prototyp na hackathon, nie produkt komercyjny. NIE twórz: polityki prywatności, regulaminu, banera cookies, zgód RODO, logowania/rejestracji, kont użytkowników, panelu admina ani stron typu „O nas”/„Kontakt”. Każdy widoczny element ma działać na prawdziwych danych i służyć ścieżce: Szukaj działki → Zobacz pole → Zrozum stan → Rekomendacje → Raport.
+- Każda zmiana: testy (`pytest` dla backendu, `npm run build` dla frontendu) muszą przechodzić, potem commit z opisem po polsku na gałęzi zadania i Pull Request (patrz „Praca zespołowa”).
+- Kod źródeł danych w `backend/app/sources/<źródło>.py`, obliczenia w `backend/app/analysis/`, endpointy w `backend/app/routers/`, kontrakty w `backend/app/schemas/`.
 - UI po polsku, prostym językiem dla rolnika.
 - Nie publikujemy niczego na serwerze bez zgody właściciela repo.

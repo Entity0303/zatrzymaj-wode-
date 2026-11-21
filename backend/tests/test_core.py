@@ -4,9 +4,9 @@ import numpy as np
 import pytest
 
 from app.analysis.et0 import et0_hargreaves, et0_penman_monteith
-from app.geo import parse_wkt, sample_points
-from app.http import SourceError
-from app.sources import iung, nasa_power, uldk
+from app.core.geo import parse_wkt, sample_points
+from app.core.http import SourceError
+from app.sources import iung, uldk, weather_power
 
 ULDK_OK = (
     "0\n"
@@ -70,7 +70,7 @@ def _power_payload():
 
 
 def test_power_parse_and_et0():
-    w = nasa_power.parse_response(_power_payload())
+    w = weather_power.parse_response(_power_payload())
     assert w.dates == [date(2026, 7, 1), date(2026, 7, 2), date(2026, 7, 3)]
     assert np.isnan(w.precip[2])
     assert list(w.et0_method) == ["PM", "PM", "HG"]  # brak promieniowania -> Hargreaves

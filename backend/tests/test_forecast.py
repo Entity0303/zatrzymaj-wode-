@@ -5,9 +5,9 @@ import pytest
 import respx
 from fastapi.testclient import TestClient
 
-from app.config import settings
+from app.core.config import settings
 from app.main import app
-from app.sources import open_meteo
+from app.sources import weather_openmeteo as open_meteo
 
 PAYLOAD = {
     "latitude": 52.33857,

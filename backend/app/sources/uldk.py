@@ -11,16 +11,16 @@ WKT może mieć prefiks 'SRID=2180;'. Geometria w EPSG:2180 jako (wschód, pół
 """
 
 import re
-import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
 import httpx
 from shapely.geometry.base import BaseGeometry
 
-from app.config import settings
-from app.geo import parse_wkt, to_wgs84
-from app.http import NotFoundError, SourceError, get_client
+from app.core.cache import TTLCache
+from app.core.config import settings
+from app.core.geo import parse_wkt, to_wgs84
+from app.core.http import NotFoundError, SourceError, get_client
 
 SOURCE = "ULDK GUGiK"
 SOURCE_URL = "https://uldk.gugik.gov.pl/"
@@ -28,9 +28,7 @@ _RESULT_FIELDS = ["geom_wkt", "id", "voivodeship", "county", "commune", "region"
 # pełny identyfikator: TERYT gminy (6 cyfr) _ typ (1 cyfra) . obręb (4 cyfry) . numer
 _FULL_ID = re.compile(r"^\d{6}_\d\.\d{4}\.\S+$")
 
-_CACHE_TTL_S = 24 * 3600
-_CACHE_MAX = 512
-_cache: dict[tuple, tuple[float, list["Parcel"]]] = {}
+_cache: TTLCache[list["Parcel"]] = TTLCache(ttl_s=24 * 3600, max_items=512)
 
 
 @dataclass
@@ -135,12 +133,10 @@ async def _query(params: dict) -> list[Parcel]:
     params = {**params, "result": ",".join(_RESULT_FIELDS), "srid": "2180"}
     key = tuple(sorted(params.items()))
     hit = _cache.get(key)
-    if hit and time.monotonic() - hit[0] < _CACHE_TTL_S:
-        return hit[1]
+    if hit is not None:
+        return hit
     parcels = parse_response(await _get(params))
-    if len(_cache) >= _CACHE_MAX:
-        _cache.pop(next(iter(_cache)))
-    _cache[key] = (time.monotonic(), parcels)
+    _cache.set(key, parcels)
     return parcels
 
 

@@ -15,6 +15,7 @@
     "moduleDetection": "force",
     "noEmit": true,
     "paths": { "@/*": ["./src/*"] },
+    "resolveJsonModule": true,
     "jsx": "react-jsx",
 
     /* Linting */

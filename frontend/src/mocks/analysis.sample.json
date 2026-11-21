@@ -1,0 +1,224 @@
+{
+  "parcel": {
+    "id": "143203_2.0027.112/11",
+    "wojewodztwo": "mazowieckie",
+    "powiat": "powiat warszawski zachodni",
+    "gmina": "Kampinos",
+    "obreb": "Szczytno",
+    "numer": "112/11",
+    "teryt_gminy": "1432032",
+    "powierzchnia_ha": 5.01,
+    "geometria": {
+      "type": "Polygon",
+      "coordinates": [[[20.6195, 52.3298], [20.6232, 52.3298], [20.6232, 52.3321], [20.6195, 52.3321], [20.6195, 52.3298]]]
+    },
+    "zrodlo": {
+      "nazwa": "DANE PRZYKŁADOWE",
+      "url": "https://uldk.gugik.gov.pl/",
+      "pobrano": "2026-06-15T10:00:00+00:00",
+      "uwagi": "Obiekt przykładowy do pracy nad UI – nie pochodzi z analizy."
+    }
+  },
+  "crop": "zboza_ozime",
+  "analysis_date": "2026-06-15",
+  "historical": true,
+  "generated_at": "2026-06-15T10:00:12+00:00",
+  "status": {
+    "level": "warn",
+    "score": 54,
+    "headline": "Uwaga – rośnie ryzyko suszy",
+    "summary": "Gleba zmieści mało wody, a od marca spadło o 84 mm mniej niż zwykle."
+  },
+  "indicators": {
+    "soil_water_pct": {
+      "value": 38,
+      "unit": "%",
+      "label": null,
+      "status": "warn",
+      "note": null,
+      "source_tag": { "kind": "szacunek_modelu", "date": "2026-06-15", "source": "Model wody w glebie FAO-56" }
+    },
+    "soil_water_mm": {
+      "value": 57,
+      "unit": "mm",
+      "label": null,
+      "status": "warn",
+      "note": null,
+      "source_tag": { "kind": "szacunek_modelu", "date": "2026-06-15", "source": "Model wody w glebie FAO-56" }
+    },
+    "risk_7d": {
+      "value": 6,
+      "unit": "dni",
+      "label": "Średnie",
+      "status": "warn",
+      "note": "stres za ok. 6 dni",
+      "days_to_stress": 6,
+      "source_tag": { "kind": "prognoza", "date": "2026-06-15", "source": "Open-Meteo" }
+    },
+    "crop_health": {
+      "value": 68,
+      "unit": "pkt",
+      "label": "Dobra",
+      "status": "ok",
+      "note": null,
+      "index_value": 0.62,
+      "source_tag": { "kind": "satelita", "date": "2026-06-12", "source": "Sentinel-2 L2A" }
+    },
+    "plant_moisture": {
+      "value": 41,
+      "unit": "pkt",
+      "label": "Umiarkowana",
+      "status": "warn",
+      "note": null,
+      "index_value": 0.08,
+      "source_tag": { "kind": "satelita", "date": "2026-06-12", "source": "Sentinel-2 L2A" }
+    },
+    "water_balance_season": {
+      "value": -84,
+      "unit": "mm",
+      "label": null,
+      "status": "risk",
+      "note": "względem średniej z 10 lat",
+      "source_tag": { "kind": "obliczenia", "date": "2026-06-14", "source": "NASA POWER" }
+    },
+    "soil_capacity": {
+      "value": 149,
+      "unit": "mm",
+      "label": "Kat. II – podatna na suszę",
+      "status": "warn",
+      "note": null,
+      "source_tag": { "kind": "pomiar", "date": null, "source": "IUNG-PIB SMSR" }
+    }
+  },
+  "history": {
+    "period_start": "2016-01-01",
+    "period_end": "2026-06-14",
+    "season_start": "2026-03-01",
+    "balance_cumulative": [
+      { "date": "2026-03-31", "value": 12 },
+      { "date": "2026-04-30", "value": -18 },
+      { "date": "2026-05-31", "value": -71 },
+      { "date": "2026-06-14", "value": -112 }
+    ],
+    "balance_band": [
+      { "date": "2026-03-31", "min": -10, "max": 38, "mean": 15 },
+      { "date": "2026-04-30", "min": -45, "max": 30, "mean": -2 },
+      { "date": "2026-05-31", "min": -98, "max": 22, "mean": -21 },
+      { "date": "2026-06-14", "min": -130, "max": 10, "mean": -28 }
+    ],
+    "stress_days_by_year": [
+      { "year": 2016, "stress_days": 12, "is_current": false },
+      { "year": 2017, "stress_days": 3, "is_current": false },
+      { "year": 2018, "stress_days": 41, "is_current": false },
+      { "year": 2019, "stress_days": 27, "is_current": false },
+      { "year": 2020, "stress_days": 9, "is_current": false },
+      { "year": 2021, "stress_days": 6, "is_current": false },
+      { "year": 2022, "stress_days": 19, "is_current": false },
+      { "year": 2023, "stress_days": 15, "is_current": false },
+      { "year": 2024, "stress_days": 22, "is_current": false },
+      { "year": 2025, "stress_days": 11, "is_current": false },
+      { "year": 2026, "stress_days": 4, "is_current": true }
+    ],
+    "monthly_precip": [
+      { "month": 3, "current_mm": 21, "mean_mm": 34 },
+      { "month": 4, "current_mm": 18, "mean_mm": 37 },
+      { "month": 5, "current_mm": 39, "mean_mm": 58 },
+      { "month": 6, "current_mm": 12, "mean_mm": 66 }
+    ],
+    "summary": "W 6 z 10 ostatnich lat w maju–lipcu brakowało wody. Najgorszy był 2018 (41 dni stresu).",
+    "source_tag": { "kind": "obliczenia", "date": "2026-06-14", "source": "NASA POWER" }
+  },
+  "causes": [
+    {
+      "factor": "opady",
+      "title": "Mało opadów",
+      "share": 0.45,
+      "description": "od marca 90 mm, zwykle 195 mm",
+      "source_tag": { "kind": "obliczenia", "date": "2026-06-14", "source": "NASA POWER" }
+    },
+    {
+      "factor": "gleba",
+      "title": "Gleba",
+      "share": 0.3,
+      "description": "kat. II, zmieści ok. 149 mm wody – mało",
+      "source_tag": { "kind": "pomiar", "date": null, "source": "IUNG-PIB SMSR" }
+    },
+    {
+      "factor": "uprawa",
+      "title": "Wymagania uprawy",
+      "share": 0.25,
+      "description": "zboża ozime w fazie kłoszenia potrzebują najwięcej wody",
+      "source_tag": { "kind": "szacunek_modelu", "date": "2026-06-15", "source": "FAO-56 Kc" }
+    }
+  ],
+  "recommendations": [
+    {
+      "id": "ret-oczko-01",
+      "category": "retencja",
+      "title": "Oczko wodne w zagłębieniu przy południowej granicy",
+      "description": "Zbiera się tam woda z ok. 1,2 ha – ok. 600 m² wystarczy, by ją zatrzymać.",
+      "why": "Najniższy punkt działki leży 2,1 m poniżej najwyższego; woda spływa na południe.",
+      "inputs": [
+        { "name": "Powierzchnia zlewni zagłębienia", "value": 1.2, "unit": "ha", "source": "NMT GUGiK", "date": null },
+        { "name": "Różnica wysokości", "value": 2.1, "unit": "m", "source": "NMT GUGiK", "date": null }
+      ],
+      "confidence": "srednia",
+      "location": { "type": "Point", "coordinates": [20.6212, 52.3301] },
+      "rule_id": "retencja.zaglebienie"
+    },
+    {
+      "id": "agro-miedzyplon-01",
+      "category": "agrotechnika",
+      "title": "Międzyplon po żniwach",
+      "description": "Więcej próchnicy – gleba zmieści więcej wody w kolejnych latach.",
+      "why": "Gleba kat. II zmieści ok. 149 mm wody; w 6 z 10 lat brakowało wody w maju–lipcu.",
+      "inputs": [
+        { "name": "Woda dostępna w glebie (WOD)", "value": 149, "unit": "mm", "source": "IUNG-PIB SMSR", "date": null },
+        { "name": "Lata z niedoborem (maj–lipiec)", "value": 6, "unit": "z 10", "source": "NASA POWER", "date": "2026-06-14" }
+      ],
+      "confidence": "wysoka",
+      "location": null,
+      "rule_id": "agrotechnika.miedzyplon"
+    },
+    {
+      "id": "naw-termin-01",
+      "category": "nawadnianie",
+      "title": "Nawadnianie w ciągu 5–7 dni",
+      "description": "Dawka ok. 20 mm, jeśli nie spadnie deszcz.",
+      "why": "Woda w glebie 38%; prognoza na 7 dni: opad 3 mm, parowanie 31 mm.",
+      "inputs": [
+        { "name": "Woda w glebie", "value": 38, "unit": "%", "source": "Model FAO-56", "date": "2026-06-15" },
+        { "name": "Bilans prognozy 7 dni", "value": -28, "unit": "mm", "source": "Open-Meteo", "date": "2026-06-15" }
+      ],
+      "confidence": "srednia",
+      "location": null,
+      "rule_id": "nawadnianie.termin"
+    }
+  ],
+  "reliability": {
+    "confidence": "srednia",
+    "reason": "Model i zdjęcie satelitarne zgadzają się, ale pogoda jest uśredniona dla dużego obszaru.",
+    "sources": [
+      { "name": "ULDK GUGiK", "used_for": "granice działki", "data_date": "2026-06-15", "resolution": null, "status": "ok", "note": null },
+      { "name": "NASA POWER", "used_for": "pogoda z 10 lat", "data_date": "2026-06-14", "resolution": "ok. 50 km", "status": "ok", "note": null },
+      { "name": "Open-Meteo", "used_for": "prognoza 7 dni", "data_date": "2026-06-15", "resolution": "kilka km", "status": "ok", "note": null },
+      { "name": "IUNG-PIB SMSR", "used_for": "kategoria gleby", "data_date": null, "resolution": null, "status": "ok", "note": null },
+      { "name": "Sentinel-2 L2A", "used_for": "kondycja i wilgotność roślin", "data_date": "2026-06-12", "resolution": "10 m", "status": "ok", "note": null },
+      { "name": "NMT GUGiK", "used_for": "teren i spływ", "data_date": null, "resolution": "1 m", "status": "czesciowo", "note": "część punktów bez odpowiedzi" }
+    ],
+    "completeness": { "available": 5, "total": 6 },
+    "limitations": [
+      "Pogoda uśredniona dla obszaru ok. 50 km",
+      "Ostatnie bezchmurne zdjęcie: 3 dni przed datą analizy",
+      "Klasy bonitacyjne niedostępne w tym powiecie"
+    ]
+  },
+  "steps": [
+    { "id": "parcel", "label": "Szukam działki", "state": "done", "note": null, "duration_ms": 310 },
+    { "id": "weather", "label": "Pobieram pogodę z 10 lat", "state": "done", "note": null, "duration_ms": 1620 },
+    { "id": "soil", "label": "Sprawdzam glebę", "state": "done", "note": null, "duration_ms": 820 },
+    { "id": "terrain", "label": "Analizuję teren", "state": "done", "note": "częściowe dane", "duration_ms": 2540 },
+    { "id": "satellite", "label": "Zdjęcia satelitarne", "state": "done", "note": null, "duration_ms": 4100 },
+    { "id": "balance", "label": "Liczę bilans wody", "state": "done", "note": null, "duration_ms": 120 }
+  ]
+}

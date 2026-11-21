@@ -2,15 +2,18 @@
 
 Warstwa rastrowa Susza:katgl_landuse2024 na GeoServerze IUNG, odczyt przez WMS GetFeatureInfo.
 Kategorie i zakresy wody ogólnie dostępnej (WOD) wg https://susza.iung.pulawy.pl/kategorie/
+
+TODO (osoba A): więcej punktów dla dużych działek, kategoria do analysis/soil.py,
+kody 11–14 = „to nie jest grunt rolny”.
 """
 
 import asyncio
 from collections import Counter
 from dataclasses import dataclass
 
-from app.config import settings
-from app.geo import sample_points, to_wgs84
-from app.http import SourceError, get_client
+from app.core.config import settings
+from app.core.geo import sample_points, to_wgs84
+from app.core.http import SourceError, get_client
 
 SOURCE = "IUNG-PIB SMSR (kategorie glebowe)"
 

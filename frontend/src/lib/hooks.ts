@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import type { Parcel } from '@/api'
+import type { Parcel } from '@/api/types'
 
 export function useMediaQuery(query: string): boolean {
   const [matches, setMatches] = useState(() => window.matchMedia(query).matches)
