@@ -36,7 +36,8 @@ CATEGORY_ORDER = ["retencja", "agrotechnika", "nawadnianie"]
 OPS = {"eq", "ne", "in", "not_in", "lt", "lte", "gt", "gte", "exists"}
 # fakty techniczne – nie pokazujemy ich jako „danych wejściowych”
 HIDDEN_FACTS = {"sensitive", "off_season", "crop_kind", "irrigation_status", "season_complete", "non_agricultural",
-                "in_season", "strong_stress", "has_crop", "irrigation_practice", "water_stress_7d"}
+                "in_season", "strong_stress", "has_crop", "irrigation_practice", "water_stress_7d", "terrain_pond",
+                "buffer_strip", "culvert_candidate"}
 DISPLAY_FACT = {"phase": "phase_label", "crop": "crop_label", "rain_retention": "rain_retention_label",
                 "light_soil": "soil_txt", "same_crop": "previous_crop_label", "cereal_after_cereal": "previous_crop_label",
                 "soil_species": "texture_label"}
@@ -96,6 +97,7 @@ class Rule:
     permit: str = "none"
     eco_scheme: str | None = None
     fertilization: bool = False
+    permit_note: str | None = None  # własna notka o formalnościach (np. oczko – A6), inaczej PERMIT_NOTES[permit]
 
     def when_for(self, facts: Facts) -> str:
         return self.timing_off_season if (self.timing_off_season and facts.get("off_season")) else self.timing
@@ -140,6 +142,7 @@ def _validate(raw: dict, src: str) -> Rule:
         confidence_fact=raw.get("confidence_fact"), source_file=src,
         timing=t_in, timing_off_season=t_off, permit=permit, eco_scheme=eco,
         fertilization=bool(raw.get("fertilization", False)),
+        permit_note=raw.get("permit_note"),
     )
 
 
@@ -286,7 +289,8 @@ def evaluate(facts: Facts, available: set[str] | None = None, rules: tuple[Rule,
         recs.append(Recommendation(
             id=rule.id, category=rule.category, title=title, description=desc, why=why.strip(), inputs=inputs,
             confidence=conf, rule_id=rule.id, priority=rule.priority,
-            when=when, when_label=TIMING_LABELS[when], permit=rule.permit, permit_note=PERMIT_NOTES[rule.permit],
+            when=when, when_label=TIMING_LABELS[when], permit=rule.permit,
+            permit_note=rule.permit_note or PERMIT_NOTES[rule.permit],
             permit_url=None if rule.permit == "none" else WODY_POLSKIE_URL,
             warning=LOW_CONFIDENCE_WARNING if conf == "ograniczona" else None,
             eco_scheme=ECO_SCHEMES[rule.eco_scheme] if rule.eco_scheme else None,

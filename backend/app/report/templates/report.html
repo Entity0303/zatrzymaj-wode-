@@ -137,6 +137,31 @@
 </div>
 {% endif %}
 
+{# 3b. Teren działki (A6) #}
+<div class="keep">
+<h2>Teren działki{% if terrain %} <span class="tag">{{ terrain.soil_group_label }}</span>{% endif %}</h2>
+{% if terrain %}
+<div class="grid2">
+  <div>
+    {{ zone_bar }}
+    <div class="legend small muted">{% for z in terrain.zones %}<span><i style="background:{{ z.color }}"></i>{{ z.label }} {{ z.share_pct|num(0, '%') }}</span>{% endfor %}</div>
+    <p>{{ terrain.summary }}</p>
+    <ul class="zones">{% for z in terrain.zones if z.sentence %}<li><span class="pill" style="background: {{ RATING[z.rating][1] }}; color: #fff">{{ RATING[z.rating][0] }}</span> {{ z.sentence }}</li>{% endfor %}</ul>
+  </div>
+  <div class="map-cap">
+    <div class="map">
+      {% if ortho %}<img src="{{ ortho }}" alt="ortofotomapa">{% endif %}
+      {{ zones_map }}
+      {{ outline }}
+    </div>
+    <div class="tiny muted">Strefy terenu z NMT GUGiK · szczegóły w części „Gleba i teren”</div>
+  </div>
+</div>
+{% else %}
+<p class="muted">{{ a.terrain_note or 'Brak analizy terenu.' }}</p>
+{% endif %}
+</div>
+
 {# 4. Na tle 10 lat (B) #}
 <div class="keep">
 <h2>B. Na tle 10 lat <span class="tag">{{ a.history.period_start|date_pl }} – {{ a.history.period_end|date_pl }}</span></h2>
@@ -181,7 +206,7 @@
   <div class="why"><b>Dlaczego?</b> {{ r.why }}</div>
 </div>
 {% else %}<p class="muted">Brak rekomendacji – nie wynikają z danych dla tej działki (np. grunt nierolny albo brak danych o glebie).</p>{% endfor %}
-<p class="small muted">Miejsca działań na mapie (oczka, zastawki, pasy zieleni) – po analizie terenu i rowów (w przygotowaniu).</p>
+<p class="small muted">{% if terrain %}Miejsca działań z terenu (oczko, pas zieleni, odpływ) – na mapie w aplikacji, warstwa „Spływ wody”.{% else %}Miejsca działań na mapie (oczka, zastawki, pasy zieleni) – po analizie terenu.{% endif %}</p>
 
 {# 7. Gleba i teren #}
 <h2>Gleba i teren</h2>
@@ -219,8 +244,18 @@
     <p class="tiny muted">{{ p.method }}; SoilGrids 250 m – wartości orientacyjne.</p>
     {% endif %}
     {% if a.soil.texture_note %}<p class="small muted">{{ a.soil.texture_note }}</p>{% endif %}
-    <h3 style="margin-top:5pt">Teren</h3>
-    <p class="muted">Spadki, zagłębienia i spływ wody (NMT) oraz rowy w okolicy (BDOT10k) – w przygotowaniu, brak danych.</p>
+    <h3 style="margin-top:5pt">Teren (NMT GUGiK)</h3>
+    {% if terrain %}{% set t = terrain %}
+    <table class="kv">
+      <tr><td>Wysokość</td><td>{{ t.elev_min_m|num(1, 'm') }} – {{ t.elev_max_m|num(1, 'm') }} (różnica {{ t.relief_m|num(1, 'm') }})</td></tr>
+      <tr><td>Spadek</td><td>średnio {{ t.slope_mean_pct|num(1, '%') }}, najwięcej {{ t.slope_max_pct|num(1, '%') }}</td></tr>
+      <tr><td>Spływ wody</td><td>{{ t.main_flow_direction or 'brak wyraźnego kierunku' }}{% for o in t.outlets %}{% if loop.first %} · odpływ: {% endif %}{{ o.direction }} {{ o.share_of_parcel_pct|num(0, '%') }}{% if not loop.last %}, {% endif %}{% endfor %}</td></tr>
+      <tr><td>Dopływ spoza działki</td><td>{{ (t.inflow_from_outside_m2 / 10000)|num(1, 'ha') if t.inflow_from_outside_m2 is not none else 'brak danych' }}</td></tr>
+      <tr><td>Zagłębienia bez odpływu</td><td>{{ t.depressions_count }}{% if t.largest_depression %} · największe ok. {{ t.largest_depression.volume_m3|num(0, 'm³') }}, głęb. {{ t.largest_depression.max_depth_m|num(1, 'm') }}{% endif %}</td></tr>
+    </table>
+    <p class="tiny muted">Dla dociekliwych: siatka {{ t.details.grid_step_m|num(1, 'm') }}, wygładzenie σ = {{ t.details.smoothing_sigma_m|num(0, 'm') }}{% if t.details.twi_mean is not none %}, TWI śr. {{ t.details.twi_mean|num(1) }} (p90 {{ t.details.twi_p90|num(1) }}){% endif %}; {{ t.details.method }}. Pewność: {{ CONFIDENCE[t.confidence] }}.</p>
+    {% else %}<p class="muted">{{ a.terrain_note or 'Brak analizy terenu.' }}</p>{% endif %}
+    <p class="tiny muted">Rowy, cieki i zbiorniki w okolicy (BDOT10k) – w przygotowaniu.</p>
   </div>
 </div>
 

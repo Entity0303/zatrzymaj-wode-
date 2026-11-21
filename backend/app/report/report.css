@@ -93,3 +93,7 @@ ul.lim li { margin-bottom: 1.5pt; }
 .fractions i { display: block; height: 10pt; }
 .page-break { break-before: page; }
 .keep { break-inside: avoid; }
+
+ul.zones { margin: 3pt 0 0 0; padding-left: 0; list-style: none; font-size: 8.5pt; }
+ul.zones li { margin: 2pt 0; }
+ul.zones .pill { font-size: 7pt; }

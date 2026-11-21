@@ -1,18 +1,22 @@
+import time
+
 import httpx
 
 from app.core.config import settings
 
 _client: httpx.AsyncClient | None = None
+DEFAULT_MAX_BYTES = 30_000_000  # największa zwykła odpowiedź: NASA POWER 10 lat / IUNG WCS – kilka MB
 
 
 def get_client() -> httpx.AsyncClient:
-    """Wspólny klient HTTP (połączenia są ponownie wykorzystywane)."""
+    """Wspólny klient HTTP (połączenia są ponownie wykorzystywane). NIGDY nie podąża za przekierowaniami (A6, D56):
+    GUGiK przy limicie odsyła na integracja01.gugik.gov.pl/resp/uldk.php, który serwuje plik ~126 MB."""
     global _client
     if _client is None:
         _client = httpx.AsyncClient(
             timeout=settings.http_timeout_s,
             headers={"User-Agent": settings.user_agent},
-            follow_redirects=True,
+            follow_redirects=False,
         )
     return _client
 
@@ -35,6 +39,66 @@ class SourceError(Exception):
 
 class NotFoundError(SourceError):
     """Źródło odpowiedziało poprawnie, ale nie ma szukanego obiektu -> HTTP 404."""
+
+
+class RedirectBlocked(SourceError):
+    """Źródło odpowiedziało przekierowaniem (3xx) – traktujemy jak blokadę / ograniczenie ruchu; treści nie czytamy."""
+
+    def __init__(self, source: str, location: str | None = None):
+        super().__init__(source, "usługa chwilowo ogranicza ruch (przekierowanie) – spróbuj za chwilę")
+        self.location = location
+
+
+async def request(
+    method: str,
+    url: str,
+    *,
+    source: str,
+    timeout_s: float,
+    params: dict | list[tuple[str, str]] | None = None,
+    data: dict | None = None,
+    headers: dict | None = None,
+    max_bytes: int = DEFAULT_MAX_BYTES,
+) -> httpx.Response:
+    """Jedno zapytanie (bez ponowień) z odczytem strumieniowym:
+    - przekierowanie 3xx → `RedirectBlocked` BEZ czytania treści (połączenie zamykane od razu),
+    - treść większa niż `max_bytes` (zadeklarowana albo w trakcie odczytu) → SourceError i przerwanie,
+    - łączny czas odczytu > 2 × `timeout_s` → SourceError (limit httpx dotyczy pojedynczej operacji).
+    Zwraca odpowiedź z wczytaną treścią (status 2xx/4xx/5xx – decyzja należy do wołającego).
+    Wyjątki httpx (timeout, brak połączenia) przechodzą dalej – obsługują je wołający."""
+    if settings.demo_offline:  # D55: w trybie demo offline nie wysyłamy żadnych zapytań zewnętrznych
+        raise SourceError(source, "tryb demo offline – bez połączenia z usługą")
+    client = get_client()
+    req = client.build_request(method, url, params=params, data=data, headers=headers,
+                               timeout=httpx.Timeout(timeout_s))
+    t0 = time.monotonic()
+    try:
+        resp = await client.send(req, stream=True, follow_redirects=False)
+    except httpx.DecodingError as exc:
+        raise SourceError(source, "usługa zwróciła uszkodzoną odpowiedź (kompresja)") from exc
+    try:
+        if 300 <= resp.status_code < 400:
+            raise RedirectBlocked(source, resp.headers.get("location"))
+        declared = resp.headers.get("content-length")
+        if declared and declared.isdigit() and int(declared) > max_bytes:
+            raise SourceError(source, f"odpowiedź za duża ({int(declared) // 1_000_000} MB) – przerwano")
+        chunks, size = [], 0
+        try:
+            async for part in resp.aiter_bytes():
+                size += len(part)
+                if size > max_bytes:
+                    raise SourceError(source, f"odpowiedź za duża (> {max_bytes // 1_000_000} MB) – przerwano")
+                if time.monotonic() - t0 > 2 * timeout_s:
+                    raise SourceError(source, f"odczyt odpowiedzi trwa ponad {2 * timeout_s:.0f} s – przerwano")
+                chunks.append(part)
+        except httpx.DecodingError as exc:  # uszkodzona kompresja (np. strona blokady GUGiK) – awaria źródła, nie 500
+            raise SourceError(source, "usługa zwróciła uszkodzoną odpowiedź (kompresja)") from exc
+    finally:
+        await resp.aclose()
+    # treść jest już rozpakowana (aiter_bytes) – bez nagłówków kodowania, inaczej httpx rozpakowałby ją drugi raz
+    headers = [(k, v) for k, v in resp.headers.multi_items()
+               if k.lower() not in ("content-encoding", "content-length", "transfer-encoding")]
+    return httpx.Response(resp.status_code, headers=headers, content=b"".join(chunks), request=req)
 
 
 def http_error(exc: SourceError):
@@ -66,20 +130,17 @@ async def get_with_retry(
     source: str,
     timeout_s: float,
     retries: int = 1,
+    max_bytes: int = DEFAULT_MAX_BYTES,
 ):
-    """GET z timeoutem i ponowną próbą przy błędzie sieci / timeoucie / 5xx.
+    """GET z timeoutem i ponowną próbą przy błędzie sieci / timeoucie / 5xx (przez `request` – bez przekierowań).
 
-    429 (limit zapytań) i pozostałe 4xx = niedostępność źródła bez ponawiania.
+    3xx (RedirectBlocked), 429 (limit zapytań) i pozostałe 4xx = niedostępność źródła bez ponawiania.
     Każda porażka kończy się SourceError(source, komunikat po polsku).
     """
-    import httpx
-
-    if settings.demo_offline:  # D55: w trybie demo offline nie wysyłamy żadnych zapytań zewnętrznych
-        raise SourceError(source, "tryb demo offline – bez połączenia z usługą")
     last = "brak odpowiedzi"
     for attempt in range(retries + 1):
         try:
-            resp = await get_client().get(url, params=params, timeout=httpx.Timeout(timeout_s))
+            resp = await request("GET", url, source=source, timeout_s=timeout_s, params=params, max_bytes=max_bytes)
         except httpx.TimeoutException:
             last = f"usługa nie odpowiada (przekroczono {timeout_s:.0f} s)"
             continue

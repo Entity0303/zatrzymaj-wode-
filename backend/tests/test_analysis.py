@@ -203,7 +203,8 @@ def test_autumn_rules_order_and_panel():
 def test_terrain_rules_disabled_until_data():
     ev = evaluate(facts())
     assert {"retencja.oczko_w_zaglebieniu", "retencja.zastawka_na_rowie", "retencja.pas_buforowy_na_stoku"} <= set(ev.disabled)
-    ev2 = evaluate(facts(depression_area_m2=600.0, depression_catchment_ha=1.2), available={"terrain"})
+    ev2 = evaluate(facts(terrain_pond="glowna", pond_catchment_ha=1.2, pond_place_txt="w zagłębieniu",
+                         pond_area_m2=80.0, pond_inflow_runoff_m3=70.0, pond_depth_m=0.6), available={"terrain"})
     assert "retencja.oczko_w_zaglebieniu" in [r.id for r in ev2.recommendations]
 
 
@@ -237,6 +238,7 @@ def _mock(nasa=True, wcs=True):
     respx.get(settings.kieg_url).mock(return_value=httpx.Response(200, text=KIEG_CLASSES))
     respx.get(settings.soilgrids_url).mock(return_value=httpx.Response(200, json=SOILGRIDS))
     respx.get(settings.soil_map_url).mock(return_value=httpx.Response(200, text=SOIL_MAP))
+    respx.post(settings.nmt_url).mock(return_value=httpx.Response(503))  # A6: bez NMT (teren = null)
 
 
 @respx.mock
@@ -253,7 +255,9 @@ def test_analysis_success(client):
     cats = [x.category for x in a.recommendations]
     assert cats == sorted(cats, key=CATEGORY_ORDER.index) and sum(x.in_panel for x in a.recommendations) <= 3
     steps = {s.id: s for s in a.steps}
-    assert steps["parcel"].state == "done" and steps["satellite"].state == "pending" and steps["terrain"].state == "pending"
+    assert steps["parcel"].state == "done" and steps["satellite"].state == "pending"
+    # A6: NMT nie odpowiada (mock 503) – teren = null z powodem, analiza działa dalej
+    assert steps["terrain"].state == "error" and a.terrain is None and "NMT GUGiK" in a.terrain_note
     assert steps["total"].duration_ms is not None and steps["total"].duration_ms < 30_000
     assert a.reliability.confidence in ("srednia", "ograniczona")
 

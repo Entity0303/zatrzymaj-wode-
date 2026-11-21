@@ -18,7 +18,7 @@ from app.analysis.et0 import DailyWeather, apply_et0, densify
 
 from app.core.cache import FOREVER, TTLCache, cached_fetch
 from app.core.config import settings
-from app.core.http import SourceError, get_client, get_with_retry
+from app.core.http import SourceError, get_with_retry, request
 
 SOURCE = "Open-Meteo (prognoza)"
 SOURCE_URL = "https://open-meteo.com/"
@@ -145,9 +145,7 @@ async def _download(key: tuple, days: int, past_days: int) -> Forecast:
     if past_days:
         params["past_days"] = str(past_days)
     try:
-        resp = await get_client().get(
-            settings.open_meteo_forecast_url, params=params, timeout=httpx.Timeout(10.0)
-        )
+        resp = await request("GET", settings.open_meteo_forecast_url, source=SOURCE, timeout_s=10.0, params=params)
     except httpx.TimeoutException as exc:
         raise SourceError(SOURCE, "usługa nie odpowiada (przekroczono 10 s)") from exc
     except httpx.TransportError as exc:

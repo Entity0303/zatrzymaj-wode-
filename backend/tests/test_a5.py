@@ -61,6 +61,7 @@ def mock_all() -> dict[str, respx.Route]:
         "kieg": respx.get(settings.kieg_url).mock(return_value=httpx.Response(200, text=KIEG_CLASSES)),
         "sg": respx.get(settings.soilgrids_url).mock(return_value=httpx.Response(200, json=SOILGRIDS)),
         "map": respx.get(settings.soil_map_url).mock(return_value=httpx.Response(200, text=SOIL_MAP)),
+        "nmt": respx.post(settings.nmt_url).mock(return_value=httpx.Response(503)),  # A6: bez NMT (teren = null)
     }
 
 
@@ -122,7 +123,9 @@ def test_permit_for_every_rule_and_category():
     assert {r.permit for r in rules if r.category == "agrotechnika"} == {"none"}
     by_id = {r.id: r.permit for r in rules}
     assert by_id["retencja.zastawka_na_rowie"] == by_id["retencja.oczko_w_zaglebieniu"] == "maybe"
-    assert by_id["retencja.mokradlo_srodpolne"] == "maybe" and by_id["retencja.pas_buforowy_na_stoku"] == "none"
+    # A6 (D59): „zostaw podmokły fragment” to brak prac – bez formalności (wcześniej D42: maybe)
+    assert by_id["retencja.mokradlo_srodpolne"] == "none" and by_id["retencja.pas_buforowy_na_stoku"] == "none"
+    assert by_id["retencja.oczko_opcja"] == "maybe"
     for r in evaluate(stress_facts()).recommendations:
         assert r.permit_note
         assert (r.permit_url is None) == (r.permit == "none")

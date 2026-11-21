@@ -99,7 +99,7 @@ def test_warmup_disabled_state():
 
 def _mock_probes(fail: str | None = None):
     urls = [settings.uldk_url, settings.nasa_power_url, settings.open_meteo_forecast_url, settings.iung_wms_url,
-            settings.kieg_url, settings.soilgrids_url, settings.soil_map_url]
+            settings.kieg_url, settings.soilgrids_url, settings.soil_map_url, settings.nmt_url]
     for u in urls:
         body = "0\n201305_2.0038.6/1\n" if u == settings.uldk_url else "{}"
         respx.get(u).mock(return_value=httpx.Response(503) if u == fail else httpx.Response(200, text=body))
@@ -109,7 +109,7 @@ def _mock_probes(fail: str | None = None):
 def test_status_all_ok(client):
     _mock_probes()
     b = client.get("/api/status").json()
-    assert b["all_ok"] is True and len(b["services"]) == 7
+    assert b["all_ok"] is True and len(b["services"]) == 8
     names = [s["name"] for s in b["services"]]
     assert names[:3] == ["ULDK GUGiK", "NASA POWER", "Open-Meteo"] and "SoilGrids (ISRIC)" in names
     assert all(s["response_ms"] is not None and s["cache_entries"] >= 0 for s in b["services"])

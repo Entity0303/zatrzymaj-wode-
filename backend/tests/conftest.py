@@ -15,7 +15,9 @@ settings.demo_warmup = False
 settings.cache_db = ""
 settings.demo_offline = False
 settings.demo_parcels_preload = False
+settings.terrain_saved_results = False  # zapisane wyniki terenu (app/data/terrain) – tylko w testach A6, jawnie
 settings.uldk_retry_delays_s = [0.0, 0.0]
+settings.nmt_retry_delay_s = 0.0
 
 
 @pytest.fixture(autouse=True)
@@ -32,9 +34,12 @@ def _isolated_caches():
         uldk._known.clear()
         uldk._known_loaded = False
 
-    saved = (settings.cache_db, settings.demo_offline, settings.demo_parcels_preload)
+    from app.analysis import terrain
+
+    terrain.clear_memo()
+    saved = (settings.cache_db, settings.demo_offline, settings.demo_parcels_preload, settings.terrain_saved_results)
     reset()
     yield
-    settings.cache_db, settings.demo_offline, settings.demo_parcels_preload = saved
+    settings.cache_db, settings.demo_offline, settings.demo_parcels_preload, settings.terrain_saved_results = saved
     cache.store()  # wróć do magazynu z ustawień (pamięć)
     reset()

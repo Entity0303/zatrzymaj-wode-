@@ -9,9 +9,10 @@ Co robi (spokojnie – przerwy między zapytaniami, pomija to, co już jest w ca
    (bezpiecznik) – pomija resztę działek, zostawia flagę.
 2. Dla każdej znanej działki demo: analiza bez uprawy (dziś) + analizy z przykładów /api/demo/examples
    (te same działki, uprawy, daty) – to wypełnia cache pogody 10 lat (NASA POWER), prognozy, IUNG, mapy
-   glebowo-rolniczej, SoilGrids, KIEG i ortofotomapy; potem raport PDF każdego przypadku.
+   glebowo-rolniczej, SoilGrids, KIEG, NMT (teren, A6) i ortofotomapy; potem raport PDF każdego przypadku.
 3. Tabela: przypadek, wynik, czas, ile źródeł z cache; liczba wpisów w cache na źródło.
-NMT, BDOT10k i GUS nie mają jeszcze klientów (teren – osoba C) – nie ma czego pobierać; cache jest na nie gotowy.
+BDOT10k i GUS nie mają jeszcze klientów – nie ma czego pobierać; cache jest na nie gotowy. Gdy NMT nie odpowiada,
+teren działek demo pochodzi z zapisanego wyniku (app/data/terrain, prawdziwe NMT z 21.11 – D57).
 Wynik jest w pliku cache (CACHE_DB, w Dockerze wolumen /data) – potem można włączyć DEMO_OFFLINE=true.
 """
 
@@ -128,7 +129,10 @@ def main() -> int:
                 if p.status_code == 200 and out:
                     out.mkdir(parents=True, exist_ok=True)
                     (out / f"{slug}.pdf").write_bytes(p.content)
-            rows.append(row + [f"{b['status']['level']} ({b['status']['score']})", f"{t_a:.2f} s", pdf])
+            t = b.get("terrain")
+            terr = ("teren: " + ", ".join(f"{z['label'].split(' –')[0]} {round(z['share_pct'])}%" for z in t["zones"]
+                                          if z["share_pct"] >= 1)) if t else "teren: brak"
+            rows.append(row + [f"{b['status']['level']} ({b['status']['score']}); {terr}", f"{t_a:.2f} s", pdf])
             if t_a > 0.5:  # były zapytania do źródeł – spokojnie
                 time.sleep(a.pause)
     print("\n| Przypadek | Uprawa | Data | Wynik | Analiza | PDF |\n|---|---|---|---|---|---|")

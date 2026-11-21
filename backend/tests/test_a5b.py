@@ -120,7 +120,7 @@ def test_eco_schemes_only_confirmed_codes():
     assert set(ALLOWED_ECO_CODES) == {"E_MPW", "E_USU", "E_WSG", "E_PN", "E_MIOD", "E_EKSTUZ"}
     assert set(ECO_SCHEMES) == set(ALLOWED_ECO_CODES) and all(e.code in ALLOWED_ECO_CODES for e in ECO_SCHEMES.values())
     for path in sorted(Path(RULES_DIR).glob("*.yaml")):  # surowy YAML, nie tylko wczytane reguły
-        for raw in yaml.safe_load(path.read_text(encoding="utf-8"))["rules"]:
+        for raw in yaml.safe_load(path.read_text(encoding="utf-8")).get("rules") or []:
             assert raw.get("eco_scheme") in (None, *ALLOWED_ECO_CODES), (path.name, raw["id"])
     assert all(r.eco_scheme in (None, *ALLOWED_ECO_CODES) for r in load_rules())
     by_id = {r.id: r for r in load_rules()}

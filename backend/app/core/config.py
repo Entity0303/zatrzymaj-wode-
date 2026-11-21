@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     http_timeout_s: float = 20.0
-    user_agent: str = "zatrzymaj-wode/0.1 (HackNation 2026)"
+    user_agent: str = "Wodoskop/0.1 (HackNation 2026)"  # uczciwy User-Agent dla wszystkich źródeł (A6)
     cors_origins: list[str] = ["http://localhost:5173"]
 
     uldk_url: str = "https://uldk.gugik.gov.pl/"
@@ -51,6 +51,13 @@ class Settings(BaseSettings):
     soil_map_url: str = "https://mapy.geoportal.gov.pl/wss/service/pub/guest/MapaGlebowoRolnicza/MapServer/WMSServer"
     soil_map_timeout_s: float = 8.0
     ortho_wms_url: str = "https://mapy.geoportal.gov.pl/wss/service/PZGIK/ORTO/WMS/StandardResolution"
+    # NMT GUGiK (A6): POST GetHByPointList, paczki po 1000 punktów; łączny limit całej siatki
+    nmt_url: str = "https://services.gugik.gov.pl/nmt/"
+    nmt_timeout_s: float = 12.0
+    nmt_total_timeout_s: float = 15.0
+    nmt_retry_delay_s: float = 0.3
+    # zapasowe wyniki terenu z app/data/terrain (prawdziwe NMT z 21.11, osoba C) – gdy NMT nie odpowiada (D57)
+    terrain_saved_results: bool = True
 
     # przykłady demo: rozgrzewka cache przy starcie (w tle) i co tyle godzin
     demo_warmup: bool = True

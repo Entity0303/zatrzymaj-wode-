@@ -120,6 +120,30 @@ async def _ortho_download(bbox: tuple[float, float, float, float], px: int) -> s
     return f"data:{ctype.split(';')[0]};base64,{base64.b64encode(resp.content).decode()}"
 
 
+def zones_overlay(a: AnalysisResponse, bbox: tuple[float, float, float, float], px: int = MAP_PX) -> str:
+    """Mapka stref terenu (A6): strefy z /api/layers/teren w tym samym wycinku co ortofotomapa (EPSG:2180 → piksele)."""
+    if a.terrain is None:
+        return ""
+    from app.analysis import terrain as terrain_mod
+    from app.analysis import terrain_interpret
+
+    try:
+        res = terrain_mod._memo_lookup(a.parcel.id)
+    except Exception:  # noqa: BLE001
+        res = None
+    if res is None:
+        return ""
+    feats = terrain_interpret.layer_teren(res.geojson, res.facts, shape(a.parcel.geometria))["features"]
+    side = bbox[2] - bbox[0]
+    shapes = []
+    for f in feats:
+        g = to_2180(shape(f["geometry"]))
+        polys = list(g.geoms) if g.geom_type == "MultiPolygon" else [g] if g.geom_type == "Polygon" else []
+        rings = [[((x - bbox[0]) / side * px, (bbox[3] - y) / side * px) for x, y in p.exterior.coords] for p in polys]
+        shapes.append((f["properties"]["color"], rings))
+    return charts.zones_svg(shapes, px, px)
+
+
 def analysis_url(a: AnalysisResponse) -> str:
     q = {"dzialka": a.parcel.id}
     if a.crop:
@@ -168,6 +192,10 @@ def render_html(a: AnalysisResponse, ortho: str | None, generated: dt.datetime |
         "chart_stress": Markup(charts.stress_chart(h.stress_days_by_year) or ""),
         "chart_precip": Markup(charts.precip_chart(h.monthly_precip) or ""),
         "water_bar": Markup(charts.bar(a.indicators.soil_water_pct.value, "#2F80C9")),
+        "terrain": a.terrain,
+        "zone_bar": Markup(charts.zone_bar(a.terrain.zones) or "") if a.terrain else "",
+        "zones_map": Markup(zones_overlay(a, bbox)),
+        "RATING": {"dobrze": ("dobrze", "#5BB37F"), "uwaga": ("uwaga", "#E8B931"), "zle": ("źle", "#C8453B")},
         "css": Markup((HERE / "report.css").read_text(encoding="utf-8")),
     }
     return _env.get_template("report.html").render(**ctx)

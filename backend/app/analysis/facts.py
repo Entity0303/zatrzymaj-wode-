@@ -62,6 +62,14 @@ FACT_META: dict[str, tuple[str, str | None, str]] = {
     "kbw30_mm": ("Bilans wody z ostatnich 30 dni (opad − parowanie)", "mm", "NASA POWER"),
     "kbw30_percentile": ("Lata z niższym bilansem wody w ostatnich 30 dniach", "%", "NASA POWER"),
     "et0_recent_mm_day": ("Parowanie (ET0) w ostatnich 7 dniach", "mm/dzień", "NASA POWER, FAO-56"),
+    # teren (A6, NMT GUGiK)
+    "slope_max_pct": ("Największy spadek terenu", "%", "NMT GUGiK"),
+    "steep_share_pct": ("Część działki o spadku > 5%", "%", "NMT GUGiK"),
+    "wet_spot_area_m2": ("Zagłębienie bez odpływu w działce", "m²", "NMT GUGiK"),
+    "outlet_share_pct": ("Część działki odprowadzana głównym odpływem", "%", "NMT GUGiK"),
+    "inflow_ha": ("Powierzchnia, z której woda spływa na działkę", "ha", "NMT GUGiK"),
+    "pond_catchment_ha": ("Zlewnia miejsca na oczko", "ha", "NMT GUGiK"),
+    "terrain_relief_m": ("Różnica wysokości w działce", "m", "NMT GUGiK"),
 }
 OPTIONAL_IRRIGATION_NOTE = (" {crop} w Polsce nawadnia się rzadko – ma to sens tylko przy dostępnej wodzie i sprzęcie"
                             " (pozwolenie wodnoprawne).")

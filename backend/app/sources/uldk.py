@@ -24,7 +24,7 @@ from shapely.geometry.base import BaseGeometry
 from app.core.cache import FOREVER, TTLCache, cached_fetch
 from app.core.config import settings
 from app.core.geo import parse_wkt, to_wgs84
-from app.core.http import NotFoundError, SourceError, get_client
+from app.core.http import NotFoundError, RedirectBlocked, SourceError, request
 
 SOURCE = "ULDK GUGiK"
 SOURCE_URL = "https://uldk.gugik.gov.pl/"
@@ -129,7 +129,6 @@ async def _get(params: dict) -> str:
     """GET z timeoutem. Blokada (429 / przekierowanie / HTML) → ponowienie po 1 s i 3 s (maks. 2 razy), każde na nowym
     połączeniu, potem SourceError – a `cached_fetch` otwiera bezpiecznik na 60 s (D54). Przekierowania nie śledzimy:
     resp/uldk.php zwraca pozorne „0” ze śmieciową geometrią (D45)."""
-    timeout = httpx.Timeout(settings.uldk_timeout_s)
     delays = [0.0, *settings.uldk_retry_delays_s]
     last = "brak odpowiedzi"
     for attempt, delay in enumerate(delays):
@@ -137,8 +136,12 @@ async def _get(params: dict) -> str:
             await asyncio.sleep(delay)
         try:
             headers = {"Connection": "close"} if attempt else None
-            resp = await get_client().get(settings.uldk_url, params=params, timeout=timeout, follow_redirects=False,
-                                          headers=headers)
+            # bez przekierowań i bez czytania treści 3xx; limit 5 MB (odpowiedź ULDK to kilka kB) – D56
+            resp = await request("GET", settings.uldk_url, source=SOURCE, timeout_s=settings.uldk_timeout_s,
+                                 params=params, headers=headers, max_bytes=5_000_000)
+        except RedirectBlocked as exc:
+            last = exc.message
+            continue
         except httpx.TimeoutException as exc:
             raise SourceError(SOURCE, f"usługa nie odpowiada (przekroczono {settings.uldk_timeout_s:.0f} s)") from exc
         except httpx.TransportError as exc:

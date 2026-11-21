@@ -44,7 +44,9 @@ def main() -> int:
                 steps.append(("Wyszukanie (punkt na mapie)", "/api/parcel", {"lon": sum(xs) / len(xs), "lat": sum(ys) / len(ys)}))
             today = dt.date.today().isoformat()
             steps += [("Analiza bez uprawy", "/api/analysis", {"parcel_id": pid, "date": today}),
-                      ("PDF bez uprawy", "/api/report.pdf", {"parcel_id": pid, "date": today})]
+                      ("PDF bez uprawy", "/api/report.pdf", {"parcel_id": pid, "date": today}),
+                      ("Warstwa Teren", "/api/layers/teren", {"parcel_id": pid, "date": today}),
+                      ("Warstwa Spływ wody", "/api/layers/splyw", {"parcel_id": pid, "date": today})]
             for e in (x for x in examples if x["parcel_id"] == pid):
                 q = {"parcel_id": pid, "crop": e["crop"], "date": e["date"]}
                 if e.get("previous_crop"):
@@ -56,6 +58,12 @@ def main() -> int:
                 if code == 200 and path == "/api/analysis":
                     b = r.json()
                     note = f"{b['status']['level']} ({b['status']['score']}), pewność {b['reliability']['confidence']}"
+                    t = b.get("terrain")
+                    note += (f"; teren: " + ", ".join(f"{z['label'].split(' –')[0]} {round(z['share_pct'])}%"
+                                                      for z in t["zones"] if z["share_pct"] >= 1)) if t else \
+                        f"; teren: brak ({b.get('terrain_note')})"
+                elif code == 200 and path.startswith("/api/layers/"):
+                    note = f"{len(r.json()['features']['features'])} obiektów, {len(r.content) // 1000} kB"
                 elif code != 200:
                     ok = False
                     try:

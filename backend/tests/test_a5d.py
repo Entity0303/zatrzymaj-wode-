@@ -165,7 +165,7 @@ def test_retry_delays_are_1_and_3_seconds_by_default():
 def test_status_shows_uldk_limited_until_and_does_not_query_it(client):
     uldk_route = respx.get(settings.uldk_url).mock(return_value=httpx.Response(200, text="0\n"))
     for u in (settings.nasa_power_url, settings.open_meteo_forecast_url, settings.iung_wms_url, settings.kieg_url,
-              settings.soilgrids_url, settings.soil_map_url):
+              settings.soilgrids_url, settings.soil_map_url, settings.nmt_url):
         respx.get(u).mock(return_value=httpx.Response(200, text="{}"))
     trip(uldk.SOURCE, 60, "usługa chwilowo ogranicza ruch (przekierowanie)")
     s = next(x for x in client.get("/api/status").json()["services"] if x["name"] == "ULDK GUGiK")
@@ -178,7 +178,7 @@ def test_status_shows_uldk_limited_until_and_does_not_query_it(client):
 def test_status_probe_detects_uldk_block_and_trips_breaker(client):
     respx.get(settings.uldk_url).mock(return_value=httpx.Response(200, text=HTML_BLOCK))
     for u in (settings.nasa_power_url, settings.open_meteo_forecast_url, settings.iung_wms_url, settings.kieg_url,
-              settings.soilgrids_url, settings.soil_map_url):
+              settings.soilgrids_url, settings.soil_map_url, settings.nmt_url):
         respx.get(u).mock(return_value=httpx.Response(200, text="{}"))
     s = next(x for x in client.get("/api/status").json()["services"] if x["name"] == "ULDK GUGiK")
     assert not s["ok"] and s["error"].startswith("ograniczony (do ") and breaker(uldk.SOURCE).open

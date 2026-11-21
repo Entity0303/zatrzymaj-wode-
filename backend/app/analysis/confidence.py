@@ -73,6 +73,9 @@ class ConfidenceInputs:
     soil_map_year: int | None = None
     stale: list[StaleHit] = field(default_factory=list)
     soil_conflict: bool = False
+    terrain_error: str | None = None  # A6: powód braku analizy terenu
+    terrain_saved: bool = False  # teren z zapisanego wyniku (NMT nie odpowiadał)
+    terrain_limitations: list[str] = field(default_factory=list)
     soil_basis_label: str | None = None  # źródło kategorii gleby, gdy inne niż IUNG
 
 
@@ -85,7 +88,8 @@ def premises(i: ConfidenceInputs) -> list[Premise]:
     if not i.satellite:
         add("satelita_brak", "brak zdjęć satelitarnych (kondycja roślin – w przygotowaniu)")
     if not i.terrain:
-        add("teren_brak", "brak analizy terenu (spadki, spływ – w przygotowaniu)")
+        add("teren_brak", "brak analizy terenu (NMT GUGiK nie odpowiada)" if i.terrain_error
+            else "brak analizy terenu (spadki, spływ)")
     if i.weather_name:
         if i.weather_fallback:
             add("pogoda_zapasowa", f"pogoda ze źródła zapasowego ({i.weather_name})")
@@ -193,8 +197,10 @@ def reliability(i: ConfidenceInputs) -> tuple[Reliability, list[Premise], int]:
     sources += [
         SourceStatus(name="Sentinel-2 L2A", used_for="kondycja i wilgotność roślin", data_date=None, resolution="10 m",
                      status="brak", note="w przygotowaniu"),
-        SourceStatus(name="NMT GUGiK", used_for="teren i spływ wody", data_date=None, resolution="1 m",
-                     status="brak", note="w przygotowaniu"),
+        SourceStatus(name="NMT GUGiK", used_for="teren i spływ wody", data_date=None, resolution="1 m (siatka 3–15 m)",
+                     status=("czesciowo" if i.terrain_saved else "ok") if i.terrain else "brak",
+                     note=("zapisany wynik analizy z 21.11.2026" if i.terrain_saved else None) if i.terrain
+                     else (i.terrain_error or "brak danych")),
         SourceStatus(name="BDOT10k", used_for="rowy, cieki i zbiorniki w okolicy", data_date=None,
                      status="brak", note="w przygotowaniu"),
     ]
@@ -213,6 +219,10 @@ def reliability(i: ConfidenceInputs) -> tuple[Reliability, list[Premise], int]:
         lim.append("Brak zdjęć satelitarnych – kondycja i wilgotność roślin w przygotowaniu.")
     if not i.terrain:
         lim.append("Brak analizy terenu – spływ wody przyjęty w uproszczeniu (20% opadu powyżej 20 mm na dobę).")
+    else:
+        lim += i.terrain_limitations
+        lim.append("Teren nie zmienia modelu wody w glebie – spływ w bilansie nadal uproszczony (20% opadu powyżej "
+                   "20 mm na dobę); strefy terenu opisują, gdzie na działce jest sucho, a gdzie mokro.")
     for c in CONSTANT_LIMITATIONS:  # bez powtórzeń treści już zgłoszonej przez moduły (np. gleba)
         if not ("gleby mineralne" in c and any("gleby mineralne" in x for x in lim)):
             lim.append(c)

@@ -40,6 +40,25 @@ def test_frontend_sample_matches_contract(sample):
 
 
 @pytest.mark.skipif(not TYPES_TS.exists(), reason="brak katalogu frontend/ obok backend/")
+@pytest.mark.skipif(not SAMPLE.exists(), reason="brak katalogu frontend/ obok backend/")
+@pytest.mark.parametrize("layer", ["teren", "splyw"])
+def test_layer_samples_match_contract(layer):
+    """A6: przykłady warstw mapy (mocks/layers.*.sample.json) – LayerResponse + properties kind/color/label."""
+    from app.schemas.layers import LayerResponse
+
+    data = json.loads(SAMPLE.with_name(f"layers.{layer}.sample.json").read_text(encoding="utf-8"))
+    r = LayerResponse.model_validate(data)
+    assert r.layer == layer and r.features["type"] == "FeatureCollection" and r.features["features"]
+    for f in r.features["features"]:
+        assert {"kind", "color", "label"} <= set(f["properties"])
+
+
+@pytest.mark.skipif(not SAMPLE.exists(), reason="brak katalogu frontend/ obok backend/")
+def test_samples_have_terrain_section():
+    a = AnalysisResponse.model_validate(json.loads(SAMPLE.read_text(encoding="utf-8")))
+    assert a.terrain is not None and len(a.terrain.zones) == 4
+
+
 def test_ts_types_name_every_contract_field():
     """Każde pole modeli odpowiedzi analizy występuje w types.ts (prosta kontrola rozjazdu)."""
     ts = TYPES_TS.read_text(encoding="utf-8")

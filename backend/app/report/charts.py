@@ -154,6 +154,36 @@ def precip_chart(months: list[MonthlyPrecip], width: int = 330, height: int = 17
     return "".join(parts)
 
 
+def zone_bar(zones, width: int = 520, height: int = 16) -> str | None:
+    """Pasek udziałów stref terenu (górka / stok / płasko / dołek) w kolorach stref (A6)."""
+    zs = [z for z in zones if z.share_pct > 0]
+    if not zs:
+        return None
+    total = sum(z.share_pct for z in zs) or 1.0
+    parts = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height + 14}" '
+             f'viewBox="0 0 {width} {height + 14}" {FONT} font-size="9">']
+    x = 0.0
+    for z in zs:
+        w = width * z.share_pct / total
+        parts.append(f'<rect x="{x:.1f}" y="0" width="{w:.1f}" height="{height}" fill="{z.color}"/>')
+        if w > 34:
+            parts.append(f'<text x="{x + w / 2:.1f}" y="{height - 4}" text-anchor="middle" fill="#FFFFFF" '
+                         f'font-weight="600">{round(z.share_pct)}%</text>')
+        x += w
+    parts.append("</svg>")
+    return "".join(parts)
+
+
+def zones_svg(shapes: list[tuple[str, list[list[tuple[float, float]]]]], width: int, height: int) -> str:
+    """Strefy terenu na mapce (pierścienie już w pikselach) – nakładka pod obrysem działki."""
+    polys = "".join(
+        f'<polygon points="{" ".join(f"{x:.1f},{y:.1f}" for x, y in ring)}" fill="{color}" fill-opacity="0.72" '
+        f'stroke="{color}" stroke-width="0.6"/>' for color, rings in shapes for ring in rings
+    )
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}" '
+            f'class="outline">{polys}</svg>')
+
+
 def outline_svg(rings: list[list[tuple[float, float]]], width: int, height: int, color: str = "#FFD84D") -> str:
     """Obrys działki (współrzędne już w pikselach) – nakładka na ortofotomapę."""
     polys = "".join(

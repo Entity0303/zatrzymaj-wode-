@@ -15,7 +15,7 @@ from fastapi import APIRouter
 from app import demo
 from app.core.cache import breaker, cache_stats, trip
 from app.core.config import settings
-from app.core.http import SourceError, get_with_retry
+from app.core.http import RedirectBlocked, SourceError, get_with_retry
 from app.schemas.status import ServiceStatus, StatusResponse
 
 router = APIRouter(prefix="/api", tags=["infrastruktura"])
@@ -47,6 +47,8 @@ def _probes() -> list[tuple[str, str, str, dict | list, str]]:
         ("SoilGrids (ISRIC)", "frakcje gleby i przepuszczalność", settings.soilgrids_url,
          [("lon", f"{LON}"), ("lat", f"{LAT}"), ("property", "clay"), ("depth", "0-5cm"), ("value", "mean")],
          "SoilGrids (ISRIC)"),
+        ("NMT GUGiK", "teren i spływ wody (wysokości)", settings.nmt_url,
+         {"request": "GetHByPointList", "list": f"{N2180:.2f} {E2180:.2f}"}, "NMT GUGiK"),  # x = północ, y = wschód
         ("Mapa glebowo-rolnicza (GUGiK)", "kompleks i gatunek gleby (informacyjnie)", settings.soil_map_url,
          {"SERVICE": "WMS", "VERSION": "1.3.0", "REQUEST": "GetFeatureInfo", "LAYERS": "0", "QUERY_LAYERS": "0",
           "CRS": "EPSG:4326", "INFO_FORMAT": "text/xml", "BBOX": f"{LAT - d},{LON - d},{LAT + d},{LON + d}", **wms_pt},
@@ -71,9 +73,9 @@ async def _check(name: str, used_for: str, url: str, params, cache_name: str) ->
     try:
         resp = await asyncio.wait_for(
             get_with_retry(url, params, source=name, timeout_s=PROBE_TIMEOUT_S, retries=0), PROBE_TIMEOUT_S + 0.5)
-        redirected = bool(resp.history) or 300 <= resp.status_code < 400  # ULDK: ograniczanie ruchu (D45)
+        # przekierowanie = RedirectBlocked (treści 3xx nie czytamy, D56); ULDK potrafi też odesłać stronę HTML
         html = name == "ULDK GUGiK" and resp.text[:300].lstrip().lower().startswith(("<!doctype", "<html"))
-        if redirected or html:
+        if html:
             ok, err = False, "usługa chwilowo ogranicza ruch (przekierowanie)"
             if name == "ULDK GUGiK":  # D54: nie dokładamy zapytań do zablokowanego ULDK
                 trip(cache_name, settings.uldk_breaker_s, err)
@@ -82,11 +84,13 @@ async def _check(name: str, used_for: str, url: str, params, cache_name: str) ->
             ok, err = False, "usługa zwróciła błąd zapytania testowego"
     except SourceError as exc:
         ok, err = False, exc.message
-        if name == "ULDK GUGiK" and "429" in exc.message:
+        if name == "ULDK GUGiK" and (isinstance(exc, RedirectBlocked) or "429" in exc.message):
             trip(cache_name, settings.uldk_breaker_s, exc.message)
             err = _limited(cache_name)
     except asyncio.TimeoutError:
         ok, err = False, f"brak odpowiedzi w {PROBE_TIMEOUT_S:.0f} s"
+    except Exception as exc:  # noqa: BLE001 – /api/status nigdy nie zwraca 500 przez jedno źródło
+        ok, err = False, f"nieoczekiwana odpowiedź usługi ({exc.__class__.__name__})"
     return ServiceStatus(name=name, used_for=used_for, ok=ok, response_ms=int((perf_counter() - t0) * 1000),
                          error=err, cache_entries=n, cache_newest_age_s=None if age is None else int(age))
 

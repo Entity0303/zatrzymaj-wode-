@@ -27,6 +27,8 @@ from app.analysis.confidence import ConfidenceInputs, reliability
 from app.analysis.crops import CROPS, PHASE_LABELS
 from app.analysis import field_state as fs
 from app.analysis import soil_consistency
+from app.analysis import terrain_interpret
+from app.analysis.terrain import terrain_for_parcel
 from app.analysis.facts import build_facts, field_facts
 from app.analysis.recommendations import Evaluation, evaluate
 from app.analysis.scoring import overall_status, reserve_status
@@ -453,7 +455,7 @@ async def dev_water(
 ANALYSIS_BUDGET_S = 27.0  # cała analiza < 30 s (wymóg KOWR) – zapas na serializację
 # twardy limit całego pobrania na źródło (D45) – limit httpx dotyczy pojedynczej operacji, nie całego zapytania
 SOURCE_LIMIT_S = {"IUNG-PIB": 15.0, "KIEG / EGiB GUGiK": 6.5, "Open-Meteo (prognoza)": 10.0,
-                  "SoilGrids (ISRIC)": 12.5, "Mapa glebowo-rolnicza (GUGiK)": 8.0}
+                  "SoilGrids (ISRIC)": 12.5, "Mapa glebowo-rolnicza (GUGiK)": 8.0, "NMT GUGiK": 16.0}
 
 
 def _step(id_: str, label: str, state: str, note: str | None = None, ms: int | None = None) -> LoadingStep:
@@ -543,11 +545,16 @@ async def _run(parcel_id: str, crop: str | None, date: dt.date | None, previous_
             res = exc
         except asyncio.TimeoutError:
             res = SourceError(name, f"brak odpowiedzi w {limit:.0f} s")
+        except Exception as exc:  # noqa: BLE001 – teren (obliczenia na danych z zewnątrz) nie wywraca analizy
+            if name != "NMT GUGiK":
+                raise
+            res = SourceError(name, f"błąd analizy terenu ({exc.__class__.__name__})")
         return res, int((perf_counter() - st) * 1000)
 
     is_today = analysis_date == today
     (
         (w_res, w_ms), (iung_res, iung_ms), (kieg_res, kieg_ms), (fc_res, fc_ms), (sg_res, sg_ms), (sm_res, sm_ms),
+        (tr_res, tr_ms),
     ) = await asyncio.gather(
         timed("NASA POWER", load_weather_history(c.x, c.y, analysis_date)),
         timed("IUNG-PIB", iung.soil_for_parcel(p.geom_2180)),
@@ -555,6 +562,7 @@ async def _run(parcel_id: str, crop: str | None, date: dt.date | None, previous_
         timed("Open-Meteo (prognoza)", _forecast_days(c.x, c.y)) if is_today else asyncio.sleep(0, result=(None, 0)),
         timed(soilgrids.SOURCE, soilgrids.texture_at(rp.x, rp.y)),
         timed(soil_map.SOURCE, soil_map.soil_map_for_parcel(p.geom_2180)),
+        timed("NMT GUGiK", terrain_for_parcel(p.geom_2180, p.id)),
     )
     if isinstance(w_res, SourceError):  # bez pogody nic nie da się policzyć
         raise http_error(w_res)
@@ -581,7 +589,9 @@ async def _run(parcel_id: str, crop: str | None, date: dt.date | None, previous_
     else:
         steps.append(_step("forecast", "Prognoza pogody", "done", note="data historyczna – scenariusz typowej pogody", ms=0))
     steps.append(_step("satellite", "Zdjęcia satelitarne", "pending", note="w przygotowaniu – brak danych"))
-    steps.append(_step("terrain", "Analizuję teren", "pending", note="w przygotowaniu – brak danych"))
+    tr_saved = None if isinstance(tr_res, SourceError) else tr_res.facts.get("saved_note")
+    steps.append(_step("terrain", "Analizuję teren (NMT GUGiK)", state(tr_res),
+                       note=err(tr_res) or ("zapisany wynik analizy NMT" if tr_saved else None), ms=tr_ms))
 
     # ── 3. obliczenia ──
     s = perf_counter()
@@ -617,9 +627,22 @@ async def _run(parcel_id: str, crop: str | None, date: dt.date | None, previous_
     prev = previous_crop if previous_crop in CROPS else None
     facts = build_facts(crop_obj, analysis_date, soil_a, model, wb, sums, soil_c=soil_c, previous_crop=prev,
                         field=field, recent=recent)
+    # teren z NMT (A6): sekcja kontraktu + fakty dla reguł (requires: terrain)
+    terrain_c, terrain_note = None, None
+    soil_cat = cons.category_used if cons.contract else soil_a.dominant_mineral
+    if isinstance(tr_res, SourceError):
+        terrain_note = f"Brak analizy terenu – {tr_res.source}: {tr_res.message}"
+    else:
+        terrain_c = terrain_interpret.to_contract(tr_res.facts, soil_cat, data_date=today if not tr_saved else None,
+                                                  saved_note=tr_saved)
+    facts.values.update(terrain_interpret.rule_facts(None if terrain_c is None else tr_res.facts, soil_cat))
+    facts.values["terrain_runoff_pct"] = (None if terrain_c is None else
+                                          round(terrain_c.zone_share_pct["stok"] + terrain_c.zone_share_pct["sucha_gorka"]))
+    facts.values["terrain_wet_pct"] = None if terrain_c is None else round(terrain_c.zone_share_pct["mokry_dolek"])
     status = overall_status(facts, soil_c)
     causes = [] if soil_a.not_agricultural else build_causes(facts)
-    evaluation = evaluate(facts) if ok_calc and not soil_a.not_agricultural else Evaluation([])
+    available = {"terrain"} if terrain_c is not None else set()
+    evaluation = evaluate(facts, available=available) if ok_calc and not soil_a.not_agricultural else Evaluation([])
     field_c = None
     if field is not None:
         f_status = status if crop_obj is None else reserve_status(field_facts(field, recent), "bez_uprawy")
@@ -637,6 +660,8 @@ async def _run(parcel_id: str, crop: str | None, date: dt.date | None, previous_
         soil_map_year=sm_rep.mapped_year if sm_status == "ok" else None,
         stale=list(stale_hits),
         soil_conflict=cons.conflict,
+        terrain=terrain_c is not None, terrain_error=None if terrain_c is not None else terrain_note,
+        terrain_saved=bool(tr_saved), terrain_limitations=terrain_c.limitations if terrain_c else [],
         soil_basis_label=soil_consistency.LABELS[cons.contract.basis] if cons.substituted and cons.contract else None,
     ))
     history = wb.history.model_copy(update={"stress_days_by_year": out.stress_days_by_year if out else []})
@@ -680,6 +705,8 @@ async def _run(parcel_id: str, crop: str | None, date: dt.date | None, previous_
         irrigation=out.irrigation if out else None,
         soil=soil_c,
         field_state=field_c,
+        terrain=terrain_c,
+        terrain_note=terrain_note,
         suggestions=None,  # A5b-2: ranking „Co tu posiać?”
         history=history,
         causes=causes,
