@@ -1,5 +1,5 @@
 import L, { type LeafletMouseEvent, type Map as LeafletMap } from 'leaflet'
-import { forwardRef, useEffect, useMemo } from 'react'
+import { forwardRef, useEffect, useMemo, useRef } from 'react'
 import {
   CircleMarker,
   GeoJSON,
@@ -17,6 +17,7 @@ import type { Status } from '@/theme/status'
 import { parcelBounds, type MapInsets } from './geo'
 import { layerByKey, type LayerKey } from './layers'
 import { ParcelLabel } from './ParcelLabel'
+import { FarmlandLayer } from './FarmlandLayer'
 import { InfraPins } from '@/features/infra-reports/InfraPins'
 import { useLang } from '@/lib/i18n'
 
@@ -30,22 +31,18 @@ const ORTO_WMTS =
   '?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=ORTOFOTOMAPA&STYLE=default' +
   '&FORMAT=image/jpeg&TILEMATRIXSET=EPSG:3857&TILEMATRIX=EPSG:3857:{z}&TILEROW={y}&TILECOL={x}'
 
-/** Ekran powitalny: pola uprawne z bliska (okolice działki z przykładu „Susza 2018”, Podlasie) i powolny „przelot”. */
-const INTRO_FROM: [number, number] = [53.043, 22.586]
-const INTRO_TO: [number, number] = [53.05, 22.601]
+/** Start bez działki w adresie: pola uprawne z bliska (okolice działki z przykładu „Susza 2018”, Podlasie). */
+const INTRO_VIEW: [number, number] = [53.047, 22.594]
 
-function IntroView({ active, reducedMotion }: { active: boolean; reducedMotion: boolean }) {
+function IntroView({ active }: { active: boolean }) {
   const map = useMap()
+  const done = useRef(false)
   useEffect(() => {
-    if (!active) return
-    map.setView(INTRO_FROM, 14, { animate: false })
-    if (reducedMotion) return
-    const id = window.setTimeout(() => map.flyTo(INTRO_TO, 15, { duration: 14, easeLinearity: 0.1 }), 400)
-    return () => {
-      window.clearTimeout(id)
-      map.stop()
-    }
-  }, [active, map, reducedMotion])
+    // tylko przy pierwszym wejściu – powrót z działki zostawia mapę tam, gdzie była
+    if (!active || done.current) return
+    done.current = true
+    map.setView(INTRO_VIEW, 13, { animate: false })
+  }, [active, map])
   return null
 }
 
@@ -131,6 +128,8 @@ type Props = {
   highlight?: GeoJSON.Geometry | null
   /** ekran powitalny – widok pól z bliska */
   intro?: boolean
+  /** podświetlenie pól uprawnych (IUNG) */
+  farmland?: boolean
   /** zgłoszenia rowów/zbiorników wokół działki; zmiana `infraRefresh` = ponowne pobranie */
   infraRefresh?: number
 }
@@ -155,6 +154,7 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
     onClosePopup,
     highlight,
     intro = false,
+    farmland = false,
     infraRefresh = 0,
   },
   ref,
@@ -282,7 +282,8 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
         />
       )}
 
-      <IntroView active={intro} reducedMotion={reducedMotion} />
+      <IntroView active={intro} />
+      {farmland && <FarmlandLayer />}
       <InfraPins bbox={infraBox} refresh={infraRefresh} />
 
       <FitTo parcel={parcel} candidates={candidates} insets={insets} reducedMotion={reducedMotion} />

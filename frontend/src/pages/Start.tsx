@@ -16,7 +16,7 @@ import { POLAND_CENTER, ParcelMap, type BaseMap } from '@/features/map/ParcelMap
 import { MobileSheetHeader } from '@/features/parcel-panel/MobileSheetHeader'
 import { ParcelPanel } from '@/features/parcel-panel/ParcelPanel'
 import { ParcelSummary } from '@/features/parcel-panel/ParcelSummary'
-import { IntroHero } from '@/features/intro/IntroHero'
+import { ExploreBar } from '@/features/intro/ExploreBar'
 import { LocateButton } from '@/features/search/LocateButton'
 import { Passport } from '@/features/passport/Passport'
 import { exampleDate, type Example } from '@/features/parcel-panel/examples'
@@ -462,8 +462,22 @@ export default function Start() {
     onExample: openExample,
   }
 
-  // ekran powitalny: przed wyborem działki tylko mapa i karta z logo, wyszukiwarką i przykładami
-  const intro = search.phase === 'idle' && !infra
+  // przeglądanie mapy: dopóki nie wybrano działki – sama mapa (pola uprawne podświetlone) i mały pasek
+  const intro = !parcel && !infra
+
+  // „Wróć do mapy”: zamyka działkę, mapa zostaje tam, gdzie była
+  function backToExplore() {
+    reqId.current++
+    setSearch({ phase: 'idle' })
+    setCandidates([])
+    setPassportFor(null)
+    setInfra(null)
+    setHighlight(null)
+    setInsidePopup(null)
+    setPendingPoint(null)
+    writeLink({ dzialka: null, uprawa: null, data: null, widok: null })
+    if (isMobile) setSnap('collapsed')
+  }
 
   const searchBar = (
     <SearchBar
@@ -474,6 +488,7 @@ export default function Start() {
       onSearch={searchByNumber}
       onPick={pickCandidate}
       selected={parcel ? `${parcel.obreb} ${parcel.numer}` : null}
+      placeholder={isMobile ? t('Numer działki') : undefined}
       onDismiss={() => {
         if (candidates.length) {
           setCandidates([])
@@ -502,7 +517,7 @@ export default function Start() {
         <main
           ref={mainRef}
           className="relative min-w-0 flex-1 overflow-hidden"
-          style={{ ['--map-bottom' as string]: `${isMobile ? sheetVisible + 4 : MAP_BOTTOM_DESKTOP}px` }}
+          style={{ ['--map-bottom' as string]: `${intro ? 0 : isMobile ? sheetVisible + 4 : MAP_BOTTOM_DESKTOP}px` }}
         >
           <ParcelMap
             ref={mapRef}
@@ -519,6 +534,7 @@ export default function Start() {
             highlight={infra ? infraMarker : highlight}
             infraRefresh={infraRefresh}
             intro={intro}
+            farmland={intro && ui.farmland}
             insets={insets}
             reducedMotion={reducedMotion}
             onMapClick={onMapClick}
@@ -528,26 +544,30 @@ export default function Start() {
           />
 
           {intro ? (
-            <IntroHero
-              search={
-                <SearchBar
-                  loading={false}
-                  error={null}
-                  candidates={[]}
-                  total={0}
-                  onSearch={searchByNumber}
-                  onPick={pickCandidate}
-                  onDismiss={() => undefined}
-                  placeholder={isMobile ? t('Numer działki') : t('Numer działki, np. Szczytno 112/11')}
-                  className="min-w-0 flex-1"
-                />
-              }
-              locate={<LocateButton locating={locating} onClick={locate} iconOnly={isMobile} />}
-              onExample={openExample}
-            />
+            <>
+              <ExploreBar
+                isMobile={isMobile}
+                search={searchBar}
+                locate={<LocateButton locating={locating} onClick={locate} iconOnly />}
+                onExample={openExample}
+                farmland={ui.farmland}
+                onFarmlandChange={(v) => setUi({ farmland: v })}
+              />
+              <MapControls
+                className={isMobile ? 'absolute top-[76px] right-3 z-[1000]' : 'absolute bottom-4 left-4 z-[1000]'}
+                onZoomIn={() => mapRef.current?.zoomIn()}
+                onZoomOut={() => mapRef.current?.zoomOut()}
+                onBackToParcel={backToParcel}
+                onLocate={locate}
+                canGoBack={false}
+                baseMap={baseMap}
+                onBaseMapChange={setBaseMap}
+              />
+            </>
           ) : (
           <div className="contents ui-appear">
           <TopBar
+            onBack={backToExplore}
             isMobile={isMobile}
             search={searchBar}
             weather={weather()}
@@ -643,6 +663,7 @@ export default function Start() {
                       run={run}
                       onRetryAnalysis={retryAnalysis}
                       onExpand={() => setUi({ panel: true })}
+                      onClose={backToExplore}
                       onOpenPassport={openPassport}
                     />
                   </div>

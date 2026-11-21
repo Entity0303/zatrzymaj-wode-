@@ -667,4 +667,12 @@ export const EN: Record<string, string> = {
   'Numer działki, np. Szczytno 112/11': 'Parcel number, e.g. Szczytno 112/11',
   // bez nawadniania dla zbóż i rzepaku
   'Faza uprawy, woda w glebie, gleba, postęp analizy': 'Crop stage, soil water, soil, analysis progress',
+  // przeglądanie mapy
+  'Podświetl pola uprawne': 'Highlight farmland',
+  'Przykłady': 'Examples',
+  'Menu': 'Menu',
+  'Zamknij działkę i wróć do mapy': 'Close the parcel and go back to the map',
+  'Wróć do mapy': 'Back to map',
+  'Zielone to pola uprawne – kliknij swoje pole': 'Green areas are farmland – click your field',
+  'Przybliż mapę i kliknij swoje pole': 'Zoom in and click your field',
 }

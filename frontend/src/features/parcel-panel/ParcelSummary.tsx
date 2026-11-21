@@ -1,4 +1,4 @@
-import { BookOpenText, ChevronDown, Leaf, Loader2 } from 'lucide-react'
+import { BookOpenText, ChevronDown, Leaf, Loader2, X } from 'lucide-react'
 import type { CropId, Parcel } from '@/api/types'
 import { ErrorNotice } from '@/components/ErrorNotice'
 import { ScoreRing } from '@/components/ScoreRing'
@@ -20,6 +20,7 @@ export function ParcelSummary({
   run,
   onRetryAnalysis,
   onExpand,
+  onClose,
   onOpenPassport,
 }: {
   parcel: Parcel
@@ -28,6 +29,8 @@ export function ParcelSummary({
   run: AnalysisRun
   onRetryAnalysis?: () => void
   onExpand: () => void
+  /** zamyka działkę – powrót do przeglądania mapy */
+  onClose?: () => void
   onOpenPassport?: () => void
 }) {
   const { t } = useLang()
@@ -49,6 +52,16 @@ export function ParcelSummary({
             {t('gm. {gmina}, obręb {obreb}', { gmina: parcel.gmina, obreb: parcel.obreb })} · {formatHa(parcel.powierzchnia_ha)} ha
           </p>
         </div>
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={t('Zamknij działkę i wróć do mapy')}
+            className="-mt-1 -mr-2 flex size-10 shrink-0 items-center justify-center rounded-full text-text-muted hover:bg-surface-2"
+          >
+            <X className="size-5" />
+          </button>
+        )}
       </div>
 
       <CropField crop={crop} onChange={onCropChange} />
