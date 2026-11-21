@@ -207,3 +207,10 @@ ol.wact2 { margin: 2pt 0 0 14pt; padding: 0; font-size: 9.4pt; }
 ol.wact2 li { margin-bottom: 3pt; }
 p.year-sentence { font-size: 10pt; font-weight: 600; margin: 0 0 2pt; }
 .small-bars svg { width: 100%; height: auto; }
+
+/* A7: strona 1 zawsze na jednej stronie (dłuższe zdania o opadach ze stacji) */
+.stmt { margin-bottom: 6pt; }
+.stmt .txt { font-size: 10.6pt; line-height: 1.32; }
+.headline { font-size: 16pt; margin: 2pt 0 8pt; }
+.wact ol { font-size: 10pt; }
+.chip { font-size: 10pt; }

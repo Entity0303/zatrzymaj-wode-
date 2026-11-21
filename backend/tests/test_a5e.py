@@ -83,9 +83,9 @@ def test_choice_with_history_wheat_after_wheat():
     assert c.crop_id == "pszenica_ozima" and c.category == "odradzane" and c.rotation.status == "naruszenie"
     assert c.yield_typical_t_ha and c.total_typical_t == pytest.approx(c.yield_typical_t_ha * 2.0, abs=0.15)
     assert c.weak_year and c.years_simulated == 10 and 0 <= c.drought_risk_years <= 10
-    assert c.why == "Pszenica ozima rosła tu rok temu – po sobie częściej chorują, lepiej zrobić przerwę."
+    assert c.why == "Pszenica ozima rosła tu rok temu – lepiej zrobić rok przerwy."  # A7: nazwa uprawy + odmiana
     assert not re.search(r"\d", c.why)  # „dlaczego” nie powtarza liczb z tabeli
-    assert sug.choice_summary.startswith("Tej uprawy na tej działce nie polecamy")
+    assert sug.choice_summary == "Pszenica ozima rosła tu rok temu – w tym roku lepiej posiać tu coś innego."
     assert 1 <= len(sug.alternatives) <= 3 and all(a.crop_id != "pszenica_ozima" for a in sug.alternatives)
     assert all(a.category != "odradzane" and a.relation in ("lepsza", "podobna") for a in sug.alternatives)
     rz = next((a for a in sug.alternatives if a.crop_id == "rzepak"), None)

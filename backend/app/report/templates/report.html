@@ -54,7 +54,7 @@
   </div>
   {% if water_actions %}
   <div class="wact"><div class="kind">Co zrobić z wodą – najpierw</div>
-    <ol>{% for r in water_actions %}<li>{{ r.title }}{% if r.permit != 'none' %} <span class="tiny muted">({{ r.permit_note }})</span>{% endif %}</li>{% endfor %}</ol></div>
+    <ol>{% for r in water_actions %}<li>{{ r.title }}{% if r.permit != 'none' %} <span class="tiny muted">(sprawdź formalności – szczegóły w raporcie szczegółowym)</span>{% endif %}</li>{% endfor %}</ol></div>
   {% endif %}
   <div class="tiny muted">{{ v.note }}</div>
   {% else %}
@@ -80,7 +80,7 @@
       <td><span class="k">słaby rok</span> <b>{{ c.yield_weak_t_ha|num(1, 't/ha') }}</b> <span class="k">({{ c.weak_year }})</span></td>
       <td><span class="k">ryzyko suszy</span> <b>{{ c.drought_risk_years }} na {{ c.years_simulated }}</b></td>
     </tr>
-    <tr class="c2"><td colspan="4">{% if c.group_note %}<b>{{ c.group_note }}</b> {% endif %}{{ c.why }}{% if not (c.rotation.status == 'naruszenie' and 'po sobie' in c.why) %}{% for n in c.rotation.notes %} <span class="{{ 'bad-t' if c.rotation.status == 'naruszenie' else 'muted' }}">Płodozmian: {{ n }}</span>{% endfor %}{% endif %}</td></tr>
+    <tr class="c2"><td colspan="4">{% if c.group_note %}<b>{{ c.group_note }}</b> {% endif %}{{ c.why }}{% if not (c.rotation.status == 'naruszenie' and 'lepiej zrobić' in c.why) %}{% for n in c.rotation.notes %} <span class="{{ 'bad-t' if c.rotation.status == 'naruszenie' else 'muted' }}">Płodozmian: {{ n }}</span>{% endfor %}{% endif %}</td></tr>
     {% endfor %}
   </table>
   {% for n in sug.choice_notes %}<p class="tiny muted">{{ n }}</p>{% endfor %}
@@ -120,6 +120,7 @@
   {% if a.history.summary %}<p class="year-sentence">{{ a.history.summary }}</p>{% endif %}
   {% if chart_years_small %}<div class="chart small-bars">{{ chart_years_small }}</div>
   <p class="tiny muted">Ile wody zostało {{ a.seasonal_balance_label or '' }} w każdym roku: spadło minus wyparowało, mm · dane pogodowe do {{ weather_until }} · linia przerywana – średnia.</p>{% endif %}
+  {% if a.precip_sources %}<p class="tiny muted">{{ a.precip_sources.sentence }}</p>{% endif %}
   <p class="tiny muted">Raport szczegółowy: stan wody, przyczyny, wszystkie działania z formalnościami, gleba, teren, źródła i ograniczenia.</p>
 </section>
 {% else %}
@@ -146,7 +147,7 @@
       <div><span class="k">Ryzyko suszy</span><span class="v">{{ c.drought_risk_years }} na {{ c.years_simulated }} lat</span><span class="s">strata ponad 20% plonu</span></div>
     </div>
     <p class="cwhy">{{ c.why }}</p>
-    {% if not (c.rotation.status == 'naruszenie' and 'po sobie' in c.why) %}{% for n in c.rotation.notes %}<p class="crot {{ 'bad-t' if c.rotation.status == 'naruszenie' else '' }}">Płodozmian: {{ n }}</p>{% endfor %}{% endif %}
+    {% if not (c.rotation.status == 'naruszenie' and 'lepiej zrobić' in c.why) %}{% for n in c.rotation.notes %}<p class="crot {{ 'bad-t' if c.rotation.status == 'naruszenie' else '' }}">Płodozmian: {{ n }}</p>{% endfor %}{% endif %}
   </div>
   {% endfor %}
   {% if sug.alternatives %}
@@ -216,6 +217,7 @@
       <div class="note">{{ soil_short }}</div>
     </div>
   </div>
+  {% if a.precip_sources %}<p class="small"><b>Skąd opad:</b> {{ a.precip_sources.sentence }}{% if a.precip_sources.agreement != 'brak_danych' %} <span class="muted">Zgodność źródeł: {{ a.precip_sources.agreement_label }}.</span>{% endif %}</p>{% endif %}
   {% if a.irrigation and a.indicators.risk_7d.value is not none %}<p class="small">Ryzyko niedoboru wody w 7 dni: <b>{{ a.indicators.risk_7d.label }}</b> – {{ a.indicators.risk_7d.note }}.</p>{% endif %}
 
   <h2>Na tle 10 lat</h2>

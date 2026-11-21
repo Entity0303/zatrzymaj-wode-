@@ -59,6 +59,13 @@ class Settings(BaseSettings):
     # zapasowe wyniki terenu z app/data/terrain (prawdziwe NMT z 21.11, osoba C) – gdy NMT nie odpowiada (D57)
     terrain_saved_results: bool = True
 
+    # opad ze stacji IMGW (A7, D82): magazyn app/data/imgw/opady.npz; wyłączony = opad z NASA POWER jak przed A7
+    imgw_enabled: bool = True
+    imgw_store: str = ""                 # ścieżka magazynu (puste = app/data/imgw/opady.npz)
+    imgw_max_km: float = 30.0            # stacje w promieniu 30 km …
+    imgw_fallback_km: float = 50.0       # … a gdy brak – do 50 km (pewność o poziom niżej)
+    imgw_max_stations: int = 3
+
     # wyszukiwanie miejsc po nazwie (A5c, D73): PRNG GUGiK (WFS) → rezerwa Nominatim OSM → słownik demo
     prng_url: str = "https://mapy.geoportal.gov.pl/wss/service/PZGIK/PRNG/WFS/GeographicalNames"
     prng_timeout_s: float = 8.0

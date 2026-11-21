@@ -94,7 +94,7 @@ def precip_stats(w: DailyWeather, last: date, years: int = 10) -> dict | None:
             "deficit_list": [r[0] for r in rows if r[3] < thr], "first": rows[0][0], "last": rows[-1][0]}
 
 
-def precip_statement(st: dict | None) -> VerdictStatement | None:
+def precip_statement(st: dict | None, measured: bool = False) -> VerdictStatement | None:
     if st is None:
         return None
     c, t = cfg()["precip"], cfg()["thresholds"]
@@ -108,9 +108,15 @@ def precip_statement(st: dict | None) -> VerdictStatement | None:
         key = "low"
     text = c[key].format(**st)
     norm = t["precip_norm_year_mm"]
-    text += c["norm_tail"].format(norm_mm=norm)  # neutralnie – NASA POWER zawyża opad względem IMGW (D68)
+    if measured:  # A7: opad ze stacji IMGW – porównanie z normą wprost
+        ratio = st["year_mm"] / norm
+        key_n = "norm_low" if ratio < 0.95 else "norm_high" if ratio > 1.05 else "norm_same"
+        text += c[key_n].format(norm_mm=norm)
+    else:  # neutralnie – NASA POWER zawyża opad względem IMGW (D68)
+        text += c["norm_tail"].format(norm_mm=norm)
     nums = {k: st[k] for k in ("year_mm", "season_mm", "deficit_years", "years", "first", "last")}
     nums["norma_mm"] = norm
+    nums["zrodlo_opadu"] = "IMGW" if measured else "NASA POWER"
     return VerdictStatement(kind="opady", level=level, text=text, numbers=nums)
 
 
@@ -228,9 +234,9 @@ def _match(cond: dict, lv: dict[str, str], wet: float, dry: float) -> bool:
 
 def build(prof: SoilProfile, wod_mm: float | None, w: DailyWeather, last: date, terrain: Terrain | None,
           sug: CropSuggestions | None, recs: list[Recommendation], field_status: OverallStatus | None,
-          chosen: tuple[str, str, OverallStatus, bool] | None = None) -> Verdict:
+          chosen: tuple[str, str, OverallStatus, bool] | None = None, measured_precip: bool = False) -> Verdict:
     sts = [soil_statement(prof, wod_mm)]
-    p = precip_statement(precip_stats(w, last))
+    p = precip_statement(precip_stats(w, last), measured_precip)
     if p:
         sts.append(p)
     sts.append(terrain_statement(terrain))

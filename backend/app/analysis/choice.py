@@ -86,7 +86,8 @@ def why_choice(item: CropSuggestion, history: list[str], light: bool) -> str:
     prev = _prev(history)
     if item.rotation.status == "naruszenie" and item.soil_suitability != "nieodpowiednia":
         k = _rotation_k(item.crop_id, history) or 1
-        return w["rotation_violation"].format(label=item.label, grew=grew(item.crop_id), ago=_ago(k))
+        return w["rotation_violation"].format(label=item.label, grew=grew(item.crop_id), ago=_ago(k),
+                                              years=years_break(crop.min_break_years))
     if item.soil_suitability == "nieodpowiednia":  # gleba ważniejsza; płodozmian – w rotation.notes
         return w["soil_bad_light"] if light else w["soil_bad"]
     if item.category == "odradzane":
@@ -243,6 +244,10 @@ def attach(sug: CropSuggestions | None, planned: list[str], light: bool) -> Crop
         better = any(a.relation == "lepsza" for a in alternatives)
         if not cats:
             summary = s["perennial_only"]
+        elif len(chosen_field) == 1 and _rotation_only(chosen_field[0]):  # ❌ tylko przez płodozmian
+            one = chosen_field[0]
+            summary = s["rotation_only"].format(label=one.label, grew=grew(one.crop_id),
+                                                ago=_ago(_rotation_k(one.crop_id, history) or 1))
         elif all(x == "odradzane" for x in cats):
             summary = s["all_bad"] if alternatives else s["all_bad_no_alt"]
         elif "odradzane" in cats:

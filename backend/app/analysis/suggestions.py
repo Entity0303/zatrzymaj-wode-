@@ -113,7 +113,9 @@ def potential(crop_id: str, voivodeship: str | None) -> Potential:
         scope = "kraj" if vals else "brak"
     if not vals:
         return Potential(None, None, 0, "brak")
-    return Potential(float(np.percentile(vals, config()["gus_percentile"])), float(np.mean(vals)), len(vals), scope)
+    adjust = float(config().get("ym_adjust", {}).get(crop_id, 1.0))  # A7 (D84): korekta progu Ym po zmianie opadu
+    return Potential(float(np.percentile(vals, config()["gus_percentile"])) * adjust, float(np.mean(vals)), len(vals),
+                     scope)
 
 
 # ── symulacja ───────────────────────────────────────────────────────────────────────────────

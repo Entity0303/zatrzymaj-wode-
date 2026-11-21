@@ -35,6 +35,10 @@ verdict:
     bad: "Opady za niskie wiosną – w {deficit_years} z {years} lat w maju–czerwcu brakowało wody; średnio {year_mm} mm opadów na rok ({season_mm} mm od kwietnia do września)."
     # porównanie z normą neutralnie: NASA POWER (PRECTOTCORR, ~50 km) daje ok. 15–20% więcej niż normy stacji IMGW
     norm_tail: " Dla porównania: średnio w Polsce ok. {norm_mm} mm na rok."
+    # A7: opad ze stacji IMGW – porównanie z normą wprost
+    norm_low: " To mniej niż średnio w Polsce (ok. {norm_mm} mm na rok) – pomiar ze stacji IMGW."
+    norm_high: " To więcej niż średnio w Polsce (ok. {norm_mm} mm na rok) – pomiar ze stacji IMGW."
+    norm_same: " To tyle, co średnio w Polsce (ok. {norm_mm} mm na rok) – pomiar ze stacji IMGW."
 
   crops:
     best: "Bezpiecznie posiejesz {best}."

@@ -13,7 +13,7 @@ choice:
   # jedno zdanie „dlaczego” dla wybranej uprawy – pierwsza pasująca reguła (kolejność = priorytet)
   why:
     perennial: "To uprawa wieloletnia – inwestycja na lata, więc liczby traktuj tylko orientacyjnie i policz opłacalność osobno."
-    rotation_violation: "{label} {grew} tu {ago} – po sobie częściej chorują, lepiej zrobić przerwę."
+    rotation_violation: "{label} {grew} tu {ago} – lepiej zrobić {years} przerwy."
     soil_bad_light: "Lekka ziemia trzyma mało wody, a ta uprawa ma duże wymagania wodne."
     soil_bad: "Ta gleba nie jest odpowiednia dla tej uprawy – plon wyraźnie spada."
     drought_bad_sensitive: "Jest wrażliwa na suszę, a na tej działce zbyt często brakuje wody w kluczowym okresie wzrostu."
@@ -50,6 +50,7 @@ choice:
     perennial_only: "Uprawy wieloletnie to inwestycja na lata – wymagają osobnej analizy opłacalności."
     all_bad: "Tej uprawy na tej działce nie polecamy – poniżej lepsze możliwości."
     all_bad_no_alt: "Tej uprawy na tej działce nie polecamy."
+    rotation_only: "{label} {grew} tu {ago} – w tym roku lepiej posiać tu coś innego."
     some_bad: "Nie wszystkie wybrane uprawy pasują do tej działki – tutaj nie polecamy: {bad}."
     good: "Twój wybór pasuje do tej działki."
     good_but_better: "Twój wybór jest dobry, ale poniżej są uprawy, które lepiej znoszą suszę na tej działce."
