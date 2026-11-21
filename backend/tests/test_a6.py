@@ -396,7 +396,7 @@ def test_layers_from_saved_result_and_errors(client):
     b = client.get("/api/layers/teren", params={"parcel_id": PID}).json()
     shares = {f["properties"]["zone"]: f["properties"]["share_pct"] for f in b["features"]["features"]}
     assert shares == {"plasko": 11.5, "stok": 56.4, "mokry_dolek": 32.1} and "21.11.2026" in b["source_tag"]["source"]
-    assert client.get("/api/layers/kondycja", params={"parcel_id": PID}).status_code == 501
+    assert client.get("/api/layers/gleba", params={"parcel_id": PID}).status_code == 501  # A11: kondycja działa
 
 
 # ── demo offline, wydajność, raport ─────────────────────────────────────────────────────────

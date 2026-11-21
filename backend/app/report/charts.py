@@ -251,3 +251,45 @@ def season_bars(years, mean_mm: float | None, width: int = 680, height: int = 19
                      f'font-weight="600">średnia {_num(mean_mm)} mm</text>')
     parts.append("</svg>")
     return "".join(parts)
+
+
+def satellite_series(points, width: int = 680, height: int = 150) -> str | None:
+    """Szereg Sentinel-2 (A11): NDVI (zielona) i NDMI (niebieska) w czasie; oś −0,4…1."""
+    pts = [p for p in points if p.ndvi is not None]
+    if len(pts) < 2:
+        return None
+    pad_l, pad_r, pad_t, pad_b = 30, 8, 10, 20
+    d0, d1 = pts[0].date, pts[-1].date
+    span = max((d1 - d0).days, 1)
+    lo, hi = -0.4, 1.0
+
+    def xy(d, v):
+        return (pad_l + (width - pad_l - pad_r) * (d - d0).days / span,
+                pad_t + (height - pad_t - pad_b) * (hi - v) / (hi - lo))
+
+    parts = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}" '
+             f'{FONT} font-size="9">']
+    for t in (-0.4, 0.0, 0.5, 1.0):
+        y = xy(d0, t)[1]
+        parts.append(f'<line x1="{pad_l}" x2="{width - pad_r}" y1="{y:.1f}" y2="{y:.1f}" stroke="{C["border"]}" stroke-width="0.6"/>')
+        lab = f"{t:.1f}".replace(".", ",").replace("-", "−")
+        parts.append(f'<text x="{pad_l - 4}" y="{y + 3:.1f}" text-anchor="end" fill="{C["muted"]}">{lab}</text>')
+    for key, color in (("ndvi", "#3F8E4E"), ("ndmi", C["water"])):
+        seq = [(p.date, getattr(p, key)) for p in pts if getattr(p, key) is not None]
+        if len(seq) < 2:
+            continue
+        path = " ".join(f"{'M' if i == 0 else 'L'}{xy(d, v)[0]:.1f},{xy(d, v)[1]:.1f}" for i, (d, v) in enumerate(seq))
+        parts.append(f'<path d="{path}" fill="none" stroke="{color}" stroke-width="2"/>')
+        for d, v in seq:
+            x, y = xy(d, v)
+            parts.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="2.2" fill="{color}"/>')
+    seen = set()
+    for p in pts:
+        key = (p.date.year, p.date.month)
+        if key in seen:
+            continue
+        seen.add(key)
+        x = xy(p.date, lo)[0]
+        parts.append(f'<text x="{x:.1f}" y="{height - 6}" text-anchor="middle" fill="{C["muted"]}">{MONTHS[p.date.month - 1]}</text>')
+    parts.append("</svg>")
+    return "".join(parts)

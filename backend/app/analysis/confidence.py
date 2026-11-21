@@ -72,6 +72,8 @@ class ConfidenceInputs:
     wb: WaterBalanceResult | None
     hg_share_season: float | None
     satellite: bool = False
+    satellite_date: object | None = None   # A11: data sceny Sentinel-2 (gdy wynik jest)
+    satellite_status: str | None = None    # ok | pending | brak_danych
     terrain: bool = False
     extra_limitations: list[str] = field(default_factory=list)
     soilgrids: str | None = None  # "ok" | "brak" | None (nie pytano)
@@ -97,7 +99,9 @@ def premises(i: ConfidenceInputs) -> list[Premise]:
         out.append(Premise(key, text, PENALTY[key]))
 
     if not i.satellite:
-        add("satelita_brak", "brak zdjęć satelitarnych (kondycja roślin – w przygotowaniu)")
+        add("satelita_brak", "zdjęcie satelitarne pobierane osobno (jeszcze nie w analizie)" if i.satellite_status == "pending"
+            else "brak bezchmurnego zdjęcia satelitarnego działki" if i.satellite_status == "brak_danych"
+            else "brak zdjęć satelitarnych")
     if not i.terrain:
         add("teren_brak", "brak analizy terenu (NMT GUGiK nie odpowiada)" if i.terrain_error
             else "brak analizy terenu (spadki, spływ)")
@@ -222,8 +226,11 @@ def reliability(i: ConfidenceInputs) -> tuple[Reliability, list[Premise], int]:
         if s.name in stale_by_source else s for s in sources
     ]
     sources += [
-        SourceStatus(name="Sentinel-2 L2A", used_for="kondycja i wilgotność roślin", data_date=None, resolution="10 m",
-                     status="brak", note="w przygotowaniu"),
+        SourceStatus(name="Sentinel-2 L2A", used_for="kondycja i wilgotność roślin (NDVI, NDMI)",
+                     data_date=i.satellite_date if i.satellite else None, resolution="10 m",
+                     status="ok" if i.satellite else "brak",
+                     note=None if i.satellite else "pobierane osobno" if i.satellite_status == "pending"
+                     else "brak bezchmurnej sceny z ostatnich 60 dni"),
         SourceStatus(name="NMT GUGiK", used_for="teren i spływ wody", data_date=None, resolution="1 m (siatka 3–15 m)",
                      status=("czesciowo" if i.terrain_saved else "ok") if i.terrain else "brak",
                      note=("zapisany wynik analizy z 21.11.2026" if i.terrain_saved else None) if i.terrain
@@ -255,8 +262,13 @@ def reliability(i: ConfidenceInputs) -> tuple[Reliability, list[Premise], int]:
     if i.model:
         lim += i.model.limitations
     lim += i.soil.limitations + i.extra_limitations
-    if not i.satellite:
-        lim.append("Brak zdjęć satelitarnych – kondycja i wilgotność roślin w przygotowaniu.")
+    if i.satellite:
+        lim.append(f"Zdjęcie satelitarne z {i.satellite_date:%d.%m.%Y} (Sentinel-2, piksel 10 m) – NDVI i NDMI to mediany "
+                   "w obrysie; progi orientacyjne; zieleń zależy też od uprawy i terminu siewu.")
+    elif i.satellite_status == "pending":
+        lim.append("Zdjęcie satelitarne liczone osobno – w tej odpowiedzi jeszcze bez kondycji i wilgotności roślin.")
+    else:
+        lim.append("Brak bezchmurnego zdjęcia satelitarnego – kondycji i wilgotności roślin nie oceniamy.")
     if not i.terrain:
         lim.append("Brak analizy terenu – spływ wody przyjęty w uproszczeniu (20% opadu powyżej 20 mm na dobę).")
     else:

@@ -164,9 +164,10 @@ def zones_overlay(a: AnalysisResponse, bbox: tuple[float, float, float, float], 
     return charts.zones_svg(shapes, px, px)
 
 
-LEVEL = {"ok": ("✓", "#5BB37F"), "warn": ("!", "#E8B931"), "bad": ("✕", "#C8453B"), "info": ("", "#2F80C9")}
+LEVEL = {"ok": ("✓", "#5BB37F"), "warn": ("!", "#E8B931"), "bad": ("✕", "#C8453B"), "info": ("i", "#2F80C9")}
 CAT_ICON = {"polecane": ("✓", "#5BB37F"), "mozliwe": ("~", "#E8B931"), "odradzane": ("✕", "#C8453B")}
-KIND_LABEL = {"gleba": "Gleba", "opady": "Opady", "teren": "Teren", "uprawy": "Co siać", "woda": "Woda",
+KIND_LABEL = {"gleba": "Gleba", "opady": "Opady", "teren": "Teren", "rosliny": "Rośliny (z satelity)", "uprawy": "Co siać",
+              "woda": "Woda",
               "uprawa_wybrana": "Wybrana uprawa"}
 
 
@@ -257,9 +258,28 @@ def top_items(a: AnalysisResponse) -> list:
     return [i for i in field if i.crop_id in ids]
 
 
+def satellite_overlay(a: AnalysisResponse, bbox: tuple[float, float, float, float]) -> tuple[str | None, str]:
+    """PNG NDVI z cache satelity + pozycja na mapce raportu (CSS w % wycinka EPSG:2180)."""
+    if a.satellite is None or a.satellite.status != "ok":
+        return None, ""
+    from app.analysis import satellite as satellite_mod
+
+    lay = satellite_mod.cached_layers(shape(a.parcel.geometria), a.analysis_date)
+    if not lay or not lay.get("kondycja"):
+        return None, ""
+    lo0, la0, lo1, la1 = lay["bbox"]
+    g = to_2180(shape({"type": "Polygon", "coordinates": [[[lo0, la0], [lo1, la0], [lo1, la1], [lo0, la1], [lo0, la0]]]}))
+    minx, miny, maxx, maxy = g.bounds
+    side = bbox[2] - bbox[0]
+    style = (f"left:{(minx - bbox[0]) / side * 100:.2f}%;top:{(bbox[3] - maxy) / side * 100:.2f}%;"
+             f"width:{(maxx - minx) / side * 100:.2f}%;height:{(maxy - miny) / side * 100:.2f}%")
+    return "data:image/png;base64," + lay["kondycja"], style
+
+
 def render_html(a: AnalysisResponse, ortho: str | None, generated: dt.datetime | None = None,
                 report_type: str = "short") -> str:
     bbox, outline = map_frame(a.parcel.geometria)
+    sat_png, sat_style = satellite_overlay(a, bbox) if report_type == "full" else (None, "")
     url = analysis_url(a)
     h = a.history
     ctx = {
@@ -292,6 +312,8 @@ def render_html(a: AnalysisResponse, ortho: str | None, generated: dt.datetime |
         "css": Markup((HERE / "report.css").read_text(encoding="utf-8")),
         # A5e: raport krótki (4–5 stron) / pełny
         "full": report_type == "full",
+        "sat": a.satellite, "sat_png": sat_png, "sat_style": sat_style,
+        "chart_sat": Markup(charts.satellite_series(a.satellite.series) or "") if a.satellite and a.satellite.series else "",
         "report_label": REPORT_LABEL.get(report_type, REPORT_LABEL["short"]),
         "chart_years_small": Markup(charts.season_bars(a.seasonal_balance_by_year, a.seasonal_balance_mean_mm,
                                                        width=620, height=128) or ""),

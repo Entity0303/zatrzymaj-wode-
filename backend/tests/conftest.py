@@ -18,6 +18,8 @@ settings.demo_parcels_preload = False
 settings.terrain_saved_results = False  # zapisane wyniki terenu (app/data/terrain) – tylko w testach A6, jawnie
 settings.uldk_retry_delays_s = [0.0, 0.0]
 settings.nmt_retry_delay_s = 0.0
+settings.sentinel_background = False  # A11: bez liczenia satelity w tle w testach
+settings.sentinel_enabled = False  # A11: Earth Search tylko w testach, które go jawnie włączają (respx)
 settings.imgw_enabled = False  # A7: magazyn IMGW tylko w testach, które go jawnie włączają
 settings.prng_min_interval_s = 0.0  # A5c: bez odstępów między zapytaniami do geokoderów w testach
 settings.prng_retry_delay_s = 0.0
@@ -42,10 +44,10 @@ def _isolated_caches():
 
     terrain.clear_memo()
     saved = (settings.cache_db, settings.demo_offline, settings.demo_parcels_preload, settings.terrain_saved_results)
-    saved_imgw = (settings.imgw_enabled, settings.imgw_store)
+    saved_imgw = (settings.imgw_enabled, settings.imgw_store, settings.sentinel_enabled)
     reset()
     yield
     settings.cache_db, settings.demo_offline, settings.demo_parcels_preload, settings.terrain_saved_results = saved
-    settings.imgw_enabled, settings.imgw_store = saved_imgw
+    settings.imgw_enabled, settings.imgw_store, settings.sentinel_enabled = saved_imgw
     cache.store()  # wróć do magazynu z ustawień (pamięć)
     reset()

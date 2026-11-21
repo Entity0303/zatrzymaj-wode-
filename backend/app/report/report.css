@@ -214,3 +214,11 @@ p.year-sentence { font-size: 10pt; font-weight: 600; margin: 0 0 2pt; }
 .headline { font-size: 16pt; margin: 2pt 0 8pt; }
 .wact ol { font-size: 10pt; }
 .chip { font-size: 10pt; }
+
+/* A11: Z satelity */
+.sat-map { position: relative; width: 230pt; height: 230pt; }
+.sat-map img, .sat-map svg.outline { position: absolute; left: 0; top: 0; width: 230pt; height: 230pt; }
+.sat-map img.sat-overlay { image-rendering: pixelated; opacity: .85; }
+.sat-legend { display: flex; align-items: center; gap: 5pt; font-size: 8pt; color: #5F6B64; margin-top: 6pt; }
+.sat-legend i { display: inline-block; width: 120pt; height: 8pt; border-radius: 99pt;
+                background: linear-gradient(90deg, #C0473C, #E2A23B, #5F9F63, #1F4230); }

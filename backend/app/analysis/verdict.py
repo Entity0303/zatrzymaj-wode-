@@ -232,14 +232,27 @@ def _match(cond: dict, lv: dict[str, str], wet: float, dry: float) -> bool:
     return True
 
 
+def plants_statement(sat) -> VerdictStatement | None:
+    """A11: pozycja „rosliny” – tylko gdy jest zdjęcie satelitarne (zdanie z wartości NDVI / NDMI i porównania)."""
+    if sat is None or getattr(sat, "status", None) != "ok" or not sat.sentence:
+        return None
+    return VerdictStatement(kind="rosliny", level=sat.level or "info", text=sat.sentence,
+                            numbers={"ndvi": sat.ndvi, "ndmi": sat.ndmi, "data": sat.date.isoformat() if sat.date else None,
+                                     "ndvi_rok_temu": sat.last_year.ndvi if sat.last_year else None})
+
+
 def build(prof: SoilProfile, wod_mm: float | None, w: DailyWeather, last: date, terrain: Terrain | None,
           sug: CropSuggestions | None, recs: list[Recommendation], field_status: OverallStatus | None,
-          chosen: tuple[str, str, OverallStatus, bool] | None = None, measured_precip: bool = False) -> Verdict:
+          chosen: tuple[str, str, OverallStatus, bool] | None = None, measured_precip: bool = False,
+          satellite=None) -> Verdict:
     sts = [soil_statement(prof, wod_mm)]
     p = precip_statement(precip_stats(w, last), measured_precip)
     if p:
         sts.append(p)
     sts.append(terrain_statement(terrain))
+    plants = plants_statement(satellite)
+    if plants:
+        sts.append(plants)
     crops, good, bad = crops_statement(sug, prof.group == "lekka")
     if crops:
         sts.append(crops)
@@ -250,7 +263,7 @@ def build(prof: SoilProfile, wod_mm: float | None, w: DailyWeather, last: date, 
         sts.append(VerdictStatement(kind="uprawa_wybrana", level=STATUS_LEVEL.get(status.level, "warn"),
                                     text=tpl.format(crop=label, phase=phase, headline=status.headline),
                                     numbers={"wynik": status.score, "poza_sezonem": 1 if off else 0}))
-    lv = {s.kind: s.level for s in sts if s.kind in ("gleba", "opady", "teren", "uprawy")}
+    lv = {s.kind: s.level for s in sts if s.kind in ("gleba", "opady", "teren", "uprawy")}  # „rosliny” – bez wpływu na nagłówek
     wet = terrain.zone_share_pct.get("mokry_dolek", 0.0) if terrain else 0.0
     dry = terrain.zone_share_pct.get("sucha_gorka", 0.0) if terrain else 0.0
     headline = next(h["text"] for h in cfg()["headlines"] if _match(h["if"], lv, wet, dry))

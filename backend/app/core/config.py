@@ -59,6 +59,16 @@ class Settings(BaseSettings):
     # zapasowe wyniki terenu z app/data/terrain (prawdziwe NMT z 21.11, osoba C) – gdy NMT nie odpowiada (D57)
     terrain_saved_results: bool = True
 
+    # Sentinel-2 L2A (A11, D86): Earth Search STAC + COG (AWS) – to nie GUGiK
+    sentinel_stac_url: str = "https://earth-search.aws.element84.com/v1/search"
+    sentinel_budget_s: float = 15.0      # tryb na żywo: ok. 15 s …
+    sentinel_budget_mb: float = 10.0     # … i ok. 10 MB na działkę
+    sentinel_timeout_s: float = 6.0      # pojedyncze zapytanie (STAC / kafel COG); przerwany odczyt – 1 ponowienie
+    sentinel_breaker_s: float = 120.0
+    sentinel_cache_ttl_today_s: float = 43_200  # wynik dla „dziś” – 12 h (nowe przeloty co 2–5 dni)
+    sentinel_background: bool = True     # analiza bez wyniku w cache uruchamia liczenie w tle
+    sentinel_enabled: bool = True        # False = bez zapytań do Earth Search (testy) – tylko cache
+
     # opad ze stacji IMGW (A7, D82): magazyn app/data/imgw/opady.npz; wyłączony = opad z NASA POWER jak przed A7
     imgw_enabled: bool = True
     imgw_store: str = ""                 # ścieżka magazynu (puste = app/data/imgw/opady.npz)

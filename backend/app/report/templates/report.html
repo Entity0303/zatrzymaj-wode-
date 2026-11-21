@@ -31,7 +31,7 @@
   <div class="p1-grid">
     <div class="stmts">
       {% for st in v.statements %}
-      <div class="stmt"><span class="ico" style="background: {{ LV[st.level][1] }}">{% if st.level == 'info' %}<svg width="11" height="13" viewBox="0 0 22 26" style="margin-top:3.5pt"><path d="M11 1 C11 1 2 11.5 2 17 a9 9 0 0 0 18 0 C20 11.5 11 1 11 1z" fill="#fff"/></svg>{% else %}{{ LV[st.level][0] }}{% endif %}</span>
+      <div class="stmt"><span class="ico" style="background: {{ LV[st.level][1] }}">{% if st.level == 'info' and st.kind == 'woda' %}<svg width="11" height="13" viewBox="0 0 22 26" style="margin-top:3.5pt"><path d="M11 1 C11 1 2 11.5 2 17 a9 9 0 0 0 18 0 C20 11.5 11 1 11 1z" fill="#fff"/></svg>{% else %}{{ LV[st.level][0] }}{% endif %}</span>
         <div><div class="kind">{{ KIND[st.kind] }}</div><div class="txt">{{ st.text }}</div></div></div>
       {% endfor %}
     </div>
@@ -240,6 +240,36 @@
     <div class="chart charts-small"><h3>Opad w miesiącach, mm</h3>{{ chart_precip }}<div class="tiny muted">niebieski – ten rok, szary – średnia z 10 lat</div></div>
   </div>
 </section>
+
+{# ═══ RAPORT SZCZEGÓŁOWY: Z SATELITY (A11) ═══ #}
+{% if sat and sat.status == 'ok' %}
+<section class="page-break">
+  <div class="p2-title">Z satelity</div>
+  <p class="lead muted">Sentinel-2 · zdjęcie z {{ sat.date|date_pl }} · piksel 10 m · chmury i cienie wycięte maską SCL</p>
+  <p class="big2">{{ sat.sentence }}</p>
+  {% if sat.warning %}<div class="warning">⚠ {{ sat.warning }}</div>{% endif %}
+  <div class="grid2" style="margin-top:6pt">
+    <div class="map sat-map">
+      {% if ortho %}<img src="{{ ortho }}" alt="ortofotomapa">{% else %}<div class="nomap">Ortofotomapa niedostępna</div>{% endif %}
+      {% if sat_png %}<img class="sat-overlay" src="{{ sat_png }}" style="{{ sat_style }}" alt="NDVI">{% endif %}
+      {{ outline }}
+    </div>
+    <div>
+      <table class="kv">
+        <tr><td>Kondycja roślin (NDVI)</td><td><b>{{ sat.ndvi|num(2) }}</b> – {{ sat.ndvi_label or '–' }}</td></tr>
+        <tr><td>Wilgotność roślin (NDMI)</td><td><b>{{ sat.ndmi|num(2) }}</b>{% if sat.ndmi_label %} – {{ sat.ndmi_label }}{% else %} <span class="muted small">(oceniamy w sezonie IV–IX przy gęstym łanie)</span>{% endif %}</td></tr>
+        <tr><td>Rok temu</td><td>{% if sat.last_year %}NDVI {{ sat.last_year.ndvi|num(2) }} ({{ sat.last_year.date|date_pl }}){% if sat.ndvi_change is not none %} · różnica {{ sat.ndvi_change|num(2) }}{% endif %}{% else %}brak bezchmurnego zdjęcia{% endif %}</td></tr>
+        <tr><td>Widoczna część działki</td><td>{{ sat.valid_pct|num(0, '%') }}</td></tr>
+      </table>
+      <div class="sat-legend"><span>Słaba roślinność</span><i></i><span>Bujna</span></div>
+      <p class="tiny muted">Kolory na mapce: NDVI (kondycja roślin); białe – chmury lub brak danych.</p>
+    </div>
+  </div>
+  {% if chart_sat %}<div class="chart" style="margin-top:6pt"><h3>Zieleń i wilgotność roślin w ostatnich 12 miesiącach</h3>{{ chart_sat }}
+    <div class="legend small muted"><span><i style="background:#3F8E4E"></i>NDVI – kondycja</span><span><i style="background:#2F80C9"></i>NDMI – wilgotność</span> · {{ sat.series_note or '' }}</div></div>{% endif %}
+  <p class="tiny muted">{{ sat.note }}</p>
+</section>
+{% endif %}
 
 {# ═══ STRONA 4: CO ZROBIĆ Z WODĄ – maks. 4 działania ═══ #}
 <section class="page-break">

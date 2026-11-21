@@ -59,6 +59,7 @@ async def request(
     data: dict | None = None,
     headers: dict | None = None,
     max_bytes: int = DEFAULT_MAX_BYTES,
+    content: bytes | None = None,
 ) -> httpx.Response:
     """Jedno zapytanie (bez ponowień) z odczytem strumieniowym:
     - przekierowanie 3xx → `RedirectBlocked` BEZ czytania treści (połączenie zamykane od razu),
@@ -69,7 +70,7 @@ async def request(
     if settings.demo_offline:  # D55: w trybie demo offline nie wysyłamy żadnych zapytań zewnętrznych
         raise SourceError(source, "tryb demo offline – bez połączenia z usługą")
     client = get_client()
-    req = client.build_request(method, url, params=params, data=data, headers=headers,
+    req = client.build_request(method, url, params=params, data=data, headers=headers, content=content,
                                timeout=httpx.Timeout(timeout_s))
     t0 = time.monotonic()
     try:

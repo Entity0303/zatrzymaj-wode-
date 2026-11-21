@@ -29,6 +29,7 @@ from app.analysis import field_state as fs
 from app.analysis import approx_area, drawn_field, soil_consistency, soil_label
 from app.analysis import choice as choice_mod
 from app.analysis import precip as precip_mod
+from app.analysis import satellite as satellite_mod
 from app.analysis import verdict as verdict_mod
 from app.analysis import suggestions as sugg
 from app.analysis import terrain_interpret
@@ -519,6 +520,26 @@ def parse_history(crop_history: str | None) -> list[str]:
             "message": f"Nieznana uprawa w historii pola: {exc}. Podaj 1–3 uprawy po przecinku albo „nie_wiem”."}) from exc
 
 
+SAT_LEVEL_STATUS = {"ok": "ok", "info": "ok", "warn": "warn", "bad": "risk"}
+
+
+def _sat_indicator(sat, which: str, no_sat: SourceTag) -> SatelliteIndicator:
+    """Wskaźniki kondycji (NDVI → 0–100) i wilgotności roślin (NDMI −0,4…0,4 → 0–100) z wyniku Sentinel-2 (A11)."""
+    if sat is None or sat.status != "ok":
+        note = "zdjęcie satelitarne pobierane osobno" if sat is not None and sat.status == "pending" else \
+            "brak bezchmurnego zdjęcia satelitarnego"
+        return SatelliteIndicator(value=None, unit="pkt", status="no_data", note=note, source_tag=no_sat)
+    raw = sat.ndvi if which == "ndvi" else sat.ndmi
+    if raw is None:
+        return SatelliteIndicator(value=None, unit="pkt", status="no_data", note="brak wartości", source_tag=no_sat)
+    pts = (min(1.0, max(0.0, raw)) if which == "ndvi" else min(1.0, max(0.0, (raw + 0.4) / 0.8))) * 100
+    label = sat.ndvi_label if which == "ndvi" else (sat.ndmi_label or "ocena tylko w sezonie przy gęstym łanie")
+    return SatelliteIndicator(
+        value=round(pts), unit="pkt", label=label, status=SAT_LEVEL_STATUS.get(sat.level or "info", "ok"),
+        note=f"{'NDVI' if which == 'ndvi' else 'NDMI'} {raw:.2f} · zdjęcie z {sat.date:%d.%m.%Y}", index_value=raw,
+        source_tag=SourceTag(kind="pomiar", date=sat.date, source="Sentinel-2 L2A"))
+
+
 def precip_contract(info: "precip_mod.PrecipInfo | None", data_until: dt.date | None) -> PrecipSources:
     """PrecipInfo → kontrakt `precip_sources` (None = opad z NASA, jak przed A7)."""
     info = info or precip_mod.PrecipInfo(main="nasa", sentence=precip_mod.cfg()["sentences"]["nasa_no_store"])
@@ -642,6 +663,11 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
                        ms=int((perf_counter() - s) * 1000)))
     c = p.geom_4326.centroid
     rp = p.geom_4326.representative_point()
+    # A11: satelita tylko z cache (analiza < 30 s); brak → „pending”, liczenie w tle, frontend dociąga /api/satellite
+    sat = satellite_mod.cached_result(p.geom_4326, analysis_date)
+    if sat is None:
+        sat = satellite_mod.pending()
+        satellite_mod.start_background(p.geom_4326, analysis_date)
 
     # ── 2. źródła równolegle, z łącznym limitem czasu ──
     remaining = max(3.0, ANALYSIS_BUDGET_S - (perf_counter() - t0))
@@ -699,7 +725,9 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
         steps.append(_step("forecast", "Prognoza pogody (Open-Meteo)", state(fc_res), note=err(fc_res), ms=fc_ms))
     else:
         steps.append(_step("forecast", "Prognoza pogody", "done", note="data historyczna – scenariusz typowej pogody", ms=0))
-    steps.append(_step("satellite", "Zdjęcia satelitarne", "pending", note="w przygotowaniu – brak danych"))
+    steps.append(_step("satellite", "Zdjęcie satelitarne (Sentinel-2)", "done" if sat.status != "pending" else "pending",
+                       note=(f"scena z {sat.date:%d.%m.%Y}" if sat.status == "ok" else
+                             "pobierane osobno – GET /api/satellite" if sat.status == "pending" else sat.warning)))
     tr_saved = None if isinstance(tr_res, SourceError) else tr_res.facts.get("saved_note")
     steps.append(_step("terrain", "Analizuję teren (NMT GUGiK)", state(tr_res),
                        note=err(tr_res) or ("zapisany wynik analizy NMT" if tr_saved else None), ms=tr_ms))
@@ -781,6 +809,7 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
         soil_map_year=sm_rep.mapped_year if sm_status == "ok" else None,
         stale=list(stale_hits),
         soil_conflict=cons.conflict, approximate=approx is not None, drawn=drawn,
+        satellite=sat.status == "ok", satellite_date=sat.date, satellite_status=sat.status,
         terrain=terrain_c is not None, terrain_error=None if terrain_c is not None else terrain_note,
         terrain_saved=bool(tr_saved), terrain_limitations=terrain_c.limitations if terrain_c else [],
         soil_basis_label=soil_consistency.LABELS[cons.contract.basis] if cons.substituted and cons.contract else None,
@@ -809,8 +838,8 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
         soil_water_pct=sw_pct,
         soil_water_mm=sw_mm,
         risk_7d=risk7,
-        crop_health=SatelliteIndicator(value=None, unit="pkt", status="no_data", note="zdjęcia satelitarne – w przygotowaniu", source_tag=no_sat),
-        plant_moisture=SatelliteIndicator(value=None, unit="pkt", status="no_data", note="zdjęcia satelitarne – w przygotowaniu", source_tag=no_sat),
+        crop_health=_sat_indicator(sat, "ndvi", no_sat),
+        plant_moisture=_sat_indicator(sat, "ndmi", no_sat),
         water_balance_season=_balance_indicator(wb),
         soil_capacity=soil_a.soil_capacity,
     )
@@ -849,7 +878,7 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
             chosen = (crop_obj.label, out.crop_season.phase_label, status, crop_off)
         verdict = verdict_mod.build(soil_prof, soil_a.wod_mm, w, last_usable_day(analysis_date), terrain_c, suggestions,
                                     evaluation.recommendations, field_c.status if field_c else None, chosen,
-                                    measured_precip=bool(w_res.precip and w_res.precip.main != "nasa"))
+                                    measured_precip=bool(w_res.precip and w_res.precip.main != "nasa"), satellite=sat)
     steps.append(_step("total", "Cała analiza", "done", ms=int((perf_counter() - t0) * 1000)))
 
     return AnalysisResponse(
@@ -882,6 +911,7 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
                                 f"{format_date_pl(wb.data_until, with_year=False)}" if wb.data_until else None),
         weather_data_until=wb.data_until,
         precip_sources=precip_contract(w_res.precip, wb.data_until),
+        satellite=sat,
         history=history,
         causes=causes,
         recommendations=evaluation.recommendations,
