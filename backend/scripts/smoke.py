@@ -1,4 +1,5 @@
-"""Test dymny na żywo: /api/analysis i /api/report.pdf dla 4 przykładów demo i 6 działek z .ai/test-parcels.md.
+"""Test dymny na żywo: /api/analysis i /api/report.pdf dla przykładów demo, działki bez uprawy (A5b-1)
+i 6 działek z .ai/test-parcels.md.
 
 Uruchomienie (backend musi działać – `docker compose up`):
   docker compose run --rm -v "$(pwd)/backend/scripts:/app/scripts" -v "$(pwd)/reports:/reports" \\
@@ -18,6 +19,7 @@ from pathlib import Path
 import httpx
 
 TODAY = dt.date.today().isoformat()
+NO_CROP = ("Stan działki (bez uprawy)", "201305_2.0038.6/1", "stan-dzialki-bez-uprawy")  # A5b-1
 # działki z .ai/test-parcels.md (uprawa dobrana do działki, data = dziś)
 PARCELS = [
     ("201305_2.0038.6/1", "zboza_ozime"),
@@ -52,6 +54,11 @@ def run_case(c: httpx.Client, name: str, params: dict, out: Path | None, slug: s
                 confidence=b["reliability"]["confidence"], recs=len(b["recommendations"]),
                 ret=sum(x["category"] == "retencja" for x in b["recommendations"]),
                 panel=sum(x["in_panel"] for x in b["recommendations"]),
+                scope=b["status"].get("scope_label"),
+                irrigation=any(x["category"] == "nawadnianie" for x in b["recommendations"]),
+                irrigation_status=(b.get("irrigation") or {}).get("status"),
+                eco=sorted({x["eco_scheme"]["code"] for x in b["recommendations"] if x.get("eco_scheme")}),
+                consistency=(b["soil"].get("consistency") or {}).get("status"),
                 total_ms=next((s["duration_ms"] for s in b["steps"] if s["id"] == "total"), None),
                 body=b,
             )
@@ -72,6 +79,27 @@ def run_case(c: httpx.Client, name: str, params: dict, out: Path | None, slug: s
     except httpx.HTTPError as exc:
         row.update(pdf_ok=False, pdf_s=round(time.perf_counter() - t1, 2), pdf_error=str(exc))
     return row
+
+
+CROP_PL = {"zboza_ozime": "zboża ozime", "zboza_jare": "zboża jare", "kukurydza_ziarno": "kukurydza na ziarno",
+           "kukurydza_kiszonka": "kukurydza na kiszonkę", "rzepak": "rzepak", "ziemniak": "ziemniak"}
+
+
+def table_a5b(rows: list[dict]) -> str:
+    """Tabela A5b-1: przykład | uprawa | status | wynik | zalecenia | nawadnianie | ekoschematy | zgodność gleby."""
+    head = ("| Przykład | Uprawa | Status | Wynik | Zaleceń | Nawadnianie | Ekoschematy | soil.consistency |\n"
+            "|---|---|---|---|---|---|---|---|")
+    lines = [head]
+    for r in rows:
+        if not r.get("ok"):
+            lines.append(f"| {r['name']} | {r.get('crop') or '— (bez uprawy)'} | błąd {r.get('http')} | – | – | – | – | – |")
+            continue
+        crop = CROP_PL.get(r.get("crop"), r.get("crop")) if r.get("crop") else "— (bez uprawy)"
+        status = f"{r['level']} – {r['scope']}" if r.get("scope") else r["level"]
+        irr = "tak" if r["irrigation"] else f"nie ({r['irrigation_status'] or 'brak sekcji'})"
+        lines.append(f"| {r['name']} | {crop} | {status} | {r['score'] if r['score'] is not None else '–'} | {r['recs']} | "
+                     f"{irr} | {', '.join(r['eco']) or '–'} | {r['consistency'] or '–'} |")
+    return "\n".join(lines)
 
 
 def table(rows: list[dict]) -> str:
@@ -104,9 +132,13 @@ def main() -> int:
             if e.get("previous_crop"):
                 params["previous_crop"] = e["previous_crop"]
             rows.append(run_case(c, e["title"], params, out, e["id"]))
+        name, pid, slug = NO_CROP
+        rows.append(run_case(c, name, {"parcel_id": pid, "date": TODAY}, out, slug))
         for pid, crop in PARCELS:
             rows.append(run_case(c, pid, {"parcel_id": pid, "crop": crop, "date": TODAY}, None, None))
     print(table(rows))
+    print()
+    print(table_a5b(rows))
     if a.json:
         Path(a.json).write_text(json.dumps(rows, ensure_ascii=False, indent=1, default=str), encoding="utf-8")
     return 0 if all(r.get("ok") and r.get("pdf_ok") for r in rows) else 1

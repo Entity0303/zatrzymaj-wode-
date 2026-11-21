@@ -1,0 +1,1086 @@
+{
+  "parcel_id": "201305_2.0038.6/1",
+  "layer": "splyw",
+  "analysis_date": "2026-11-21",
+  "raster": null,
+  "features": {
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              22.601259,
+              53.050175
+            ],
+            [
+              22.601189,
+              53.050137
+            ],
+            [
+              22.601185,
+              53.050097
+            ],
+            [
+              22.600693,
+              53.049828
+            ]
+          ]
+        },
+        "properties": {
+          "kind": "flow",
+          "color": "#2F7FC1",
+          "label": "Kierunek spływu wody",
+          "upstream_m2": 16544.0
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              22.600864,
+              53.050268
+            ],
+            [
+              22.600833,
+              53.049905
+            ]
+          ]
+        },
+        "properties": {
+          "kind": "flow",
+          "color": "#2F7FC1",
+          "label": "Kierunek spływu wody",
+          "upstream_m2": 16504.0
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              22.601061,
+              53.050222
+            ],
+            [
+              22.601044,
+              53.05002
+            ]
+          ]
+        },
+        "properties": {
+          "kind": "flow",
+          "color": "#2F7FC1",
+          "label": "Kierunek spływu wody",
+          "upstream_m2": 13426.0
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              22.600797,
+              53.05027
+            ],
+            [
+              22.600766,
+              53.049907
+            ],
+            [
+              22.600625,
+              53.04983
+            ]
+          ]
+        },
+        "properties": {
+          "kind": "flow",
+          "color": "#2F7FC1",
+          "label": "Kierunek spływu wody",
+          "upstream_m2": 3078.0
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              22.600927,
+              53.050226
+            ],
+            [
+              22.600904,
+              53.049943
+            ]
+          ]
+        },
+        "properties": {
+          "kind": "flow",
+          "color": "#2F7FC1",
+          "label": "Kierunek spływu wody",
+          "upstream_m2": 14540.0
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              22.601128,
+              53.05022
+            ],
+            [
+              22.601115,
+              53.050058
+            ]
+          ]
+        },
+        "properties": {
+          "kind": "flow",
+          "color": "#2F7FC1",
+          "label": "Kierunek spływu wody",
+          "upstream_m2": 12758.0
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              22.601192,
+              53.050177
+            ],
+            [
+              22.601189,
+              53.050137
+            ]
+          ]
+        },
+        "properties": {
+          "kind": "flow",
+          "color": "#2F7FC1",
+          "label": "Kierunek spływu wody",
+          "upstream_m2": 11968.0
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              22.599932,
+              53.050378
+            ],
+            [
+              22.599898,
+              53.049974
+            ]
+          ]
+        },
+        "properties": {
+          "kind": "flow",
+          "color": "#2F7FC1",
+          "label": "Kierunek spływu wody",
+          "upstream_m2": 506.0
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              22.600994,
+              53.050224
+            ],
+            [
+              22.600974,
+              53.049982
+            ]
+          ]
+        },
+        "properties": {
+          "kind": "flow",
+          "color": "#2F7FC1",
+          "label": "Kierunek spływu wody",
+          "upstream_m2": 13892.0
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              22.600324,
+              53.050244
+            ],
+            [
+              22.600294,
+              53.049881
+            ]
+          ]
+        },
+        "properties": {
+          "kind": "flow",
+          "color": "#2F7FC1",
+          "label": "Kierunek spływu wody",
+          "upstream_m2": 486.0
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              22.600726,
+              53.050232
+            ],
+            [
+              22.600696,
+              53.049869
+            ]
+          ]
+        },
+        "properties": {
+          "kind": "flow",
+          "color": "#2F7FC1",
+          "label": "Kierunek spływu wody",
+          "upstream_m2": 3058.0
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              22.601587,
+              53.050084
+            ],
+            [
+              22.60138,
+              53.05001
+            ],
+            [
+              22.601175,
+              53.049975
+            ],
+            [
+              22.601034,
+              53.049899
+            ],
+            [
+              22.600967,
+              53.049901
+            ],
+            [
+              22.600827,
+              53.049824
+            ],
+            [
+              22.600759,
+              53.049826
+            ],
+            [
+              22.600689,
+              53.049788
+            ]
+          ]
+        },
+        "properties": {
+          "kind": "flow",
+          "color": "#2F7FC1",
+          "label": "Kierunek spływu wody",
+          "upstream_m2": 19177.0
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              22.601654,
+              53.050082
+            ],
+            [
+              22.601584,
+              53.050044
+            ],
+            [
+              22.601517,
+              53.050046
+            ]
+          ]
+        },
+        "properties": {
+          "kind": "flow",
+          "color": "#2F7FC1",
+          "label": "Kierunek spływu wody",
+          "upstream_m2": 3017.0
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              22.600187,
+              53.050208
+            ],
+            [
+              22.600163,
+              53.049925
+            ]
+          ]
+        },
+        "properties": {
+          "kind": "flow",
+          "color": "#2F7FC1",
+          "label": "Kierunek spływu wody",
+          "upstream_m2": 446.0
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              22.600049,
+              53.050171
+            ],
+            [
+              22.600029,
+              53.049929
+            ]
+          ]
+        },
+        "properties": {
+          "kind": "flow",
+          "color": "#2F7FC1",
+          "label": "Kierunek spływu wody",
+          "upstream_m2": 425.0
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              22.601323,
+              53.050133
+            ],
+            [
+              22.600759,
+              53.049826
+            ]
+          ]
+        },
+        "properties": {
+          "kind": "flow",
+          "color": "#2F7FC1",
+          "label": "Kierunek spływu wody",
+          "upstream_m2": 18954.0
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              22.601721,
+              53.05008
+            ],
+            [
+              22.601651,
+              53.050042
+            ],
+            [
+              22.601584,
+              53.050044
+            ]
+          ]
+        },
+        "properties": {
+          "kind": "flow",
+          "color": "#2F7FC1",
+          "label": "Kierunek spływu wody",
+          "upstream_m2": 2349.0
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              22.599979,
+              53.050133
+            ],
+            [
+              22.599962,
+              53.049931
+            ]
+          ]
+        },
+        "properties": {
+          "kind": "flow",
+          "color": "#2F7FC1",
+          "label": "Kierunek spływu wody",
+          "upstream_m2": 405.0
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              22.601788,
+              53.050078
+            ],
+            [
+              22.601721,
+              53.05008
+            ]
+          ]
+        },
+        "properties": {
+          "kind": "flow",
+          "color": "#2F7FC1",
+          "label": "Kierunek spływu wody",
+          "upstream_m2": 810.0
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              22.600109,
+              53.050089
+            ],
+            [
+              22.600096,
+              53.049927
+            ]
+          ]
+        },
+        "properties": {
+          "kind": "flow",
+          "color": "#2F7FC1",
+          "label": "Kierunek spływu wody",
+          "upstream_m2": 385.0
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              22.601919,
+              53.050034
+            ],
+            [
+              22.601651,
+              53.050042
+            ]
+          ]
+        },
+        "properties": {
+          "kind": "flow",
+          "color": "#2F7FC1",
+          "label": "Kierunek spływu wody",
+          "upstream_m2": 1316.0
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              22.60024,
+              53.050044
+            ],
+            [
+              22.600227,
+              53.049883
+            ]
+          ]
+        },
+        "properties": {
+          "kind": "flow",
+          "color": "#2F7FC1",
+          "label": "Kierunek spływu wody",
+          "upstream_m2": 385.0
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              22.600642,
+              53.050032
+            ],
+            [
+              22.600629,
+              53.04987
+            ],
+            [
+              22.600559,
+              53.049832
+            ]
+          ]
+        },
+        "properties": {
+          "kind": "flow",
+          "color": "#2F7FC1",
+          "label": "Kierunek spływu wody",
+          "upstream_m2": 608.0
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              22.601178,
+              53.050016
+            ],
+            [
+              22.600967,
+              53.049901
+            ]
+          ]
+        },
+        "properties": {
+          "kind": "flow",
+          "color": "#2F7FC1",
+          "label": "Kierunek spływu wody",
+          "upstream_m2": 14296.0
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              22.601246,
+              53.050014
+            ],
+            [
+              22.601175,
+              53.049975
+            ]
+          ]
+        },
+        "properties": {
+          "kind": "flow",
+          "color": "#2F7FC1",
+          "label": "Kierunek spływu wody",
+          "upstream_m2": 5164.0
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              22.601916,
+              53.049993
+            ],
+            [
+              22.60138,
+              53.05001
+            ]
+          ]
+        },
+        "properties": {
+          "kind": "flow",
+          "color": "#2F7FC1",
+          "label": "Kierunek spływu wody",
+          "upstream_m2": 3766.0
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              22.600371,
+              53.05
+            ],
+            [
+              22.600361,
+              53.049879
+            ]
+          ]
+        },
+        "properties": {
+          "kind": "flow",
+          "color": "#2F7FC1",
+          "label": "Kierunek spływu wody",
+          "upstream_m2": 364.0
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              22.601912,
+              53.049953
+            ],
+            [
+              22.601242,
+              53.049973
+            ]
+          ]
+        },
+        "properties": {
+          "kind": "flow",
+          "color": "#2F7FC1",
+          "label": "Kierunek spływu wody",
+          "upstream_m2": 4840.0
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              22.601909,
+              53.049913
+            ],
+            [
+              22.601105,
+              53.049937
+            ]
+          ]
+        },
+        "properties": {
+          "kind": "flow",
+          "color": "#2F7FC1",
+          "label": "Kierunek spływu wody",
+          "upstream_m2": 12474.0
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              22.601839,
+              53.049874
+            ],
+            [
+              22.601772,
+              53.049876
+            ],
+            [
+              22.601708,
+              53.049919
+            ]
+          ]
+        },
+        "properties": {
+          "kind": "flow",
+          "color": "#2F7FC1",
+          "label": "Kierunek spływu wody",
+          "upstream_m2": 6237.0
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              22.601835,
+              53.049834
+            ],
+            [
+              22.601772,
+              53.049876
+            ]
+          ]
+        },
+        "properties": {
+          "kind": "flow",
+          "color": "#2F7FC1",
+          "label": "Kierunek spływu wody",
+          "upstream_m2": 1580.0
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              22.601828,
+              53.049753
+            ],
+            [
+              22.601574,
+              53.049923
+            ]
+          ]
+        },
+        "properties": {
+          "kind": "flow",
+          "color": "#2F7FC1",
+          "label": "Kierunek spływu wody",
+          "upstream_m2": 7168.0
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              22.601825,
+              53.049713
+            ],
+            [
+              22.601571,
+              53.049883
+            ],
+            [
+              22.601034,
+              53.049899
+            ]
+          ]
+        },
+        "properties": {
+          "kind": "flow",
+          "color": "#2F7FC1",
+          "label": "Kierunek spływu wody",
+          "upstream_m2": 13932.0
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              22.601822,
+              53.049672
+            ],
+            [
+              22.601503,
+              53.049884
+            ]
+          ]
+        },
+        "properties": {
+          "kind": "flow",
+          "color": "#2F7FC1",
+          "label": "Kierunek spływu wody",
+          "upstream_m2": 871.0
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              22.601755,
+              53.049675
+            ],
+            [
+              22.601436,
+              53.049886
+            ]
+          ]
+        },
+        "properties": {
+          "kind": "flow",
+          "color": "#2F7FC1",
+          "label": "Kierunek spływu wody",
+          "upstream_m2": 1336.0
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              22.601832,
+              53.049794
+            ],
+            [
+              22.601641,
+              53.049921
+            ]
+          ]
+        },
+        "properties": {
+          "kind": "flow",
+          "color": "#2F7FC1",
+          "label": "Kierunek spływu wody",
+          "upstream_m2": 6743.0
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              22.60155,
+              53.04964
+            ],
+            [
+              22.601296,
+              53.04981
+            ],
+            [
+              22.600827,
+              53.049824
+            ]
+          ]
+        },
+        "properties": {
+          "kind": "flow",
+          "color": "#2F7FC1",
+          "label": "Kierunek spływu wody",
+          "upstream_m2": 18488.0
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              22.601684,
+              53.049636
+            ],
+            [
+              22.601366,
+              53.049848
+            ],
+            [
+              22.600897,
+              53.049862
+            ]
+          ]
+        },
+        "properties": {
+          "kind": "flow",
+          "color": "#2F7FC1",
+          "label": "Kierunek spływu wody",
+          "upstream_m2": 15896.0
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              22.601751,
+              53.049634
+            ],
+            [
+              22.601433,
+              53.049846
+            ],
+            [
+              22.601366,
+              53.049848
+            ]
+          ]
+        },
+        "properties": {
+          "kind": "flow",
+          "color": "#2F7FC1",
+          "label": "Kierunek spływu wody",
+          "upstream_m2": 972.0
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              22.601219,
+              53.049691
+            ],
+            [
+              22.601028,
+              53.049818
+            ]
+          ]
+        },
+        "properties": {
+          "kind": "flow",
+          "color": "#2F7FC1",
+          "label": "Kierunek spływu wody",
+          "upstream_m2": 2430.0
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              22.601285,
+              53.049689
+            ],
+            [
+              22.601095,
+              53.049816
+            ]
+          ]
+        },
+        "properties": {
+          "kind": "flow",
+          "color": "#2F7FC1",
+          "label": "Kierunek spływu wody",
+          "upstream_m2": 1944.0
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              22.601416,
+              53.049644
+            ],
+            [
+              22.601162,
+              53.049814
+            ]
+          ]
+        },
+        "properties": {
+          "kind": "flow",
+          "color": "#2F7FC1",
+          "label": "Kierunek spływu wody",
+          "upstream_m2": 1458.0
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              22.601617,
+              53.049638
+            ],
+            [
+              22.601299,
+              53.04985
+            ]
+          ]
+        },
+        "properties": {
+          "kind": "flow",
+          "color": "#2F7FC1",
+          "label": "Kierunek spływu wody",
+          "upstream_m2": 1478.0
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              22.601483,
+              53.049642
+            ],
+            [
+              22.601487,
+              53.049683
+            ]
+          ]
+        },
+        "properties": {
+          "kind": "flow",
+          "color": "#2F7FC1",
+          "label": "Kierunek spływu wody",
+          "upstream_m2": 830.0
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            22.600724,
+            53.049807
+          ]
+        },
+        "properties": {
+          "kind": "outflow",
+          "color": "#E5675C",
+          "share_pct": 100.0,
+          "direction": "południowy zachód",
+          "label": "Tu woda ucieka z działki – 100% działki (kierunek: południowy zachód)"
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            22.600759,
+            53.049826
+          ]
+        },
+        "properties": {
+          "kind": "retencja",
+          "color": "#2E5B3F",
+          "proposal": "oczko_przy_odplywie",
+          "label": "Miejsce na oczko / zbiornik: z ulewy 20 mm spłynie tu ok. 114 m³ wody"
+        }
+      }
+    ]
+  },
+  "value_range": null,
+  "source_tag": {
+    "kind": "pomiar",
+    "date": null,
+    "source": "NMT GUGiK (zapisany wynik z 21.11.2026)"
+  }
+}

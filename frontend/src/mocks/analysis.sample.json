@@ -43,19 +43,21 @@
       "nazwa": "ULDK GUGiK",
       "url": "https://uldk.gugik.gov.pl/",
       "pobrano": "2026-11-21T16:47:28+00:00",
-      "uwagi": "ZAPIS ODPOWIEDZI /api/analysis dla 201305_2.0038.6/1, zboża ozime, 2018-06-10, przedplon zboża ozime (wygenerowano 2026-11-21, A5). Plik służy tylko do pracy nad UI (?dane=przykladowe) – UI zawsze pokazuje napis „DANE PRZYKŁADOWE”."
+      "uwagi": "ZAPIS ODPOWIEDZI /api/analysis dla 201305_2.0038.6/1, zboża ozime, 2018-06-10, przedplon zboża ozime (wygenerowano 2026-11-21, A5b-2a; obrys z zapisanej odpowiedzi ULDK, teren z zapisanego wyniku NMT z 21.11, pozostałe źródła na żywo / z cache). Plik służy tylko do pracy nad UI (?dane=przykladowe) – UI zawsze pokazuje napis „DANE PRZYKŁADOWE”."
     }
   },
   "crop": "zboza_ozime",
   "previous_crop": "zboza_ozime",
   "analysis_date": "2018-06-10",
   "historical": true,
-  "generated_at": "2026-11-21T16:47:31Z",
+  "generated_at": "2026-11-21T20:04:16Z",
   "status": {
     "level": "danger",
     "score": 8,
     "headline": "Susza – rośliny cierpią z braku wody",
-    "summary": "Gleba ma 17% wody dostępnej w strefie korzeni, a od 1 marca bilans wody wynosi −111 mm – o 90 mm mniej niż zwykle. Rośliny już odczuwają brak wody."
+    "summary": "Gleba ma 17% wody dostępnej w strefie korzeni, a od 1 marca bilans wody wynosi −111 mm – o 90 mm mniej niż zwykle. Rośliny już odczuwają brak wody.",
+    "scope": "sezon",
+    "scope_label": "w sezonie"
   },
   "indicators": {
     "soil_water_pct": {
@@ -126,7 +128,7 @@
       "unit": "mm",
       "label": null,
       "status": "risk",
-      "note": "o 90 mm mniej niż zwykle (średnia 10 lat -20 mm), od 01.03",
+      "note": "o 90 mm mniej niż zwykle (średnia 10 lat −20 mm), od 01.03",
       "source_tag": {
         "kind": "obliczenia",
         "date": "2018-06-09",
@@ -138,7 +140,7 @@
       "unit": "mm",
       "label": "Kat. III – średnio podatna na suszę",
       "status": "ok",
-      "note": "woda dostępna dla roślin (WOD) – 100% działki to gleby mineralne użytków rolnych; klasy bonitacyjne EGiB: RIIIb, RIVa, RIVb",
+      "note": "woda dostępna dla roślin (WOD) – 100% działki to gleby mineralne użytków rolnych",
       "source_tag": {
         "kind": "pomiar",
         "date": null,
@@ -167,13 +169,14 @@
     "last_season": null
   },
   "irrigation": {
-    "status": "zalecane",
-    "message": "27,5 mm teraz, powtórz za ok. 2 dni (w 7 dniach 3 dawki, niedobór ok. 70 mm)",
-    "dose_mm": 27.5,
-    "first_date": "2018-06-10",
-    "interval_days": 2,
-    "total_7d_mm": 70.0,
-    "doses_7d": 3,
+    "status": "nie_praktykowane",
+    "message": "Zbóż w Polsce się nie nawadnia – liczy się zatrzymanie wody w glebie.",
+    "dose_mm": null,
+    "first_date": null,
+    "interval_days": null,
+    "total_7d_mm": null,
+    "doses_7d": null,
+    "practice": "not_practiced",
     "source_tag": {
       "kind": "szacunek_modelu",
       "date": "2018-06-10",
@@ -197,12 +200,8 @@
     ],
     "agricultural_share": 1.0,
     "wod_mm": 166.2,
-    "classes": [
-      "RIIIb",
-      "RIVa",
-      "RIVb"
-    ],
-    "classes_note": null,
+    "classes": null,
+    "classes_note": "Usługa KIEG nie odpowiada – klasy bonitacyjne niedostępne.",
     "non_agricultural": false,
     "non_agricultural_reason": null,
     "non_agricultural_note": null,
@@ -233,13 +232,12 @@
       }
     },
     "soil_map": {
-      "complex_code": "6",
-      "complex_label": "żytni słaby",
-      "species_code": "pgl",
-      "species_label": "piasek gliniasty lekki",
+      "complex_code": "2",
+      "complex_label": "pszenny dobry",
+      "species_code": "glp",
+      "species_label": "glina lekka pylasta",
       "deeper": [
-        "piasek słabogliniasty",
-        "piasek luźny"
+        "glina średnia pylasta"
       ],
       "soil_type_code": "Bw",
       "mapped_year": 1973,
@@ -250,12 +248,4331 @@
       }
     },
     "texture_note": null,
+    "consistency": {
+      "status": "ok",
+      "note": "Źródła zgodne: na działce są dwie gleby – według mapy glebowo-rolniczej lżejsza w 22% punktów, według mapy IUNG gleby lekkie (kat. I–II) to 25% działki. W obliczeniach – średnia ważona dla całej działki (IUNG). Model SoilGrids (250 m) wskazuje glebę lekką – jest najmniej dokładny, pominięty.",
+      "basis": "mapa_glebowo_rolnicza",
+      "category_used": 3,
+      "by_source": [
+        {
+          "source": "mapa_glebowo_rolnicza",
+          "source_label": "Mapa glebowo-rolnicza 1:5000 (GUGiK)",
+          "category": 3,
+          "description": "glina lekka pylasta – gleba średnia (7 z 9 punktów); piasek gliniasty lekki – gleba lekka (2 z 9 punktów)"
+        },
+        {
+          "source": "iung",
+          "source_label": "Mapa gleb IUNG-PIB",
+          "category": 3,
+          "description": "kat. III 75%, kat. I 25% działki – średnio podatna na suszę"
+        },
+        {
+          "source": "soilgrids",
+          "source_label": "SoilGrids (ISRIC), model 250 m",
+          "category": 2,
+          "description": "glina piaszczysta – gleba lekka"
+        }
+      ]
+    },
     "source_tag": {
       "kind": "pomiar",
       "date": null,
       "source": "IUNG-PIB"
     }
   },
+  "field_state": {
+    "status": {
+      "level": "danger",
+      "score": 4,
+      "headline": "Susza glebowa – bardzo mało wody w glebie",
+      "summary": "W profilu gleby (ok. 1 m) jest 23% wody dostępnej (39 mm) – najmniej tego dnia w ostatnich 10 latach. Bilans opad − parowanie z ostatnich 30 dni: −77 mm (o 54 mm mniej niż zwykle). Bez wybranej uprawy – stan dla typowego pola (po zbiorach goła gleba).",
+      "scope": "bez_uprawy",
+      "scope_label": "stan wody na działce"
+    },
+    "cover": "pokrycie referencyjne FAO-56 (Kc = 1) od marca do lipca, po typowym terminie zbioru goła gleba; profil ok. 1 m",
+    "soil_water_pct": {
+      "value": 23.0,
+      "unit": "%",
+      "label": "stan działki",
+      "status": "warn",
+      "note": "bardzo mało wody w glebie – gleba nadal przesycha (profil ok. 1 m, pokrycie referencyjne)",
+      "source_tag": {
+        "kind": "szacunek_modelu",
+        "date": "2018-06-09",
+        "source": "Model wody w glebie FAO-56 – pokrycie referencyjne"
+      }
+    },
+    "soil_water_mm": {
+      "value": 38.6,
+      "unit": "mm",
+      "label": null,
+      "status": "warn",
+      "note": "woda dostępna dla roślin, profil ok. 1 m",
+      "source_tag": {
+        "kind": "szacunek_modelu",
+        "date": "2018-06-09",
+        "source": "Model wody w glebie FAO-56 – pokrycie referencyjne"
+      }
+    },
+    "soil_water": {
+      "scope": "profil",
+      "depth_m": 1.0,
+      "description": "bardzo mało wody w glebie – gleba nadal przesycha",
+      "rank": {
+        "lower_years": 0,
+        "of_years": 10
+      },
+      "last_season": null
+    },
+    "series_start": "2017-11-01",
+    "series": [
+      {
+        "date": "2017-11-01",
+        "value": 99.9
+      },
+      {
+        "date": "2017-11-02",
+        "value": 99.9
+      },
+      {
+        "date": "2017-11-03",
+        "value": 99.9
+      },
+      {
+        "date": "2017-11-04",
+        "value": 99.9
+      },
+      {
+        "date": "2017-11-05",
+        "value": 99.9
+      },
+      {
+        "date": "2017-11-06",
+        "value": 99.8
+      },
+      {
+        "date": "2017-11-07",
+        "value": 99.9
+      },
+      {
+        "date": "2017-11-08",
+        "value": 99.9
+      },
+      {
+        "date": "2017-11-09",
+        "value": 99.9
+      },
+      {
+        "date": "2017-11-10",
+        "value": 99.9
+      },
+      {
+        "date": "2017-11-11",
+        "value": 99.9
+      },
+      {
+        "date": "2017-11-12",
+        "value": 99.9
+      },
+      {
+        "date": "2017-11-13",
+        "value": 100.0
+      },
+      {
+        "date": "2017-11-14",
+        "value": 99.9
+      },
+      {
+        "date": "2017-11-15",
+        "value": 99.9
+      },
+      {
+        "date": "2017-11-16",
+        "value": 100.0
+      },
+      {
+        "date": "2017-11-17",
+        "value": 99.9
+      },
+      {
+        "date": "2017-11-18",
+        "value": 99.9
+      },
+      {
+        "date": "2017-11-19",
+        "value": 99.9
+      },
+      {
+        "date": "2017-11-20",
+        "value": 100.0
+      },
+      {
+        "date": "2017-11-21",
+        "value": 100.0
+      },
+      {
+        "date": "2017-11-22",
+        "value": 100.0
+      },
+      {
+        "date": "2017-11-23",
+        "value": 100.0
+      },
+      {
+        "date": "2017-11-24",
+        "value": 100.0
+      },
+      {
+        "date": "2017-11-25",
+        "value": 100.0
+      },
+      {
+        "date": "2017-11-26",
+        "value": 100.0
+      },
+      {
+        "date": "2017-11-27",
+        "value": 100.0
+      },
+      {
+        "date": "2017-11-28",
+        "value": 100.0
+      },
+      {
+        "date": "2017-11-29",
+        "value": 100.0
+      },
+      {
+        "date": "2017-11-30",
+        "value": 100.0
+      },
+      {
+        "date": "2017-12-01",
+        "value": 100.0
+      },
+      {
+        "date": "2017-12-02",
+        "value": 100.0
+      },
+      {
+        "date": "2017-12-03",
+        "value": 100.0
+      },
+      {
+        "date": "2017-12-04",
+        "value": 100.0
+      },
+      {
+        "date": "2017-12-05",
+        "value": 100.0
+      },
+      {
+        "date": "2017-12-06",
+        "value": 100.0
+      },
+      {
+        "date": "2017-12-07",
+        "value": 100.0
+      },
+      {
+        "date": "2017-12-08",
+        "value": 100.0
+      },
+      {
+        "date": "2017-12-09",
+        "value": 100.0
+      },
+      {
+        "date": "2017-12-10",
+        "value": 100.0
+      },
+      {
+        "date": "2017-12-11",
+        "value": 99.9
+      },
+      {
+        "date": "2017-12-12",
+        "value": 99.9
+      },
+      {
+        "date": "2017-12-13",
+        "value": 99.9
+      },
+      {
+        "date": "2017-12-14",
+        "value": 100.0
+      },
+      {
+        "date": "2017-12-15",
+        "value": 100.0
+      },
+      {
+        "date": "2017-12-16",
+        "value": 100.0
+      },
+      {
+        "date": "2017-12-17",
+        "value": 100.0
+      },
+      {
+        "date": "2017-12-18",
+        "value": 100.0
+      },
+      {
+        "date": "2017-12-19",
+        "value": 100.0
+      },
+      {
+        "date": "2017-12-20",
+        "value": 100.0
+      },
+      {
+        "date": "2017-12-21",
+        "value": 100.0
+      },
+      {
+        "date": "2017-12-22",
+        "value": 100.0
+      },
+      {
+        "date": "2017-12-23",
+        "value": 100.0
+      },
+      {
+        "date": "2017-12-24",
+        "value": 100.0
+      },
+      {
+        "date": "2017-12-25",
+        "value": 100.0
+      },
+      {
+        "date": "2017-12-26",
+        "value": 100.0
+      },
+      {
+        "date": "2017-12-27",
+        "value": 100.0
+      },
+      {
+        "date": "2017-12-28",
+        "value": 100.0
+      },
+      {
+        "date": "2017-12-29",
+        "value": 100.0
+      },
+      {
+        "date": "2017-12-30",
+        "value": 100.0
+      },
+      {
+        "date": "2017-12-31",
+        "value": 100.0
+      },
+      {
+        "date": "2018-01-01",
+        "value": 100.0
+      },
+      {
+        "date": "2018-01-02",
+        "value": 100.0
+      },
+      {
+        "date": "2018-01-03",
+        "value": 100.0
+      },
+      {
+        "date": "2018-01-04",
+        "value": 100.0
+      },
+      {
+        "date": "2018-01-05",
+        "value": 100.0
+      },
+      {
+        "date": "2018-01-06",
+        "value": 100.0
+      },
+      {
+        "date": "2018-01-07",
+        "value": 100.0
+      },
+      {
+        "date": "2018-01-08",
+        "value": 100.0
+      },
+      {
+        "date": "2018-01-09",
+        "value": 100.0
+      },
+      {
+        "date": "2018-01-10",
+        "value": 100.0
+      },
+      {
+        "date": "2018-01-11",
+        "value": 100.0
+      },
+      {
+        "date": "2018-01-12",
+        "value": 100.0
+      },
+      {
+        "date": "2018-01-13",
+        "value": 100.0
+      },
+      {
+        "date": "2018-01-14",
+        "value": 99.9
+      },
+      {
+        "date": "2018-01-15",
+        "value": 99.9
+      },
+      {
+        "date": "2018-01-16",
+        "value": 100.0
+      },
+      {
+        "date": "2018-01-17",
+        "value": 100.0
+      },
+      {
+        "date": "2018-01-18",
+        "value": 100.0
+      },
+      {
+        "date": "2018-01-19",
+        "value": 100.0
+      },
+      {
+        "date": "2018-01-20",
+        "value": 100.0
+      },
+      {
+        "date": "2018-01-21",
+        "value": 100.0
+      },
+      {
+        "date": "2018-01-22",
+        "value": 100.0
+      },
+      {
+        "date": "2018-01-23",
+        "value": 100.0
+      },
+      {
+        "date": "2018-01-24",
+        "value": 100.0
+      },
+      {
+        "date": "2018-01-25",
+        "value": 100.0
+      },
+      {
+        "date": "2018-01-26",
+        "value": 99.9
+      },
+      {
+        "date": "2018-01-27",
+        "value": 100.0
+      },
+      {
+        "date": "2018-01-28",
+        "value": 100.0
+      },
+      {
+        "date": "2018-01-29",
+        "value": 100.0
+      },
+      {
+        "date": "2018-01-30",
+        "value": 99.9
+      },
+      {
+        "date": "2018-01-31",
+        "value": 99.9
+      },
+      {
+        "date": "2018-02-01",
+        "value": 100.0
+      },
+      {
+        "date": "2018-02-02",
+        "value": 100.0
+      },
+      {
+        "date": "2018-02-03",
+        "value": 100.0
+      },
+      {
+        "date": "2018-02-04",
+        "value": 99.9
+      },
+      {
+        "date": "2018-02-05",
+        "value": 99.9
+      },
+      {
+        "date": "2018-02-06",
+        "value": 100.0
+      },
+      {
+        "date": "2018-02-07",
+        "value": 99.9
+      },
+      {
+        "date": "2018-02-08",
+        "value": 100.0
+      },
+      {
+        "date": "2018-02-09",
+        "value": 100.0
+      },
+      {
+        "date": "2018-02-10",
+        "value": 100.0
+      },
+      {
+        "date": "2018-02-11",
+        "value": 99.9
+      },
+      {
+        "date": "2018-02-12",
+        "value": 99.9
+      },
+      {
+        "date": "2018-02-13",
+        "value": 99.9
+      },
+      {
+        "date": "2018-02-14",
+        "value": 99.9
+      },
+      {
+        "date": "2018-02-15",
+        "value": 99.9
+      },
+      {
+        "date": "2018-02-16",
+        "value": 99.9
+      },
+      {
+        "date": "2018-02-17",
+        "value": 99.9
+      },
+      {
+        "date": "2018-02-18",
+        "value": 99.9
+      },
+      {
+        "date": "2018-02-19",
+        "value": 99.9
+      },
+      {
+        "date": "2018-02-20",
+        "value": 99.9
+      },
+      {
+        "date": "2018-02-21",
+        "value": 99.9
+      },
+      {
+        "date": "2018-02-22",
+        "value": 99.9
+      },
+      {
+        "date": "2018-02-23",
+        "value": 99.9
+      },
+      {
+        "date": "2018-02-24",
+        "value": 99.9
+      },
+      {
+        "date": "2018-02-25",
+        "value": 99.9
+      },
+      {
+        "date": "2018-02-26",
+        "value": 99.9
+      },
+      {
+        "date": "2018-02-27",
+        "value": 99.9
+      },
+      {
+        "date": "2018-02-28",
+        "value": 99.9
+      },
+      {
+        "date": "2018-03-01",
+        "value": 99.8
+      },
+      {
+        "date": "2018-03-02",
+        "value": 99.7
+      },
+      {
+        "date": "2018-03-03",
+        "value": 99.7
+      },
+      {
+        "date": "2018-03-04",
+        "value": 99.5
+      },
+      {
+        "date": "2018-03-05",
+        "value": 99.3
+      },
+      {
+        "date": "2018-03-06",
+        "value": 99.1
+      },
+      {
+        "date": "2018-03-07",
+        "value": 99.8
+      },
+      {
+        "date": "2018-03-08",
+        "value": 99.8
+      },
+      {
+        "date": "2018-03-09",
+        "value": 99.7
+      },
+      {
+        "date": "2018-03-10",
+        "value": 99.6
+      },
+      {
+        "date": "2018-03-11",
+        "value": 99.7
+      },
+      {
+        "date": "2018-03-12",
+        "value": 99.7
+      },
+      {
+        "date": "2018-03-13",
+        "value": 99.6
+      },
+      {
+        "date": "2018-03-14",
+        "value": 99.6
+      },
+      {
+        "date": "2018-03-15",
+        "value": 99.1
+      },
+      {
+        "date": "2018-03-16",
+        "value": 98.8
+      },
+      {
+        "date": "2018-03-17",
+        "value": 98.2
+      },
+      {
+        "date": "2018-03-18",
+        "value": 97.6
+      },
+      {
+        "date": "2018-03-19",
+        "value": 97.1
+      },
+      {
+        "date": "2018-03-20",
+        "value": 96.5
+      },
+      {
+        "date": "2018-03-21",
+        "value": 96.0
+      },
+      {
+        "date": "2018-03-22",
+        "value": 96.1
+      },
+      {
+        "date": "2018-03-23",
+        "value": 95.7
+      },
+      {
+        "date": "2018-03-24",
+        "value": 95.0
+      },
+      {
+        "date": "2018-03-25",
+        "value": 94.3
+      },
+      {
+        "date": "2018-03-26",
+        "value": 93.8
+      },
+      {
+        "date": "2018-03-27",
+        "value": 93.6
+      },
+      {
+        "date": "2018-03-28",
+        "value": 93.1
+      },
+      {
+        "date": "2018-03-29",
+        "value": 96.4
+      },
+      {
+        "date": "2018-03-30",
+        "value": 95.9
+      },
+      {
+        "date": "2018-03-31",
+        "value": 99.0
+      },
+      {
+        "date": "2018-04-01",
+        "value": 99.8
+      },
+      {
+        "date": "2018-04-02",
+        "value": 99.7
+      },
+      {
+        "date": "2018-04-03",
+        "value": 99.3
+      },
+      {
+        "date": "2018-04-04",
+        "value": 98.2
+      },
+      {
+        "date": "2018-04-05",
+        "value": 97.1
+      },
+      {
+        "date": "2018-04-06",
+        "value": 96.2
+      },
+      {
+        "date": "2018-04-07",
+        "value": 95.0
+      },
+      {
+        "date": "2018-04-08",
+        "value": 93.7
+      },
+      {
+        "date": "2018-04-09",
+        "value": 92.2
+      },
+      {
+        "date": "2018-04-10",
+        "value": 90.7
+      },
+      {
+        "date": "2018-04-11",
+        "value": 93.3
+      },
+      {
+        "date": "2018-04-12",
+        "value": 92.1
+      },
+      {
+        "date": "2018-04-13",
+        "value": 90.9
+      },
+      {
+        "date": "2018-04-14",
+        "value": 89.8
+      },
+      {
+        "date": "2018-04-15",
+        "value": 88.5
+      },
+      {
+        "date": "2018-04-16",
+        "value": 87.9
+      },
+      {
+        "date": "2018-04-17",
+        "value": 88.7
+      },
+      {
+        "date": "2018-04-18",
+        "value": 87.5
+      },
+      {
+        "date": "2018-04-19",
+        "value": 86.0
+      },
+      {
+        "date": "2018-04-20",
+        "value": 84.3
+      },
+      {
+        "date": "2018-04-21",
+        "value": 82.3
+      },
+      {
+        "date": "2018-04-22",
+        "value": 80.7
+      },
+      {
+        "date": "2018-04-23",
+        "value": 79.4
+      },
+      {
+        "date": "2018-04-24",
+        "value": 78.7
+      },
+      {
+        "date": "2018-04-25",
+        "value": 79.5
+      },
+      {
+        "date": "2018-04-26",
+        "value": 79.1
+      },
+      {
+        "date": "2018-04-27",
+        "value": 78.2
+      },
+      {
+        "date": "2018-04-28",
+        "value": 76.5
+      },
+      {
+        "date": "2018-04-29",
+        "value": 77.0
+      },
+      {
+        "date": "2018-04-30",
+        "value": 75.7
+      },
+      {
+        "date": "2018-05-01",
+        "value": 74.9
+      },
+      {
+        "date": "2018-05-02",
+        "value": 72.9
+      },
+      {
+        "date": "2018-05-03",
+        "value": 70.7
+      },
+      {
+        "date": "2018-05-04",
+        "value": 68.7
+      },
+      {
+        "date": "2018-05-05",
+        "value": 66.8
+      },
+      {
+        "date": "2018-05-06",
+        "value": 64.7
+      },
+      {
+        "date": "2018-05-07",
+        "value": 62.5
+      },
+      {
+        "date": "2018-05-08",
+        "value": 60.1
+      },
+      {
+        "date": "2018-05-09",
+        "value": 58.0
+      },
+      {
+        "date": "2018-05-10",
+        "value": 56.2
+      },
+      {
+        "date": "2018-05-11",
+        "value": 53.7
+      },
+      {
+        "date": "2018-05-12",
+        "value": 51.2
+      },
+      {
+        "date": "2018-05-13",
+        "value": 49.0
+      },
+      {
+        "date": "2018-05-14",
+        "value": 48.5
+      },
+      {
+        "date": "2018-05-15",
+        "value": 47.1
+      },
+      {
+        "date": "2018-05-16",
+        "value": 50.3
+      },
+      {
+        "date": "2018-05-17",
+        "value": 54.6
+      },
+      {
+        "date": "2018-05-18",
+        "value": 54.7
+      },
+      {
+        "date": "2018-05-19",
+        "value": 53.3
+      },
+      {
+        "date": "2018-05-20",
+        "value": 51.1
+      },
+      {
+        "date": "2018-05-21",
+        "value": 48.9
+      },
+      {
+        "date": "2018-05-22",
+        "value": 49.1
+      },
+      {
+        "date": "2018-05-23",
+        "value": 47.2
+      },
+      {
+        "date": "2018-05-24",
+        "value": 45.0
+      },
+      {
+        "date": "2018-05-25",
+        "value": 44.2
+      },
+      {
+        "date": "2018-05-26",
+        "value": 45.1
+      },
+      {
+        "date": "2018-05-27",
+        "value": 42.6
+      },
+      {
+        "date": "2018-05-28",
+        "value": 40.1
+      },
+      {
+        "date": "2018-05-29",
+        "value": 37.6
+      },
+      {
+        "date": "2018-05-30",
+        "value": 35.1
+      },
+      {
+        "date": "2018-05-31",
+        "value": 32.9
+      },
+      {
+        "date": "2018-06-01",
+        "value": 30.9
+      },
+      {
+        "date": "2018-06-02",
+        "value": 32.7
+      },
+      {
+        "date": "2018-06-03",
+        "value": 32.2
+      },
+      {
+        "date": "2018-06-04",
+        "value": 30.4
+      },
+      {
+        "date": "2018-06-05",
+        "value": 29.1
+      },
+      {
+        "date": "2018-06-06",
+        "value": 27.7
+      },
+      {
+        "date": "2018-06-07",
+        "value": 26.3
+      },
+      {
+        "date": "2018-06-08",
+        "value": 24.7
+      },
+      {
+        "date": "2018-06-09",
+        "value": 23.2
+      }
+    ],
+    "series_band": [
+      {
+        "date": "2017-11-01",
+        "min": 16.8,
+        "max": 99.9,
+        "mean": 77.4
+      },
+      {
+        "date": "2017-11-02",
+        "min": 16.9,
+        "max": 100.0,
+        "mean": 77.6
+      },
+      {
+        "date": "2017-11-03",
+        "min": 17.0,
+        "max": 99.9,
+        "mean": 77.7
+      },
+      {
+        "date": "2017-11-04",
+        "min": 17.0,
+        "max": 99.9,
+        "mean": 77.9
+      },
+      {
+        "date": "2017-11-05",
+        "min": 17.1,
+        "max": 99.9,
+        "mean": 79.0
+      },
+      {
+        "date": "2017-11-06",
+        "min": 17.3,
+        "max": 100.0,
+        "mean": 79.2
+      },
+      {
+        "date": "2017-11-07",
+        "min": 19.5,
+        "max": 100.0,
+        "mean": 80.0
+      },
+      {
+        "date": "2017-11-08",
+        "min": 23.0,
+        "max": 100.0,
+        "mean": 80.8
+      },
+      {
+        "date": "2017-11-09",
+        "min": 24.2,
+        "max": 100.0,
+        "mean": 81.2
+      },
+      {
+        "date": "2017-11-10",
+        "min": 30.2,
+        "max": 100.0,
+        "mean": 81.8
+      },
+      {
+        "date": "2017-11-11",
+        "min": 33.1,
+        "max": 100.0,
+        "mean": 82.1
+      },
+      {
+        "date": "2017-11-12",
+        "min": 34.5,
+        "max": 100.0,
+        "mean": 82.5
+      },
+      {
+        "date": "2017-11-13",
+        "min": 34.7,
+        "max": 100.0,
+        "mean": 82.7
+      },
+      {
+        "date": "2017-11-14",
+        "min": 40.1,
+        "max": 100.0,
+        "mean": 83.4
+      },
+      {
+        "date": "2017-11-15",
+        "min": 40.5,
+        "max": 100.0,
+        "mean": 83.8
+      },
+      {
+        "date": "2017-11-16",
+        "min": 40.6,
+        "max": 100.0,
+        "mean": 83.9
+      },
+      {
+        "date": "2017-11-17",
+        "min": 43.3,
+        "max": 100.0,
+        "mean": 84.5
+      },
+      {
+        "date": "2017-11-18",
+        "min": 46.9,
+        "max": 100.0,
+        "mean": 84.9
+      },
+      {
+        "date": "2017-11-19",
+        "min": 48.5,
+        "max": 100.0,
+        "mean": 85.6
+      },
+      {
+        "date": "2017-11-20",
+        "min": 49.4,
+        "max": 100.0,
+        "mean": 86.2
+      },
+      {
+        "date": "2017-11-21",
+        "min": 49.8,
+        "max": 100.0,
+        "mean": 86.6
+      },
+      {
+        "date": "2017-11-22",
+        "min": 50.6,
+        "max": 100.0,
+        "mean": 86.8
+      },
+      {
+        "date": "2017-11-23",
+        "min": 50.6,
+        "max": 100.0,
+        "mean": 86.8
+      },
+      {
+        "date": "2017-11-24",
+        "min": 50.6,
+        "max": 100.0,
+        "mean": 86.9
+      },
+      {
+        "date": "2017-11-25",
+        "min": 50.6,
+        "max": 100.0,
+        "mean": 87.1
+      },
+      {
+        "date": "2017-11-26",
+        "min": 50.6,
+        "max": 100.0,
+        "mean": 87.5
+      },
+      {
+        "date": "2017-11-27",
+        "min": 50.6,
+        "max": 100.0,
+        "mean": 87.7
+      },
+      {
+        "date": "2017-11-28",
+        "min": 51.5,
+        "max": 100.0,
+        "mean": 87.8
+      },
+      {
+        "date": "2017-11-29",
+        "min": 51.8,
+        "max": 100.0,
+        "mean": 87.9
+      },
+      {
+        "date": "2017-11-30",
+        "min": 53.6,
+        "max": 100.0,
+        "mean": 88.3
+      },
+      {
+        "date": "2017-12-01",
+        "min": 56.1,
+        "max": 100.0,
+        "mean": 88.8
+      },
+      {
+        "date": "2017-12-02",
+        "min": 56.3,
+        "max": 100.0,
+        "mean": 88.8
+      },
+      {
+        "date": "2017-12-03",
+        "min": 56.7,
+        "max": 100.0,
+        "mean": 89.3
+      },
+      {
+        "date": "2017-12-04",
+        "min": 56.9,
+        "max": 100.0,
+        "mean": 89.4
+      },
+      {
+        "date": "2017-12-05",
+        "min": 56.9,
+        "max": 100.0,
+        "mean": 90.0
+      },
+      {
+        "date": "2017-12-06",
+        "min": 56.9,
+        "max": 100.0,
+        "mean": 90.0
+      },
+      {
+        "date": "2017-12-07",
+        "min": 57.0,
+        "max": 100.0,
+        "mean": 90.1
+      },
+      {
+        "date": "2017-12-08",
+        "min": 57.2,
+        "max": 100.0,
+        "mean": 90.2
+      },
+      {
+        "date": "2017-12-09",
+        "min": 57.4,
+        "max": 100.0,
+        "mean": 90.5
+      },
+      {
+        "date": "2017-12-10",
+        "min": 57.6,
+        "max": 100.0,
+        "mean": 90.5
+      },
+      {
+        "date": "2017-12-11",
+        "min": 57.9,
+        "max": 100.0,
+        "mean": 90.5
+      },
+      {
+        "date": "2017-12-12",
+        "min": 58.8,
+        "max": 100.0,
+        "mean": 90.7
+      },
+      {
+        "date": "2017-12-13",
+        "min": 64.6,
+        "max": 100.0,
+        "mean": 91.4
+      },
+      {
+        "date": "2017-12-14",
+        "min": 64.7,
+        "max": 100.0,
+        "mean": 91.6
+      },
+      {
+        "date": "2017-12-15",
+        "min": 64.8,
+        "max": 100.0,
+        "mean": 91.6
+      },
+      {
+        "date": "2017-12-16",
+        "min": 64.8,
+        "max": 100.0,
+        "mean": 92.0
+      },
+      {
+        "date": "2017-12-17",
+        "min": 66.8,
+        "max": 100.0,
+        "mean": 92.5
+      },
+      {
+        "date": "2017-12-18",
+        "min": 67.9,
+        "max": 100.0,
+        "mean": 92.9
+      },
+      {
+        "date": "2017-12-19",
+        "min": 68.0,
+        "max": 100.0,
+        "mean": 93.4
+      },
+      {
+        "date": "2017-12-20",
+        "min": 68.1,
+        "max": 100.0,
+        "mean": 93.5
+      },
+      {
+        "date": "2017-12-21",
+        "min": 71.2,
+        "max": 100.0,
+        "mean": 93.9
+      },
+      {
+        "date": "2017-12-22",
+        "min": 72.9,
+        "max": 100.0,
+        "mean": 94.9
+      },
+      {
+        "date": "2017-12-23",
+        "min": 73.0,
+        "max": 100.0,
+        "mean": 95.3
+      },
+      {
+        "date": "2017-12-24",
+        "min": 73.1,
+        "max": 100.0,
+        "mean": 95.8
+      },
+      {
+        "date": "2017-12-25",
+        "min": 73.3,
+        "max": 100.0,
+        "mean": 95.9
+      },
+      {
+        "date": "2017-12-26",
+        "min": 79.9,
+        "max": 100.0,
+        "mean": 96.6
+      },
+      {
+        "date": "2017-12-27",
+        "min": 81.7,
+        "max": 100.0,
+        "mean": 96.8
+      },
+      {
+        "date": "2017-12-28",
+        "min": 83.5,
+        "max": 100.0,
+        "mean": 97.0
+      },
+      {
+        "date": "2017-12-29",
+        "min": 83.5,
+        "max": 100.0,
+        "mean": 97.0
+      },
+      {
+        "date": "2017-12-30",
+        "min": 83.5,
+        "max": 100.0,
+        "mean": 97.1
+      },
+      {
+        "date": "2017-12-31",
+        "min": 83.5,
+        "max": 100.0,
+        "mean": 97.1
+      },
+      {
+        "date": "2018-01-01",
+        "min": 83.5,
+        "max": 100.0,
+        "mean": 97.3
+      },
+      {
+        "date": "2018-01-02",
+        "min": 83.5,
+        "max": 100.0,
+        "mean": 97.5
+      },
+      {
+        "date": "2018-01-03",
+        "min": 83.5,
+        "max": 100.0,
+        "mean": 97.6
+      },
+      {
+        "date": "2018-01-04",
+        "min": 83.5,
+        "max": 100.0,
+        "mean": 97.6
+      },
+      {
+        "date": "2018-01-05",
+        "min": 83.6,
+        "max": 100.0,
+        "mean": 97.9
+      },
+      {
+        "date": "2018-01-06",
+        "min": 83.8,
+        "max": 100.0,
+        "mean": 98.1
+      },
+      {
+        "date": "2018-01-07",
+        "min": 83.9,
+        "max": 100.0,
+        "mean": 98.1
+      },
+      {
+        "date": "2018-01-08",
+        "min": 84.9,
+        "max": 100.0,
+        "mean": 98.3
+      },
+      {
+        "date": "2018-01-09",
+        "min": 85.5,
+        "max": 100.0,
+        "mean": 98.4
+      },
+      {
+        "date": "2018-01-10",
+        "min": 85.6,
+        "max": 100.0,
+        "mean": 98.5
+      },
+      {
+        "date": "2018-01-11",
+        "min": 87.7,
+        "max": 100.0,
+        "mean": 98.7
+      },
+      {
+        "date": "2018-01-12",
+        "min": 90.3,
+        "max": 100.0,
+        "mean": 99.0
+      },
+      {
+        "date": "2018-01-13",
+        "min": 91.2,
+        "max": 100.0,
+        "mean": 99.1
+      },
+      {
+        "date": "2018-01-14",
+        "min": 91.6,
+        "max": 100.0,
+        "mean": 99.1
+      },
+      {
+        "date": "2018-01-15",
+        "min": 92.0,
+        "max": 100.0,
+        "mean": 99.2
+      },
+      {
+        "date": "2018-01-16",
+        "min": 92.4,
+        "max": 100.0,
+        "mean": 99.2
+      },
+      {
+        "date": "2018-01-17",
+        "min": 92.4,
+        "max": 100.0,
+        "mean": 99.2
+      },
+      {
+        "date": "2018-01-18",
+        "min": 92.5,
+        "max": 100.0,
+        "mean": 99.2
+      },
+      {
+        "date": "2018-01-19",
+        "min": 92.7,
+        "max": 100.0,
+        "mean": 99.2
+      },
+      {
+        "date": "2018-01-20",
+        "min": 93.4,
+        "max": 100.0,
+        "mean": 99.3
+      },
+      {
+        "date": "2018-01-21",
+        "min": 93.8,
+        "max": 100.0,
+        "mean": 99.4
+      },
+      {
+        "date": "2018-01-22",
+        "min": 94.1,
+        "max": 100.0,
+        "mean": 99.4
+      },
+      {
+        "date": "2018-01-23",
+        "min": 94.1,
+        "max": 100.0,
+        "mean": 99.4
+      },
+      {
+        "date": "2018-01-24",
+        "min": 94.4,
+        "max": 100.0,
+        "mean": 99.4
+      },
+      {
+        "date": "2018-01-25",
+        "min": 96.0,
+        "max": 100.0,
+        "mean": 99.6
+      },
+      {
+        "date": "2018-01-26",
+        "min": 97.2,
+        "max": 100.0,
+        "mean": 99.7
+      },
+      {
+        "date": "2018-01-27",
+        "min": 98.3,
+        "max": 100.0,
+        "mean": 99.8
+      },
+      {
+        "date": "2018-01-28",
+        "min": 99.7,
+        "max": 100.0,
+        "mean": 99.9
+      },
+      {
+        "date": "2018-01-29",
+        "min": 99.9,
+        "max": 100.0,
+        "mean": 100.0
+      },
+      {
+        "date": "2018-01-30",
+        "min": 99.9,
+        "max": 100.0,
+        "mean": 100.0
+      },
+      {
+        "date": "2018-01-31",
+        "min": 99.9,
+        "max": 100.0,
+        "mean": 100.0
+      },
+      {
+        "date": "2018-02-01",
+        "min": 99.9,
+        "max": 100.0,
+        "mean": 100.0
+      },
+      {
+        "date": "2018-02-02",
+        "min": 99.9,
+        "max": 100.0,
+        "mean": 100.0
+      },
+      {
+        "date": "2018-02-03",
+        "min": 99.8,
+        "max": 100.0,
+        "mean": 100.0
+      },
+      {
+        "date": "2018-02-04",
+        "min": 99.9,
+        "max": 100.0,
+        "mean": 100.0
+      },
+      {
+        "date": "2018-02-05",
+        "min": 99.9,
+        "max": 100.0,
+        "mean": 100.0
+      },
+      {
+        "date": "2018-02-06",
+        "min": 99.9,
+        "max": 100.0,
+        "mean": 100.0
+      },
+      {
+        "date": "2018-02-07",
+        "min": 99.8,
+        "max": 100.0,
+        "mean": 100.0
+      },
+      {
+        "date": "2018-02-08",
+        "min": 99.9,
+        "max": 100.0,
+        "mean": 100.0
+      },
+      {
+        "date": "2018-02-09",
+        "min": 99.9,
+        "max": 100.0,
+        "mean": 99.9
+      },
+      {
+        "date": "2018-02-10",
+        "min": 99.8,
+        "max": 100.0,
+        "mean": 99.9
+      },
+      {
+        "date": "2018-02-11",
+        "min": 99.9,
+        "max": 100.0,
+        "mean": 100.0
+      },
+      {
+        "date": "2018-02-12",
+        "min": 99.9,
+        "max": 100.0,
+        "mean": 100.0
+      },
+      {
+        "date": "2018-02-13",
+        "min": 99.9,
+        "max": 100.0,
+        "mean": 99.9
+      },
+      {
+        "date": "2018-02-14",
+        "min": 99.8,
+        "max": 100.0,
+        "mean": 99.9
+      },
+      {
+        "date": "2018-02-15",
+        "min": 99.8,
+        "max": 100.0,
+        "mean": 99.9
+      },
+      {
+        "date": "2018-02-16",
+        "min": 99.8,
+        "max": 100.0,
+        "mean": 99.9
+      },
+      {
+        "date": "2018-02-17",
+        "min": 99.8,
+        "max": 100.0,
+        "mean": 99.9
+      },
+      {
+        "date": "2018-02-18",
+        "min": 99.8,
+        "max": 100.0,
+        "mean": 99.9
+      },
+      {
+        "date": "2018-02-19",
+        "min": 99.9,
+        "max": 100.0,
+        "mean": 99.9
+      },
+      {
+        "date": "2018-02-20",
+        "min": 99.9,
+        "max": 100.0,
+        "mean": 99.9
+      },
+      {
+        "date": "2018-02-21",
+        "min": 99.8,
+        "max": 100.0,
+        "mean": 99.9
+      },
+      {
+        "date": "2018-02-22",
+        "min": 99.9,
+        "max": 100.0,
+        "mean": 99.9
+      },
+      {
+        "date": "2018-02-23",
+        "min": 99.8,
+        "max": 100.0,
+        "mean": 99.9
+      },
+      {
+        "date": "2018-02-24",
+        "min": 99.8,
+        "max": 99.9,
+        "mean": 99.9
+      },
+      {
+        "date": "2018-02-25",
+        "min": 99.7,
+        "max": 99.9,
+        "mean": 99.9
+      },
+      {
+        "date": "2018-02-26",
+        "min": 99.6,
+        "max": 99.9,
+        "mean": 99.9
+      },
+      {
+        "date": "2018-02-27",
+        "min": 99.6,
+        "max": 99.9,
+        "mean": 99.8
+      },
+      {
+        "date": "2018-02-28",
+        "min": 99.6,
+        "max": 99.9,
+        "mean": 99.8
+      },
+      {
+        "date": "2018-03-01",
+        "min": 99.4,
+        "max": 99.9,
+        "mean": 99.7
+      },
+      {
+        "date": "2018-03-02",
+        "min": 99.2,
+        "max": 99.8,
+        "mean": 99.6
+      },
+      {
+        "date": "2018-03-03",
+        "min": 98.9,
+        "max": 99.7,
+        "mean": 99.4
+      },
+      {
+        "date": "2018-03-04",
+        "min": 98.4,
+        "max": 99.8,
+        "mean": 99.1
+      },
+      {
+        "date": "2018-03-05",
+        "min": 97.9,
+        "max": 99.7,
+        "mean": 99.0
+      },
+      {
+        "date": "2018-03-06",
+        "min": 97.3,
+        "max": 99.9,
+        "mean": 99.0
+      },
+      {
+        "date": "2018-03-07",
+        "min": 96.8,
+        "max": 99.7,
+        "mean": 98.8
+      },
+      {
+        "date": "2018-03-08",
+        "min": 96.3,
+        "max": 99.7,
+        "mean": 98.6
+      },
+      {
+        "date": "2018-03-09",
+        "min": 96.4,
+        "max": 99.8,
+        "mean": 98.4
+      },
+      {
+        "date": "2018-03-10",
+        "min": 96.5,
+        "max": 99.7,
+        "mean": 98.3
+      },
+      {
+        "date": "2018-03-11",
+        "min": 95.8,
+        "max": 99.7,
+        "mean": 98.4
+      },
+      {
+        "date": "2018-03-12",
+        "min": 95.1,
+        "max": 99.8,
+        "mean": 98.4
+      },
+      {
+        "date": "2018-03-13",
+        "min": 94.2,
+        "max": 99.8,
+        "mean": 98.4
+      },
+      {
+        "date": "2018-03-14",
+        "min": 93.5,
+        "max": 99.5,
+        "mean": 98.0
+      },
+      {
+        "date": "2018-03-15",
+        "min": 95.4,
+        "max": 99.7,
+        "mean": 98.1
+      },
+      {
+        "date": "2018-03-16",
+        "min": 96.0,
+        "max": 99.6,
+        "mean": 97.9
+      },
+      {
+        "date": "2018-03-17",
+        "min": 95.3,
+        "max": 99.7,
+        "mean": 98.0
+      },
+      {
+        "date": "2018-03-18",
+        "min": 94.4,
+        "max": 99.7,
+        "mean": 98.2
+      },
+      {
+        "date": "2018-03-19",
+        "min": 93.6,
+        "max": 99.7,
+        "mean": 98.5
+      },
+      {
+        "date": "2018-03-20",
+        "min": 92.7,
+        "max": 99.6,
+        "mean": 98.2
+      },
+      {
+        "date": "2018-03-21",
+        "min": 92.4,
+        "max": 99.6,
+        "mean": 97.9
+      },
+      {
+        "date": "2018-03-22",
+        "min": 91.9,
+        "max": 99.6,
+        "mean": 97.8
+      },
+      {
+        "date": "2018-03-23",
+        "min": 91.0,
+        "max": 99.6,
+        "mean": 97.6
+      },
+      {
+        "date": "2018-03-24",
+        "min": 89.9,
+        "max": 99.7,
+        "mean": 97.4
+      },
+      {
+        "date": "2018-03-25",
+        "min": 89.0,
+        "max": 99.6,
+        "mean": 97.3
+      },
+      {
+        "date": "2018-03-26",
+        "min": 89.3,
+        "max": 99.6,
+        "mean": 96.9
+      },
+      {
+        "date": "2018-03-27",
+        "min": 90.1,
+        "max": 99.4,
+        "mean": 96.6
+      },
+      {
+        "date": "2018-03-28",
+        "min": 91.0,
+        "max": 99.3,
+        "mean": 96.7
+      },
+      {
+        "date": "2018-03-29",
+        "min": 90.1,
+        "max": 99.3,
+        "mean": 96.6
+      },
+      {
+        "date": "2018-03-30",
+        "min": 90.4,
+        "max": 99.4,
+        "mean": 97.0
+      },
+      {
+        "date": "2018-03-31",
+        "min": 91.6,
+        "max": 99.6,
+        "mean": 97.0
+      },
+      {
+        "date": "2018-04-01",
+        "min": 94.1,
+        "max": 99.7,
+        "mean": 97.2
+      },
+      {
+        "date": "2018-04-02",
+        "min": 93.0,
+        "max": 99.5,
+        "mean": 96.8
+      },
+      {
+        "date": "2018-04-03",
+        "min": 93.4,
+        "max": 99.7,
+        "mean": 96.6
+      },
+      {
+        "date": "2018-04-04",
+        "min": 92.1,
+        "max": 99.6,
+        "mean": 96.2
+      },
+      {
+        "date": "2018-04-05",
+        "min": 91.2,
+        "max": 99.6,
+        "mean": 96.2
+      },
+      {
+        "date": "2018-04-06",
+        "min": 90.4,
+        "max": 99.6,
+        "mean": 96.2
+      },
+      {
+        "date": "2018-04-07",
+        "min": 90.1,
+        "max": 99.2,
+        "mean": 96.0
+      },
+      {
+        "date": "2018-04-08",
+        "min": 88.7,
+        "max": 98.9,
+        "mean": 95.3
+      },
+      {
+        "date": "2018-04-09",
+        "min": 89.6,
+        "max": 99.6,
+        "mean": 95.2
+      },
+      {
+        "date": "2018-04-10",
+        "min": 89.4,
+        "max": 98.9,
+        "mean": 94.5
+      },
+      {
+        "date": "2018-04-11",
+        "min": 88.4,
+        "max": 99.3,
+        "mean": 94.4
+      },
+      {
+        "date": "2018-04-12",
+        "min": 87.4,
+        "max": 99.5,
+        "mean": 94.4
+      },
+      {
+        "date": "2018-04-13",
+        "min": 87.1,
+        "max": 99.6,
+        "mean": 94.5
+      },
+      {
+        "date": "2018-04-14",
+        "min": 85.6,
+        "max": 99.4,
+        "mean": 94.8
+      },
+      {
+        "date": "2018-04-15",
+        "min": 84.5,
+        "max": 99.3,
+        "mean": 94.5
+      },
+      {
+        "date": "2018-04-16",
+        "min": 83.5,
+        "max": 99.3,
+        "mean": 94.0
+      },
+      {
+        "date": "2018-04-17",
+        "min": 82.2,
+        "max": 99.5,
+        "mean": 93.8
+      },
+      {
+        "date": "2018-04-18",
+        "min": 80.9,
+        "max": 98.2,
+        "mean": 93.1
+      },
+      {
+        "date": "2018-04-19",
+        "min": 79.4,
+        "max": 97.6,
+        "mean": 92.3
+      },
+      {
+        "date": "2018-04-20",
+        "min": 77.8,
+        "max": 99.5,
+        "mean": 92.0
+      },
+      {
+        "date": "2018-04-21",
+        "min": 76.2,
+        "max": 99.3,
+        "mean": 91.4
+      },
+      {
+        "date": "2018-04-22",
+        "min": 74.6,
+        "max": 98.0,
+        "mean": 90.5
+      },
+      {
+        "date": "2018-04-23",
+        "min": 72.8,
+        "max": 97.0,
+        "mean": 89.2
+      },
+      {
+        "date": "2018-04-24",
+        "min": 71.1,
+        "max": 97.2,
+        "mean": 88.1
+      },
+      {
+        "date": "2018-04-25",
+        "min": 69.3,
+        "max": 96.2,
+        "mean": 86.7
+      },
+      {
+        "date": "2018-04-26",
+        "min": 67.2,
+        "max": 96.7,
+        "mean": 86.5
+      },
+      {
+        "date": "2018-04-27",
+        "min": 65.1,
+        "max": 97.5,
+        "mean": 85.9
+      },
+      {
+        "date": "2018-04-28",
+        "min": 62.9,
+        "max": 99.7,
+        "mean": 85.9
+      },
+      {
+        "date": "2018-04-29",
+        "min": 60.6,
+        "max": 99.3,
+        "mean": 85.5
+      },
+      {
+        "date": "2018-04-30",
+        "min": 58.1,
+        "max": 98.2,
+        "mean": 84.3
+      },
+      {
+        "date": "2018-05-01",
+        "min": 55.9,
+        "max": 96.6,
+        "mean": 84.6
+      },
+      {
+        "date": "2018-05-02",
+        "min": 53.7,
+        "max": 95.5,
+        "mean": 83.7
+      },
+      {
+        "date": "2018-05-03",
+        "min": 51.4,
+        "max": 98.2,
+        "mean": 85.1
+      },
+      {
+        "date": "2018-05-04",
+        "min": 49.2,
+        "max": 99.3,
+        "mean": 84.7
+      },
+      {
+        "date": "2018-05-05",
+        "min": 47.7,
+        "max": 98.7,
+        "mean": 83.9
+      },
+      {
+        "date": "2018-05-06",
+        "min": 49.8,
+        "max": 97.9,
+        "mean": 84.9
+      },
+      {
+        "date": "2018-05-07",
+        "min": 50.2,
+        "max": 98.8,
+        "mean": 84.4
+      },
+      {
+        "date": "2018-05-08",
+        "min": 48.3,
+        "max": 98.8,
+        "mean": 83.8
+      },
+      {
+        "date": "2018-05-09",
+        "min": 48.2,
+        "max": 98.1,
+        "mean": 82.4
+      },
+      {
+        "date": "2018-05-10",
+        "min": 47.8,
+        "max": 98.1,
+        "mean": 81.6
+      },
+      {
+        "date": "2018-05-11",
+        "min": 48.3,
+        "max": 97.3,
+        "mean": 81.0
+      },
+      {
+        "date": "2018-05-12",
+        "min": 49.5,
+        "max": 95.5,
+        "mean": 80.4
+      },
+      {
+        "date": "2018-05-13",
+        "min": 47.7,
+        "max": 94.6,
+        "mean": 80.6
+      },
+      {
+        "date": "2018-05-14",
+        "min": 46.0,
+        "max": 98.8,
+        "mean": 79.7
+      },
+      {
+        "date": "2018-05-15",
+        "min": 44.4,
+        "max": 98.7,
+        "mean": 79.9
+      },
+      {
+        "date": "2018-05-16",
+        "min": 48.0,
+        "max": 98.7,
+        "mean": 79.8
+      },
+      {
+        "date": "2018-05-17",
+        "min": 47.8,
+        "max": 98.8,
+        "mean": 80.0
+      },
+      {
+        "date": "2018-05-18",
+        "min": 46.0,
+        "max": 99.0,
+        "mean": 79.7
+      },
+      {
+        "date": "2018-05-19",
+        "min": 45.1,
+        "max": 98.5,
+        "mean": 78.6
+      },
+      {
+        "date": "2018-05-20",
+        "min": 43.0,
+        "max": 98.7,
+        "mean": 78.9
+      },
+      {
+        "date": "2018-05-21",
+        "min": 43.5,
+        "max": 97.8,
+        "mean": 77.8
+      },
+      {
+        "date": "2018-05-22",
+        "min": 47.0,
+        "max": 95.1,
+        "mean": 77.0
+      },
+      {
+        "date": "2018-05-23",
+        "min": 47.2,
+        "max": 92.4,
+        "mean": 75.9
+      },
+      {
+        "date": "2018-05-24",
+        "min": 45.5,
+        "max": 95.8,
+        "mean": 75.5
+      },
+      {
+        "date": "2018-05-25",
+        "min": 43.4,
+        "max": 96.3,
+        "mean": 75.8
+      },
+      {
+        "date": "2018-05-26",
+        "min": 41.1,
+        "max": 95.2,
+        "mean": 75.2
+      },
+      {
+        "date": "2018-05-27",
+        "min": 41.6,
+        "max": 98.6,
+        "mean": 75.0
+      },
+      {
+        "date": "2018-05-28",
+        "min": 41.9,
+        "max": 98.4,
+        "mean": 74.6
+      },
+      {
+        "date": "2018-05-29",
+        "min": 44.0,
+        "max": 96.5,
+        "mean": 74.4
+      },
+      {
+        "date": "2018-05-30",
+        "min": 46.3,
+        "max": 96.0,
+        "mean": 73.2
+      },
+      {
+        "date": "2018-05-31",
+        "min": 47.8,
+        "max": 98.0,
+        "mean": 72.9
+      },
+      {
+        "date": "2018-06-01",
+        "min": 51.5,
+        "max": 98.2,
+        "mean": 72.5
+      },
+      {
+        "date": "2018-06-02",
+        "min": 51.8,
+        "max": 98.4,
+        "mean": 73.7
+      },
+      {
+        "date": "2018-06-03",
+        "min": 51.8,
+        "max": 97.9,
+        "mean": 72.5
+      },
+      {
+        "date": "2018-06-04",
+        "min": 50.7,
+        "max": 98.4,
+        "mean": 71.4
+      },
+      {
+        "date": "2018-06-05",
+        "min": 50.2,
+        "max": 98.1,
+        "mean": 69.7
+      },
+      {
+        "date": "2018-06-06",
+        "min": 50.0,
+        "max": 97.5,
+        "mean": 68.0
+      },
+      {
+        "date": "2018-06-07",
+        "min": 51.1,
+        "max": 96.2,
+        "mean": 67.0
+      },
+      {
+        "date": "2018-06-08",
+        "min": 48.9,
+        "max": 97.5,
+        "mean": 65.2
+      },
+      {
+        "date": "2018-06-09",
+        "min": 46.9,
+        "max": 98.4,
+        "mean": 64.9
+      }
+    ],
+    "balance_30d": {
+      "value": -77.4,
+      "unit": "mm",
+      "label": "ostatnie 30 dni",
+      "status": "risk",
+      "note": "11.05–09.06, o 54 mm mniej niż zwykle (niższy w 1 z 10 lat)",
+      "source_tag": {
+        "kind": "obliczenia",
+        "date": "2018-06-09",
+        "source": "NASA POWER"
+      }
+    },
+    "balance_30d_rank": {
+      "lower_years": 1,
+      "of_years": 10
+    },
+    "source_tag": {
+      "kind": "szacunek_modelu",
+      "date": "2018-06-09",
+      "source": "Model wody w glebie FAO-56 – pokrycie referencyjne"
+    }
+  },
+  "terrain": {
+    "zones": [
+      {
+        "key": "sucha_gorka",
+        "label": "górka – sucho",
+        "share_pct": 0.0,
+        "color": "#8B6B4A",
+        "rating": null,
+        "sentence": null
+      },
+      {
+        "key": "stok",
+        "label": "stok – woda ucieka",
+        "share_pct": 56.4,
+        "color": "#E8B931",
+        "rating": "uwaga",
+        "sentence": "56% działki to stok – po ulewie woda spływa po powierzchni i zabiera glebę."
+      },
+      {
+        "key": "plasko",
+        "label": "płasko – dobre warunki",
+        "share_pct": 11.5,
+        "color": "#5BB37F",
+        "rating": "dobrze",
+        "sentence": "12% działki jest płaska – tu są najlepsze warunki wodne."
+      },
+      {
+        "key": "mokry_dolek",
+        "label": "dołek – woda stoi",
+        "share_pct": 32.1,
+        "color": "#2F80C9",
+        "rating": "zle",
+        "sentence": "32% działki to dołek – na zwięzłej glebie wiosną i po ulewach stoi tu woda, uprawy mogą wymakać."
+      }
+    ],
+    "zone_share_pct": {
+      "sucha_gorka": 0.0,
+      "stok": 56.4,
+      "plasko": 11.5,
+      "mokry_dolek": 32.1
+    },
+    "soil_group": "zwiezla",
+    "soil_group_label": "gleba zwięzła (kat. III)",
+    "summary": "Działka jest lekko nachylona – różnica wysokości 2,0 m, średni spadek 3,1%. Woda spływa na południowy zachód i opuszcza działkę w jednym miejscu – tędy odpływa woda z całej działki; spływa tu też woda z ok. 3,6 ha pól i terenów powyżej. Nie ma zagłębień, w których woda stałaby dłużej po deszczu.",
+    "relief_m": 2.0,
+    "elev_min_m": 140.0,
+    "elev_max_m": 142.0,
+    "slope_mean_pct": 3.1,
+    "slope_max_pct": 6.1,
+    "main_flow_direction": "południowy zachód",
+    "main_flow_direction_short": "SW",
+    "main_flow_azimuth_deg": 211.0,
+    "outlets": [
+      {
+        "direction": "południowy zachód",
+        "direction_short": "SW",
+        "azimuth_deg": 210.0,
+        "share_of_parcel_pct": 100.0,
+        "location": [
+          22.6007243,
+          53.0498069
+        ]
+      }
+    ],
+    "inflow_from_outside_m2": 36328.0,
+    "inflow_from_outside_ratio": 6.25,
+    "depressions_count": 0,
+    "depressions_volume_m3": 0.0,
+    "largest_depression": null,
+    "details": {
+      "grid_step_m": 4.5,
+      "smoothing_sigma_m": 6.0,
+      "nmt_points": 4662,
+      "nmt_missing_pct": 0.0,
+      "twi_mean": 8.54,
+      "twi_p90": 10.69,
+      "steep_share_pct": 5.2,
+      "flow_consistency": 0.53,
+      "method": "flow: D8 (kierunki, wyjścia) + D-infinity (TWI), fill: priority-flood (Barnes 2014), slope: Horn 3×3"
+    },
+    "confidence": "wysoka",
+    "limitations": [
+      "Teren z zapisanego wyniku analizy NMT z 21.11.2026 (NMT GUGiK nie odpowiadał – ukształtowanie terenu się nie zmienia).",
+      "Siatka 4.5 m – formy mniejsze niż ~9 m (bruzdy, koleiny, rowki) są niewidoczne.",
+      "Wysokości podawane co 0,1 m – przy małych spadkach kierunek spływu jest niepewny; stosujemy wygładzenie σ = 6 m.",
+      "Bufor 100 m: zlewnia sięgająca dalej (długie stoki) jest niedoszacowana.",
+      "Model nie zna drenażu, rowów, przepustów, dróg ani orki wzdłuż/w poprzek stoku – rzeczywisty odpływ może iść inaczej.",
+      "Objętości zagłębień i dopływu to szacunek rzędu wielkości, nie projekt."
+    ],
+    "source_tag": {
+      "kind": "pomiar",
+      "date": null,
+      "source": "NMT GUGiK (wysokości ±0,1 m) + obliczenia"
+    }
+  },
+  "terrain_note": null,
+  "suggestions": {
+    "seasons": [
+      2008,
+      2009,
+      2010,
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017
+    ],
+    "groups": [
+      {
+        "key": "polowe",
+        "label": "uprawy polowe",
+        "items": [
+          {
+            "crop_id": "rzepak",
+            "label": "Rzepak i rzepik",
+            "group_id": "rzepak",
+            "category": "polecane",
+            "category_label": "polecane",
+            "rank": 1,
+            "score": 112.4,
+            "reason": "Gleba pasuje i wody wystarcza – typowo 3,6 t/ha, a nawet w najsuchszym roku (2008) plon spadłby tylko o 10%.",
+            "yield_typical_t_ha": 3.6,
+            "yield_weak_t_ha": 3.3,
+            "weak_year": 2008,
+            "yield_potential_t_ha": 3.6,
+            "gus_mean_t_ha": 3.1,
+            "relative_yield_median": 0.99,
+            "relative_yield_weak": 0.9,
+            "drought_risk_years": 0,
+            "years_simulated": 10,
+            "total_typical_t": 2.1,
+            "total_weak_t": 1.9,
+            "price": null,
+            "soil_suitability": "odpowiednia",
+            "soil_suitability_label": "gleba odpowiednia",
+            "rotation": {
+              "status": "plus",
+              "notes": [
+                "Dobry przedplon: rok temu zboża ozime."
+              ]
+            },
+            "irrigation_practice": "not_practiced",
+            "drought_sensitivity": "srednia",
+            "confidence": "ograniczona",
+            "confidence_note": "współczynnik Ky (reakcja plonu na brak wody) to szacunek",
+            "notes": [],
+            "yields_by_year": [
+              {
+                "year": 2008,
+                "relative": 0.9,
+                "yield_t_ha": 3.3,
+                "water_deficit_mm": 33.0
+              },
+              {
+                "year": 2009,
+                "relative": 1.0,
+                "yield_t_ha": 3.6,
+                "water_deficit_mm": 1.0
+              },
+              {
+                "year": 2010,
+                "relative": 1.0,
+                "yield_t_ha": 3.6,
+                "water_deficit_mm": 0.0
+              },
+              {
+                "year": 2011,
+                "relative": 0.99,
+                "yield_t_ha": 3.6,
+                "water_deficit_mm": 2.0
+              },
+              {
+                "year": 2012,
+                "relative": 1.0,
+                "yield_t_ha": 3.6,
+                "water_deficit_mm": 0.0
+              },
+              {
+                "year": 2013,
+                "relative": 1.0,
+                "yield_t_ha": 3.6,
+                "water_deficit_mm": 0.0
+              },
+              {
+                "year": 2014,
+                "relative": 1.0,
+                "yield_t_ha": 3.6,
+                "water_deficit_mm": 0.0
+              },
+              {
+                "year": 2015,
+                "relative": 0.93,
+                "yield_t_ha": 3.4,
+                "water_deficit_mm": 24.0
+              },
+              {
+                "year": 2016,
+                "relative": 0.97,
+                "yield_t_ha": 3.5,
+                "water_deficit_mm": 11.0
+              },
+              {
+                "year": 2017,
+                "relative": 0.98,
+                "yield_t_ha": 3.6,
+                "water_deficit_mm": 6.0
+              }
+            ],
+            "source_tags": [
+              {
+                "kind": "szacunek_modelu",
+                "date": "2018-06-09",
+                "source": "Model wody w glebie FAO-56 + plon FAO-33 (Ky 0,95)"
+              },
+              {
+                "kind": "pomiar",
+                "date": null,
+                "source": "GUS BDL – plony z 1 ha wg województw (podlaskie, 2016–2025)"
+              }
+            ]
+          },
+          {
+            "crop_id": "kukurydza_kiszonka",
+            "label": "Kukurydza na kiszonkę",
+            "group_id": "kukurydza_kiszonka",
+            "category": "polecane",
+            "category_label": "polecane",
+            "rank": 2,
+            "score": 100.0,
+            "reason": "Gleba pasuje – typowo 50,4 t/ha; strata ponad 20% plonu zdarzyłaby się w 1 z 10 lat (najgorszy rok: 2015).",
+            "yield_typical_t_ha": 50.4,
+            "yield_weak_t_ha": 31.5,
+            "weak_year": 2015,
+            "yield_potential_t_ha": 55.4,
+            "gus_mean_t_ha": 48.2,
+            "relative_yield_median": 0.91,
+            "relative_yield_weak": 0.57,
+            "drought_risk_years": 1,
+            "years_simulated": 10,
+            "total_typical_t": 29.2,
+            "total_weak_t": 18.3,
+            "price": null,
+            "soil_suitability": "odpowiednia",
+            "soil_suitability_label": "gleba odpowiednia",
+            "rotation": {
+              "status": "plus",
+              "notes": [
+                "Dobry przedplon: rok temu zboża ozime."
+              ]
+            },
+            "irrigation_practice": "optional",
+            "drought_sensitivity": "srednia",
+            "confidence": "ograniczona",
+            "confidence_note": "współczynnik Ky (reakcja plonu na brak wody) to szacunek",
+            "notes": [
+              "Plon zielonej masy."
+            ],
+            "yields_by_year": [
+              {
+                "year": 2008,
+                "relative": 0.83,
+                "yield_t_ha": 45.8,
+                "water_deficit_mm": 64.0
+              },
+              {
+                "year": 2009,
+                "relative": 0.97,
+                "yield_t_ha": 54.0,
+                "water_deficit_mm": 8.0
+              },
+              {
+                "year": 2010,
+                "relative": 0.93,
+                "yield_t_ha": 51.8,
+                "water_deficit_mm": 22.0
+              },
+              {
+                "year": 2011,
+                "relative": 1.0,
+                "yield_t_ha": 55.4,
+                "water_deficit_mm": 0.0
+              },
+              {
+                "year": 2012,
+                "relative": 0.88,
+                "yield_t_ha": 48.5,
+                "water_deficit_mm": 45.0
+              },
+              {
+                "year": 2013,
+                "relative": 0.82,
+                "yield_t_ha": 45.3,
+                "water_deficit_mm": 63.0
+              },
+              {
+                "year": 2014,
+                "relative": 0.89,
+                "yield_t_ha": 49.1,
+                "water_deficit_mm": 41.0
+              },
+              {
+                "year": 2015,
+                "relative": 0.57,
+                "yield_t_ha": 31.5,
+                "water_deficit_mm": 182.0
+              },
+              {
+                "year": 2016,
+                "relative": 1.0,
+                "yield_t_ha": 55.4,
+                "water_deficit_mm": 0.0
+              },
+              {
+                "year": 2017,
+                "relative": 1.0,
+                "yield_t_ha": 55.3,
+                "water_deficit_mm": 0.0
+              }
+            ],
+            "source_tags": [
+              {
+                "kind": "szacunek_modelu",
+                "date": "2018-06-09",
+                "source": "Model wody w glebie FAO-56 + plon FAO-33 (Ky 1,10)"
+              },
+              {
+                "kind": "pomiar",
+                "date": null,
+                "source": "GUS BDL – plony z 1 ha wg województw (podlaskie, 2016–2025)"
+              }
+            ]
+          },
+          {
+            "crop_id": "pszenica_ozima",
+            "label": "Pszenica ozima",
+            "group_id": "zboza_ozime",
+            "category": "polecane",
+            "category_label": "polecane",
+            "rank": 3,
+            "score": 97.5,
+            "reason": "Gleba pasuje i wody wystarcza – typowo 4,7 t/ha, a nawet w najsuchszym roku (2008) plon spadłby tylko o 12%.",
+            "yield_typical_t_ha": 4.7,
+            "yield_weak_t_ha": 4.2,
+            "weak_year": 2008,
+            "yield_potential_t_ha": 4.8,
+            "gus_mean_t_ha": 3.9,
+            "relative_yield_median": 0.98,
+            "relative_yield_weak": 0.88,
+            "drought_risk_years": 0,
+            "years_simulated": 10,
+            "total_typical_t": 2.7,
+            "total_weak_t": 2.5,
+            "price": null,
+            "soil_suitability": "odpowiednia",
+            "soil_suitability_label": "gleba odpowiednia",
+            "rotation": {
+              "status": "ostrzezenie",
+              "notes": [
+                "Zboże po zbożu – więcej chorób, niższy plon; to ostrzeżenie, nie zakaz."
+              ]
+            },
+            "irrigation_practice": "not_practiced",
+            "drought_sensitivity": "srednia",
+            "confidence": "srednia",
+            "confidence_note": null,
+            "notes": [],
+            "yields_by_year": [
+              {
+                "year": 2008,
+                "relative": 0.88,
+                "yield_t_ha": 4.2,
+                "water_deficit_mm": 72.0
+              },
+              {
+                "year": 2009,
+                "relative": 0.99,
+                "yield_t_ha": 4.7,
+                "water_deficit_mm": 4.0
+              },
+              {
+                "year": 2010,
+                "relative": 1.0,
+                "yield_t_ha": 4.8,
+                "water_deficit_mm": 0.0
+              },
+              {
+                "year": 2011,
+                "relative": 0.96,
+                "yield_t_ha": 4.6,
+                "water_deficit_mm": 14.0
+              },
+              {
+                "year": 2012,
+                "relative": 1.0,
+                "yield_t_ha": 4.8,
+                "water_deficit_mm": 15.0
+              },
+              {
+                "year": 2013,
+                "relative": 1.0,
+                "yield_t_ha": 4.8,
+                "water_deficit_mm": 0.0
+              },
+              {
+                "year": 2014,
+                "relative": 1.0,
+                "yield_t_ha": 4.8,
+                "water_deficit_mm": 0.0
+              },
+              {
+                "year": 2015,
+                "relative": 0.93,
+                "yield_t_ha": 4.4,
+                "water_deficit_mm": 78.0
+              },
+              {
+                "year": 2016,
+                "relative": 0.93,
+                "yield_t_ha": 4.5,
+                "water_deficit_mm": 40.0
+              },
+              {
+                "year": 2017,
+                "relative": 0.95,
+                "yield_t_ha": 4.5,
+                "water_deficit_mm": 25.0
+              }
+            ],
+            "source_tags": [
+              {
+                "kind": "szacunek_modelu",
+                "date": "2018-06-09",
+                "source": "Model wody w glebie FAO-56 + plon FAO-33 (Ky 1,00)"
+              },
+              {
+                "kind": "pomiar",
+                "date": null,
+                "source": "GUS BDL – plony z 1 ha wg województw (podlaskie, 2016–2025)"
+              }
+            ]
+          },
+          {
+            "crop_id": "pszenzyto_ozime",
+            "label": "Pszenżyto ozime",
+            "group_id": "zboza_ozime",
+            "category": "polecane",
+            "category_label": "polecane",
+            "rank": 4,
+            "score": 97.3,
+            "reason": "Gleba pasuje i wody wystarcza – typowo 4,5 t/ha, a nawet w najsuchszym roku (2008) plon spadłby tylko o 15%.",
+            "yield_typical_t_ha": 4.5,
+            "yield_weak_t_ha": 3.9,
+            "weak_year": 2008,
+            "yield_potential_t_ha": 4.6,
+            "gus_mean_t_ha": 3.7,
+            "relative_yield_median": 0.97,
+            "relative_yield_weak": 0.85,
+            "drought_risk_years": 0,
+            "years_simulated": 10,
+            "total_typical_t": 2.6,
+            "total_weak_t": 2.3,
+            "price": null,
+            "soil_suitability": "odpowiednia",
+            "soil_suitability_label": "gleba odpowiednia",
+            "rotation": {
+              "status": "ostrzezenie",
+              "notes": [
+                "Zboże po zbożu – więcej chorób, niższy plon; to ostrzeżenie, nie zakaz."
+              ]
+            },
+            "irrigation_practice": "not_practiced",
+            "drought_sensitivity": "srednia",
+            "confidence": "ograniczona",
+            "confidence_note": "współczynnik Ky (reakcja plonu na brak wody) to szacunek",
+            "notes": [],
+            "yields_by_year": [
+              {
+                "year": 2008,
+                "relative": 0.85,
+                "yield_t_ha": 3.9,
+                "water_deficit_mm": 64.0
+              },
+              {
+                "year": 2009,
+                "relative": 0.99,
+                "yield_t_ha": 4.5,
+                "water_deficit_mm": 6.0
+              },
+              {
+                "year": 2010,
+                "relative": 1.0,
+                "yield_t_ha": 4.6,
+                "water_deficit_mm": 0.0
+              },
+              {
+                "year": 2011,
+                "relative": 0.96,
+                "yield_t_ha": 4.4,
+                "water_deficit_mm": 14.0
+              },
+              {
+                "year": 2012,
+                "relative": 0.98,
+                "yield_t_ha": 4.5,
+                "water_deficit_mm": 7.0
+              },
+              {
+                "year": 2013,
+                "relative": 1.0,
+                "yield_t_ha": 4.6,
+                "water_deficit_mm": 0.0
+              },
+              {
+                "year": 2014,
+                "relative": 1.0,
+                "yield_t_ha": 4.6,
+                "water_deficit_mm": 0.0
+              },
+              {
+                "year": 2015,
+                "relative": 0.85,
+                "yield_t_ha": 3.9,
+                "water_deficit_mm": 65.0
+              },
+              {
+                "year": 2016,
+                "relative": 0.91,
+                "yield_t_ha": 4.2,
+                "water_deficit_mm": 38.0
+              },
+              {
+                "year": 2017,
+                "relative": 0.94,
+                "yield_t_ha": 4.3,
+                "water_deficit_mm": 22.0
+              }
+            ],
+            "source_tags": [
+              {
+                "kind": "szacunek_modelu",
+                "date": "2018-06-09",
+                "source": "Model wody w glebie FAO-56 + plon FAO-33 (Ky 0,90)"
+              },
+              {
+                "kind": "pomiar",
+                "date": null,
+                "source": "GUS BDL – plony z 1 ha wg województw (podlaskie, 2016–2025)"
+              }
+            ]
+          },
+          {
+            "crop_id": "jeczmien_ozimy",
+            "label": "Jęczmień ozimy",
+            "group_id": "zboza_ozime",
+            "category": "polecane",
+            "category_label": "polecane",
+            "rank": 5,
+            "score": 97.0,
+            "reason": "Gleba pasuje i wody wystarcza – typowo 4,4 t/ha, a nawet w najsuchszym roku (2008) plon spadłby tylko o 11%.",
+            "yield_typical_t_ha": 4.4,
+            "yield_weak_t_ha": 4.0,
+            "weak_year": 2008,
+            "yield_potential_t_ha": 4.5,
+            "gus_mean_t_ha": 3.5,
+            "relative_yield_median": 0.97,
+            "relative_yield_weak": 0.89,
+            "drought_risk_years": 0,
+            "years_simulated": 10,
+            "total_typical_t": 2.5,
+            "total_weak_t": 2.3,
+            "price": null,
+            "soil_suitability": "odpowiednia",
+            "soil_suitability_label": "gleba odpowiednia",
+            "rotation": {
+              "status": "ostrzezenie",
+              "notes": [
+                "Zboże po zbożu – więcej chorób, niższy plon; to ostrzeżenie, nie zakaz."
+              ]
+            },
+            "irrigation_practice": "not_practiced",
+            "drought_sensitivity": "srednia",
+            "confidence": "ograniczona",
+            "confidence_note": "współczynnik Ky (reakcja plonu na brak wody) to szacunek; plon potencjalny: plon jęczmienia ogółem",
+            "notes": [],
+            "yields_by_year": [
+              {
+                "year": 2008,
+                "relative": 0.89,
+                "yield_t_ha": 4.0,
+                "water_deficit_mm": 32.0
+              },
+              {
+                "year": 2009,
+                "relative": 0.97,
+                "yield_t_ha": 4.3,
+                "water_deficit_mm": 10.0
+              },
+              {
+                "year": 2010,
+                "relative": 1.0,
+                "yield_t_ha": 4.5,
+                "water_deficit_mm": 0.0
+              },
+              {
+                "year": 2011,
+                "relative": 0.97,
+                "yield_t_ha": 4.4,
+                "water_deficit_mm": 8.0
+              },
+              {
+                "year": 2012,
+                "relative": 1.0,
+                "yield_t_ha": 4.5,
+                "water_deficit_mm": 0.0
+              },
+              {
+                "year": 2013,
+                "relative": 1.0,
+                "yield_t_ha": 4.5,
+                "water_deficit_mm": 0.0
+              },
+              {
+                "year": 2014,
+                "relative": 1.0,
+                "yield_t_ha": 4.5,
+                "water_deficit_mm": 0.0
+              },
+              {
+                "year": 2015,
+                "relative": 0.94,
+                "yield_t_ha": 4.2,
+                "water_deficit_mm": 18.0
+              },
+              {
+                "year": 2016,
+                "relative": 0.94,
+                "yield_t_ha": 4.2,
+                "water_deficit_mm": 17.0
+              },
+              {
+                "year": 2017,
+                "relative": 0.95,
+                "yield_t_ha": 4.3,
+                "water_deficit_mm": 12.0
+              }
+            ],
+            "source_tags": [
+              {
+                "kind": "szacunek_modelu",
+                "date": "2018-06-09",
+                "source": "Model wody w glebie FAO-56 + plon FAO-33 (Ky 1,00)"
+              },
+              {
+                "kind": "pomiar",
+                "date": null,
+                "source": "GUS BDL – plony z 1 ha wg województw (podlaskie, 2016–2025)"
+              }
+            ]
+          },
+          {
+            "crop_id": "warzywa",
+            "label": "Warzywa gruntowe",
+            "group_id": "warzywa",
+            "category": "polecane",
+            "category_label": "polecane",
+            "rank": 6,
+            "score": 96.0,
+            "reason": "Gleba pasuje – typowo 22,5 t/ha; strata ponad 20% plonu zdarzyłaby się w 2 z 10 lat (najgorszy rok: 2015).",
+            "yield_typical_t_ha": 22.5,
+            "yield_weak_t_ha": 14.4,
+            "weak_year": 2015,
+            "yield_potential_t_ha": 24.7,
+            "gus_mean_t_ha": 20.9,
+            "relative_yield_median": 0.91,
+            "relative_yield_weak": 0.58,
+            "drought_risk_years": 2,
+            "years_simulated": 10,
+            "total_typical_t": 13.0,
+            "total_weak_t": 8.3,
+            "price": null,
+            "soil_suitability": "odpowiednia",
+            "soil_suitability_label": "gleba odpowiednia",
+            "rotation": {
+              "status": "plus",
+              "notes": [
+                "Dobry przedplon: rok temu zboża ozime."
+              ]
+            },
+            "irrigation_practice": "common",
+            "drought_sensitivity": "wysoka",
+            "confidence": "ograniczona",
+            "confidence_note": "współczynnik Ky (reakcja plonu na brak wody) to szacunek",
+            "notes": [],
+            "yields_by_year": [
+              {
+                "year": 2008,
+                "relative": 0.76,
+                "yield_t_ha": 18.7,
+                "water_deficit_mm": 153.0
+              },
+              {
+                "year": 2009,
+                "relative": 0.97,
+                "yield_t_ha": 24.1,
+                "water_deficit_mm": 56.0
+              },
+              {
+                "year": 2010,
+                "relative": 0.96,
+                "yield_t_ha": 23.8,
+                "water_deficit_mm": 60.0
+              },
+              {
+                "year": 2011,
+                "relative": 1.0,
+                "yield_t_ha": 24.7,
+                "water_deficit_mm": 17.0
+              },
+              {
+                "year": 2012,
+                "relative": 0.91,
+                "yield_t_ha": 22.4,
+                "water_deficit_mm": 87.0
+              },
+              {
+                "year": 2013,
+                "relative": 0.84,
+                "yield_t_ha": 20.7,
+                "water_deficit_mm": 111.0
+              },
+              {
+                "year": 2014,
+                "relative": 0.9,
+                "yield_t_ha": 22.2,
+                "water_deficit_mm": 88.0
+              },
+              {
+                "year": 2015,
+                "relative": 0.58,
+                "yield_t_ha": 14.4,
+                "water_deficit_mm": 250.0
+              },
+              {
+                "year": 2016,
+                "relative": 0.99,
+                "yield_t_ha": 24.5,
+                "water_deficit_mm": 51.0
+              },
+              {
+                "year": 2017,
+                "relative": 0.91,
+                "yield_t_ha": 22.5,
+                "water_deficit_mm": 78.0
+              }
+            ],
+            "source_tags": [
+              {
+                "kind": "szacunek_modelu",
+                "date": "2018-06-09",
+                "source": "Model wody w glebie FAO-56 + plon FAO-33 (Ky 0,95)"
+              },
+              {
+                "kind": "pomiar",
+                "date": null,
+                "source": "GUS BDL – plony z 1 ha wg województw (podlaskie, 2016–2025)"
+              }
+            ]
+          },
+          {
+            "crop_id": "burak_cukrowy",
+            "label": "Burak cukrowy",
+            "group_id": "burak_cukrowy",
+            "category": "polecane",
+            "category_label": "polecane",
+            "rank": 7,
+            "score": 94.4,
+            "reason": "Gleba pasuje – typowo 67,6 t/ha; strata ponad 20% plonu zdarzyłaby się w 2 z 10 lat (najgorszy rok: 2015).",
+            "yield_typical_t_ha": 67.6,
+            "yield_weak_t_ha": 46.5,
+            "weak_year": 2015,
+            "yield_potential_t_ha": 75.6,
+            "gus_mean_t_ha": 58.8,
+            "relative_yield_median": 0.89,
+            "relative_yield_weak": 0.61,
+            "drought_risk_years": 2,
+            "years_simulated": 10,
+            "total_typical_t": 39.2,
+            "total_weak_t": 27.0,
+            "price": null,
+            "soil_suitability": "odpowiednia",
+            "soil_suitability_label": "gleba odpowiednia",
+            "rotation": {
+              "status": "plus",
+              "notes": [
+                "Dobry przedplon: rok temu zboża ozime."
+              ]
+            },
+            "irrigation_practice": "not_practiced",
+            "drought_sensitivity": "srednia",
+            "confidence": "srednia",
+            "confidence_note": null,
+            "notes": [
+              "Plon korzeni."
+            ],
+            "yields_by_year": [
+              {
+                "year": 2008,
+                "relative": 0.77,
+                "yield_t_ha": 58.0,
+                "water_deficit_mm": 168.0
+              },
+              {
+                "year": 2009,
+                "relative": 0.99,
+                "yield_t_ha": 75.2,
+                "water_deficit_mm": 25.0
+              },
+              {
+                "year": 2010,
+                "relative": 0.96,
+                "yield_t_ha": 72.9,
+                "water_deficit_mm": 41.0
+              },
+              {
+                "year": 2011,
+                "relative": 1.0,
+                "yield_t_ha": 75.6,
+                "water_deficit_mm": 1.0
+              },
+              {
+                "year": 2012,
+                "relative": 0.86,
+                "yield_t_ha": 65.1,
+                "water_deficit_mm": 109.0
+              },
+              {
+                "year": 2013,
+                "relative": 0.87,
+                "yield_t_ha": 65.6,
+                "water_deficit_mm": 99.0
+              },
+              {
+                "year": 2014,
+                "relative": 0.85,
+                "yield_t_ha": 64.3,
+                "water_deficit_mm": 117.0
+              },
+              {
+                "year": 2015,
+                "relative": 0.61,
+                "yield_t_ha": 46.5,
+                "water_deficit_mm": 300.0
+              },
+              {
+                "year": 2016,
+                "relative": 0.96,
+                "yield_t_ha": 72.8,
+                "water_deficit_mm": 45.0
+              },
+              {
+                "year": 2017,
+                "relative": 0.92,
+                "yield_t_ha": 69.6,
+                "water_deficit_mm": 65.0
+              }
+            ],
+            "source_tags": [
+              {
+                "kind": "szacunek_modelu",
+                "date": "2018-06-09",
+                "source": "Model wody w glebie FAO-56 + plon FAO-33 (Ky 0,90)"
+              },
+              {
+                "kind": "pomiar",
+                "date": null,
+                "source": "GUS BDL – plony z 1 ha wg województw (podlaskie, 2016–2025)"
+              }
+            ]
+          },
+          {
+            "crop_id": "straczkowe",
+            "label": "Rośliny strączkowe",
+            "group_id": "straczkowe",
+            "category": "polecane",
+            "category_label": "polecane",
+            "rank": 8,
+            "score": 91.0,
+            "reason": "Gleba pasuje – typowo 1,9 t/ha; strata ponad 20% plonu zdarzyłaby się w 2 z 10 lat (najgorszy rok: 2015).",
+            "yield_typical_t_ha": 1.9,
+            "yield_weak_t_ha": 1.3,
+            "weak_year": 2015,
+            "yield_potential_t_ha": 2.2,
+            "gus_mean_t_ha": 1.9,
+            "relative_yield_median": 0.86,
+            "relative_yield_weak": 0.58,
+            "drought_risk_years": 2,
+            "years_simulated": 10,
+            "total_typical_t": 1.1,
+            "total_weak_t": 0.8,
+            "price": null,
+            "soil_suitability": "odpowiednia",
+            "soil_suitability_label": "gleba odpowiednia",
+            "rotation": {
+              "status": "plus",
+              "notes": [
+                "Dobry przedplon: rok temu zboża ozime."
+              ]
+            },
+            "irrigation_practice": "not_practiced",
+            "drought_sensitivity": "wysoka",
+            "confidence": "srednia",
+            "confidence_note": null,
+            "notes": [],
+            "yields_by_year": [
+              {
+                "year": 2008,
+                "relative": 0.66,
+                "yield_t_ha": 1.5,
+                "water_deficit_mm": 105.0
+              },
+              {
+                "year": 2009,
+                "relative": 1.0,
+                "yield_t_ha": 2.2,
+                "water_deficit_mm": 1.0
+              },
+              {
+                "year": 2010,
+                "relative": 0.9,
+                "yield_t_ha": 2.0,
+                "water_deficit_mm": 36.0
+              },
+              {
+                "year": 2011,
+                "relative": 1.0,
+                "yield_t_ha": 2.2,
+                "water_deficit_mm": 8.0
+              },
+              {
+                "year": 2012,
+                "relative": 0.88,
+                "yield_t_ha": 2.0,
+                "water_deficit_mm": 46.0
+              },
+              {
+                "year": 2013,
+                "relative": 0.85,
+                "yield_t_ha": 1.9,
+                "water_deficit_mm": 51.0
+              },
+              {
+                "year": 2014,
+                "relative": 0.86,
+                "yield_t_ha": 1.9,
+                "water_deficit_mm": 51.0
+              },
+              {
+                "year": 2015,
+                "relative": 0.58,
+                "yield_t_ha": 1.3,
+                "water_deficit_mm": 139.0
+              },
+              {
+                "year": 2016,
+                "relative": 0.86,
+                "yield_t_ha": 1.9,
+                "water_deficit_mm": 43.0
+              },
+              {
+                "year": 2017,
+                "relative": 0.81,
+                "yield_t_ha": 1.8,
+                "water_deficit_mm": 46.0
+              }
+            ],
+            "source_tags": [
+              {
+                "kind": "szacunek_modelu",
+                "date": "2018-06-09",
+                "source": "Model wody w glebie FAO-56 + plon FAO-33 (Ky 1,15)"
+              },
+              {
+                "kind": "pomiar",
+                "date": null,
+                "source": "GUS BDL – plony z 1 ha wg województw (podlaskie, 2016–2025)"
+              }
+            ]
+          },
+          {
+            "crop_id": "jeczmien_jary",
+            "label": "Jęczmień jary",
+            "group_id": "zboza_jare",
+            "category": "polecane",
+            "category_label": "polecane",
+            "rank": 9,
+            "score": 91.0,
+            "reason": "Gleba pasuje – typowo 4,4 t/ha; strata ponad 20% plonu zdarzyłaby się w 2 z 10 lat (najgorszy rok: 2008).",
+            "yield_typical_t_ha": 4.4,
+            "yield_weak_t_ha": 3.6,
+            "weak_year": 2008,
+            "yield_potential_t_ha": 4.5,
+            "gus_mean_t_ha": 3.5,
+            "relative_yield_median": 0.99,
+            "relative_yield_weak": 0.79,
+            "drought_risk_years": 2,
+            "years_simulated": 10,
+            "total_typical_t": 2.6,
+            "total_weak_t": 2.1,
+            "price": null,
+            "soil_suitability": "odpowiednia",
+            "soil_suitability_label": "gleba odpowiednia",
+            "rotation": {
+              "status": "ostrzezenie",
+              "notes": [
+                "Zboże po zbożu – więcej chorób, niższy plon; to ostrzeżenie, nie zakaz."
+              ]
+            },
+            "irrigation_practice": "not_practiced",
+            "drought_sensitivity": "wysoka",
+            "confidence": "ograniczona",
+            "confidence_note": "współczynnik Ky (reakcja plonu na brak wody) to szacunek; plon potencjalny: plon jęczmienia ogółem",
+            "notes": [],
+            "yields_by_year": [
+              {
+                "year": 2008,
+                "relative": 0.79,
+                "yield_t_ha": 3.6,
+                "water_deficit_mm": 65.0
+              },
+              {
+                "year": 2009,
+                "relative": 1.0,
+                "yield_t_ha": 4.5,
+                "water_deficit_mm": 0.0
+              },
+              {
+                "year": 2010,
+                "relative": 1.0,
+                "yield_t_ha": 4.5,
+                "water_deficit_mm": 0.0
+              },
+              {
+                "year": 2011,
+                "relative": 0.99,
+                "yield_t_ha": 4.5,
+                "water_deficit_mm": 2.0
+              },
+              {
+                "year": 2012,
+                "relative": 0.99,
+                "yield_t_ha": 4.4,
+                "water_deficit_mm": 4.0
+              },
+              {
+                "year": 2013,
+                "relative": 1.0,
+                "yield_t_ha": 4.5,
+                "water_deficit_mm": 0.0
+              },
+              {
+                "year": 2014,
+                "relative": 1.0,
+                "yield_t_ha": 4.5,
+                "water_deficit_mm": 0.0
+              },
+              {
+                "year": 2015,
+                "relative": 0.8,
+                "yield_t_ha": 3.6,
+                "water_deficit_mm": 64.0
+              },
+              {
+                "year": 2016,
+                "relative": 0.9,
+                "yield_t_ha": 4.0,
+                "water_deficit_mm": 31.0
+              },
+              {
+                "year": 2017,
+                "relative": 0.91,
+                "yield_t_ha": 4.1,
+                "water_deficit_mm": 25.0
+              }
+            ],
+            "source_tags": [
+              {
+                "kind": "szacunek_modelu",
+                "date": "2018-06-09",
+                "source": "Model wody w glebie FAO-56 + plon FAO-33 (Ky 1,10)"
+              },
+              {
+                "kind": "pomiar",
+                "date": null,
+                "source": "GUS BDL – plony z 1 ha wg województw (podlaskie, 2016–2025)"
+              }
+            ]
+          },
+          {
+            "crop_id": "kukurydza_ziarno",
+            "label": "Kukurydza na ziarno",
+            "group_id": "kukurydza_ziarno",
+            "category": "polecane",
+            "category_label": "polecane",
+            "rank": 10,
+            "score": 89.7,
+            "reason": "Gleba pasuje – typowo 7,4 t/ha; strata ponad 20% plonu zdarzyłaby się w 3 z 10 lat (najgorszy rok: 2015).",
+            "yield_typical_t_ha": 7.4,
+            "yield_weak_t_ha": 4.1,
+            "weak_year": 2015,
+            "yield_potential_t_ha": 8.3,
+            "gus_mean_t_ha": 7.1,
+            "relative_yield_median": 0.89,
+            "relative_yield_weak": 0.5,
+            "drought_risk_years": 3,
+            "years_simulated": 10,
+            "total_typical_t": 4.3,
+            "total_weak_t": 2.4,
+            "price": null,
+            "soil_suitability": "odpowiednia",
+            "soil_suitability_label": "gleba odpowiednia",
+            "rotation": {
+              "status": "plus",
+              "notes": [
+                "Dobry przedplon: rok temu zboża ozime."
+              ]
+            },
+            "irrigation_practice": "optional",
+            "drought_sensitivity": "srednia",
+            "confidence": "srednia",
+            "confidence_note": null,
+            "notes": [],
+            "yields_by_year": [
+              {
+                "year": 2008,
+                "relative": 0.8,
+                "yield_t_ha": 6.7,
+                "water_deficit_mm": 68.0
+              },
+              {
+                "year": 2009,
+                "relative": 0.95,
+                "yield_t_ha": 8.0,
+                "water_deficit_mm": 15.0
+              },
+              {
+                "year": 2010,
+                "relative": 0.93,
+                "yield_t_ha": 7.8,
+                "water_deficit_mm": 21.0
+              },
+              {
+                "year": 2011,
+                "relative": 1.0,
+                "yield_t_ha": 8.3,
+                "water_deficit_mm": 0.0
+              },
+              {
+                "year": 2012,
+                "relative": 0.83,
+                "yield_t_ha": 6.9,
+                "water_deficit_mm": 58.0
+              },
+              {
+                "year": 2013,
+                "relative": 0.8,
+                "yield_t_ha": 6.7,
+                "water_deficit_mm": 65.0
+              },
+              {
+                "year": 2014,
+                "relative": 0.84,
+                "yield_t_ha": 7.0,
+                "water_deficit_mm": 54.0
+              },
+              {
+                "year": 2015,
+                "relative": 0.5,
+                "yield_t_ha": 4.1,
+                "water_deficit_mm": 201.0
+              },
+              {
+                "year": 2016,
+                "relative": 1.0,
+                "yield_t_ha": 8.3,
+                "water_deficit_mm": 0.0
+              },
+              {
+                "year": 2017,
+                "relative": 1.0,
+                "yield_t_ha": 8.3,
+                "water_deficit_mm": 0.0
+              }
+            ],
+            "source_tags": [
+              {
+                "kind": "szacunek_modelu",
+                "date": "2018-06-09",
+                "source": "Model wody w glebie FAO-56 + plon FAO-33 (Ky 1,25)"
+              },
+              {
+                "kind": "pomiar",
+                "date": null,
+                "source": "GUS BDL – plony z 1 ha wg województw (podlaskie, 2016–2025)"
+              }
+            ]
+          },
+          {
+            "crop_id": "zyto",
+            "label": "Żyto",
+            "group_id": "zboza_ozime",
+            "category": "mozliwe",
+            "category_label": "możliwe",
+            "rank": 11,
+            "score": 89.6,
+            "reason": "Da się uprawiać, choć ta gleba nie jest dla tej uprawy najlepsza – typowo 3,3 t/ha, w najsuchszym roku (2008) plon niższy o 13%.",
+            "yield_typical_t_ha": 3.3,
+            "yield_weak_t_ha": 2.9,
+            "weak_year": 2008,
+            "yield_potential_t_ha": 3.4,
+            "gus_mean_t_ha": 2.9,
+            "relative_yield_median": 0.98,
+            "relative_yield_weak": 0.87,
+            "drought_risk_years": 0,
+            "years_simulated": 10,
+            "total_typical_t": 1.9,
+            "total_weak_t": 1.7,
+            "price": null,
+            "soil_suitability": "neutralna",
+            "soil_suitability_label": "gleba przeciętna dla tej uprawy",
+            "rotation": {
+              "status": "ostrzezenie",
+              "notes": [
+                "Zboże po zbożu – więcej chorób, niższy plon; to ostrzeżenie, nie zakaz."
+              ]
+            },
+            "irrigation_practice": "not_practiced",
+            "drought_sensitivity": "niska",
+            "confidence": "ograniczona",
+            "confidence_note": "współczynnik Ky (reakcja plonu na brak wody) to szacunek",
+            "notes": [],
+            "yields_by_year": [
+              {
+                "year": 2008,
+                "relative": 0.87,
+                "yield_t_ha": 2.9,
+                "water_deficit_mm": 58.0
+              },
+              {
+                "year": 2009,
+                "relative": 0.98,
+                "yield_t_ha": 3.3,
+                "water_deficit_mm": 6.0
+              },
+              {
+                "year": 2010,
+                "relative": 1.0,
+                "yield_t_ha": 3.4,
+                "water_deficit_mm": 0.0
+              },
+              {
+                "year": 2011,
+                "relative": 0.97,
+                "yield_t_ha": 3.3,
+                "water_deficit_mm": 14.0
+              },
+              {
+                "year": 2012,
+                "relative": 0.99,
+                "yield_t_ha": 3.3,
+                "water_deficit_mm": 2.0
+              },
+              {
+                "year": 2013,
+                "relative": 1.0,
+                "yield_t_ha": 3.4,
+                "water_deficit_mm": 0.0
+              },
+              {
+                "year": 2014,
+                "relative": 1.0,
+                "yield_t_ha": 3.4,
+                "water_deficit_mm": 0.0
+              },
+              {
+                "year": 2015,
+                "relative": 0.89,
+                "yield_t_ha": 3.0,
+                "water_deficit_mm": 52.0
+              },
+              {
+                "year": 2016,
+                "relative": 0.92,
+                "yield_t_ha": 3.1,
+                "water_deficit_mm": 35.0
+              },
+              {
+                "year": 2017,
+                "relative": 0.95,
+                "yield_t_ha": 3.2,
+                "water_deficit_mm": 20.0
+              }
+            ],
+            "source_tags": [
+              {
+                "kind": "szacunek_modelu",
+                "date": "2018-06-09",
+                "source": "Model wody w glebie FAO-56 + plon FAO-33 (Ky 0,80)"
+              },
+              {
+                "kind": "pomiar",
+                "date": null,
+                "source": "GUS BDL – plony z 1 ha wg województw (podlaskie, 2016–2025)"
+              }
+            ]
+          },
+          {
+            "crop_id": "lubin",
+            "label": "Łubin",
+            "group_id": "straczkowe",
+            "category": "mozliwe",
+            "category_label": "możliwe",
+            "rank": 12,
+            "score": 89.0,
+            "reason": "Da się uprawiać, choć ta gleba nie jest dla tej uprawy najlepsza – typowo 1,9 t/ha, strata ponad 20% plonu w 2 z 10 lat.",
+            "yield_typical_t_ha": 1.9,
+            "yield_weak_t_ha": 1.5,
+            "weak_year": 2015,
+            "yield_potential_t_ha": 2.1,
+            "gus_mean_t_ha": 1.9,
+            "relative_yield_median": 0.92,
+            "relative_yield_weak": 0.71,
+            "drought_risk_years": 2,
+            "years_simulated": 10,
+            "total_typical_t": 1.1,
+            "total_weak_t": 0.9,
+            "price": null,
+            "soil_suitability": "neutralna",
+            "soil_suitability_label": "gleba przeciętna dla tej uprawy",
+            "rotation": {
+              "status": "plus",
+              "notes": [
+                "Dobry przedplon: rok temu zboża ozime."
+              ]
+            },
+            "irrigation_practice": "not_practiced",
+            "drought_sensitivity": "srednia",
+            "confidence": "ograniczona",
+            "confidence_note": "współczynnik Ky (reakcja plonu na brak wody) to szacunek; plon potencjalny: plon roślin strączkowych razem (łubinu nie ma w GUS BDL)",
+            "notes": [],
+            "yields_by_year": [
+              {
+                "year": 2008,
+                "relative": 0.77,
+                "yield_t_ha": 1.6,
+                "water_deficit_mm": 90.0
+              },
+              {
+                "year": 2009,
+                "relative": 1.0,
+                "yield_t_ha": 2.1,
+                "water_deficit_mm": 0.0
+              },
+              {
+                "year": 2010,
+                "relative": 0.96,
+                "yield_t_ha": 2.0,
+                "water_deficit_mm": 17.0
+              },
+              {
+                "year": 2011,
+                "relative": 1.0,
+                "yield_t_ha": 2.1,
+                "water_deficit_mm": 1.0
+              },
+              {
+                "year": 2012,
+                "relative": 0.92,
+                "yield_t_ha": 1.9,
+                "water_deficit_mm": 31.0
+              },
+              {
+                "year": 2013,
+                "relative": 0.91,
+                "yield_t_ha": 1.9,
+                "water_deficit_mm": 33.0
+              },
+              {
+                "year": 2014,
+                "relative": 0.92,
+                "yield_t_ha": 1.9,
+                "water_deficit_mm": 32.0
+              },
+              {
+                "year": 2015,
+                "relative": 0.71,
+                "yield_t_ha": 1.5,
+                "water_deficit_mm": 120.0
+              },
+              {
+                "year": 2016,
+                "relative": 0.94,
+                "yield_t_ha": 2.0,
+                "water_deficit_mm": 24.0
+              },
+              {
+                "year": 2017,
+                "relative": 0.91,
+                "yield_t_ha": 1.9,
+                "water_deficit_mm": 32.0
+              }
+            ],
+            "source_tags": [
+              {
+                "kind": "szacunek_modelu",
+                "date": "2018-06-09",
+                "source": "Model wody w glebie FAO-56 + plon FAO-33 (Ky 1,00)"
+              },
+              {
+                "kind": "pomiar",
+                "date": null,
+                "source": "GUS BDL – plony z 1 ha wg województw (podlaskie, 2016–2025)"
+              }
+            ]
+          },
+          {
+            "crop_id": "owies",
+            "label": "Owies",
+            "group_id": "zboza_jare",
+            "category": "mozliwe",
+            "category_label": "możliwe",
+            "rank": 13,
+            "score": 79.6,
+            "reason": "Da się uprawiać, choć ta gleba nie jest dla tej uprawy najlepsza – typowo 3,3 t/ha, strata ponad 20% plonu w 2 z 10 lat.",
+            "yield_typical_t_ha": 3.3,
+            "yield_weak_t_ha": 2.6,
+            "weak_year": 2015,
+            "yield_potential_t_ha": 3.4,
+            "gus_mean_t_ha": 2.9,
+            "relative_yield_median": 0.96,
+            "relative_yield_weak": 0.75,
+            "drought_risk_years": 2,
+            "years_simulated": 10,
+            "total_typical_t": 1.9,
+            "total_weak_t": 1.5,
+            "price": null,
+            "soil_suitability": "neutralna",
+            "soil_suitability_label": "gleba przeciętna dla tej uprawy",
+            "rotation": {
+              "status": "ostrzezenie",
+              "notes": [
+                "Zboże po zbożu – więcej chorób, niższy plon; to ostrzeżenie, nie zakaz."
+              ]
+            },
+            "irrigation_practice": "not_practiced",
+            "drought_sensitivity": "wysoka",
+            "confidence": "ograniczona",
+            "confidence_note": "współczynnik Ky (reakcja plonu na brak wody) to szacunek",
+            "notes": [],
+            "yields_by_year": [
+              {
+                "year": 2008,
+                "relative": 0.77,
+                "yield_t_ha": 2.6,
+                "water_deficit_mm": 83.0
+              },
+              {
+                "year": 2009,
+                "relative": 1.0,
+                "yield_t_ha": 3.4,
+                "water_deficit_mm": 0.0
+              },
+              {
+                "year": 2010,
+                "relative": 0.99,
+                "yield_t_ha": 3.4,
+                "water_deficit_mm": 4.0
+              },
+              {
+                "year": 2011,
+                "relative": 1.0,
+                "yield_t_ha": 3.4,
+                "water_deficit_mm": 2.0
+              },
+              {
+                "year": 2012,
+                "relative": 0.94,
+                "yield_t_ha": 3.2,
+                "water_deficit_mm": 21.0
+              },
+              {
+                "year": 2013,
+                "relative": 0.98,
+                "yield_t_ha": 3.3,
+                "water_deficit_mm": 9.0
+              },
+              {
+                "year": 2014,
+                "relative": 0.97,
+                "yield_t_ha": 3.3,
+                "water_deficit_mm": 11.0
+              },
+              {
+                "year": 2015,
+                "relative": 0.75,
+                "yield_t_ha": 2.6,
+                "water_deficit_mm": 92.0
+              },
+              {
+                "year": 2016,
+                "relative": 0.91,
+                "yield_t_ha": 3.1,
+                "water_deficit_mm": 32.0
+              },
+              {
+                "year": 2017,
+                "relative": 0.91,
+                "yield_t_ha": 3.1,
+                "water_deficit_mm": 30.0
+              }
+            ],
+            "source_tags": [
+              {
+                "kind": "szacunek_modelu",
+                "date": "2018-06-09",
+                "source": "Model wody w glebie FAO-56 + plon FAO-33 (Ky 1,10)"
+              },
+              {
+                "kind": "pomiar",
+                "date": null,
+                "source": "GUS BDL – plony z 1 ha wg województw (podlaskie, 2016–2025)"
+              }
+            ]
+          },
+          {
+            "crop_id": "ziemniak",
+            "label": "Ziemniak",
+            "group_id": "ziemniak",
+            "category": "mozliwe",
+            "category_label": "możliwe",
+            "rank": 14,
+            "score": 72.8,
+            "reason": "Gleba pasuje, ale wody bywa za mało – typowo 24,5 t/ha, strata ponad 20% plonu w 5 z 10 lat (najgorszy rok: 2015).",
+            "yield_typical_t_ha": 24.5,
+            "yield_weak_t_ha": 16.0,
+            "weak_year": 2015,
+            "yield_potential_t_ha": 30.7,
+            "gus_mean_t_ha": 25.7,
+            "relative_yield_median": 0.8,
+            "relative_yield_weak": 0.52,
+            "drought_risk_years": 5,
+            "years_simulated": 10,
+            "total_typical_t": 14.2,
+            "total_weak_t": 9.3,
+            "price": null,
+            "soil_suitability": "odpowiednia",
+            "soil_suitability_label": "gleba odpowiednia",
+            "rotation": {
+              "status": "plus",
+              "notes": [
+                "Dobry przedplon: rok temu zboża ozime."
+              ]
+            },
+            "irrigation_practice": "common",
+            "drought_sensitivity": "wysoka",
+            "confidence": "srednia",
+            "confidence_note": null,
+            "notes": [],
+            "yields_by_year": [
+              {
+                "year": 2008,
+                "relative": 0.71,
+                "yield_t_ha": 21.8,
+                "water_deficit_mm": 169.0
+              },
+              {
+                "year": 2009,
+                "relative": 0.81,
+                "yield_t_ha": 24.8,
+                "water_deficit_mm": 67.0
+              },
+              {
+                "year": 2010,
+                "relative": 0.87,
+                "yield_t_ha": 26.6,
+                "water_deficit_mm": 80.0
+              },
+              {
+                "year": 2011,
+                "relative": 1.0,
+                "yield_t_ha": 30.7,
+                "water_deficit_mm": 21.0
+              },
+              {
+                "year": 2012,
+                "relative": 0.79,
+                "yield_t_ha": 24.2,
+                "water_deficit_mm": 110.0
+              },
+              {
+                "year": 2013,
+                "relative": 0.7,
+                "yield_t_ha": 21.3,
+                "water_deficit_mm": 142.0
+              },
+              {
+                "year": 2014,
+                "relative": 0.78,
+                "yield_t_ha": 23.8,
+                "water_deficit_mm": 121.0
+              },
+              {
+                "year": 2015,
+                "relative": 0.52,
+                "yield_t_ha": 16.0,
+                "water_deficit_mm": 289.0
+              },
+              {
+                "year": 2016,
+                "relative": 0.99,
+                "yield_t_ha": 30.4,
+                "water_deficit_mm": 53.0
+              },
+              {
+                "year": 2017,
+                "relative": 0.94,
+                "yield_t_ha": 28.9,
+                "water_deficit_mm": 80.0
+              }
+            ],
+            "source_tags": [
+              {
+                "kind": "szacunek_modelu",
+                "date": "2018-06-09",
+                "source": "Model wody w glebie FAO-56 + plon FAO-33 (Ky 1,10)"
+              },
+              {
+                "kind": "pomiar",
+                "date": null,
+                "source": "GUS BDL – plony z 1 ha wg województw (podlaskie, 2016–2025)"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "key": "wieloletnie",
+        "label": "uprawy wieloletnie",
+        "items": [
+          {
+            "crop_id": "drzewa_owocowe",
+            "label": "Drzewa owocowe",
+            "group_id": "drzewa_owocowe",
+            "category": "polecane",
+            "category_label": "polecane",
+            "rank": 1,
+            "score": 106.6,
+            "reason": "Gleba pasuje – typowo 13,6 t/ha; strata ponad 20% plonu zdarzyłaby się w 1 z 10 lat (najgorszy rok: 2015).",
+            "yield_typical_t_ha": 13.6,
+            "yield_weak_t_ha": 9.8,
+            "weak_year": 2015,
+            "yield_potential_t_ha": 14.0,
+            "gus_mean_t_ha": 9.4,
+            "relative_yield_median": 0.98,
+            "relative_yield_weak": 0.7,
+            "drought_risk_years": 1,
+            "years_simulated": 10,
+            "total_typical_t": 7.9,
+            "total_weak_t": 5.7,
+            "price": null,
+            "soil_suitability": "odpowiednia",
+            "soil_suitability_label": "gleba odpowiednia",
+            "rotation": {
+              "status": "plus",
+              "notes": [
+                "Dobry przedplon: rok temu zboża ozime."
+              ]
+            },
+            "irrigation_practice": "common",
+            "drought_sensitivity": "srednia",
+            "confidence": "ograniczona",
+            "confidence_note": "współczynnik Ky (reakcja plonu na brak wody) to szacunek",
+            "notes": [
+              "Uprawa wieloletnia – decyzja na wiele lat; plon dotyczy plantacji w pełni owocowania."
+            ],
+            "yields_by_year": [
+              {
+                "year": 2008,
+                "relative": 0.89,
+                "yield_t_ha": 12.4,
+                "water_deficit_mm": 59.0
+              },
+              {
+                "year": 2009,
+                "relative": 1.0,
+                "yield_t_ha": 14.0,
+                "water_deficit_mm": 0.0
+              },
+              {
+                "year": 2010,
+                "relative": 1.0,
+                "yield_t_ha": 14.0,
+                "water_deficit_mm": 0.0
+              },
+              {
+                "year": 2011,
+                "relative": 1.0,
+                "yield_t_ha": 14.0,
+                "water_deficit_mm": 0.0
+              },
+              {
+                "year": 2012,
+                "relative": 0.95,
+                "yield_t_ha": 13.3,
+                "water_deficit_mm": 24.0
+              },
+              {
+                "year": 2013,
+                "relative": 0.93,
+                "yield_t_ha": 13.0,
+                "water_deficit_mm": 33.0
+              },
+              {
+                "year": 2014,
+                "relative": 0.93,
+                "yield_t_ha": 13.1,
+                "water_deficit_mm": 35.0
+              },
+              {
+                "year": 2015,
+                "relative": 0.7,
+                "yield_t_ha": 9.8,
+                "water_deficit_mm": 179.0
+              },
+              {
+                "year": 2016,
+                "relative": 1.0,
+                "yield_t_ha": 14.0,
+                "water_deficit_mm": 0.0
+              },
+              {
+                "year": 2017,
+                "relative": 1.0,
+                "yield_t_ha": 13.9,
+                "water_deficit_mm": 1.0
+              }
+            ],
+            "source_tags": [
+              {
+                "kind": "szacunek_modelu",
+                "date": "2018-06-09",
+                "source": "Model wody w glebie FAO-56 + plon FAO-33 (Ky 0,90)"
+              },
+              {
+                "kind": "pomiar",
+                "date": null,
+                "source": "GUS BDL – plony z 1 ha wg województw (podlaskie, 2016–2025)"
+              }
+            ]
+          },
+          {
+            "crop_id": "krzewy_owocowe",
+            "label": "Krzewy owocowe",
+            "group_id": "krzewy_owocowe",
+            "category": "polecane",
+            "category_label": "polecane",
+            "rank": 2,
+            "score": 101.6,
+            "reason": "Gleba pasuje – typowo 3,7 t/ha; strata ponad 20% plonu zdarzyłaby się w 1 z 10 lat (najgorszy rok: 2015).",
+            "yield_typical_t_ha": 3.7,
+            "yield_weak_t_ha": 2.6,
+            "weak_year": 2015,
+            "yield_potential_t_ha": 4.0,
+            "gus_mean_t_ha": 3.4,
+            "relative_yield_median": 0.93,
+            "relative_yield_weak": 0.64,
+            "drought_risk_years": 1,
+            "years_simulated": 10,
+            "total_typical_t": 2.2,
+            "total_weak_t": 1.5,
+            "price": null,
+            "soil_suitability": "odpowiednia",
+            "soil_suitability_label": "gleba odpowiednia",
+            "rotation": {
+              "status": "plus",
+              "notes": [
+                "Dobry przedplon: rok temu zboża ozime."
+              ]
+            },
+            "irrigation_practice": "common",
+            "drought_sensitivity": "wysoka",
+            "confidence": "ograniczona",
+            "confidence_note": "współczynnik Ky (reakcja plonu na brak wody) to szacunek; krótka albo niepełna seria plonów GUS dla województwa",
+            "notes": [
+              "Uprawa wieloletnia – decyzja na wiele lat; plon dotyczy plantacji w pełni owocowania."
+            ],
+            "yields_by_year": [
+              {
+                "year": 2008,
+                "relative": 0.81,
+                "yield_t_ha": 3.2,
+                "water_deficit_mm": 132.0
+              },
+              {
+                "year": 2009,
+                "relative": 1.0,
+                "yield_t_ha": 4.0,
+                "water_deficit_mm": 20.0
+              },
+              {
+                "year": 2010,
+                "relative": 0.98,
+                "yield_t_ha": 3.9,
+                "water_deficit_mm": 27.0
+              },
+              {
+                "year": 2011,
+                "relative": 1.0,
+                "yield_t_ha": 4.0,
+                "water_deficit_mm": 6.0
+              },
+              {
+                "year": 2012,
+                "relative": 0.9,
+                "yield_t_ha": 3.6,
+                "water_deficit_mm": 79.0
+              },
+              {
+                "year": 2013,
+                "relative": 0.88,
+                "yield_t_ha": 3.5,
+                "water_deficit_mm": 84.0
+              },
+              {
+                "year": 2014,
+                "relative": 0.87,
+                "yield_t_ha": 3.5,
+                "water_deficit_mm": 96.0
+              },
+              {
+                "year": 2015,
+                "relative": 0.64,
+                "yield_t_ha": 2.6,
+                "water_deficit_mm": 263.0
+              },
+              {
+                "year": 2016,
+                "relative": 0.99,
+                "yield_t_ha": 4.0,
+                "water_deficit_mm": 23.0
+              },
+              {
+                "year": 2017,
+                "relative": 0.95,
+                "yield_t_ha": 3.8,
+                "water_deficit_mm": 42.0
+              }
+            ],
+            "source_tags": [
+              {
+                "kind": "szacunek_modelu",
+                "date": "2018-06-09",
+                "source": "Model wody w glebie FAO-56 + plon FAO-33 (Ky 0,85)"
+              },
+              {
+                "kind": "pomiar",
+                "date": null,
+                "source": "GUS BDL – plony z 1 ha wg województw (podlaskie, 2016–2025)"
+              }
+            ]
+          },
+          {
+            "crop_id": "truskawki",
+            "label": "Truskawki",
+            "group_id": "truskawki",
+            "category": "polecane",
+            "category_label": "polecane",
+            "rank": 3,
+            "score": 101.1,
+            "reason": "Gleba pasuje – typowo 5,8 t/ha; strata ponad 20% plonu zdarzyłaby się w 1 z 10 lat (najgorszy rok: 2015).",
+            "yield_typical_t_ha": 5.8,
+            "yield_weak_t_ha": 3.7,
+            "weak_year": 2015,
+            "yield_potential_t_ha": 6.3,
+            "gus_mean_t_ha": 4.5,
+            "relative_yield_median": 0.92,
+            "relative_yield_weak": 0.59,
+            "drought_risk_years": 1,
+            "years_simulated": 10,
+            "total_typical_t": 3.4,
+            "total_weak_t": 2.2,
+            "price": null,
+            "soil_suitability": "odpowiednia",
+            "soil_suitability_label": "gleba odpowiednia",
+            "rotation": {
+              "status": "plus",
+              "notes": [
+                "Dobry przedplon: rok temu zboża ozime."
+              ]
+            },
+            "irrigation_practice": "common",
+            "drought_sensitivity": "wysoka",
+            "confidence": "ograniczona",
+            "confidence_note": "współczynnik Ky (reakcja plonu na brak wody) to szacunek; krótka albo niepełna seria plonów GUS dla województwa",
+            "notes": [
+              "Uprawa wieloletnia – decyzja na wiele lat; plon dotyczy plantacji w pełni owocowania."
+            ],
+            "yields_by_year": [
+              {
+                "year": 2008,
+                "relative": 0.83,
+                "yield_t_ha": 5.2,
+                "water_deficit_mm": 124.0
+              },
+              {
+                "year": 2009,
+                "relative": 1.0,
+                "yield_t_ha": 6.3,
+                "water_deficit_mm": 54.0
+              },
+              {
+                "year": 2010,
+                "relative": 1.0,
+                "yield_t_ha": 6.3,
+                "water_deficit_mm": 52.0
+              },
+              {
+                "year": 2011,
+                "relative": 0.98,
+                "yield_t_ha": 6.2,
+                "water_deficit_mm": 59.0
+              },
+              {
+                "year": 2012,
+                "relative": 0.91,
+                "yield_t_ha": 5.8,
+                "water_deficit_mm": 90.0
+              },
+              {
+                "year": 2013,
+                "relative": 0.89,
+                "yield_t_ha": 5.6,
+                "water_deficit_mm": 94.0
+              },
+              {
+                "year": 2014,
+                "relative": 0.9,
+                "yield_t_ha": 5.7,
+                "water_deficit_mm": 97.0
+              },
+              {
+                "year": 2015,
+                "relative": 0.59,
+                "yield_t_ha": 3.7,
+                "water_deficit_mm": 244.0
+              },
+              {
+                "year": 2016,
+                "relative": 0.93,
+                "yield_t_ha": 5.9,
+                "water_deficit_mm": 80.0
+              },
+              {
+                "year": 2017,
+                "relative": 0.93,
+                "yield_t_ha": 5.8,
+                "water_deficit_mm": 75.0
+              }
+            ],
+            "source_tags": [
+              {
+                "kind": "szacunek_modelu",
+                "date": "2018-06-09",
+                "source": "Model wody w glebie FAO-56 + plon FAO-33 (Ky 1,00)"
+              },
+              {
+                "kind": "pomiar",
+                "date": null,
+                "source": "GUS BDL – plony z 1 ha wg województw (podlaskie, 2016–2025)"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "area": {
+      "value_ha": 0.58,
+      "estimated": true,
+      "note": "Oszacowanie: powierzchnia działki z geometrii ULDK (0.58 ha) × udział gruntów rolnych wg IUNG (100%). Podaj własną powierzchnię uprawy, jeśli jest inna."
+    },
+    "crop_history": [
+      "zboza_ozime"
+    ],
+    "rotation_hint": null,
+    "note": "Plony bez nawadniania. Symulacja na pogodzie z ostatnich 10 sezonów dla tej działki i tej gleby; nie uwzględnia nawożenia, odmiany, chorób ani cen.",
+    "limitations": [
+      "Plon potencjalny z plonów GUS w województwie (90. percentyl z 10 lat) i szacunkowego współczynnika przydatności gleby – to rząd wielkości, nie prognoza.",
+      "Reakcja plonu na brak wody wg FAO-33 (Ky); dla części upraw Ky to szacunek (oznaczone niższą pewnością).",
+      "Wymagania glebowe i płodozmian – ogólne zalecenia agrotechniczne (szacunek, do weryfikacji z doradcą)."
+    ],
+    "compute_ms": 3,
+    "source_tag": {
+      "kind": "szacunek_modelu",
+      "date": "2018-06-09",
+      "source": "Model wody w glebie FAO-56 + plon FAO-33; GUS BDL – plony z 1 ha wg województw"
+    }
+  },
+  "crop_history": [
+    "zboza_ozime"
+  ],
+  "cultivated_area_ha": 0.58,
   "history": {
     "period_start": "2006-08-01",
     "period_end": "2018-06-09",
@@ -1385,7 +5702,7 @@
     {
       "factor": "opady",
       "title": "Mało opadów",
-      "share": 0.36,
+      "share": 0.32,
       "description": "od 1 marca spadło 130 mm, zwykle 187 mm",
       "source_tag": {
         "kind": "obliczenia",
@@ -1396,7 +5713,7 @@
     {
       "factor": "gleba",
       "title": "Gleba",
-      "share": 0.24,
+      "share": 0.21,
       "description": "kat. III, zmieści ok. 166 mm wody – średnio dużo",
       "source_tag": {
         "kind": "pomiar",
@@ -1407,7 +5724,7 @@
     {
       "factor": "uprawa",
       "title": "Wymagania uprawy",
-      "share": 0.21,
+      "share": 0.18,
       "description": "zboża ozime – pełnia rozwoju, zużycie wody ok. 5,1 mm dziennie (Kc 1,15)",
       "source_tag": {
         "kind": "szacunek_modelu",
@@ -1418,7 +5735,7 @@
     {
       "factor": "parowanie",
       "title": "Duże parowanie",
-      "share": 0.19,
+      "share": 0.17,
       "description": "parowanie od 1 marca: 240 mm, zwykle 207 mm",
       "source_tag": {
         "kind": "obliczenia",
@@ -1429,16 +5746,36 @@
     {
       "factor": "teren",
       "title": "Teren i spływ",
-      "share": 0.0,
-      "description": "brak danych (analiza terenu w przygotowaniu)",
+      "share": 0.12,
+      "description": "stoki i górki na 56% działki – tu woda z ulewy spływa lub szybko przesycha; dołki 32%",
       "source_tag": {
-        "kind": "brak_danych",
+        "kind": "pomiar",
         "date": null,
         "source": "NMT GUGiK"
       }
     }
   ],
   "recommendations": [
+    {
+      "id": "retencja.bez_nawadniania_zatrzymaj_wode",
+      "category": "retencja",
+      "title": "Zatrzymaj wodę w glebie – zamiast nawadniania",
+      "description": "Zbóż w Polsce się nie nawadnia – liczy się zatrzymanie wody w glebie. Nie ugniataj gleby ciężkim sprzętem i zostaw na polu resztki roślin – deszcz wsiąknie wtedy zamiast spłynąć. Po zbiorze od razu rozdrobnij słomę i wysiej międzyplon, żeby odbudować zapas wody na następny sezon.",
+      "why": "W strefie korzeni jest 17% wody dostępnej – rośliny już odczuwają brak wody. Od 1 marca bilans wody (opad − parowanie) wynosi −111 mm – o 90 mm mniej niż zwykle.",
+      "inputs": [],
+      "confidence": "srednia",
+      "location": null,
+      "rule_id": "retencja.bez_nawadniania_zatrzymaj_wode",
+      "priority": 99,
+      "in_panel": true,
+      "when": "teraz",
+      "when_label": "teraz",
+      "permit": "none",
+      "permit_note": "Bez formalności – możesz to zrobić sam.",
+      "permit_url": null,
+      "warning": null,
+      "eco_scheme": null
+    },
     {
       "id": "retencja.po_zbiorze_miedzyplon",
       "category": "retencja",
@@ -1458,7 +5795,7 @@
       "location": null,
       "rule_id": "retencja.po_zbiorze_miedzyplon",
       "priority": 80,
-      "in_panel": true,
+      "in_panel": false,
       "when": "po_zbiorze",
       "when_label": "po zbiorze",
       "permit": "none",
@@ -1469,39 +5806,6 @@
         "name": "Rolnictwo węglowe i zarządzanie składnikami odżywczymi",
         "practice": "Międzyplony ozime lub wsiewki śródplonowe",
         "code": "E_MPW",
-        "note": "Sprawdź aktualne warunki w ARiMR."
-      }
-    },
-    {
-      "id": "retencja.prochnica",
-      "category": "retencja",
-      "title": "Zwiększaj próchnicę – lekka gleba trzyma mało wody",
-      "description": "Gleba (kat. III, piasek gliniasty lekki) zatrzymuje mało wody. Każdy dodatkowy procent próchnicy zwiększa jej pojemność wodną – mieszaj słomę z glebą, wysiewaj międzyplony, stosuj obornik lub kompost.",
-      "why": "Gleby ubogie w materię organiczną szybciej przesychają; wzrost próchnicy poprawia pojemność wodną. Gleba zmieści ok. 166 mm wody dostępnej dla roślin. Woda z ulewy: szybko wsiąka i ucieka w głąb (przepuszczalność ok. 85 mm/h). Dane: woda z ulewy: szybko wsiąka i ucieka w głąb.",
-      "inputs": [
-        {
-          "name": "Woda z ulewy",
-          "value": "szybko wsiąka i ucieka w głąb",
-          "unit": null,
-          "source": "SoilGrids + Saxton i Rawls (2006)",
-          "date": null
-        }
-      ],
-      "confidence": "srednia",
-      "location": null,
-      "rule_id": "retencja.prochnica",
-      "priority": 60,
-      "in_panel": false,
-      "when": "po_zbiorze",
-      "when_label": "po zbiorze",
-      "permit": "none",
-      "permit_note": "Bez formalności – możesz to zrobić sam.",
-      "permit_url": null,
-      "warning": null,
-      "eco_scheme": {
-        "name": "Rolnictwo węglowe i zarządzanie składnikami odżywczymi",
-        "practice": "Wymieszanie słomy z glebą",
-        "code": "E_WSG",
         "note": "Sprawdź aktualne warunki w ARiMR."
       }
     },
@@ -1523,70 +5827,52 @@
       "permit_note": "Bez formalności – możesz to zrobić sam.",
       "permit_url": null,
       "warning": null,
-      "eco_scheme": {
-        "name": "Rolnictwo węglowe i zarządzanie składnikami odżywczymi",
-        "practice": "Opracowanie i przestrzeganie planu nawożenia",
-        "code": null,
-        "note": "Sprawdź aktualne warunki w ARiMR."
-      }
+      "eco_scheme": null
     },
     {
-      "id": "agrotechnika.plodozmian",
+      "id": "agrotechnika.bez_nawadniania_parowanie",
       "category": "agrotechnika",
-      "title": "Zmień uprawę – wprowadź płodozmian",
-      "description": "Rok temu zboża ozime, teraz zboża ozime – ta sama uprawa drugi rok z rzędu. W kolejnym sezonie wprowadź roślinę z innej grupy (strączkowe, rzepak, okopowe) albo międzyplon – poprawia to strukturę gleby i jej zdolność zatrzymywania wody.",
-      "why": "Monokultura i zboże po zbożu pogarszają strukturę gleby i zwiększają podatność na suszę. Dane: uprawa w poprzednim roku: zboża ozime.",
-      "inputs": [
-        {
-          "name": "Uprawa w poprzednim roku",
-          "value": "zboża ozime",
-          "unit": null,
-          "source": "wybór rolnika",
-          "date": null
-        }
-      ],
+      "title": "Ogranicz straty wody – bez uprawek i z odchwaszczaniem",
+      "description": "Zbóż w Polsce się nie nawadnia – liczy się zatrzymanie wody w glebie. W strefie korzeni jest 17% wody dostępnej – rośliny już odczuwają brak wody. Nie wykonuj teraz zabiegów mechanicznych, które przesuszają glebę, i nie dopuść do zachwaszczenia – chwasty zabierają wodę roślinom.",
+      "why": "Rośliny w fazie wrażliwej odczuwają już brak wody albo odczują go w ciągu 7 dni.",
+      "inputs": [],
       "confidence": "srednia",
       "location": null,
-      "rule_id": "agrotechnika.plodozmian",
-      "priority": 55,
+      "rule_id": "agrotechnika.bez_nawadniania_parowanie",
+      "priority": 92,
       "in_panel": false,
-      "when": "przed_sezonem",
-      "when_label": "przed następnym sezonem",
+      "when": "teraz",
+      "when_label": "teraz",
       "permit": "none",
       "permit_note": "Bez formalności – możesz to zrobić sam.",
       "permit_url": null,
       "warning": null,
-      "eco_scheme": {
-        "name": "Rolnictwo węglowe i zarządzanie składnikami odżywczymi",
-        "practice": "Zróżnicowana struktura upraw",
-        "code": "E_ZSU",
-        "note": "Sprawdź aktualne warunki w ARiMR."
-      }
+      "eco_scheme": null
     },
     {
-      "id": "nawadnianie.plan_dawek",
-      "category": "nawadnianie",
-      "title": "Nawadnianie teraz",
-      "description": "27,5 mm teraz, powtórz za ok. 2 dni (w 7 dniach 3 dawki, niedobór ok. 70 mm).",
-      "why": "Rośliny w fazie wrażliwej zaczną odczuwać brak wody w ciągu 7 dni albo już go odczuwają; dawka dobrana do gleby kat. III.",
+      "id": "agrotechnika.bez_nawadniania_termin_zabiegow",
+      "category": "agrotechnika",
+      "title": "Zabiegi rano lub wieczorem",
+      "description": "Opryski wykonuj wcześnie rano albo wieczorem, przy wyższej wilgotności powietrza – w upale rośliny w stresie wodnym gorzej znoszą zabiegi, a ciecz szybciej odparowuje. Parowanie (ET0) w ostatnich dniach: ok. 4,5 mm na dobę.",
+      "why": "Przy niedoborze wody i dużym parowaniu termin zabiegu decyduje o jego skuteczności.",
       "inputs": [],
-      "confidence": "ograniczona",
+      "confidence": "srednia",
       "location": null,
-      "rule_id": "nawadnianie.plan_dawek",
-      "priority": 100,
-      "in_panel": true,
+      "rule_id": "agrotechnika.bez_nawadniania_termin_zabiegow",
+      "priority": 88,
+      "in_panel": false,
       "when": "teraz",
       "when_label": "teraz",
-      "permit": "required",
-      "permit_note": "Wymaga pozwolenia wodnoprawnego (pobór wody) – Wody Polskie.",
-      "permit_url": "https://www.gov.pl/web/wody-polskie",
-      "warning": "Obarczone dużym ryzykiem błędu – traktuj jako wskazówkę i sprawdź na polu.",
+      "permit": "none",
+      "permit_note": "Bez formalności – możesz to zrobić sam.",
+      "permit_url": null,
+      "warning": null,
       "eco_scheme": null
     }
   ],
   "reliability": {
     "confidence": "srednia",
-    "reason": "Ograniczenia: brak zdjęć satelitarnych (kondycja roślin – w przygotowaniu); brak analizy terenu (spadki, spływ – w przygotowaniu); pogoda uśredniona dla obszaru ok. 50 km.",
+    "reason": "Ograniczenia: brak zdjęć satelitarnych (kondycja roślin – w przygotowaniu); pogoda uśredniona dla obszaru ok. 50 km; data historyczna – ryzyko na 7 dni ze scenariusza typowej pogody.",
     "sources": [
       {
         "name": "ULDK GUGiK",
@@ -1615,10 +5901,10 @@
       {
         "name": "EGiB (KIEG)",
         "used_for": "klasy bonitacyjne (informacyjnie)",
-        "data_date": "2026-11-21",
+        "data_date": null,
         "resolution": null,
-        "status": "ok",
-        "note": null
+        "status": "brak",
+        "note": "usługa chwilowo ogranicza ruch (przekierowanie) – spróbuj za chwilę (ponowna próba za ok. 4 min)"
       },
       {
         "name": "SoilGrids (ISRIC)",
@@ -1630,7 +5916,7 @@
       },
       {
         "name": "Mapa glebowo-rolnicza (GUGiK)",
-        "used_for": "kompleks i gatunek gleby (informacyjnie)",
+        "used_for": "kompleks i gatunek gleby, zgodność z IUNG",
         "data_date": null,
         "resolution": "1:5000",
         "status": "ok",
@@ -1648,9 +5934,9 @@
         "name": "NMT GUGiK",
         "used_for": "teren i spływ wody",
         "data_date": null,
-        "resolution": "1 m",
-        "status": "brak",
-        "note": "w przygotowaniu"
+        "resolution": "1 m (siatka 3–15 m)",
+        "status": "czesciowo",
+        "note": "zapisany wynik analizy z 21.11.2026"
       },
       {
         "name": "BDOT10k",
@@ -1662,16 +5948,23 @@
       }
     ],
     "completeness": {
-      "available": 4,
+      "available": 5,
       "total": 7
     },
     "limitations": [
       "Pogoda uśredniona dla obszaru ok. 50 km (NASA POWER).",
       "WOD to wartość typowa dla kategorii gleby (środek przedziału IUNG), nie pomiar na tej działce.",
+      "Klasy bonitacyjne niedostępne (usługa KIEG nie odpowiada) – to tylko informacja dodatkowa.",
       "Frakcje gleby i przepuszczalność z modelu globalnego SoilGrids (250 m) – wartości orientacyjne, nie pomiar na tej działce.",
       "Mapa glebowo-rolnicza opracowana ok. 1973 r. – stan gleby mógł się zmienić.",
       "Brak zdjęć satelitarnych – kondycja i wilgotność roślin w przygotowaniu.",
-      "Brak analizy terenu – spływ wody przyjęty w uproszczeniu (20% opadu powyżej 20 mm na dobę).",
+      "Teren z zapisanego wyniku analizy NMT z 21.11.2026 (NMT GUGiK nie odpowiadał – ukształtowanie terenu się nie zmienia).",
+      "Siatka 4.5 m – formy mniejsze niż ~9 m (bruzdy, koleiny, rowki) są niewidoczne.",
+      "Wysokości podawane co 0,1 m – przy małych spadkach kierunek spływu jest niepewny; stosujemy wygładzenie σ = 6 m.",
+      "Bufor 100 m: zlewnia sięgająca dalej (długie stoki) jest niedoszacowana.",
+      "Model nie zna drenażu, rowów, przepustów, dróg ani orki wzdłuż/w poprzek stoku – rzeczywisty odpływ może iść inaczej.",
+      "Objętości zagłębień i dopływu to szacunek rzędu wielkości, nie projekt.",
+      "Teren nie zmienia modelu wody w glebie – spływ w bilansie nadal uproszczony (20% opadu powyżej 20 mm na dobę); strefy terenu opisują, gdzie na działce jest sucho, a gdzie mokro.",
       "Model wody w glebie FAO-56 z parametrami tabelarycznymi upraw – nie uwzględnia odmiany, nawożenia ani poziomu wód gruntowych.",
       "Kategorie podatności IUNG opisują tylko gleby mineralne użytków rolnych."
     ]
@@ -1682,42 +5975,42 @@
       "label": "Szukam działki (ULDK GUGiK)",
       "state": "done",
       "note": null,
-      "duration_ms": 260
+      "duration_ms": 0
     },
     {
       "id": "weather",
       "label": "Pobieram pogodę z 10 lat (NASA POWER)",
       "state": "done",
       "note": null,
-      "duration_ms": 1817
+      "duration_ms": 0
     },
     {
       "id": "soil",
       "label": "Sprawdzam glebę (IUNG-PIB)",
       "state": "done",
       "note": null,
-      "duration_ms": 369
+      "duration_ms": 0
     },
     {
       "id": "egib",
       "label": "Klasy bonitacyjne (EGiB)",
-      "state": "done",
-      "note": null,
-      "duration_ms": 389
+      "state": "error",
+      "note": "usługa chwilowo ogranicza ruch (przekierowanie) – spróbuj za chwilę (ponowna próba za ok. 4 min)",
+      "duration_ms": 0
     },
     {
       "id": "soilgrids",
       "label": "Frakcje i przepuszczalność gleby (SoilGrids)",
       "state": "done",
       "note": null,
-      "duration_ms": 3642
+      "duration_ms": 0
     },
     {
       "id": "soil_map",
       "label": "Mapa glebowo-rolnicza (GUGiK)",
       "state": "done",
       "note": null,
-      "duration_ms": 171
+      "duration_ms": 14
     },
     {
       "id": "forecast",
@@ -1735,31 +6028,38 @@
     },
     {
       "id": "terrain",
-      "label": "Analizuję teren",
-      "state": "pending",
-      "note": "w przygotowaniu – brak danych",
-      "duration_ms": null
+      "label": "Analizuję teren (NMT GUGiK)",
+      "state": "done",
+      "note": "zapisany wynik analizy NMT",
+      "duration_ms": 13
     },
     {
       "id": "balance",
       "label": "Liczę bilans wody i wodę w glebie (FAO-56)",
       "state": "done",
       "note": null,
-      "duration_ms": 24
+      "duration_ms": 23
     },
     {
       "id": "scoring",
       "label": "Ocena, pewność, przyczyny i rekomendacje",
       "state": "done",
       "note": null,
-      "duration_ms": 57
+      "duration_ms": 2
+    },
+    {
+      "id": "suggestions",
+      "label": "Ranking „Co tu posiać?” (17 upraw × 10 sezonów)",
+      "state": "done",
+      "note": null,
+      "duration_ms": 3
     },
     {
       "id": "total",
       "label": "Cała analiza",
       "state": "done",
       "note": null,
-      "duration_ms": 3993
+      "duration_ms": 43
     }
   ]
 }

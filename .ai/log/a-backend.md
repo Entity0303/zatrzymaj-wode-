@@ -4,6 +4,126 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-21 22:40 · `a/backend` · A5b-2a: ranking „Co tu posiać?”, historia upraw, powierzchnia, status z percentyli
+**Co:**
+- **0. Dane C** (`git show origin/c/research:research/data/…`, bez merge) → `backend/app/data/crops/`. Ky żyta 0,80 i pszenżyta 0,90 – już zgodne. `uldk_demo.json` – brak. W kopii: + kolumny `root_depth_m`, `typ`; ziemniak `irrigation_practice` → common (decyzja Dominika), burak → not_practiced (z pliku C). `crops.py` czyta CSV; parametry 15 upraw bez zmian (sprawdzone asercją i 296 testami).
+- **1. Ranking** (`suggestions.py`, `rules/ranking.yaml`): model wody × 17 upraw × 10 pełnych sezonów, FAO-33 (Ky faz tylko zweryfikowane), Ym = P90 GUS województwa × gleba, kalibracja do dobrego roku na przeciętnej glebie, kategorie, jedno zdanie, grupy polowe / wieloletnie, pewność. Kalibracja na żywo (NASA POWER, średnia symulowana vs średnia GUS, przeciętna gleba):
+
+| Uprawa | podlaskie | lubelskie | wielkopolskie |
+|---|---|---|---|
+| pszenica ozima | +7% | −2% | −1% |
+| żyto | +7% | −2% | +1% |
+| pszenżyto | +6% | −4% | −2% |
+| jęczmień ozimy / jary | +11% / +8% | −1% / −7% | +2% / 0% |
+| owies | +6% | −8% | +1% |
+| rzepak | +2% | +5% | −1% |
+| kukurydza ziarno / kiszonka | −6% / −5% | −10% / −6% | −11% / −11% |
+| ziemniak | −9% | −7% | −8% |
+| burak cukrowy | +3% | −7% | −4% |
+| strączkowe / łubin | −9% / −2% | −13% / −7% | −12% / −4% |
+| warzywa | −1% | −8% | −7% |
+| krzewy / truskawki | −3% / +17% | −7% / −1% | −5% / −10% |
+| drzewa owocowe | +29% | +10% | +33% |
+
+- **2–3.** `crop_history` (twarda przerwa → odradzane z powodem; miękkie ostrzeżenia / plusy), `cultivated_area_ha` (domyślnie działka × udział rolny IUNG), plon w tonach, `price = null`.
+- **4.** Status poza sezonem / zimowanie / bez uprawy z porównania z tą samą datą w 10 latach; stan działki – goła gleba po 31 VII. 201305, 21.11.2026: bez uprawy 91% wody, „Dobrze” 70 (było „Ryzyko” 43); zboża ozime i rzepak – „w polu – zimowanie”, Dobrze 70; kukurydza – „poza sezonem”, Uwaga 50 (61% wody, mniej było w 1 z 10 lat; było „Ryzyko” 39 → 49); ziemniak, zboża jare – poza sezonem, Dobrze 70; drzewa owocowe – zimowanie, Uwaga 50; rzepak (jesień) – w sezonie, Dobrze 84.
+- **5.** Kukurydza: bez dawek; 201305, 20.08.2019: „W tym sezonie brakuje ok. 62 mm wody; nawadnianie opłaca się tylko przy własnym źródle wody i deszczowni; pobór wody może wymagać pozwolenia wodnoprawnego – Wody Polskie”.
+- Ranking 201305 (kat. III, kompleks 2, podlaskie, 0,58 ha, sezony 2017–2026): polecane – rzepak 3,5 t/ha, pszenica ozima 4,5 (słaby rok 2018: 3,8; ryzyko 1/10), jęczmień ozimy 4,2, jęczmień jary 4,1, pszenżyto 4,2, warzywa 22,1, kukurydza kiszonka 49,3, burak 64,7 (3/10), kukurydza ziarno 7,0 (3/10); możliwe – żyto 3,1 (gleba przeciętna dla żyta), łubin 1,9, owies 3,1, ziemniak 25,6 (4/10), strączkowe 1,9 (4/10); wieloletnie – drzewa 13,2, truskawki 5,8, krzewy 3,6. Z historią „rzepak 2 lata temu”: rzepak spada na koniec jako odradzany („…rosła tu 2 lata temu, a potrzeba 3 lat przerwy (kiła kapusty)”), reszta bez zmian.
+- Kontrakt (addytywnie) + 3 przykłady; `npm run build` OK. Testy: **320 passed** bez sieci (+25 w `test_a5b2.py`, +1 przykład kontraktu; 1 nieaktualny test „dopisek optional” usunięty).
+**Pliki:** `backend/app/data/crops/*`, `backend/app/analysis/{crops,suggestions,scoring,facts,field_state,water_balance}.py`, `backend/app/analysis/rules/{ranking,nawadnianie}.yaml`, `backend/app/routers/{analysis,reports}.py`, `backend/app/schemas/analysis.py`, `backend/tests/{test_a5b2,test_a5b,test_analysis,test_contract}.py`, `frontend/src/api/types.ts`, `frontend/src/mocks/analysis*.json`, `reports/examples/*.pdf`, `.ai/*`.
+**Kontrakt API:** TAK (addytywnie) – `suggestions`, `crop_history`, `cultivated_area_ha`, `StatusScope.zimowanie` (osobny commit, `contract-changes.md`).
+
+## 2026-11-21 21:50 · `a/backend` · A6: teren i spływ wody z NMT (port prototypu osoby C)
+**Co:**
+- Prototyp `research/terrain/` z `origin/c/research` pobrany przez `git show` (bez merge). Rdzeń (`analyze_surface`, D8 / D-infinity, priority-flood, strefy, odpływy, propozycje) – bez zmian w `analysis/terrain.py`; testy prototypu → `tests/test_terrain.py` (10, przechodzą). Pobieranie: `sources/nmt.py` (httpx async, POST ≤ 1000 punktów, x = PÓŁNOC, y = WSCHÓD, cache bez wygasania, bezpiecznik).
+- Kontrakt (addytywnie): `terrain` + `terrain_note`, typy `Terrain*`; `/api/layers/teren` i `/api/layers/splyw` działają. Interpretacja (`terrain_interpret.py`): strefy z oceną gleba × teren (`rules/teren_gleba.yaml`), podsumowanie 2–3 zdania, fakty do reguł z progami oczka (D59), warstwy GeoJSON przycięte do działki i uproszczone.
+- Reguły z terenu: oczko w zagłębieniu (główna) / „Do rozważenia: małe oczko przy odpływie”, zastawka (sprawdź rów), pas zieleni / zadrzewienie (E_MIOD), mokradło; `permit_note` w regule (oczko: „może wymagać zgłoszenia lub pozwolenia – Wody Polskie i starostwo”, bez niezweryfikowanych progów). Przyczyna „teren”, NMT w `reliability` i `/api/status`, PDF „Teren działki”.
+- **Przekierowania (D56, dopisek do zadania):** wspólne `core/http.request` – bez `follow_redirects`, 3xx = blokada bez czytania treści, limity rozmiaru i czasu odczytu; ULDK, prognoza, NMT i `get_with_retry` przez nie. User-Agent „Wodoskop/0.1 (HackNation 2026)”. **Błąd znaleziony na żywo i naprawiony:** po odczycie strumieniowym odpowiedź gzip była dekodowana drugi raz (`/api/status` → 500, Open-Meteo / IUNG / mapa „DecodingError”) – testy na mockach tego nie łapały; dodane testy z prawdziwym gzip i uszkodzonym gzip.
+- **NMT GUGiK odsyła 302 (jak ULDK i KIEG)** – porównania na żywo z wynikiem C nie było. Zapas: zapisane prawdziwe wyniki NMT osoby C z 21.11 (`app/data/terrain/`, 201305 i 061704), oznaczone w ograniczeniach, źródło „częściowo”; test sprawdza zgodność liczb z `facts.json`.
+- Teren działek w cache (201305 – teren z zapisu C; 061704 – teren gotowy, działka czeka na ULDK):
+
+| Działka | Strefy (górka / stok / płasko / dołek) | Gleba | Zdania dla rolnika | Rekomendacje z terenu |
+|---|---|---|---|---|
+| 201305_2.0038.6/1 (0,58 ha) | 0 / 56 / 12 / 32% | zwięzła (kat. III) | „56% działki to stok – po ulewie woda spływa po powierzchni i zabiera glebę.” · „12% działki jest płaska – tu są najlepsze warunki wodne.” · „32% działki to dołek – na zwięzłej glebie wiosną i po ulewach stoi tu woda, uprawy mogą wymakać.” | bez uprawy: „Sprawdź rów przy miejscu odpływu – zastawka” (ostrzeżenie), „Do rozważenia: małe oczko przy odpływie” (ostrzeżenie, nie w panelu); Susza 2018 – poza limitem 5 (pierwszeństwo: zatrzymanie wody zamiast nawadniania, odłóż nawożenie) |
+| 061704_2.0011.383/2 (0,21 ha) | 0 / 49 / 48 / 3% | zwięzła (kat. IV) | „49% działki to stok – …zabiera glebę.” · „48% działki jest płaska – tu są najlepsze warunki wodne.” · „3% działki to dołek – …uprawy mogą wymakać.” | zastawka (odpływ 80%, dopływ 0,5 ha); oczko – brak (zlewnia 0,3 ha < 0,5 ha) |
+
+- Ścieżka demo przy odciętej sieci (`--network none`, DEMO_OFFLINE, wolumen cache):
+
+| Działka | Krok | HTTP | Czas | Wynik |
+|---|---|---|---|---|
+| Wnory-Wandy 6/1 – przykłady „Susza 2018”, „Mokry rok 2021” | Wyszukanie (id) | 200 | 0.00 s |  |
+| Wnory-Wandy 6/1 – przykłady „Susza 2018”, „Mokry rok 2021” | Wyszukanie (obręb numer) | 200 | 0.00 s |  |
+| Wnory-Wandy 6/1 – przykłady „Susza 2018”, „Mokry rok 2021” | Wyszukanie (punkt na mapie) | 200 | 0.00 s |  |
+| Wnory-Wandy 6/1 – przykłady „Susza 2018”, „Mokry rok 2021” | Analiza bez uprawy | 200 | 0.07 s | risk (43), pewność srednia; teren: stok 56%, płasko 12%, dołek 32% |
+| Wnory-Wandy 6/1 – przykłady „Susza 2018”, „Mokry rok 2021” | PDF bez uprawy | 200 | 1.06 s |  |
+| Wnory-Wandy 6/1 – przykłady „Susza 2018”, „Mokry rok 2021” | Warstwa Teren | 200 | 0.06 s | 3 obiektów, 3 kB |
+| Wnory-Wandy 6/1 – przykłady „Susza 2018”, „Mokry rok 2021” | Warstwa Spływ wody | 200 | 0.03 s | 46 obiektów, 10 kB |
+| Wnory-Wandy 6/1 – przykłady „Susza 2018”, „Mokry rok 2021” | Analiza: Susza 2018 | 200 | 0.06 s | danger (8), pewność srednia; teren: stok 56%, płasko 12%, dołek 32% |
+| Wnory-Wandy 6/1 – przykłady „Susza 2018”, „Mokry rok 2021” | PDF: Susza 2018 | 200 | 0.76 s |  |
+| Wnory-Wandy 6/1 – przykłady „Susza 2018”, „Mokry rok 2021” | Analiza: Mokry rok 2021 | 200 | 0.08 s | warn (59), pewność srednia; teren: stok 56%, płasko 12%, dołek 32% |
+| Wnory-Wandy 6/1 – przykłady „Susza 2018”, „Mokry rok 2021” | PDF: Mokry rok 2021 | 200 | 0.78 s |  |
+
+- Testy: **296 passed** bez sieci (+40: test_terrain 10, test_a6 27, test_contract 3 nowe – przykłady warstw i teren w przykładzie); `npm run build` OK.
+**Pliki:** `backend/app/{analysis/{terrain,terrain_interpret,causes,confidence,facts,recommendations}.py,analysis/rules/{retencja,teren_gleba}.yaml,core/{http,config}.py,sources/{nmt,uldk,weather_openmeteo}.py,routers/{analysis,layers,status}.py,report/{builder,charts}.py,report/report.css,report/templates/report.html,schemas/{analysis,layers}.py,data/terrain/*}`, `backend/scripts/{warm_demo,demo_check}.py`, `backend/tests/{test_terrain,test_a6,conftest,test_a5,test_a5b,test_a5d,test_analysis,test_contract,test_demo_status_report}.py`, `backend/tests/fixtures/terrain_201305_research.facts.json`, `frontend/src/api/types.ts`, `frontend/src/mocks/{analysis.sample,analysis.no-crop.sample,layers.teren.sample,layers.splyw.sample}.json`, `reports/examples/*.pdf`, `.ai/*`.
+**Kontrakt API:** TAK (addytywnie) – `terrain`, `terrain_note`, warstwy teren / spływ (osobny commit, `contract-changes.md`).
+
+## 2026-11-21 21:00 · `a/backend` · A5d: odporność demo – trwały cache, działki bez ULDK, bezpiecznik, tryb offline
+**Co:**
+- **0. Trwały cache (D53):** `core/cache.py` – `TTLCache` = pamięć + jeden plik SQLite (`CACHE_DB`), wspólny dla wszystkich źródeł (ULDK, NASA POWER, Open-Meteo prognoza i archiwum, IUNG, KIEG, mapa glebowo-rolnicza, SoilGrids, ortofotomapa do PDF); czas ścienny; `ttl_s=None` = bez wygasania; plik niedostępny → sama pamięć (wcześniej wywracał start – znalezione na żywo: wolumen należał do roota, poprawione w Dockerfile). TTL: działki i gleba bez wygasania, pogoda zakończona > 7 dni temu bez wygasania, prognoza 1 h. NMT / BDOT10k / GUS – brak klientów (osoba C), warstwa gotowa.
+- **1–2. Działki (D54):** indeks znanych działek (cache + `app/data/demo_parcels.json`: 5 działek, pełne dane 201305_2.0038.6/1, reszta `needs_fetch`); po id i po punkcie bez ULDK; „obręb numer” przy blokadzie – ze znanych.
+- **3. Blokada ULDK:** 302 / 429 / HTML → ponowienia 1 s, 3 s → 502 + bezpiecznik 60 s; wspólny bezpiecznik na źródło; `/api/status` bez sondowania źródeł z otwartym bezpiecznikiem, „ograniczony (do HH:MM)” w czasie polskim; rozgrzewka nie pyta ULDK o znane działki.
+- **4. DEMO_OFFLINE (D55):** zero zapytań zewnętrznych, brak w cache = 502 z komunikatem; `/api/demo/examples` filtruje niedziałające przykłady (offline / blokada ULDK). `scripts/warm_demo.py`, `scripts/demo_check.py`; `smoke_cached_uldk.py` usunięty. `docker-compose.yml`: wolumen `cache-data:/data`, `CACHE_DB`, `DEMO_OFFLINE`, montaż `scripts/` i `reports/`, `--reload-dir app`.
+- **5. Testy:** `tests/test_a5d.py` (18) – zapis/odczyt i restart na tym samym pliku, TTL prognozy, pogoda bez wygasania, działka po punkcie z cache, działki demo bez sieci, blokada 302/429/HTML + bezpiecznik, status „ograniczony”, rozgrzewka bez ULDK, DEMO_OFFLINE (502, status bez sond, pełna ścieżka demo z cache bez żadnego zapytania), filtr przykładów; `conftest.py` – izolacja cache i bezpieczników między testami. **256 passed** w `docker run --network none`.
+- **Na żywo:** `warm_demo.py` – ULDK zablokowany (061704: 3 próby → bezpiecznik, reszta pominięta bez zapytań); 201305: analiza bez uprawy + Susza 2018 + Mokry rok 2021 + PDF-y; cache: NASA 3, mapa glebowo-rolnicza 9, IUNG 1, SoilGrids 1, prognoza 1, ortofotomapa 1, ULDK 1, KIEG 0 (nie odpowiada). Restart kontenera – cache został (analiza 0,06 s). Kontener `--network none` + `DEMO_OFFLINE=true` + wolumen:
+
+| Działka | Krok | HTTP | Czas | Wynik |
+|---|---|---|---|---|
+| Wnory-Wandy 6/1 – przykłady „Susza 2018”, „Mokry rok 2021” | Wyszukanie (id) | 200 | 0.00 s |  |
+| Wnory-Wandy 6/1 – przykłady „Susza 2018”, „Mokry rok 2021” | Wyszukanie (obręb numer) | 200 | 0.00 s |  |
+| Wnory-Wandy 6/1 – przykłady „Susza 2018”, „Mokry rok 2021” | Wyszukanie (punkt na mapie) | 200 | 0.00 s |  |
+| Wnory-Wandy 6/1 – przykłady „Susza 2018”, „Mokry rok 2021” | Analiza bez uprawy | 200 | 0.09 s | risk (43), pewność srednia |
+| Wnory-Wandy 6/1 – przykłady „Susza 2018”, „Mokry rok 2021” | PDF bez uprawy | 200 | 0.99 s |  |
+| Wnory-Wandy 6/1 – przykłady „Susza 2018”, „Mokry rok 2021” | Analiza: Susza 2018 | 200 | 0.03 s | danger (8), pewność srednia |
+| Wnory-Wandy 6/1 – przykłady „Susza 2018”, „Mokry rok 2021” | PDF: Susza 2018 | 200 | 0.59 s |  |
+| Wnory-Wandy 6/1 – przykłady „Susza 2018”, „Mokry rok 2021” | Analiza: Mokry rok 2021 | 200 | 0.09 s | warn (59), pewność srednia |
+| Wnory-Wandy 6/1 – przykłady „Susza 2018”, „Mokry rok 2021” | PDF: Mokry rok 2021 | 200 | 0.52 s |  |
+
+  Przykłady offline: susza-2018, mokry-rok-2021.
+- Zaległe z A5b-1 (smoke na wszystkich przykładach, PDF-y kukurydza/las, 061704) – nadal czekają na ULDK (status).
+**Pliki:** `backend/app/core/{cache,config,http}.py`, `backend/app/sources/{uldk,weather_power,weather_openmeteo,iung,kieg,soil_map,soilgrids}.py`, `backend/app/routers/{status,demo}.py`, `backend/app/{demo,main}.py`, `backend/app/report/builder.py`, `backend/app/analysis/confidence.py`, `backend/app/data/demo_parcels.json`, `backend/scripts/{warm_demo,demo_check}.py` (−`smoke_cached_uldk.py`), `backend/tests/{conftest,test_a5d,test_demo_status_report}.py`, `backend/{Dockerfile,CLAUDE.md}`, `docker-compose.yml`, `.env.example`, `reports/examples/*.pdf`, `.ai/*`.
+**Kontrakt API:** NIE (stan ULDK w istniejącym polu `ServiceStatus.error`; `/api/demo/examples` – ten sam format, krótsza lista offline).
+
+## 2026-11-21 20:30 · `a/backend` · A5b-1: stan działki bez uprawy, nawadnianie wg praktyki, ekoschematy, status poza sezonem, zgodność gleby
+**Co:**
+- **1. Nawadnianie (D48):** `Crop.irrigation_practice` (not_practiced: zboża, rzepak, strączkowe; optional: kukurydza, burak, tytoń; common: ziemniak, warzywa, sady, owoce miękkie, chmiel). `not_practiced` → `irrigation.status = nie_praktykowane`, bez dawek; silnik pomija kategorię „nawadnianie”; 3 reguły zastępcze przy stresie ≤ 7 dni (`retencja.bez_nawadniania_zatrzymaj_wode`, `agrotechnika.bez_nawadniania_parowanie`, `agrotechnika.bez_nawadniania_termin_zabiegow`) ze zdaniem „Zbóż w Polsce się nie nawadnia – liczy się zatrzymanie wody w glebie”. `optional` – dopisek w planie dawek.
+- **2. Ekoschematy (D51):** katalog = E_MPW, E_USU, E_WSG, E_PN, E_MIOD, E_EKSTUZ; usunięte E_ZSU, plan nawożenia i TUZ bez kodu; „Odłóż nawożenie” bez ekoschematu; kod spoza listy = `RuleError`.
+- **3. Status poza sezonem (D52):** `scoring.reserve_status` – 0,6 × woda w profilu + 0,4 × pozycja KBW 30 dni wśród 10 lat (`water_balance.recent_balance`); `OverallStatus.scope/scope_label`. „Kukurydza dziś” (zastępczo 201305): 39 → **49, „poza sezonem”**, bez kar za historię sezonu i stres.
+- **4. Gleba (D49):** `analysis/soil_consistency.py` + `soil_map.soil_map_for_parcel` (9 punktów). Badanie 201305: działka na dwóch konturach (piasek gliniasty lekki – kompleks 6 / glina lekka pylasta – kompleks 2), IUNG 75% III / 25% I – **zgodne**; „konflikt” był skutkiem jednego punktu. Porównanie udziałów gleb lekkich (> 40 p.p. = konflikt), przy konflikcie kategoria i WOD z mapy, −10 pkt pewności; bez IUNG – mapa / SoilGrids.
+- **5. Bez uprawy (D50):** `analysis/field_state.py` – pokrycie referencyjne FAO-56 (trawa, Kc 1, p 0,5, profil 1 m), przebieg od 1 XI z pasmem 10 lat, ranking dnia, KBW 30 dni; `/api/analysis` i `/api/report.pdf` bez `crop` (PDF „Stan wodny działki”, `stan-wodny-dzialki-….pdf`); `field_state` liczone zawsze; 3 reguły retencji bez uprawy wg pory roku; `suggestions = null` pod A5b-2.
+- **Kontrakt** (wpis A5b-1, „Dla Mefju”) + minimalne poprawki typów w 5 plikach `frontend/` (za zgodą właściciela) – `npm run build` OK (w kontenerze po `npm install`; obraz frontendu nie ma Fraunces).
+- **ULDK GUGiK odpowiadał 302 (ograniczenie ruchu) przez całą sesję** → `scripts/smoke_cached_uldk.py`: smoke w procesie z zapisaną odpowiedzią ULDK dla 201305 (fikstura), reszta źródeł na żywo. Działki wymagające ULDK – 502 (do powtórki, status „Do zrobienia na żywo”).
+- Testy: 238 bez sieci (`docker run --network none`), w tym `tests/test_a5b.py` (29) i przykład bez uprawy w `test_contract`.
+- Smoke A5b-1:
+
+| Przykład | Uprawa | Status | Wynik | Zaleceń | Nawadnianie | Ekoschematy | soil.consistency |
+|---|---|---|---|---|---|---|---|
+| Susza 2018 | zboża ozime | danger – w sezonie | 8 | 5 | nie (nie_praktykowane) | E_MPW | ok |
+| Mokry rok 2021 | zboża ozime | warn – w sezonie | 59 | 2 | nie (nie_praktykowane) | E_MPW, E_WSG | ok |
+| Kukurydza – stan dziś | kukurydza_ziarno | błąd 502 | – | – | – | – | – |
+| To nie jest pole | zboza_ozime | błąd 502 | – | – | – | – | – |
+| Stan działki (bez uprawy) | — (bez uprawy) | risk – stan wody na działce | 43 | 2 | nie (brak sekcji) | E_USU, E_WSG | ok |
+| Stan działki 10.06.2018 (bez uprawy) | — (bez uprawy) | danger – stan wody na działce | 18 | 2 | nie (brak sekcji) | E_USU, E_WSG | ok |
+| 201305_2.0038.6/1 | zboża ozime | ok – poza sezonem | 71 | 3 | nie (nie_praktykowane) | E_WSG | ok |
+| 061704_2.0011.383/2 | kukurydza_ziarno | błąd 502 | – | – | – | – | – |
+| 040703_5.0020.76 | zboza_ozime | błąd 502 | – | – | – | – | – |
+| 302114_5.0018.445 | zboza_ozime | błąd 502 | – | – | – | – | – |
+| 160703_5.0011.945 | zboza_ozime | błąd 502 | – | – | – | – | – |
+| 143203_2.0027.112/11 | zboza_ozime | błąd 502 | – | – | – | – | – |
+
+  PDF-y: `reports/examples/susza-2018.pdf` (5 str.), `mokry-rok-2021.pdf` (4), **`stan-dzialki-bez-uprawy.pdf`** (4, nowy); `kukurydza-dzis.pdf` i `to-nie-jest-pole.pdf` – jeszcze z A5 (ULDK).
+**Pliki:** `backend/app/analysis/{crops,facts,scoring,confidence,recommendations,water_balance,field_state,soil_consistency}.py`, `backend/app/analysis/rules/*.yaml`, `backend/app/sources/soil_map.py`, `backend/app/routers/analysis.py`, `backend/app/report/{builder,charts}.py`, `backend/app/report/templates/report.html`, `backend/app/schemas/analysis.py`, `backend/scripts/{smoke,smoke_cached_uldk}.py`, `backend/tests/{test_a5b,test_a5,test_analysis,test_contract,test_demo_status_report,test_water_model}.py`; `frontend/src/api/types.ts`, `frontend/src/mocks/{analysis.sample,analysis.no-crop.sample}.json`, `frontend/src/{features/parcel-panel/IrrigationCard,features/parcel-panel/ParcelPanel,features/passport/SectionD,layout/cards/AlertsCard}.tsx`, `frontend/src/lib/{storage,i18n.en}.ts`; `reports/examples/*.pdf`; `.ai/*`.
+**Kontrakt API:** TAK – `crop`/`crop_season`/`irrigation` mogą być null, `field_state`, `suggestions`, `OverallStatus.scope(_label)`, `Soil.consistency`, `IrrigationStatus.nie_praktykowane`, `IrrigationPlan.practice` (osobny commit, `contract-changes.md`).
+
 ## 2026-11-21 19:30 · `integracja` · INT1: połączenie a/backend + b/frontend (bez main)
 **Co:**
 - Gałąź `integracja` od `origin/main` (kamień milowy 1) + `origin/b/frontend` (B10, B11 – bez konfliktów) + `origin/a/backend` (A5, `bb2df36`).

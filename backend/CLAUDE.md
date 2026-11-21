@@ -27,9 +27,12 @@ Python 3.12, FastAPI, httpx (async), numpy, shapely, pyproj. Uruchamianie: `dock
 
 ## Cache
 
-- `core.cache.TTLCache` w module źródła (klucz = parametry zapytania). ULDK 24 h, prognoza Open-Meteo 30 min.
-- Każde źródło z cache ma `clear_cache()` – testy czyszczą cache w fixture.
-- TODO: trwały cache w SQLite (dane historyczne nie zmieniają się – można trzymać długo).
+- Jedna warstwa `core.cache`: `TTLCache` w module źródła (klucz = źródło + znormalizowane parametry) = pamięć procesu
+  + trwały plik SQLite (`CACHE_DB`, w Dockerze wolumen `/data`). TTL i zasady: `.ai/decisions.md` D53 (działki,
+  gleba, pogoda historyczna – bez wygasania; prognoza 1 h). Każde nowe źródło (NMT, BDOT10k, GUS) – przez `cached_fetch`.
+- Bezpiecznik wspólny dla źródła (`cached_fetch(..., breaker_s=)`, stan w `/api/status`); `DEMO_OFFLINE=true` – tylko cache (D55).
+- Testy: `conftest.py` czyści pamięć wszystkich cache i bezpieczniki przed każdym testem; plik SQLite tylko w testach,
+  które go jawnie włączają (`settings.cache_db = tmp_path…`).
 
 ## Data analizy
 

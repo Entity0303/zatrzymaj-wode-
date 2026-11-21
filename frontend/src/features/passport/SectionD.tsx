@@ -4,7 +4,7 @@ import { IrrigationCard } from '@/features/parcel-panel/IrrigationCard'
 import { RecommendationWhy } from '@/features/parcel-panel/RecommendationWhy'
 import { REC_CATEGORY } from '@/theme/recommendations'
 import { useLang } from '@/lib/i18n'
-import { irrigationPracticed } from '@/lib/crops'
+import { irrigationShown } from '@/lib/crops'
 import { PassportSection } from './PassportSection'
 
 const ORDER: RecommendationCategory[] = ['retencja', 'agrotechnika', 'nawadnianie']
@@ -19,7 +19,7 @@ const MAX = 5
 export function SectionD({ analysis, onShowOnMap }: { analysis: AnalysisResponse; onShowOnMap?: (g: GeoJSON.Geometry) => void }) {
   const { t } = useLang()
   // zboża i rzepak: bez grupy „Nawadnianie” (karty, dawek i zaleceń) – zostaje retencja i uprawa
-  const irrigation = irrigationPracticed(analysis.crop)
+  const irrigation = irrigationShown(analysis)
   const groups = irrigation ? ORDER : ORDER.filter((c) => c !== 'nawadnianie')
   const sorted = [...analysis.recommendations]
     .filter((r) => r.category !== 'nawadnianie' || irrigation)
@@ -48,7 +48,7 @@ export function SectionD({ analysis, onShowOnMap }: { analysis: AnalysisResponse
                 onShowOnMap={r.location && onShowOnMap ? () => onShowOnMap(r.location!) : undefined}
               />
             ))}
-            {cat === 'nawadnianie' && <IrrigationCard plan={analysis.irrigation} />}
+            {cat === 'nawadnianie' && analysis.irrigation && <IrrigationCard plan={analysis.irrigation} />}
           </div>
         )
       })}

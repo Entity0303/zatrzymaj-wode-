@@ -72,6 +72,12 @@ def facts(**kw) -> Facts:
         "previous_crop_label": None, "same_crop": None, "cereal_after_cereal": None, "rotation_issue": None,
         "rain_retention": None, "rain_retention_label": None, "ksat_mm_h": None, "sand_pct": None,
         "texture_label": None, "soil_species": None, "soil_complex_label": None,
+        # A5b-1/A5b-2a (praktyka nawadniania – tu „common”, żeby testy silnika obejmowały wszystkie kategorie)
+        "has_crop": True, "irrigation_practice": "common", "irrigation_practice_note": "", "water_stress_7d": False,
+        "season_deficit_mm": 0.0, "kbw30_rank_lower": 5, "kbw30_rank_of": 10,
+        "stress_when_txt": "", "no_irrigation_txt": None, "water_description": None, "water_rank_lower": 5,
+        "water_rank_of": 10, "kbw30_mm": -20.0, "kbw30_percentile": 50.0, "kbw30_deviation_mm": -5.0,
+        "kbw30_mean_mm": -15.0, "kbw30_vs_mean_txt": "o 5 mm mniej niż zwykle", "et0_recent_mm_day": 4.0,
     }
     base.update(kw)
     return Facts(base)
@@ -97,10 +103,10 @@ def test_stressed_plants_alarm_in_sensitive_phase():
 @pytest.mark.parametrize("phase", ["dojrzewanie", "po_zbiorze", "spoczynek_zimowy", "przed_siewem"])
 def test_no_plant_stress_alarm_outside_sensitive_phases(phase):
     s = overall_status(facts(phase=phase, phase_label=phase, sensitive=False, water_pct=5.0, days_to_stress=None,
-                             balance_percentile=0.0, water_rank_pct=0.0), SOIL_OK)
+                             balance_percentile=0.0, water_rank_pct=0.0, water_rank_lower=0), SOIL_OK)
     assert s.level == "risk"  # najwyżej „ryzyko” – nie „susza” roślin
     assert "zapas wody w glebie" in s.headline and "cierpią" not in s.headline
-    assert "ocena dotyczy zapasu wody w glebie" in s.summary
+    assert "zapas" in s.summary and "wody w glebie" in s.summary
 
 
 def test_non_agricultural_no_score():
@@ -169,7 +175,7 @@ def test_causes_wet_season_precip_share_zero():
 
 def test_rules_load_and_validate():
     rules = load_rules()
-    assert 15 <= len(rules) <= 25
+    assert 15 <= len(rules) <= 35
     assert {r.category for r in rules} == set(CATEGORY_ORDER)
     assert all(r.all or r.any for r in rules)  # każda reguła ma warunek
     with pytest.raises(RuleError):
@@ -198,7 +204,8 @@ def test_autumn_rules_order_and_panel():
 def test_terrain_rules_disabled_until_data():
     ev = evaluate(facts())
     assert {"retencja.oczko_w_zaglebieniu", "retencja.zastawka_na_rowie", "retencja.pas_buforowy_na_stoku"} <= set(ev.disabled)
-    ev2 = evaluate(facts(depression_area_m2=600.0, depression_catchment_ha=1.2), available={"terrain"})
+    ev2 = evaluate(facts(terrain_pond="glowna", pond_catchment_ha=1.2, pond_place_txt="w zagłębieniu",
+                         pond_area_m2=80.0, pond_inflow_runoff_m3=70.0, pond_depth_m=0.6), available={"terrain"})
     assert "retencja.oczko_w_zaglebieniu" in [r.id for r in ev2.recommendations]
 
 
@@ -232,6 +239,7 @@ def _mock(nasa=True, wcs=True):
     respx.get(settings.kieg_url).mock(return_value=httpx.Response(200, text=KIEG_CLASSES))
     respx.get(settings.soilgrids_url).mock(return_value=httpx.Response(200, json=SOILGRIDS))
     respx.get(settings.soil_map_url).mock(return_value=httpx.Response(200, text=SOIL_MAP))
+    respx.post(settings.nmt_url).mock(return_value=httpx.Response(503))  # A6: bez NMT (teren = null)
 
 
 @respx.mock
@@ -248,7 +256,9 @@ def test_analysis_success(client):
     cats = [x.category for x in a.recommendations]
     assert cats == sorted(cats, key=CATEGORY_ORDER.index) and sum(x.in_panel for x in a.recommendations) <= 3
     steps = {s.id: s for s in a.steps}
-    assert steps["parcel"].state == "done" and steps["satellite"].state == "pending" and steps["terrain"].state == "pending"
+    assert steps["parcel"].state == "done" and steps["satellite"].state == "pending"
+    # A6: NMT nie odpowiada (mock 503) – teren = null z powodem, analiza działa dalej
+    assert steps["terrain"].state == "error" and a.terrain is None and "NMT GUGiK" in a.terrain_note
     assert steps["total"].duration_ms is not None and steps["total"].duration_ms < 30_000
     assert a.reliability.confidence in ("srednia", "ograniczona")
 
@@ -259,7 +269,9 @@ def test_analysis_iung_down_no_crash(client):
     r = client.get("/api/analysis", params=Q)
     assert r.status_code == 200, r.text
     b = r.json()
-    assert b["indicators"]["soil_capacity"]["value"] is None and b["status"]["level"] == "no_data"
+    # A5b-1 (D49): bez IUNG kategoria i WOD z mapy glebowo-rolniczej (glina lekka pylasta – kat. III)
+    assert b["indicators"]["soil_capacity"]["value"] == 186 and b["status"]["level"] != "no_data"
+    assert b["soil"]["consistency"]["basis"] == "mapa_glebowo_rolnicza"
     assert b["reliability"]["confidence"] == "ograniczona"
     assert next(s for s in b["steps"] if s["id"] == "soil")["state"] == "error"
 
@@ -294,7 +306,6 @@ def test_analysis_non_agricultural(client):
 @pytest.mark.parametrize(
     ("params", "msg"),
     [
-        ({"parcel_id": "x"}, "Wybierz uprawę"),
         ({"parcel_id": "x", "crop": "banany"}, "Nieznana uprawa"),
         ({"parcel_id": "x", "crop": "zboza_ozime", "date": "2999-01-01"}, "przyszłości"),
         ({"parcel_id": "x", "crop": "zboza_ozime", "date": "2001-01-01"}, "lat wstecz"),

@@ -18,7 +18,7 @@ RESOLUTION = "250 m"
 DEPTHS = {"0-5cm": 5, "5-15cm": 10, "15-30cm": 15}
 PROPERTIES = ("sand", "silt", "clay", "soc")
 
-_cache: TTLCache["SoilGridsResult"] = TTLCache(ttl_s=7 * 24 * 3600, max_items=512, name=SOURCE)
+_cache: TTLCache["SoilGridsResult"] = TTLCache(ttl_s=None, max_items=512, name=SOURCE)
 
 
 @dataclass(frozen=True)

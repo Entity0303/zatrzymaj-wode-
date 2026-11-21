@@ -11,5 +11,6 @@ router = APIRouter(prefix="/api/demo", tags=["demo"])
 @router.get("/examples", response_model=list[DemoExample])
 async def get_examples() -> list[DemoExample]:
     """4 przykłady: Susza 2018, Mokry rok 2021, Kukurydza – stan dziś, To nie jest pole.
-    Każdy otwiera się normalnym zapytaniem GET /api/analysis z podanymi parametrami."""
-    return demo.examples()
+    Każdy otwiera się normalnym zapytaniem GET /api/analysis z podanymi parametrami.
+    W trybie DEMO_OFFLINE albo przy zablokowanym ULDK – tylko przykłady, które da się teraz policzyć (D55)."""
+    return await demo.ready_examples()

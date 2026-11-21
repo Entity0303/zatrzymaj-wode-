@@ -1,5 +1,8 @@
 """KONTRAKT API: wynik analizy wodnej działki – GET /api/analysis?parcel_id=&crop=&date=
 
+`crop` jest opcjonalne (A5b-1): bez uprawy odpowiedź opisuje „Stan działki” (gleba, zapas wody pod
+pokryciem referencyjnym FAO-56, bilans opad − ET0) – `crop`, `crop_season`, `irrigation` = null.
+
 Źródło prawdy dla backendu (osoba A) i frontendu (osoba B). Odpowiednik TypeScript:
 frontend/src/api/types.ts (AnalysisResponse i typy składowe), przykład:
 frontend/src/mocks/analysis.sample.json (walidowany testem tests/test_contract.py).
@@ -117,6 +120,12 @@ class Indicators(Contract):
     soil_capacity: Indicator = Field(description="Ile wody zmieści gleba (WOD), mm – kategoria IUNG")
 
 
+StatusScope = Literal["sezon", "zimowanie", "poza_sezonem", "bez_uprawy"]
+"""Czego dotyczy ocena: sezon uprawy (stres roślin) / zimowanie – uprawa jest w polu (oziminy od siewu jesiennego
+do wiosny, uprawy wieloletnie zimą) / poza sezonem uprawy (zapas wody w glebie i bilans z ostatnich
+tygodni) / bez uprawy (stan wody na działce, pokrycie referencyjne FAO-56)."""
+
+
 class OverallStatus(Contract):
     """Karta stanu (SPEC 6.3) i wskaźnik w okręgu paszportu (SPEC 7.A)."""
 
@@ -124,6 +133,8 @@ class OverallStatus(Contract):
     score: int | None = Field(None, ge=0, le=100, description="Ogólny stan wodny 0–100")
     headline: str = Field(description="Np. 'Uwaga – rośnie ryzyko suszy'")
     summary: str = Field(description="Jedno zdanie z liczbami")
+    scope: StatusScope | None = Field(None, description="Czego dotyczy ocena (sezon / poza sezonem / bez uprawy)")
+    scope_label: str | None = Field(None, description="Etykieta, np. 'poza sezonem', 'stan wody na działce'")
 
 
 # ── Gleba (IUNG + EGiB) ─────────────────────────────────────────────────────────────────────
@@ -155,7 +166,30 @@ class Soil(Contract):
     permeability: "SoilPermeability | None" = Field(None, description="Przepuszczalność i zachowanie wody przy ulewie")
     soil_map: "SoilMapInfo | None" = Field(None, description="Mapa glebowo-rolnicza (GUGiK): kompleks i gatunek gleby")
     texture_note: str | None = Field(None, description="Powód braku frakcji / mapy glebowo-rolniczej, np. 'SoilGrids nie odpowiada'")
+    consistency: "SoilConsistency | None" = Field(None, description="Czy źródła gleby się zgadzają (mapa glebowo-rolnicza, IUNG, SoilGrids)")
     source_tag: SourceTag
+
+
+SoilSourceKey = Literal["mapa_glebowo_rolnicza", "iung", "soilgrids"]
+
+
+class SoilCategoryVote(Contract):
+    """Kategoria agronomiczna gleby (I bardzo lekka … IV ciężka) według jednego źródła."""
+
+    source: SoilSourceKey
+    source_label: str = Field(description="Np. 'Mapa glebowo-rolnicza 1:5000 (GUGiK)'")
+    category: int | None = Field(None, ge=1, le=4, description="Kategoria I–IV (jak kategorie podatności IUNG)")
+    description: str = Field(description="Np. 'piasek gliniasty lekki – gleba lekka'")
+
+
+class SoilConsistency(Contract):
+    """Zgodność źródeł gleby. Kolejność ważności: mapa glebowo-rolnicza > IUNG > SoilGrids (D49)."""
+
+    status: Literal["ok", "conflict"]
+    note: str = Field(description="Krótkie wyjaśnienie dla rolnika")
+    basis: SoilSourceKey | None = Field(None, description="Źródło kategorii gleby i WOD użytych w obliczeniach")
+    category_used: int | None = Field(None, ge=1, le=4, description="Kategoria gleby użyta w modelu wody")
+    by_source: list[SoilCategoryVote] = Field(default_factory=list)
 
 
 class SoilTexture(Contract):
@@ -268,7 +302,11 @@ CropPhase = Literal[
 ]
 """Faza uprawy w dacie analizy. Wrażliwe na niedobór (stres, nawadnianie): poczatkowa, rozwoj, pelnia."""
 
-IrrigationStatus = Literal["zalecane", "niepotrzebne", "nieuzasadnione_w_fazie", "brak_danych"]
+IrrigationStatus = Literal["zalecane", "niepotrzebne", "nieuzasadnione_w_fazie", "nie_praktykowane", "brak_danych"]
+"""nie_praktykowane – uprawy, których w Polsce się nie nawadnia (zboża, rzepak, strączkowe): bez dawek (D48)."""
+
+IrrigationPractice = Literal["not_practiced", "optional", "common"]
+"""Nawadnianie w praktyce w Polsce: nie stosuje się / rzadko (gdy jest woda i sprzęt) / typowe."""
 
 
 class CropSeason(Contract):
@@ -312,6 +350,196 @@ class IrrigationPlan(Contract):
     interval_days: int | None = Field(None, description="Co ile dni powtarzać, by utrzymać wodę powyżej progu stresu")
     total_7d_mm: float | None = Field(None, description="Łączny niedobór do uzupełnienia w 7 dniach")
     doses_7d: int | None = None
+    practice: IrrigationPractice | None = Field(None, description="Czy tę uprawę w Polsce się nawadnia")
+    source_tag: SourceTag
+
+
+# ── Stan działki bez uprawy (A5b-1, punkt 1 przepływu panelu) ───────────────────────────────
+
+
+class FieldState(Contract):
+    """Stan wody na działce niezależnie od uprawy: zapas wody w profilu ~1 m pod pokryciem referencyjnym FAO-56
+    (trawa, Kc = 1 – ta sama powierzchnia, dla której liczy się ET0 i KBW), bilans opad − ET0 z ostatnich 30 dni
+    na tle 10 lat i status „stan wody na działce”. Liczony zawsze (z uprawą i bez), null dla gruntu nierolnego."""
+
+    status: OverallStatus
+    cover: str = Field(description="Założone pokrycie, np. 'pokrycie referencyjne FAO-56 (trawa, Kc = 1)'")
+    soil_water_pct: Indicator = Field(description="Woda dostępna w profilu ~1 m, %")
+    soil_water_mm: Indicator = Field(description="Woda dostępna w profilu ~1 m, mm")
+    soil_water: SoilWaterState = Field(description="Opis i porównanie z tym samym dniem w 10 latach")
+    series_start: dt.date = Field(description="Początek przebiegu (1 listopada – początek roku hydrologicznego)")
+    series: list[SeriesPoint] = Field(description="Woda dostępna w profilu, % – dzień po dniu od series_start")
+    series_band: list[BandPoint] = Field(description="Ten sam okres w 10 poprzednich latach: min / max / średnia, %")
+    balance_30d: Indicator = Field(description="Bilans opad − ET0 z ostatnich 30 dni z danymi, mm")
+    balance_30d_rank: BalanceRank | None = Field(None, description="W ilu z 10 lat bilans 30 dni był niższy")
+    source_tag: SourceTag
+
+
+# ── Ranking „Co tu posiać?” (A5b-2a) ────────────────────────────────────────────────────────
+
+RankingCropId = Literal[
+    "kukurydza_ziarno", "kukurydza_kiszonka", "rzepak", "ziemniak", "burak_cukrowy", "straczkowe", "warzywa",
+    "drzewa_owocowe", "krzewy_owocowe", "truskawki", "pszenica_ozima", "zyto", "pszenzyto_ozime", "jeczmien_ozimy",
+    "jeczmien_jary", "owies", "lubin",
+]
+"""Uprawy w rankingu (crops.csv, in_ranking = tak): 10 upraw IUNG + 7 gatunków (zboża, łubin)."""
+
+SuggestionCategory = Literal["polecane", "mozliwe", "odradzane"]
+"""✅ polecane / 🟡 możliwe / ❌ odradzane."""
+
+SoilSuitability = Literal["odpowiednia", "neutralna", "nieodpowiednia"]
+RotationStatus = Literal["ok", "plus", "ostrzezenie", "naruszenie", "brak_historii"]
+
+
+class RotationCheck(Contract):
+    """Płodozmian dla uprawy wg historii pola: naruszenie = za krótka przerwa (uprawa odradzana)."""
+
+    status: RotationStatus
+    notes: list[str] = Field(default_factory=list, description="Zdania dla rolnika, np. 'Zboże po zbożu – więcej chorób…'")
+
+
+class YearYield(Contract):
+    year: int
+    relative: float = Field(ge=0, le=1, description="Plon względny Ya/Ym w tym sezonie (1 = bez strat z braku wody)")
+    yield_t_ha: float | None = None
+    water_deficit_mm: float | None = Field(None, description="Niedobór wody w sezonie: ETc − ETa, mm")
+
+
+class CultivatedArea(Contract):
+    value_ha: float
+    estimated: bool = Field(description="True = powierzchnia działki × udział gruntów rolnych wg IUNG (oszacowanie)")
+    note: str
+
+
+class CropSuggestion(Contract):
+    crop_id: RankingCropId
+    label: str
+    group_id: str = Field(description="Uprawa IUNG, której modelem wody liczony jest gatunek, np. 'zboza_ozime'")
+    category: SuggestionCategory
+    category_label: str
+    rank: int = Field(description="Miejsce w grupie (1 = najlepsza)")
+    score: float = Field(description="Ocena do kolejności (plon względny, stabilność, gleba, płodozmian)")
+    reason: str = Field(description="JEDNO zdanie uzasadnienia prostym językiem")
+    yield_typical_t_ha: float | None = Field(None, description="Typowy plon – mediana z 10 lat, t/ha (bez nawadniania)")
+    yield_weak_t_ha: float | None = Field(None, description="Plon w słabym roku – najgorszy z 10 lat, t/ha")
+    weak_year: int = Field(description="Który to był rok")
+    yield_potential_t_ha: float | None = Field(None, description="Plon potencjalny Ym (GUS × gleba), t/ha")
+    gus_mean_t_ha: float | None = Field(None, description="Średni plon GUS w województwie z 10 lat, t/ha")
+    relative_yield_median: float = Field(ge=0, le=1)
+    relative_yield_weak: float = Field(ge=0, le=1)
+    drought_risk_years: int = Field(ge=0, description="W ilu latach strata plonu > 20%")
+    years_simulated: int = Field(description="Z ilu pełnych sezonów (zwykle 10)")
+    total_typical_t: float | None = Field(None, description="Typowy plon z całej powierzchni uprawy, t")
+    total_weak_t: float | None = Field(None, description="Plon w słabym roku z całej powierzchni, t")
+    price: None = Field(None, description="Miejsce na cenę skupu (później) – na razie null")
+    soil_suitability: SoilSuitability
+    soil_suitability_label: str
+    rotation: RotationCheck
+    irrigation_practice: IrrigationPractice
+    drought_sensitivity: Literal["niska", "srednia", "wysoka"]
+    confidence: Confidence
+    confidence_note: str | None = Field(None, description="Dlaczego pewność niższa, np. 'Ky to szacunek'")
+    notes: list[str] = Field(default_factory=list)
+    yields_by_year: list[YearYield]
+    source_tags: list[SourceTag]
+
+
+class SuggestionGroup(Contract):
+    key: Literal["polowe", "wieloletnie"]
+    label: str
+    items: list[CropSuggestion] = Field(description="Od najlepszej: polecane → możliwe → odradzane")
+
+
+class CropSuggestions(Contract):
+    """Ranking upraw dla tej działki i gleby na pogodzie z 10 sezonów. Plony zawsze BEZ nawadniania."""
+
+    seasons: list[int] = Field(description="Sezony użyte w symulacji")
+    groups: list[SuggestionGroup]
+    area: CultivatedArea
+    crop_history: list[str] = Field(default_factory=list, description="Historia upraw z zapytania (0 = rok temu)")
+    rotation_hint: str | None = Field(None, description="Bez historii: 'Podaj, co rosło w ostatnich latach…'")
+    note: str
+    limitations: list[str] = Field(default_factory=list)
+    compute_ms: int | None = None
+    source_tag: SourceTag
+
+
+# ── Teren i spływ wody z NMT (A6) ───────────────────────────────────────────────────────────
+
+TerrainZoneKey = Literal["sucha_gorka", "stok", "plasko", "mokry_dolek"]
+TerrainRating = Literal["dobrze", "uwaga", "zle"]
+
+
+class TerrainZone(Contract):
+    """Strefa terenu z udziałem w działce i oceną z glebą (reguły: analysis/rules/teren_gleba.yaml)."""
+
+    key: TerrainZoneKey
+    label: str = Field(description="Dla rolnika: 'górka – sucho', 'stok – woda ucieka', 'płasko – dobre warunki', 'dołek – woda stoi'")
+    share_pct: float = Field(ge=0, le=100)
+    color: str = Field(description="Kolor strefy na pasku i mapie, np. '#8B6B4A'")
+    rating: TerrainRating | None = Field(None, description="Ocena strefy z glebą; null, gdy strefy praktycznie nie ma (< 1%)")
+    sentence: str | None = Field(None, description="Jedno zdanie dla rolnika, np. '20% działki to dołek – wiosną stoi woda.'")
+
+
+class TerrainOutlet(Contract):
+    """Miejsce, którędy woda opuszcza działkę („tu woda ucieka”)."""
+
+    direction: str = Field(description="Np. 'południowy zachód'")
+    direction_short: str = Field(description="Np. 'SW'")
+    azimuth_deg: float | None = None
+    share_of_parcel_pct: float = Field(description="Jaka część działki odprowadza wodę tym miejscem, %")
+    location: list[float] = Field(description="[lon, lat] (EPSG:4326)")
+
+
+class TerrainDepression(Contract):
+    """Największe zagłębienie bez odpływu (tu zbiera się woda)."""
+
+    area_m2: float | None = None
+    max_depth_m: float | None = None
+    volume_m3: float | None = None
+    catchment_m2: float | None = None
+    location: list[float] | None = Field(None, description="[lon, lat] najgłębszego miejsca")
+
+
+class TerrainDetails(Contract):
+    """Szczegóły „dla dociekliwych” – metoda i liczby techniczne."""
+
+    grid_step_m: float
+    smoothing_sigma_m: float
+    nmt_points: int | None = None
+    nmt_missing_pct: float | None = None
+    twi_mean: float | None = Field(None, description="Wskaźnik wilgotności topograficznej TWI = ln(a / tan β), średnia w działce")
+    twi_p90: float | None = None
+    steep_share_pct: float | None = Field(None, description="Udział działki o spadku > 5%")
+    flow_consistency: float | None = Field(None, description="1 = cała działka spada w jedną stronę")
+    method: str = Field(description="Np. 'priority-flood (Barnes 2014), D8 + D-infinity (TWI), spadek: Horn 3×3'")
+
+
+class Terrain(Contract):
+    """Teren i spływ wody z NMT GUGiK (A6) – strefy, spadki, odpływ, zagłębienia, ocena z glebą, zdania dla rolnika."""
+
+    zones: list[TerrainZone] = Field(description="Zawsze 4 strefy: górka, stok, płasko, dołek (kolejność stała)")
+    zone_share_pct: dict[str, float] = Field(description="Udziały stref, %: sucha_gorka, stok, plasko, mokry_dolek")
+    soil_group: Literal["lekka", "zwiezla", "nieznana"] = Field(description="Gleba użyta w ocenie stref (kat. I–II lekka, III–IV zwięzła)")
+    soil_group_label: str = Field(description="Np. 'gleba zwięzła (kat. III)'")
+    summary: str = Field(description="2–3 zdania o terenie prostym językiem")
+    relief_m: float | None = Field(None, description="Różnica wysokości w działce, m")
+    elev_min_m: float | None = None
+    elev_max_m: float | None = None
+    slope_mean_pct: float | None = None
+    slope_max_pct: float | None = None
+    main_flow_direction: str | None = Field(None, description="Główny kierunek spływu, np. 'południowy zachód'")
+    main_flow_direction_short: str | None = None
+    main_flow_azimuth_deg: float | None = None
+    outlets: list[TerrainOutlet] = Field(default_factory=list)
+    inflow_from_outside_m2: float | None = Field(None, description="Powierzchnia spoza działki, z której woda spływa na działkę")
+    inflow_from_outside_ratio: float | None = Field(None, description="Dopływ z zewnątrz / powierzchnia działki")
+    depressions_count: int = 0
+    depressions_volume_m3: float | None = None
+    largest_depression: TerrainDepression | None = None
+    details: TerrainDetails
+    confidence: Confidence
+    limitations: list[str] = Field(default_factory=list)
     source_tag: SourceTag
 
 
@@ -410,17 +638,23 @@ class LoadingStep(Contract):
 
 class AnalysisResponse(Contract):
     parcel: Parcel
-    crop: CropId
+    crop: CropId | None = Field(description="null = analiza bez uprawy („Stan działki”)")
     previous_crop: PreviousCropId | None = Field(None, description="Uprawa w poprzednim roku (jeśli podana)")
     analysis_date: dt.date
     historical: bool = Field(description="True, gdy analysis_date < dziś (analiza historyczna)")
     generated_at: dt.datetime
     status: OverallStatus
     indicators: Indicators
-    crop_season: CropSeason
+    crop_season: CropSeason | None = Field(description="null bez uprawy")
     soil_water: SoilWaterState
-    irrigation: IrrigationPlan
+    irrigation: IrrigationPlan | None = Field(description="null bez uprawy")
     soil: Soil
+    field_state: FieldState | None = Field(None, description="Stan działki bez względu na uprawę (null: grunt nierolny / brak danych)")
+    terrain: Terrain | None = Field(None, description="Teren i spływ wody z NMT (null = brak danych, powód w terrain_note)")
+    terrain_note: str | None = Field(None, description="Dlaczego brak analizy terenu, np. 'NMT GUGiK nie odpowiada'")
+    suggestions: CropSuggestions | None = Field(None, description="Ranking „Co tu posiać?” (null: grunt nierolny / brak danych)")
+    crop_history: list[str] = Field(default_factory=list, description="Historia upraw z zapytania: 1–3 lata, indeks 0 = rok temu (crop_id albo 'nie_wiem')")
+    cultivated_area_ha: float | None = Field(None, description="Powierzchnia uprawy użyta w rankingu, ha (podana albo oszacowana)")
     history: History
     causes: list[Cause] = Field(description="Od największego udziału")
     recommendations: list[Recommendation] = Field(description="retencja → agrotechnika → nawadnianie")

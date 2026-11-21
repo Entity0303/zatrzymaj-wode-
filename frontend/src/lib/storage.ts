@@ -80,6 +80,7 @@ const HISTORY_MAX = 50
 
 /** Zapamiętuje wynik analizy (ta sama działka + uprawa + data = jeden wpis, najnowszy na górze). */
 export function rememberAnalysis(a: AnalysisResponse) {
+  if (!a.crop) return // A5b-1: analiza bez uprawy („Stan działki”) – historia na razie tylko z uprawą
   const rec: AnalysisRecord = {
     parcel_id: a.parcel.id,
     numer: a.parcel.numer,

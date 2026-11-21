@@ -1,5 +1,7 @@
 # Reguły NAWADNIANIA – kategoria ostatnia (opcjonalna). Plan dawek z modelu FAO-56 (A3b, D33).
 # Pobór wody do nawadniania wymaga pozwolenia wodnoprawnego – Wody Polskie (D40): permit: required.
+# Uprawy z irrigation_practice = not_practiced (zboża, rzepak, strączkowe) i analiza bez uprawy – silnik pomija
+# całą kategorię (D48); optional (kukurydza, burak, tytoń) – dopisek, że nawadnia się je rzadko.
 rules:
   - id: nawadnianie.plan_dawek
     category: nawadnianie
@@ -10,6 +12,7 @@ rules:
     when:
       all:
         - {fact: irrigation_status, eq: zalecane}
+        - {fact: irrigation_practice, eq: common}
     title: "Nawadnianie {irrigation_when}"
     description: "{irrigation_message}."
     why:
@@ -24,9 +27,28 @@ rules:
     when:
       all:
         - {fact: sensitive, eq: true}
+        - {fact: irrigation_practice, eq: common}
         - {fact: irrigation_status, eq: niepotrzebne}
         - {fact: days_to_stress, gte: 8}
     title: "Przygotuj nawadnianie"
     description: "Na razie wody wystarcza, ale przy obecnej pogodzie rośliny zaczną odczuwać jej brak za ok. {days_to_stress} dni."
     why:
       - "Stres wodny przewidywany w horyzoncie 16 dni."
+
+  # Uprawy nawadniane w Polsce rzadko (kukurydza, tytoń – irrigation_practice = optional, D64): ŻADNYCH dawek,
+  # tylko informacja o niedoborze wody w sezonie i o formalnościach.
+  - id: nawadnianie.informacja_optional
+    category: nawadnianie
+    priority: 40
+    confidence: srednia
+    timing: teraz
+    permit: required
+    permit_note: "Pobór wody do nawadniania może wymagać pozwolenia wodnoprawnego – Wody Polskie."
+    when:
+      all:
+        - {fact: irrigation_practice, eq: optional}
+        - {fact: season_deficit_mm, gte: 10}
+    title: "Nawadnianie – tylko przy własnym źródle wody"
+    description: "W tym sezonie brakuje ok. {season_deficit_mm} mm wody. Nawadnianie opłaca się tylko przy własnym źródle wody i deszczowni; pobór wody może wymagać pozwolenia wodnoprawnego – Wody Polskie."
+    why:
+      - "Niedobór = różnica między wodą, której uprawa potrzebowała, a tą, którą pobrała z gleby (model FAO-56)."

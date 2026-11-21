@@ -146,11 +146,18 @@ export type Indicators = {
   soil_capacity: Indicator
 }
 
+/** Czego dotyczy ocena: sezon uprawy / poza sezonem (zapas wody + bilans 30 dni) / bez uprawy (stan działki) */
+export type StatusScope = 'sezon' | 'zimowanie' | 'poza_sezonem' | 'bez_uprawy'
+
 export type OverallStatus = {
   level: StatusLevel
   score?: number | null
   headline: string
   summary: string
+  /** A5b-1: czego dotyczy ocena */
+  scope?: StatusScope | null
+  /** np. 'poza sezonem', 'stan wody na działce' */
+  scope_label?: string | null
 }
 
 /** Faza uprawy w dacie analizy. Wrażliwe na niedobór (stres, nawadnianie): poczatkowa, rozwoj, pelnia */
@@ -164,7 +171,11 @@ export type CropPhase =
   | 'dojrzewanie'
   | 'po_zbiorze'
 
-export type IrrigationStatus = 'zalecane' | 'niepotrzebne' | 'nieuzasadnione_w_fazie' | 'brak_danych'
+/** nie_praktykowane – uprawy, których w Polsce się nie nawadnia (zboża, rzepak, strączkowe): bez dawek */
+export type IrrigationStatus = 'zalecane' | 'niepotrzebne' | 'nieuzasadnione_w_fazie' | 'nie_praktykowane' | 'brak_danych'
+
+/** nawadnianie w praktyce w Polsce: nie stosuje się / rzadko / typowe */
+export type IrrigationPractice = 'not_practiced' | 'optional' | 'common'
 
 export type CropSeason = {
   phase: CropPhase
@@ -215,6 +226,8 @@ export type IrrigationPlan = {
   /** łączny niedobór do uzupełnienia w 7 dniach */
   total_7d_mm?: number | null
   doses_7d?: number | null
+  /** A5b-1: czy tę uprawę w Polsce się nawadnia */
+  practice?: IrrigationPractice | null
   source_tag: SourceTag
 }
 
@@ -254,7 +267,32 @@ export type Soil = {
   soil_map?: SoilMapInfo | null
   /** powód braku frakcji / mapy glebowo-rolniczej */
   texture_note?: string | null
+  /** A5b-1: zgodność źródeł gleby (mapa glebowo-rolnicza > IUNG > SoilGrids) */
+  consistency?: SoilConsistency | null
   source_tag: SourceTag
+}
+
+export type SoilSourceKey = 'mapa_glebowo_rolnicza' | 'iung' | 'soilgrids'
+
+/** kategoria agronomiczna gleby (I bardzo lekka … IV ciężka) według jednego źródła */
+export type SoilCategoryVote = {
+  source: SoilSourceKey
+  source_label: string
+  /** 1–4 */
+  category?: number | null
+  /** np. 'piasek gliniasty lekki – gleba lekka' */
+  description: string
+}
+
+export type SoilConsistency = {
+  status: 'ok' | 'conflict'
+  /** krótkie wyjaśnienie dla rolnika */
+  note: string
+  /** źródło kategorii gleby i WOD użytych w obliczeniach */
+  basis?: SoilSourceKey | null
+  /** kategoria gleby (1–4) użyta w modelu wody */
+  category_used?: number | null
+  by_source?: SoilCategoryVote[]
 }
 
 /** uziarnienie 0–30 cm – SoilGrids 250 m (ISRIC) */
@@ -424,9 +462,220 @@ export type LoadingStep = {
   duration_ms?: number | null
 }
 
+/**
+ * A5b-1: stan wody na działce bez względu na uprawę – profil ~1 m pod pokryciem referencyjnym FAO-56
+ * (trawa, Kc = 1), bilans opad − ET0 z 30 dni na tle 10 lat. Liczony zawsze; null dla gruntu nierolnego.
+ */
+export type FieldState = {
+  status: OverallStatus
+  /** np. 'pokrycie referencyjne FAO-56 (trawa, Kc = 1), profil ok. 1 m' */
+  cover: string
+  soil_water_pct: Indicator
+  soil_water_mm: Indicator
+  soil_water: SoilWaterState
+  /** początek przebiegu – 1 listopada (rok hydrologiczny) */
+  series_start: ISODate
+  /** woda dostępna w profilu, %, dzień po dniu */
+  series: SeriesPoint[]
+  /** ten sam okres w 10 poprzednich latach (min / max / średnia), % */
+  series_band: BandPoint[]
+  /** bilans opad − ET0 z ostatnich 30 dni, mm */
+  balance_30d: Indicator
+  balance_30d_rank?: BalanceRank | null
+  source_tag: SourceTag
+}
+
+// ── Ranking „Co tu posiać?” (A5b-2a) ───────────────────────────────────────────────────────
+
+/** uprawy w rankingu: 10 upraw IUNG + 7 gatunków (zboża, łubin) */
+export type RankingCropId =
+  | 'kukurydza_ziarno'
+  | 'kukurydza_kiszonka'
+  | 'rzepak'
+  | 'ziemniak'
+  | 'burak_cukrowy'
+  | 'straczkowe'
+  | 'warzywa'
+  | 'drzewa_owocowe'
+  | 'krzewy_owocowe'
+  | 'truskawki'
+  | 'pszenica_ozima'
+  | 'zyto'
+  | 'pszenzyto_ozime'
+  | 'jeczmien_ozimy'
+  | 'jeczmien_jary'
+  | 'owies'
+  | 'lubin'
+
+/** ✅ polecane / 🟡 możliwe / ❌ odradzane */
+export type SuggestionCategory = 'polecane' | 'mozliwe' | 'odradzane'
+export type SoilSuitability = 'odpowiednia' | 'neutralna' | 'nieodpowiednia'
+export type RotationStatus = 'ok' | 'plus' | 'ostrzezenie' | 'naruszenie' | 'brak_historii'
+
+/** płodozmian wg historii pola; naruszenie = za krótka przerwa (uprawa odradzana) */
+export type RotationCheck = { status: RotationStatus; notes?: string[] }
+
+export type YearYield = {
+  year: number
+  /** plon względny 0–1 (1 = bez strat z braku wody) */
+  relative: number
+  yield_t_ha?: number | null
+  water_deficit_mm?: number | null
+}
+
+export type CultivatedArea = {
+  value_ha: number
+  /** true = działka × udział gruntów rolnych wg IUNG (oszacowanie) */
+  estimated: boolean
+  note: string
+}
+
+export type CropSuggestion = {
+  crop_id: RankingCropId
+  label: string
+  group_id: string
+  category: SuggestionCategory
+  category_label: string
+  /** miejsce w grupie (1 = najlepsza) */
+  rank: number
+  score: number
+  /** JEDNO zdanie uzasadnienia */
+  reason: string
+  /** typowy plon – mediana z 10 lat, t/ha, bez nawadniania */
+  yield_typical_t_ha?: number | null
+  /** plon w słabym roku – najgorszy z 10 lat, t/ha */
+  yield_weak_t_ha?: number | null
+  weak_year: number
+  yield_potential_t_ha?: number | null
+  gus_mean_t_ha?: number | null
+  relative_yield_median: number
+  relative_yield_weak: number
+  /** w ilu latach strata plonu > 20% („X na 10 lat”) */
+  drought_risk_years: number
+  years_simulated: number
+  /** plon z całej powierzchni uprawy, t */
+  total_typical_t?: number | null
+  total_weak_t?: number | null
+  /** miejsce na cenę skupu – na razie null */
+  price?: null
+  soil_suitability: SoilSuitability
+  soil_suitability_label: string
+  rotation: RotationCheck
+  irrigation_practice: IrrigationPractice
+  drought_sensitivity: 'niska' | 'srednia' | 'wysoka'
+  confidence: Confidence
+  confidence_note?: string | null
+  notes?: string[]
+  yields_by_year: YearYield[]
+  source_tags: SourceTag[]
+}
+
+export type SuggestionGroup = {
+  key: 'polowe' | 'wieloletnie'
+  label: string
+  /** od najlepszej: polecane → możliwe → odradzane */
+  items: CropSuggestion[]
+}
+
+/** ranking upraw dla tej działki i gleby na pogodzie z 10 sezonów; plony zawsze BEZ nawadniania */
+export type CropSuggestions = {
+  seasons: number[]
+  groups: SuggestionGroup[]
+  area: CultivatedArea
+  crop_history?: string[]
+  /** bez historii: 'Podaj, co rosło w ostatnich latach – uwzględnimy płodozmian.' */
+  rotation_hint?: string | null
+  note: string
+  limitations?: string[]
+  compute_ms?: number | null
+  source_tag: SourceTag
+}
+
+// ── Teren i spływ wody z NMT (A6) ──────────────────────────────────────────────────────────
+
+export type TerrainZoneKey = 'sucha_gorka' | 'stok' | 'plasko' | 'mokry_dolek'
+export type TerrainRating = 'dobrze' | 'uwaga' | 'zle'
+
+/** strefa terenu z udziałem i oceną z glebą */
+export type TerrainZone = {
+  key: TerrainZoneKey
+  /** 'górka – sucho' | 'stok – woda ucieka' | 'płasko – dobre warunki' | 'dołek – woda stoi' */
+  label: string
+  /** 0–100 */
+  share_pct: number
+  /** kolor na pasku i mapie: górka #8B6B4A, stok #E8B931, płasko #5BB37F, dołek #2F80C9 */
+  color: string
+  /** null, gdy strefy praktycznie nie ma (< 1%) */
+  rating?: TerrainRating | null
+  /** jedno zdanie dla rolnika, np. '20% działki to dołek – wiosną stoi woda.' */
+  sentence?: string | null
+}
+
+/** miejsce, którędy woda opuszcza działkę („tu woda ucieka”) */
+export type TerrainOutlet = {
+  direction: string
+  direction_short: string
+  azimuth_deg?: number | null
+  share_of_parcel_pct: number
+  /** [lon, lat] */
+  location: number[]
+}
+
+export type TerrainDepression = {
+  area_m2?: number | null
+  max_depth_m?: number | null
+  volume_m3?: number | null
+  catchment_m2?: number | null
+  /** [lon, lat] najgłębszego miejsca */
+  location?: number[] | null
+}
+
+/** szczegóły „dla dociekliwych” */
+export type TerrainDetails = {
+  grid_step_m: number
+  smoothing_sigma_m: number
+  nmt_points?: number | null
+  nmt_missing_pct?: number | null
+  /** TWI = ln(a / tan β) */
+  twi_mean?: number | null
+  twi_p90?: number | null
+  steep_share_pct?: number | null
+  flow_consistency?: number | null
+  method: string
+}
+
+export type Terrain = {
+  /** zawsze 4 strefy w stałej kolejności: górka, stok, płasko, dołek */
+  zones: TerrainZone[]
+  zone_share_pct: Record<TerrainZoneKey, number>
+  soil_group: 'lekka' | 'zwiezla' | 'nieznana'
+  soil_group_label: string
+  /** 2–3 zdania o terenie prostym językiem */
+  summary: string
+  relief_m?: number | null
+  elev_min_m?: number | null
+  elev_max_m?: number | null
+  slope_mean_pct?: number | null
+  slope_max_pct?: number | null
+  main_flow_direction?: string | null
+  main_flow_direction_short?: string | null
+  main_flow_azimuth_deg?: number | null
+  outlets?: TerrainOutlet[]
+  inflow_from_outside_m2?: number | null
+  inflow_from_outside_ratio?: number | null
+  depressions_count?: number
+  depressions_volume_m3?: number | null
+  largest_depression?: TerrainDepression | null
+  details: TerrainDetails
+  confidence: Confidence
+  limitations?: string[]
+  source_tag: SourceTag
+}
+
 export type AnalysisResponse = {
   parcel: Parcel
-  crop: CropId
+  /** null = analiza bez uprawy („Stan działki”) */
+  crop: CropId | null
   /** uprawa w poprzednim roku (jeśli podana) */
   previous_crop?: PreviousCropId | null
   analysis_date: ISODate
@@ -434,10 +683,24 @@ export type AnalysisResponse = {
   generated_at: ISODateTime
   status: OverallStatus
   indicators: Indicators
-  crop_season: CropSeason
+  /** null bez uprawy */
+  crop_season: CropSeason | null
   soil_water: SoilWaterState
-  irrigation: IrrigationPlan
+  /** null bez uprawy */
+  irrigation: IrrigationPlan | null
   soil: Soil
+  /** A5b-1: „Stan działki” – pokazywać od razu po wybraniu działki, bez wymagania uprawy */
+  field_state?: FieldState | null
+  /** A5b-2a: ranking „Co tu posiać?” (null: grunt nierolny / brak danych) */
+  suggestions?: CropSuggestions | null
+  /** historia pola z zapytania: 1–3 lata, indeks 0 = rok temu (crop_id albo 'nie_wiem') */
+  crop_history?: string[]
+  /** powierzchnia uprawy użyta w rankingu, ha */
+  cultivated_area_ha?: number | null
+  /** A6: teren i spływ wody z NMT (null = brak danych, powód w terrain_note) */
+  terrain?: Terrain | null
+  /** A6: dlaczego brak analizy terenu */
+  terrain_note?: string | null
   history: History
   causes: Cause[]
   recommendations: Recommendation[]

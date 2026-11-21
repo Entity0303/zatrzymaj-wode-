@@ -10,14 +10,18 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.core.cache import store
 from app.core.config import settings
 from app.core.http import close_client
 from app.demo import warmup_loop
 from app.routers import analysis, demo, infra_reports, layers, parcel, reports, status, weather
+from app.sources import uldk
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    store()  # trwały cache SQLite (D53) – otwarcie pliku przy starcie
+    uldk.load_known()  # znane działki: cache + app/data/demo_parcels.json (D54) – bez zapytań do ULDK
     # rozgrzewka cache przykładów demo w tle – nie blokuje startu (DEMO_WARMUP=false wyłącza)
     task = asyncio.create_task(warmup_loop()) if settings.demo_warmup else None
     yield

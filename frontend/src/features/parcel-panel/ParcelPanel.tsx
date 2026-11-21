@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button'
 import { WaveDivider } from '@/components/WaveDivider'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { formatDatePl } from '@/lib/format'
-import { irrigationPracticed } from '@/lib/crops'
+import { irrigationPracticed, irrigationShown } from '@/lib/crops'
 import { AnalysisLoading } from './AnalysisLoading'
 import { CropField } from './CropField'
 import { CropSeasonCard } from './CropSeasonCard'
@@ -237,7 +237,7 @@ export function ParcelPanel({
                 {t(
                   nonAgri
                     ? 'Postęp analizy'
-                    : irrigationPracticed(crop)
+                    : irrigationPracticed(crop) && (!analysis || irrigationShown(analysis))
                       ? 'Faza uprawy, woda w glebie, nawadnianie, gleba, postęp analizy'
                       : 'Faza uprawy, woda w glebie, gleba, postęp analizy',
                 )}
@@ -247,9 +247,9 @@ export function ParcelPanel({
           </button>
           {showDetails && (
             <div className="space-y-3 border-t p-3">
-              {analysis && !nonAgri && <CropSeasonCard season={analysis.crop_season} analysisDate={analysis.analysis_date} />}
+              {analysis && !nonAgri && analysis.crop_season && <CropSeasonCard season={analysis.crop_season} analysisDate={analysis.analysis_date} />}
               {analysis && !nonAgri && <SoilWaterCard state={analysis.soil_water} />}
-              {analysis && !nonAgri && irrigationPracticed(analysis.crop) && <IrrigationCard plan={analysis.irrigation} />}
+              {analysis && !nonAgri && analysis.irrigation && irrigationShown(analysis) && <IrrigationCard plan={analysis.irrigation} />}
               {analysis && !nonAgri && <SoilCard soil={analysis.soil} />}
               <div className="rounded-xl border bg-surface p-3.5">
                 <p className="text-sm font-medium">{t('Postęp analizy')}</p>

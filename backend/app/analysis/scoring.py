@@ -6,11 +6,15 @@ Składowe (każda 0–100):
 - historia – pozycja na tle 10 lat: % lat z niższym bilansem wody od 1 III i % lat z mniejszym
   zapasem wody tego dnia (średnia z dostępnych).
 Brak składowej → wagi pozostałych przeskalowane. Wagi i progi poniżej (D35).
-Poza fazami wrażliwymi (dojrzewanie, po zbiorze, przed siewem, wschody jesienne, spoczynek) ocena
-dotyczy ZAPASU WODY W GLEBIE, nie stresu roślin: inne nagłówki, status najwyżej „risk” (D35).
+Dojrzewanie (poza fazami wrażliwymi, ale w sezonie): woda + historia, status najwyżej „risk” (D35).
+
+POZA SEZONEM uprawy (przed siewem, po zbiorze, wschody jesienne, spoczynek zimowy) i BEZ UPRAWY (A5b-1, D52)
+status nie wynika ze stresu uprawy ani z bilansu całego sezonu, tylko z zapasu wody w glebie (profil ~1 m)
+i klimatycznego bilansu wodnego z ostatnich 30 dni na tle 10 lat: woda 0,6 + bilans 30 dni 0,4 (pozycja wśród
+10 lat, 0–100). Poza sezonem najwyżej „risk”; bez uprawy możliwa „susza glebowa” (danger).
 """
 
-from app.analysis.facts import Facts
+from app.analysis.facts import OFF_SEASON_PHASES, Facts
 from app.analysis.water_balance import format_mm
 from app.schemas.analysis import OverallStatus, Soil, StatusLevel
 
@@ -22,6 +26,16 @@ RISK_POINTS = [(0, 0), (3, 25), (7, 50), (16, 75)]
 STATUS_THRESHOLDS: list[tuple[int, StatusLevel]] = [(70, "ok"), (50, "warn"), (30, "risk"), (0, "danger")]
 OFF_SEASON_MAX: StatusLevel = "risk"  # poza fazami wrażliwymi nie ogłaszamy „Suszy” roślin
 ORDER: list[StatusLevel] = ["ok", "warn", "risk", "danger"]
+WEIGHTS_RESERVE = {"woda": 0.6, "bilans_30d": 0.4}  # poza sezonem i bez uprawy (D52)
+SCOPE_LABELS = {"sezon": "w sezonie", "zimowanie": "w polu – zimowanie", "poza_sezonem": "poza sezonem",
+                "bez_uprawy": "stan wody na działce"}
+WINTERING_PHASES = {"wschody_jesienne", "spoczynek_zimowy"}  # uprawa jest w polu (oziminy, wieloletnie) – D65
+HEADLINES_FIELD: dict[StatusLevel, str] = {
+    "ok": "Dobrze – zapas wody w glebie w normie",
+    "warn": "Uwaga – mniej wody w glebie niż zwykle",
+    "risk": "Ryzyko – mały zapas wody w glebie",
+    "danger": "Susza glebowa – bardzo mało wody w glebie",
+}
 
 HEADLINES_SENSITIVE: dict[StatusLevel, str] = {
     "ok": "Dobrze – wody w glebie wystarcza",
@@ -101,6 +115,103 @@ def summary_sentence(f: Facts) -> str:
     return text[0].upper() + text[1:]
 
 
+def reserve_score(water_pct: float | None, kbw30_percentile: float | None) -> int | None:
+    """Zapas wody w glebie (0–100) i pozycja bilansu 30 dni wśród 10 lat (0–100); brak bilansu – sama woda."""
+    if water_pct is None:
+        return None
+    comp = {"woda": float(max(0, min(100, water_pct)))}
+    if kbw30_percentile is not None:
+        comp["bilans_30d"] = float(kbw30_percentile)
+    used = {k: w for k, w in WEIGHTS_RESERVE.items() if k in comp}
+    return round(sum(comp[k] * w for k, w in used.items()) / sum(used.values()))
+
+
+def reserve_summary(f: Facts, scope: str) -> str:
+    text = f"W profilu gleby (ok. 1 m) jest {f['water_pct']:.0f}% wody dostępnej"
+    if f.get("water_mm") is not None:
+        text += f" ({f['water_mm']:.0f} mm)"
+    lower, of = f.get("water_rank_lower"), f.get("water_rank_of")
+    if lower is None or not of:
+        text += "."
+    elif lower == 0:
+        text += f" – najmniej tego dnia w ostatnich {of} latach."
+    else:
+        text += f"; mniej wody było tego dnia w {lower} z {of} ostatnich lat."
+    if f.get("kbw30_mm") is not None:
+        text += f" Bilans opad − parowanie z ostatnich 30 dni: {format_mm(f['kbw30_mm'])} mm"
+        text += f" ({f['kbw30_vs_mean_txt']})." if f.get("kbw30_vs_mean_txt") else "."
+    if scope == "poza_sezonem" and f.get("phase_label"):
+        text += f" Uprawa: {f['phase_label']} – poza sezonem oceniamy zapas wody w glebie, nie stres roślin."
+    elif scope == "zimowanie" and f.get("phase_label"):
+        text += f" Uprawa jest w polu ({f['phase_label']}) – zimą oceniamy zapas wody w glebie, nie stres roślin."
+    elif scope == "bez_uprawy":
+        text += " Bez wybranej uprawy – stan dla typowego pola (po zbiorach goła gleba)."
+    return text
+
+
+RANK_MIN_YEARS = 5  # mniej lat porównawczych – progi bezwzględne (D52)
+RANK_WARN_SHARE = 0.2  # „niżej niż w 8 na 10 lat”: mniej wody było najwyżej w 2 z 10 lat
+FULL_PROFILE_PCT = 90  # pełny profil nigdy nie jest alarmem, nawet gdy inne lata były pełniejsze
+BANDS = {"ok": (70, 100), "warn": (50, 69), "risk": (30, 49), "danger": (0, 29)}
+
+
+def rank_level(f: Facts, scope: str) -> StatusLevel | None:
+    """Poziom z porównania z TĄ SAMĄ datą w 10 poprzednich latach (D65, zastępuje progi bezwzględne D52):
+    zapas wody najniższy od 10 lat = ryzyko; niżej niż w 8 na 10 lat = uwaga; inaczej dobrze. Bilans 30 dni
+    najniższy od 10 lat przy niepełnym profilu = co najmniej uwaga. None = za mało lat do porównania."""
+    lower, of = f.get("water_rank_lower"), f.get("water_rank_of")
+    if lower is None or not of or of < RANK_MIN_YEARS:
+        return None
+    pct = f.get("water_pct") or 0
+    if pct >= FULL_PROFILE_PCT:
+        return "ok"
+    if lower == 0:
+        level: StatusLevel = "danger" if scope == "bez_uprawy" and pct < 30 else "risk"
+    elif lower <= RANK_WARN_SHARE * of:
+        level = "warn"
+    else:
+        level = "ok"
+    k_lower, k_of = f.get("kbw30_rank_lower"), f.get("kbw30_rank_of")
+    if level == "ok" and k_of and k_of >= RANK_MIN_YEARS and k_lower == 0:
+        level = "warn"
+    return level
+
+
+def rank_score(f: Facts, level: StatusLevel) -> int:
+    """Wskaźnik 0–100 z pozycji wśród 10 lat (woda 0,6, bilans 30 dni 0,4), w przedziale poziomu statusu."""
+    w = 100.0 * f["water_rank_lower"] / f["water_rank_of"]
+    k_lower, k_of = f.get("kbw30_rank_lower"), f.get("kbw30_rank_of")
+    k = 100.0 * k_lower / k_of if k_of and k_lower is not None else w
+    lo, hi = BANDS[level]
+    return int(min(hi, max(lo, round(WEIGHTS_RESERVE["woda"] * w + WEIGHTS_RESERVE["bilans_30d"] * k))))
+
+
+def reserve_status(f: Facts, scope: str) -> OverallStatus:
+    """Status z zapasu wody w glebie i bilansu 30 dni na tle tej samej daty w 10 latach (poza sezonem uprawy,
+    zimowanie, bez uprawy – D65); przy braku lat porównawczych – progi bezwzględne (D52)."""
+    if f.get("water_pct") is None:
+        return OverallStatus(level="no_data", score=None, headline="Brak danych do oceny stanu wody",
+                             summary="Nie udało się policzyć wody w glebie – brak danych pogodowych lub glebowych.",
+                             scope=scope, scope_label=SCOPE_LABELS[scope])
+    level = rank_level(f, scope)
+    if level is None:
+        score = reserve_score(f.get("water_pct"), f.get("kbw30_percentile"))
+        level = status_for(score, sensitive=scope == "bez_uprawy")  # z uprawą najwyżej „risk”
+    else:
+        score = rank_score(f, level)
+    headline = (HEADLINES_FIELD if scope == "bez_uprawy" else HEADLINES_OTHER)[level]
+    lower, of = f.get("water_rank_lower"), f.get("water_rank_of")
+    below_usual = bool(of) and lower is not None and lower < of / 2
+    if level == "warn" and not below_usual:
+        k_lower = f.get("kbw30_rank_lower")
+        headline = ("Uwaga – ostatnie 30 dni najsuchsze od lat" if k_lower == 0 else
+                    "Uwaga – zapas wody w glebie niepełny")
+    elif level == "warn" and scope != "bez_uprawy":
+        headline = "Uwaga – mniejszy zapas wody w glebie niż zwykle"
+    return OverallStatus(level=level, score=score, headline=headline, summary=reserve_summary(f, scope),
+                         scope=scope, scope_label=SCOPE_LABELS[scope])
+
+
 def overall_status(f: Facts, soil: Soil) -> OverallStatus:
     if soil.non_agricultural:
         return OverallStatus(
@@ -109,6 +220,12 @@ def overall_status(f: Facts, soil: Soil) -> OverallStatus:
             headline="Ocena suszy rolniczej nie dotyczy tej działki",
             summary=soil.non_agricultural_note or "Według mapy gleb IUNG to nie jest grunt rolny.",
         )
+    if f.get("has_crop") is False:
+        return reserve_status(f, "bez_uprawy")
+    if f.get("phase") in WINTERING_PHASES:
+        return reserve_status(f, "zimowanie")
+    if f.get("phase") in OFF_SEASON_PHASES:
+        return reserve_status(f, "poza_sezonem")
     score = score_value(f)
     if score is None:
         return OverallStatus(
@@ -123,4 +240,5 @@ def overall_status(f: Facts, soil: Soil) -> OverallStatus:
     # „niż zwykle” tylko, gdy dane to potwierdzają (bilans poniżej średniej z 10 lat)
     if not sensitive and level == "warn" and not ((f.get("balance_deviation_mm") or 0) < 0):
         headline = "Uwaga – zapas wody w glebie niepełny"
-    return OverallStatus(level=level, score=score, headline=headline, summary=summary_sentence(f))
+    return OverallStatus(level=level, score=score, headline=headline, summary=summary_sentence(f),
+                         scope="sezon", scope_label=SCOPE_LABELS["sezon"])

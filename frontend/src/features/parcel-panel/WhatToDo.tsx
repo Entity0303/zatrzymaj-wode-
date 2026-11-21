@@ -1,7 +1,7 @@
 import type { AnalysisResponse, RecommendationCategory } from '@/api/types'
 import { RecommendationCard } from '@/components/RecommendationCard'
 import { useLang } from '@/lib/i18n'
-import { irrigationPracticed } from '@/lib/crops'
+import { irrigationShown } from '@/lib/crops'
 import { RecommendationWhy } from './RecommendationWhy'
 
 const ORDER: RecommendationCategory[] = ['retencja', 'agrotechnika', 'nawadnianie']
@@ -19,7 +19,7 @@ export function WhatToDo({
   if (analysis?.recommendations.length) {
     // backend wskazuje, co pokazać w panelu (`in_panel`, po jednej z kategorii); bez flag – wg priorytetu
     // zboża i rzepak: w Polsce się ich nie nawadnia – bez zaleceń nawadniania, zamiast nich retencja
-    const all = analysis.recommendations.filter((r) => r.category !== 'nawadnianie' || irrigationPracticed(analysis.crop))
+    const all = analysis.recommendations.filter((r) => r.category !== 'nawadnianie' || irrigationShown(analysis))
     const byOrder = (a: (typeof all)[number], b: (typeof all)[number]) =>
       ORDER.indexOf(a.category) - ORDER.indexOf(b.category) || (b.priority ?? 0) - (a.priority ?? 0)
     const flagged = all.filter((r) => r.in_panel)

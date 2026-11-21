@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
 <meta charset="utf-8">
-<title>Paszport wodny działki {{ a.parcel.id }}</title>
+<title>{{ title }} {{ a.parcel.id }}</title>
 <style>{{ css }}</style>
 </head>
 <body>
@@ -14,7 +14,7 @@
       <svg width="22" height="26" viewBox="0 0 22 26"><path d="M11 1 C11 1 2 11.5 2 17 a9 9 0 0 0 18 0 C20 11.5 11 1 11 1z" fill="#2F80C9"/><path d="M6 17 q5 4 10 0" stroke="#fff" stroke-width="1.6" fill="none"/></svg>
       <span class="name">ZATRZYMAJ WODĘ</span>
     </div>
-    <h1>Paszport wodny działki</h1>
+    <h1>{{ title }}</h1>
     <p class="muted">Wygenerowano: {{ generated|date_pl }} · data analizy: <b>{{ a.analysis_date|date_pl }}</b>{% if a.historical %} (analiza historyczna – tylko dane sprzed tej daty){% endif %}</p>
   </div>
   <div class="qr">{{ qr }}<div class="tiny muted">Zeskanuj – analiza online</div><div class="tiny muted">{{ url_host }}</div></div>
@@ -28,10 +28,14 @@
       <tr><td>Identyfikator</td><td><b>{{ a.parcel.id }}</b></td></tr>
       <tr><td>Położenie</td><td>woj. {{ a.parcel.wojewodztwo }}, {{ a.parcel.powiat }}, gm. {{ a.parcel.gmina }}, obręb {{ a.parcel.obreb }}, nr {{ a.parcel.numer }}</td></tr>
       <tr><td>Powierzchnia</td><td>{{ a.parcel.powierzchnia_ha|num(2, 'ha') }} <span class="muted small">(z geometrii ULDK)</span></td></tr>
+      {% if a.crop %}
       <tr><td>Uprawa</td><td>{{ crop_label }} – {{ a.crop_season.phase_label }}{% if a.crop_season.sensitive %} <span class="pill">faza wrażliwa na brak wody</span>{% endif %}</td></tr>
       {% if previous_crop_label %}<tr><td>Uprawa rok wcześniej</td><td>{{ previous_crop_label }}</td></tr>{% endif %}
       <tr><td>Sezon</td><td>{{ a.crop_season.season_start|date_pl }} – {{ a.crop_season.harvest|date_pl }} (typowy termin zbioru)</td></tr>
-      <tr><td>Gleba</td><td>{{ a.soil.dominant_label or 'brak danych' }}{% if a.soil.wod_mm is not none %} · zmieści ok. {{ a.soil.wod_mm|num(0, 'mm') }} wody{% endif %}</td></tr>
+      {% else %}
+      <tr><td>Uprawa</td><td>nie wybrano – raport opisuje stan wody na działce (pokrycie referencyjne FAO-56)</td></tr>
+      {% endif %}
+      <tr><td>Gleba</td><td>{{ a.soil.dominant_label or 'brak danych' }}{% if a.soil.wod_mm is not none %} · zmieści ok. {{ a.soil.wod_mm|num(0, 'mm') }} wody{% endif %}{% if a.soil.consistency and a.soil.consistency.status == 'conflict' %} <span class="muted small">(źródła gleby różnią się – zob. „Gleba i teren”)</span>{% endif %}</td></tr>
     </table>
   </div>
   <div class="map-cap">
@@ -44,7 +48,8 @@
 </div>
 
 {# 3. Stan obecny (A) #}
-<h2>A. Stan obecny</h2>
+{% if a.crop %}
+<h2>A. Stan obecny{% if a.status.scope_label %} <span class="tag">{{ a.status.scope_label }}</span>{% endif %}</h2>
 <div class="status" style="background: {{ status[2] }}">
   <span class="badge" style="background: {{ status[1] }}">{{ status[0] }}</span>
   {% if a.status.score is not none %}<div class="score">{{ a.status.score }}<small> / 100</small></div>{% endif %}
@@ -77,6 +82,85 @@
     <span class="tagline">brak danych</span>
   </div>
 </div>
+{% if field %}
+<div class="box" style="margin-top:5pt">
+  <b>Stan działki bez względu na uprawę:</b> <span class="badge" style="background: {{ field_status[1] }}">{{ field_status[0] }}</span>
+  {{ field.status.headline }} – w profilu ok. 1 m {{ field.soil_water_pct.value|num(0, '%') }} wody dostępnej, bilans 30 dni {{ field.balance_30d.value|num(0, 'mm') }}.
+  <span class="tiny muted">{{ field.cover }}.</span>
+</div>
+{% endif %}
+{% elif field %}
+<h2>A. Stan wody na działce <span class="tag">bez uprawy</span></h2>
+<div class="status" style="background: {{ field_status[2] }}">
+  <span class="badge" style="background: {{ field_status[1] }}">{{ field_status[0] }}</span>
+  {% if field.status.score is not none %}<div class="score">{{ field.status.score }}<small> / 100</small></div>{% endif %}
+  <div><h3>{{ field.status.headline }}</h3><p>{{ field.status.summary }}</p></div>
+</div>
+<div class="cards">
+  <div class="card">
+    <div class="label">Woda w glebie (profil ~1 m)</div>
+    <div class="value">{{ field.soil_water_pct.value|num(0, '%') }}</div>
+    {{ field_bar }}
+    <div class="note">{{ field.soil_water_mm.value|num(0, 'mm') }} · {{ field.soil_water.description }}{% if field.soil_water.rank %} · mniej wody tego dnia w {{ field.soil_water.rank.lower_years }} z {{ field.soil_water.rank.of_years }} lat{% endif %}</div>
+    <span class="tagline">szacunek modelu FAO-56</span>
+  </div>
+  <div class="card">
+    <div class="label">Bilans wody – ostatnie 30 dni</div>
+    <div class="value">{{ field.balance_30d.value|num(0, 'mm') }}</div>
+    <div class="note">{{ field.balance_30d.note or '' }}</div>
+    <span class="tagline">obliczenia: opad − parowanie</span>
+  </div>
+  <div class="card">
+    <div class="label">Bilans wody od {{ a.history.season_start|date_pl }}</div>
+    <div class="value">{{ a.indicators.water_balance_season.value|num(0, 'mm') }}</div>
+    <div class="note">{{ a.indicators.water_balance_season.note or '' }}</div>
+    <span class="tagline">obliczenia: opad − parowanie</span>
+  </div>
+  <div class="card">
+    <div class="label">Ile wody zmieści gleba</div>
+    <div class="value">{{ a.indicators.soil_capacity.value|num(0, 'mm') }}</div>
+    <div class="note">{{ a.indicators.soil_capacity.label or '' }}</div>
+    <span class="tagline">{{ a.indicators.soil_capacity.source_tag.source or 'brak danych' }}</span>
+  </div>
+</div>
+<div class="chart">
+  <h3>Woda w glebie od {{ field.series_start|date_pl }}, % wody dostępnej (profil ~1 m)</h3>
+  {{ chart_field }}
+  <div class="legend small muted"><span><i style="background:#C8453B"></i>ten rok (zielony, gdy więcej wody niż zwykle)</span><span><i style="background:#2F80C9"></i>średnia z 10 lat</span><span><i style="background:#E3F0FB;height:8pt"></i>zakres min–max</span></div>
+  <p class="tiny muted">{{ field.cover|capitalize }} – bez wybranej uprawy. Wybierz uprawę w aplikacji, aby dostać pełną analizę (fazy, stres roślin, nawadnianie).</p>
+</div>
+{% else %}
+<h2>A. Stan obecny</h2>
+<div class="status" style="background: {{ status[2] }}">
+  <span class="badge" style="background: {{ status[1] }}">{{ status[0] }}</span>
+  <div><h3>{{ a.status.headline }}</h3><p>{{ a.status.summary }}</p></div>
+</div>
+{% endif %}
+
+{# 3b. Teren działki (A6) #}
+<div class="keep">
+<h2>Teren działki{% if terrain %} <span class="tag">{{ terrain.soil_group_label }}</span>{% endif %}</h2>
+{% if terrain %}
+<div class="grid2">
+  <div>
+    {{ zone_bar }}
+    <div class="legend small muted">{% for z in terrain.zones %}<span><i style="background:{{ z.color }}"></i>{{ z.label }} {{ z.share_pct|num(0, '%') }}</span>{% endfor %}</div>
+    <p>{{ terrain.summary }}</p>
+    <ul class="zones">{% for z in terrain.zones if z.sentence %}<li><span class="pill" style="background: {{ RATING[z.rating][1] }}; color: #fff">{{ RATING[z.rating][0] }}</span> {{ z.sentence }}</li>{% endfor %}</ul>
+  </div>
+  <div class="map-cap">
+    <div class="map">
+      {% if ortho %}<img src="{{ ortho }}" alt="ortofotomapa">{% endif %}
+      {{ zones_map }}
+      {{ outline }}
+    </div>
+    <div class="tiny muted">Strefy terenu z NMT GUGiK · szczegóły w części „Gleba i teren”</div>
+  </div>
+</div>
+{% else %}
+<p class="muted">{{ a.terrain_note or 'Brak analizy terenu.' }}</p>
+{% endif %}
+</div>
 
 {# 4. Na tle 10 lat (B) #}
 <div class="keep">
@@ -89,7 +173,7 @@
 </div>
 </div>
 <div class="grid2">
-  <div class="chart"><h3>Dni stresu wodnego w sezonach</h3>{{ chart_stress }}<div class="tiny muted">czerwony – bieżący sezon; b.d. – brak danych</div></div>
+  {% if a.crop %}<div class="chart"><h3>Dni stresu wodnego w sezonach</h3>{{ chart_stress }}<div class="tiny muted">czerwony – bieżący sezon; b.d. – brak danych</div></div>{% endif %}
   <div class="chart"><h3>Opad w miesiącach, mm</h3>{{ chart_precip }}<div class="tiny muted">niebieski – ten rok, szary – średnia z 10 lat</div></div>
 </div>
 
@@ -122,7 +206,7 @@
   <div class="why"><b>Dlaczego?</b> {{ r.why }}</div>
 </div>
 {% else %}<p class="muted">Brak rekomendacji – nie wynikają z danych dla tej działki (np. grunt nierolny albo brak danych o glebie).</p>{% endfor %}
-<p class="small muted">Miejsca działań na mapie (oczka, zastawki, pasy zieleni) – po analizie terenu i rowów (w przygotowaniu).</p>
+<p class="small muted">{% if terrain %}Miejsca działań z terenu (oczko, pas zieleni, odpływ) – na mapie w aplikacji, warstwa „Spływ wody”.{% else %}Miejsca działań na mapie (oczka, zastawki, pasy zieleni) – po analizie terenu.{% endif %}</p>
 
 {# 7. Gleba i teren #}
 <h2>Gleba i teren</h2>
@@ -136,6 +220,9 @@
       <tr><td>Ile wody zmieści (WOD)</td><td>{{ a.soil.wod_mm|num(0, 'mm') }}</td></tr>
       <tr><td>Klasy bonitacyjne (EGiB)</td><td>{{ a.soil.classes|join(', ') if a.soil.classes else (a.soil.classes_note or 'brak danych') }}</td></tr>
     </table>
+    {% if a.soil.consistency %}{% set k = a.soil.consistency %}
+    <div class="{{ 'warning' if k.status == 'conflict' else 'small' }}" style="margin-top:4pt">{% if k.status == 'conflict' %}⚠ {% endif %}<b>Zgodność źródeł gleby:</b> {{ k.note }}</div>
+    {% endif %}
     {% if a.soil.soil_map %}{% set m = a.soil.soil_map %}
     <h3 style="margin-top:5pt">Mapa glebowo-rolnicza</h3>
     <table class="kv">
@@ -157,8 +244,18 @@
     <p class="tiny muted">{{ p.method }}; SoilGrids 250 m – wartości orientacyjne.</p>
     {% endif %}
     {% if a.soil.texture_note %}<p class="small muted">{{ a.soil.texture_note }}</p>{% endif %}
-    <h3 style="margin-top:5pt">Teren</h3>
-    <p class="muted">Spadki, zagłębienia i spływ wody (NMT) oraz rowy w okolicy (BDOT10k) – w przygotowaniu, brak danych.</p>
+    <h3 style="margin-top:5pt">Teren (NMT GUGiK)</h3>
+    {% if terrain %}{% set t = terrain %}
+    <table class="kv">
+      <tr><td>Wysokość</td><td>{{ t.elev_min_m|num(1, 'm') }} – {{ t.elev_max_m|num(1, 'm') }} (różnica {{ t.relief_m|num(1, 'm') }})</td></tr>
+      <tr><td>Spadek</td><td>średnio {{ t.slope_mean_pct|num(1, '%') }}, najwięcej {{ t.slope_max_pct|num(1, '%') }}</td></tr>
+      <tr><td>Spływ wody</td><td>{{ t.main_flow_direction or 'brak wyraźnego kierunku' }}{% for o in t.outlets %}{% if loop.first %} · odpływ: {% endif %}{{ o.direction }} {{ o.share_of_parcel_pct|num(0, '%') }}{% if not loop.last %}, {% endif %}{% endfor %}</td></tr>
+      <tr><td>Dopływ spoza działki</td><td>{{ (t.inflow_from_outside_m2 / 10000)|num(1, 'ha') if t.inflow_from_outside_m2 is not none else 'brak danych' }}</td></tr>
+      <tr><td>Zagłębienia bez odpływu</td><td>{{ t.depressions_count }}{% if t.largest_depression %} · największe ok. {{ t.largest_depression.volume_m3|num(0, 'm³') }}, głęb. {{ t.largest_depression.max_depth_m|num(1, 'm') }}{% endif %}</td></tr>
+    </table>
+    <p class="tiny muted">Dla dociekliwych: siatka {{ t.details.grid_step_m|num(1, 'm') }}, wygładzenie σ = {{ t.details.smoothing_sigma_m|num(0, 'm') }}{% if t.details.twi_mean is not none %}, TWI śr. {{ t.details.twi_mean|num(1) }} (p90 {{ t.details.twi_p90|num(1) }}){% endif %}; {{ t.details.method }}. Pewność: {{ CONFIDENCE[t.confidence] }}.</p>
+    {% else %}<p class="muted">{{ a.terrain_note or 'Brak analizy terenu.' }}</p>{% endif %}
+    <p class="tiny muted">Rowy, cieki i zbiorniki w okolicy (BDOT10k) – w przygotowaniu.</p>
   </div>
 </div>
 

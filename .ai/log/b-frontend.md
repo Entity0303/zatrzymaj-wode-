@@ -4,6 +4,11 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-21 · `b/frontend` · merge `origin/a/backend` (A5b-1, A5d, A6, A5b-2a)
+**Co:** scalone 17 commitów A (null-safety A5b-1, tryb demo / trwały cache A5d, teren i spływ A6, ranking „Co tu posiać?” A5b-2a). Konflikty: `ParcelPanel.tsx` – zostaje układ B (faza uprawy i nawadnianie w „Pokaż szczegóły”), null-checki A przeniesione tam (`crop_season`, `irrigation`); `AlertsCard.tsx` – `irrigation?.` (A) + reguła B. Nawadnianie: nowe `irrigationShown()` w `lib/crops.ts` – pierwszeństwo ma kontrakt (`irrigation.status = nie_praktykowane` / `irrigation.practice = not_practiced`), lista lokalna (zboża, rzepak, strączkowe) tylko gdy pola brak; używane w panelu, „Co zrobić?”, paszporcie D i alertach. Weryfikacja: `tsc`, `npm run build`, `oxlint` OK; `pytest` 315 passed, 5 failed – wszystkie to testy PDF (WeasyPrint wymaga Pango, którego nie ma na Windows; w obrazie Docker jest). `docker compose build frontend` niewykonane – na tym komputerze nie ma Dockera.
+**Pliki:** merge + `frontend/src/{features/parcel-panel/{ParcelPanel,WhatToDo}.tsx, features/passport/SectionD.tsx, layout/cards/AlertsCard.tsx, lib/crops.ts}`.
+**Kontrakt API:** TAK (zmiany A, przyjęte) → `.ai/contract-changes.md`.
+
 ## 2026-11-21 · `b/frontend` · B18: bez podświetlenia pól uprawnych
 **Co:** usunięte podświetlenie pól (WMS IUNG ze stylem SLD) – na prośbę B wyglądało tandetnie: warstwa, przełącznik w menu, zielony kwadrat w podpowiedzi i ustawienie `farmland`. Podpowiedź: „Przybliż mapę i kliknij swoje pole”. Reszta trybu przeglądania (B17) bez zmian.
 **Pliki:** `frontend/src/features/map/FarmlandLayer.tsx` (usunięty), `frontend/src/features/map/ParcelMap.tsx`, `frontend/src/features/intro/ExploreBar.tsx`, `frontend/src/pages/Start.tsx`, `frontend/src/lib/{storage,i18n.en}.ts`.
