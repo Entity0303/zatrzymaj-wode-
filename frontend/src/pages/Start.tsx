@@ -86,7 +86,7 @@ export default function Start() {
   // link z adresu (?dzialka=&uprawa=&data=) – czytany raz przy wejściu
   const [link] = useState(readLink)
   const [asOf, setAsOf] = useState(link.data ?? todayIso())
-  const [layer, setLayer] = useState<LayerKey>('kondycja')
+  const [layer, setLayer] = useState<LayerKey>('teren') // Kondycja upraw nie ma jeszcze danych
   const [view, setView] = useState<'2d' | '3d'>('2d')
   const [settings] = useSettings()
   const [ui, setUi] = useUiPrefs()
@@ -181,6 +181,8 @@ export default function Start() {
   }
 
   const searchByNumber = (q: string) => find(() => api.parcelById(q), 'number')
+  // komunikaty o błędach usług pokazujemy dopiero po działaniu użytkownika (nie przy wejściu z linku)
+  const userActed = useRef(false)
 
   // ── miejsce po nazwie („Tczów”): lista obrębów/gmin → mapa przybliża → klik w pole ──────────
   const [places, setPlaces] = useState<Place[]>([])
@@ -230,6 +232,7 @@ export default function Start() {
 
   /** jedno pole wyszukiwania, 3 rodzaje zapytań: identyfikator / „obręb numer” → działka, sama nazwa → miejsce */
   const onSearch = (q: string) => {
+    userActed.current = true
     if (isPlaceQuery(q)) return searchPlace(q)
     setPlaces([])
     setPlaceError(null)
@@ -259,6 +262,7 @@ export default function Start() {
   }
 
   function onMapClick(lon: number, lat: number) {
+    userActed.current = true
     if (infra?.picking) {
       setInfra({ point: [lon, lat], picking: false })
       if (isMobile) setSnap('full')
@@ -290,6 +294,7 @@ export default function Start() {
   }
 
   function locate() {
+    userActed.current = true
     const fail = (message: string) => {
       setSearch({
         phase: 'error',
@@ -417,6 +422,7 @@ export default function Start() {
 
   // ── „Zobacz przykład”: działka + uprawa + data jednym klikiem ───────────────────────────────
   function openExample(e: Example) {
+    userActed.current = true
     pendingCrop.current = e.crop
     setPassportFor(null)
     setAsOf(exampleDate(e))
@@ -550,7 +556,7 @@ export default function Start() {
   const searchBar = (
     <SearchBar
       loading={search.phase === 'loading' || placeBusy}
-      error={placeError ?? (search.phase === 'error' ? t(search.error.title, search.error.vars) : null)}
+      error={placeError ?? (search.phase === 'error' && userActed.current ? t(search.error.title, search.error.vars) : null)}
       places={places}
       onPickPlace={pickPlace}
       candidates={candidates}
@@ -798,7 +804,7 @@ export default function Start() {
                 type="button"
                 onClick={() => setUi({ cards: false })}
                 aria-expanded
-                className="absolute -top-10 left-1/2 z-10 flex h-8 -translate-x-1/2 items-center gap-1.5 rounded-full bg-surface px-3 text-sm font-medium shadow-float hover:bg-sage-soft"
+                className="absolute top-2 right-2 z-10 flex h-8 items-center gap-1 rounded-full bg-surface-2 px-2.5 text-sm font-medium hover:bg-sage-soft"
               >
                 <ChevronDown className="size-4 text-text-muted" aria-hidden /> {t('Ukryj')}
               </button>

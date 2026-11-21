@@ -6,7 +6,6 @@ import {
   MapContainer,
   Marker,
   Popup,
-  ScaleControl,
   TileLayer,
   Tooltip,
   useMap,
@@ -194,7 +193,6 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
           attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         />
       )}
-      <ScaleControl position="bottomleft" imperial={false} />
 
       {parcel && (
         <>

@@ -714,4 +714,13 @@ export const EN: Record<string, string> = {
   'Widok z boku': 'Side view',
   '3D poglądowo: rzeźba z publicznego modelu terenu (~30 m), wysokości ×{x}. Prawy przycisk / Ctrl + przeciągnij = obrót. Analiza korzysta z dokładnego NMT GUGiK.': '3D for illustration: relief from a public terrain model (~30 m), heights ×{x}. Right button / Ctrl + drag = rotate. The analysis uses the precise GUGiK elevation model.',
   'Wczytuję widok 3D…': 'Loading the 3D view…',
+  // kontrolki mapy i lewa kolumna
+  'Zmień rodzaj mapy na: {name}': 'Change map type to: {name}',
+  'Mapa': 'Map',
+  'Satelita': 'Satellite',
+  'Pokaż zwykłą mapę z drogami i nazwami': 'Show a regular map with roads and names',
+  'Pokaż zdjęcie satelitarne (ortofotomapa)': 'Show the satellite photo (orthophoto)',
+  'Działki zapisane gwiazdką': 'Parcels you starred',
+  'Poprzednie paszporty wodne': 'Previous water passports',
+  'Mapa, tryb, język, zapisane dane': 'Map, mode, language, saved data',
 }

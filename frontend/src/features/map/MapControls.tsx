@@ -1,37 +1,24 @@
-import { Crosshair, Layers2, LocateFixed, Minus, Plus, type LucideIcon } from 'lucide-react'
-import { useState, type CSSProperties } from 'react'
+import { Crosshair, Map as MapIcon, Minus, Plus, Satellite, type LucideIcon } from 'lucide-react'
+import type { CSSProperties } from 'react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import type { BaseMap } from './ParcelMap'
 import { useLang } from '@/lib/i18n'
 
-// MapControls: pionowa grupa białych kwadratowych przycisków 44 px (SPEC 5.2, 14)
+// MapControls: przełącznik rodzaju mapy z podpisem + mała grupa przybliżania (SPEC 5.2, 14).
+// Komputer: przyciski 28 px (mniej rzeczy na ekranie); telefon: 44 px (wygodne dla palca).
 
-function CtrlButton({
-  icon: Icon,
-  label,
-  onClick,
-  disabled,
-  pressed,
-}: {
-  icon: LucideIcon
-  label: string
-  onClick: () => void
-  disabled?: boolean
-  pressed?: boolean
-}) {
+function CtrlButton({ icon: Icon, label, onClick }: { icon: LucideIcon; label: string; onClick: () => void }) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <button
           type="button"
           aria-label={label}
-          aria-pressed={pressed}
           onClick={onClick}
-          disabled={disabled}
-          className="flex size-11 items-center justify-center bg-surface text-text transition-colors hover:bg-ok-soft hover:text-brand disabled:text-text-muted/40 disabled:hover:bg-surface"
+          className="flex size-11 items-center justify-center bg-surface text-text transition-colors hover:bg-ok-soft hover:text-brand md:size-7"
         >
-          <Icon className="size-5" aria-hidden />
+          <Icon className="size-5 md:size-4" aria-hidden />
         </button>
       </TooltipTrigger>
       <TooltipContent side="right">{label}</TooltipContent>
@@ -43,7 +30,6 @@ export function MapControls({
   onZoomIn,
   onZoomOut,
   onBackToParcel,
-  onLocate,
   canGoBack,
   baseMap,
   onBaseMapChange,
@@ -53,7 +39,8 @@ export function MapControls({
   onZoomIn: () => void
   onZoomOut: () => void
   onBackToParcel: () => void
-  onLocate: () => void
+  /** „Moja lokalizacja” jest w górnym pasku – tu bez duplikatu (zostaje dla zgodności wywołań) */
+  onLocate?: () => void
   canGoBack: boolean
   baseMap: BaseMap
   onBaseMapChange: (b: BaseMap) => void
@@ -61,51 +48,32 @@ export function MapControls({
   style?: CSSProperties
 }) {
   const { t } = useLang()
-  const [baseOpen, setBaseOpen] = useState(false)
+  // przycisk pokazuje, NA CO się przełączy – zrozumiałe bez znajomości ikon
+  const next: BaseMap = baseMap === 'orto' ? 'osm' : 'orto'
+  const NextIcon = next === 'osm' ? MapIcon : Satellite
+  const nextLabel = next === 'osm' ? 'Mapa' : 'Satelita'
   return (
     <div className={cn('flex flex-col items-start gap-2', className)} style={style}>
-      {/* mały przycisk podkładu mapy (SPEC 5.1) */}
-      <div className="relative">
-        <div className="overflow-hidden rounded-md shadow-float">
-          <CtrlButton icon={Layers2} label={t('Podkład mapy')} onClick={() => setBaseOpen((o) => !o)} pressed={baseOpen} />
-        </div>
-        {baseOpen && (
-          <div
-            role="radiogroup"
-            aria-label={t('Podkład mapy')}
-            className="absolute bottom-0 left-full z-10 ml-2 flex w-44 flex-col gap-1 rounded-xl bg-surface p-1.5 shadow-float max-md:top-0 max-md:right-full max-md:bottom-auto max-md:left-auto max-md:mr-2 max-md:ml-0"
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            onClick={() => onBaseMapChange(next)}
+            aria-label={t('Zmień rodzaj mapy na: {name}', { name: t(nextLabel) })}
+            className="flex h-11 items-center gap-1.5 rounded-full bg-surface pr-3 pl-2.5 text-sm font-semibold shadow-float hover:bg-sage-soft md:h-9"
           >
-            {(
-              [
-                ['orto', 'Ortofotomapa'],
-                ['osm', 'Mapa (OpenStreetMap)'],
-              ] as const
-            ).map(([k, label]) => (
-              <button
-                key={k}
-                type="button"
-                role="radio"
-                aria-checked={baseMap === k}
-                onClick={() => {
-                  onBaseMapChange(k)
-                  setBaseOpen(false)
-                }}
-                className={cn(
-                  'min-h-11 rounded-md px-3 text-left text-sm font-medium',
-                  baseMap === k ? 'bg-ok-soft text-brand' : 'hover:bg-surface-2',
-                )}
-              >
-                {t(label)}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+            <NextIcon className="size-4 text-brand" aria-hidden />
+            {t(nextLabel)}
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="right">
+          {t(next === 'osm' ? 'Pokaż zwykłą mapę z drogami i nazwami' : 'Pokaż zdjęcie satelitarne (ortofotomapa)')}
+        </TooltipContent>
+      </Tooltip>
       <div className="flex flex-col divide-y divide-line overflow-hidden rounded-md shadow-float">
         <CtrlButton icon={Plus} label={t('Przybliż')} onClick={onZoomIn} />
         <CtrlButton icon={Minus} label={t('Oddal')} onClick={onZoomOut} />
-        <CtrlButton icon={Crosshair} label={t('Wróć do mojej działki')} onClick={onBackToParcel} disabled={!canGoBack} />
-        <CtrlButton icon={LocateFixed} label={t('Moja lokalizacja')} onClick={onLocate} />
+        {canGoBack && <CtrlButton icon={Crosshair} label={t('Wróć do mojej działki')} onClick={onBackToParcel} />}
       </div>
     </div>
   )
