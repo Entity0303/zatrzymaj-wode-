@@ -16,7 +16,7 @@ from datetime import date
 
 import numpy as np
 
-from app.analysis.crops import DayInfo
+from app.analysis.crops import KC_BARE, ZE_M, DayInfo
 from app.analysis.et0 import DailyWeather
 from app.analysis.water_balance import (
     MAX_MISSING_YEAR,
@@ -34,9 +34,15 @@ from app.analysis.water_balance import (
 
 REFERENCE_KC = 1.0
 REFERENCE_P = 0.5
-COVER_LABEL = "pokrycie referencyjne FAO-56 (trawa, Kc = 1), profil ok. 1 m"
+COVER_LABEL = ("pokrycie referencyjne FAO-56 (Kc = 1) od marca do lipca, po typowym terminie zbioru goła gleba; "
+               "profil ok. 1 m")
 FIELD_SOURCE = "Model wody w glebie FAO-56 – pokrycie referencyjne"
 MIN_SERIES_DAYS = 30
+
+
+GROWING_MONTHS = (3, 7)  # marzec–lipiec: okres wegetacji typowej uprawy polowej
+_GROWING = DayInfo("referencja", REFERENCE_KC, PROFILE_DEPTH_M, False, False, 0, None)
+_BARE = DayInfo("gola_gleba", KC_BARE, ZE_M, False, True, 0, None)
 
 
 class ReferenceCover:
@@ -47,7 +53,11 @@ class ReferenceCover:
     p = REFERENCE_P
 
     def day_info(self, d: date) -> DayInfo:
-        return DayInfo("referencja", REFERENCE_KC, PROFILE_DEPTH_M, False, False, d.year, None)
+        """1 III–31 VII: pokrycie referencyjne (Kc = 1, korzenie w profilu 1 m); od 1 VIII (po typowym zbiorze zbóż)
+        do końca lutego: goła gleba – parowanie tylko z wierzchniej warstwy (FAO-56 rozdz. 7), D65."""
+        if GROWING_MONTHS[0] <= d.month <= GROWING_MONTHS[1]:
+            return _GROWING
+        return _BARE
 
 
 REFERENCE = ReferenceCover()

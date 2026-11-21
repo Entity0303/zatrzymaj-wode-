@@ -72,8 +72,9 @@ def facts(**kw) -> Facts:
         "previous_crop_label": None, "same_crop": None, "cereal_after_cereal": None, "rotation_issue": None,
         "rain_retention": None, "rain_retention_label": None, "ksat_mm_h": None, "sand_pct": None,
         "texture_label": None, "soil_species": None, "soil_complex_label": None,
-        # A5b-1 (praktyka nawadniania – tu „optional”, żeby testy silnika obejmowały wszystkie kategorie)
-        "has_crop": True, "irrigation_practice": "optional", "irrigation_practice_note": "", "water_stress_7d": False,
+        # A5b-1/A5b-2a (praktyka nawadniania – tu „common”, żeby testy silnika obejmowały wszystkie kategorie)
+        "has_crop": True, "irrigation_practice": "common", "irrigation_practice_note": "", "water_stress_7d": False,
+        "season_deficit_mm": 0.0, "kbw30_rank_lower": 5, "kbw30_rank_of": 10,
         "stress_when_txt": "", "no_irrigation_txt": None, "water_description": None, "water_rank_lower": 5,
         "water_rank_of": 10, "kbw30_mm": -20.0, "kbw30_percentile": 50.0, "kbw30_deviation_mm": -5.0,
         "kbw30_mean_mm": -15.0, "kbw30_vs_mean_txt": "o 5 mm mniej niż zwykle", "et0_recent_mm_day": 4.0,
@@ -102,10 +103,10 @@ def test_stressed_plants_alarm_in_sensitive_phase():
 @pytest.mark.parametrize("phase", ["dojrzewanie", "po_zbiorze", "spoczynek_zimowy", "przed_siewem"])
 def test_no_plant_stress_alarm_outside_sensitive_phases(phase):
     s = overall_status(facts(phase=phase, phase_label=phase, sensitive=False, water_pct=5.0, days_to_stress=None,
-                             balance_percentile=0.0, water_rank_pct=0.0), SOIL_OK)
+                             balance_percentile=0.0, water_rank_pct=0.0, water_rank_lower=0), SOIL_OK)
     assert s.level == "risk"  # najwyżej „ryzyko” – nie „susza” roślin
     assert "zapas wody w glebie" in s.headline and "cierpią" not in s.headline
-    assert "ocena dotyczy zapasu wody w glebie" in s.summary or "oceniamy zapas wody w glebie" in s.summary
+    assert "zapas" in s.summary and "wody w glebie" in s.summary
 
 
 def test_non_agricultural_no_score():

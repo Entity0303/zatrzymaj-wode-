@@ -408,6 +408,8 @@ class Trace:
     season_year: np.ndarray
     dp: np.ndarray  # przesiąkanie
     missing: int
+    eta: np.ndarray | None = None  # ewapotranspiracja rzeczywista (Ks·Kc·ET0) [mm]
+    etc: np.ndarray | None = None  # potencjalna uprawy (Kc·ET0) [mm] – do plonu FAO-33 (A5b-2a)
 
 
 def _resize(st: State, z_new: float, wod: float) -> None:
@@ -444,6 +446,7 @@ def run(
     et0 = np.asarray(et0, float)
     out_d1, out_dt, out_raw, out_zr = np.empty(n), np.empty(n), np.empty(n), np.empty(n)
     out_stress, out_sy, out_dp = np.zeros(n, bool), np.zeros(n, int), np.zeros(n)
+    out_eta, out_etc = np.zeros(n), np.zeros(n)
     phases: list[str] = []
     missing = 0
     for i, d in enumerate(dates):
@@ -465,13 +468,14 @@ def run(
                     out_dp[i] = -st.d2
                     st.d2 = 0.0
             st.d1 = min(st.d1 + et, taw1)
+            out_eta[i], out_etc[i] = et, info.kc * et0[i]
         else:
             missing += 1
         out_d1[i], out_dt[i], out_raw[i], out_zr[i] = st.d1, st.total(), raw1, st.zr
         out_stress[i] = info.sensitive and st.d1 > raw1
         out_sy[i] = info.season_year
         phases.append(info.phase)
-    return Trace(dates, out_d1, out_dt, out_raw, out_zr, phases, out_stress, out_sy, out_dp, missing)
+    return Trace(dates, out_d1, out_dt, out_raw, out_zr, phases, out_stress, out_sy, out_dp, missing, out_eta, out_etc)
 
 
 def initial_state(w: DailyWeather, crop: Crop, wod: float, start: date) -> tuple[State, float | None]:
@@ -612,6 +616,7 @@ class SoilWaterResult:
     days_to_stress: int | None = None
     risk: str | None = None
     irrigation: IrrigationResult | None = None
+    season_deficit_mm: float | None = None  # ETc − ETa w fazach uprawy bieżącego sezonu [mm]
     limitations: list[str] = field(default_factory=list)
 
 
@@ -685,6 +690,8 @@ def soil_water_model(
     # ── dni stresu w bieżącym sezonie (fazy wrażliwe, D32) ──
     in_season = tr.season_year == sy
     res.stress_days_season = int((tr.stress & in_season).sum())
+    grow = in_season & np.isin(np.array(tr.phase), list(IN_SEASON_SCOPE))
+    res.season_deficit_mm = round(float((tr.etc[grow] - tr.eta[grow]).sum()), 0)
     res.season_complete = L >= h
 
     # ── te same okresy w poprzednich latach: dni stresu i stan wody tego samego dnia ──
@@ -728,6 +735,8 @@ def soil_water_model(
         res.risk = risk_class(res.days_to_stress)
         if crop.irrigation_practice == "not_practiced":  # D48: bez dawek i bez planu
             res.irrigation = IrrigationResult("nie_praktykowane", no_irrigation_sentence(crop) + ".")
+        elif crop.irrigation_practice == "optional":  # D64: żadnych dawek – najwyżej informacja o niedoborze
+            res.irrigation = optional_irrigation_info(res)
         else:
             res.irrigation = _irrigation_plan(crop, wod_mm, st, hz, res.days_to_stress, analysis_date, soil_category,
                                               runoff_threshold, runoff_fraction)
@@ -761,6 +770,21 @@ def _describe(res: SoilWaterResult, tr: Trace, info: DayInfo, stressed_now: bool
     if res.water_pct is not None and res.water_pct >= 90:
         return f"{prefix} – zapas wody w glebie odbudowany"
     return f"{prefix} – zapas wody w normie"
+
+
+OPTIONAL_DEFICIT_MIN_MM = 10.0
+OPTIONAL_TAIL = ("nawadnianie opłaca się tylko przy własnym źródle wody i deszczowni; pobór wody może wymagać "
+                 "pozwolenia wodnoprawnego – Wody Polskie")
+
+
+def optional_irrigation_info(res: SoilWaterResult) -> IrrigationResult:
+    """Uprawy nawadniane w Polsce rzadko (kukurydza, tytoń): bez dawek i harmonogramu (D64)."""
+    d = res.season_deficit_mm or 0.0
+    if d >= OPTIONAL_DEFICIT_MIN_MM:
+        return IrrigationResult("nie_praktykowane", f"W tym sezonie brakuje ok. {d:.0f} mm wody; {OPTIONAL_TAIL}")
+    if res.days_to_stress is not None and res.days_to_stress <= RISK_MEDIUM_DAYS:
+        return IrrigationResult("nie_praktykowane", f"Rośliny wkrótce odczują brak wody; {OPTIONAL_TAIL}")
+    return IrrigationResult("niepotrzebne", "Wody na razie wystarcza – w tym sezonie uprawie jej nie brakowało.")
 
 
 MIN_DOSE_INTERVAL_DAYS = 2  # nie częściej niż co 2 dni – realna logistyka deszczowni (D33)

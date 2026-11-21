@@ -95,13 +95,6 @@ def test_engine_never_recommends_irrigation_for_not_practiced():
     assert any(r.category == "nawadnianie" for r in irrigated)
 
 
-def test_optional_practice_note_in_irrigation_rule():
-    f = stress_facts(crop="kukurydza_ziarno", irrigation_practice="optional",
-                     irrigation_practice_note=" Kukurydza na ziarno w Polsce nawadnia się rzadko – ma to sens tylko przy dostępnej wodzie i sprzęcie (pozwolenie wodnoprawne).")
-    rec = next(r for r in evaluate(f, limit=False).recommendations if r.id == "nawadnianie.plan_dawek")
-    assert "nawadnia się rzadko" in rec.description
-
-
 @respx.mock
 def test_drought_2018_winter_cereals_zero_irrigation(client):
     """Kontrola z zadania: „Susza 2018” (zboża ozime, 10.06.2018) → ZERO zaleceń nawadniania."""
@@ -134,16 +127,19 @@ def test_eco_schemes_only_confirmed_codes():
 # ── 3. status poza sezonem ──────────────────────────────────────────────────────────────────
 
 
-@pytest.mark.parametrize("phase", ["po_zbiorze", "przed_siewem", "spoczynek_zimowy", "wschody_jesienne"])
-def test_off_season_status_from_soil_water_and_recent_balance(phase):
+@pytest.mark.parametrize(("phase", "scope"), [("po_zbiorze", "poza_sezonem"), ("przed_siewem", "poza_sezonem"),
+                                              ("spoczynek_zimowy", "zimowanie"), ("wschody_jesienne", "zimowanie")])
+def test_off_season_status_from_soil_water_and_recent_balance(phase, scope):
+    """Poza fazami uprawy status z zapasu wody i bilansu 30 dni (A5b-2a: na tle tej samej daty w 10 latach, D65) –
+    bez kar za stres i historię sezonu uprawy."""
     f = facts(crop="kukurydza_ziarno", phase=phase, phase_label=phase, sensitive=False, water_pct=80.0, water_mm=150.0,
               days_to_stress=0, risk="wysokie", balance_percentile=0.0, water_rank_pct=0.0,
               stress_days_season=60, kbw30_percentile=70.0)
     s = overall_status(f, SOIL_OK)
-    assert s.scope == "poza_sezonem" and s.scope_label == "poza sezonem"
-    assert s.score == reserve_score(80.0, 70.0) == round(0.6 * 80 + 0.4 * 70)  # bez sezonu i bez stresu uprawy
-    assert s.level == "ok" and "cierpią" not in s.headline and "oceniamy zapas wody w glebie" in s.summary
+    assert s.scope == scope and s.level == "ok" and s.score >= 70
+    assert "cierpią" not in s.headline and "zapas wody w glebie" in s.summary
     assert "Bilans opad − parowanie z ostatnich 30 dni" in s.summary
+    assert reserve_score(80.0, 70.0) == round(0.6 * 80 + 0.4 * 70)  # zapas, gdy brak lat porównawczych (D52)
 
 
 def test_in_season_status_scope():

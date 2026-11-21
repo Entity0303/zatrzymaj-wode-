@@ -62,6 +62,7 @@ FACT_META: dict[str, tuple[str, str | None, str]] = {
     "kbw30_mm": ("Bilans wody z ostatnich 30 dni (opad − parowanie)", "mm", "NASA POWER"),
     "kbw30_percentile": ("Lata z niższym bilansem wody w ostatnich 30 dniach", "%", "NASA POWER"),
     "et0_recent_mm_day": ("Parowanie (ET0) w ostatnich 7 dniach", "mm/dzień", "NASA POWER, FAO-56"),
+    "season_deficit_mm": ("Niedobór wody uprawy w tym sezonie", "mm", "Model wody w glebie FAO-56"),
     # teren (A6, NMT GUGiK)
     "slope_max_pct": ("Największy spadek terenu", "%", "NMT GUGiK"),
     "steep_share_pct": ("Część działki o spadku > 5%", "%", "NMT GUGiK"),
@@ -98,6 +99,8 @@ def recent_facts(recent: RecentBalance | None) -> dict[str, Any]:
         "kbw30_percentile": recent.percentile if recent else None,
         "kbw30_deviation_mm": recent.deviation_mm if recent else None,
         "kbw30_mean_mm": recent.mean_mm if recent else None,
+        "kbw30_rank_lower": recent.lower_years if recent else None,
+        "kbw30_rank_of": recent.of_years if recent else None,
     }
     dev30 = v["kbw30_deviation_mm"]
     v["kbw30_vs_mean_txt"] = (
@@ -165,6 +168,7 @@ def build_facts(
         "irrigation_dose_mm": model.irrigation.dose_mm if model and model.irrigation else None,
         "irrigation_total_mm": model.irrigation.total_7d_mm if model and model.irrigation else None,
         "irrigation_when": None,
+        "season_deficit_mm": model.season_deficit_mm if model and model.status == "ok" else None,
         # bilans (historia)
         "balance_mm": wb.current_balance_mm if wb else None,
         "balance_mean_mm": wb.mean_balance_mm if wb else None,

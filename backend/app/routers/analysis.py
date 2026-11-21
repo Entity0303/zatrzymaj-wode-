@@ -24,9 +24,10 @@ from app.analysis.soil import assess_soil
 from app.analysis.soil import to_contract as soil_to_contract
 from app.analysis.causes import build_causes
 from app.analysis.confidence import ConfidenceInputs, reliability
-from app.analysis.crops import CROPS, PHASE_LABELS
+from app.analysis.crops import ALL_CROPS, CROPS, PHASE_LABELS
 from app.analysis import field_state as fs
 from app.analysis import soil_consistency
+from app.analysis import suggestions as sugg
 from app.analysis import terrain_interpret
 from app.analysis.terrain import terrain_for_parcel
 from app.analysis.facts import build_facts, field_facts
@@ -491,6 +492,14 @@ def _hg_share(w, sums) -> float | None:
     return float((m == "HG").mean()) if len(m) else None
 
 
+def parse_history(crop_history: str | None) -> list[str]:
+    try:
+        return sugg.parse_history(crop_history)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail={
+            "message": f"Nieznana uprawa w historii pola: {exc}. Podaj 1–3 uprawy po przecinku albo „nie_wiem”."}) from exc
+
+
 def validate_params(crop: str | None, analysis_date: dt.date, previous_crop: str | None, today: dt.date) -> None:
     """Uprawa opcjonalna (A5b-1): bez niej – „Stan działki”. Nieznana uprawa / zła data – 422."""
     if crop and crop not in CROPS:
@@ -504,19 +513,28 @@ def validate_params(crop: str | None, analysis_date: dt.date, previous_crop: str
 
 
 async def run_analysis(
-    parcel_id: str, crop: str | None, analysis_date: dt.date | None = None, previous_crop: str | None = None
+    parcel_id: str, crop: str | None, analysis_date: dt.date | None = None, previous_crop: str | None = None,
+    crop_history: str | None = None, cultivated_area_ha: float | None = None,
 ) -> AnalysisResponse:
     """Pełna analiza (wspólna dla /api/analysis, raportu PDF i rozgrzewki przykładów demo)."""
     with stale_scope() as stale_hits:
-        return await _run(parcel_id, crop, analysis_date, previous_crop, stale_hits)
+        return await _run(parcel_id, crop, analysis_date, previous_crop, stale_hits, crop_history, cultivated_area_ha)
 
 
 async def _run(parcel_id: str, crop: str | None, date: dt.date | None, previous_crop: str | None,
-               stale_hits: list) -> AnalysisResponse:
+               stale_hits: list, crop_history: str | None = None, cultivated_area_ha: float | None = None,
+               ) -> AnalysisResponse:
     t0 = perf_counter()
     today = dt.date.today()
     analysis_date = date or today
     validate_params(crop, analysis_date, previous_crop, today)
+    crop_hist = parse_history(crop_history)
+    if cultivated_area_ha is not None and not 0 < cultivated_area_ha <= 10_000:
+        raise HTTPException(status_code=422, detail={"message": "Powierzchnia uprawy musi być większa od 0 ha."})
+    if not crop_hist and previous_crop in CROPS:  # zgodność z A5: sam przedplon = historia 1 roku
+        crop_hist = [previous_crop]
+    if not previous_crop and crop_hist and crop_hist[0] in CROPS:
+        previous_crop = crop_hist[0]
     crop = crop or None
     crop_obj = get_crop(crop) if crop else None
     steps: list[LoadingStep] = []
@@ -689,6 +707,31 @@ async def _run(parcel_id: str, crop: str | None, date: dt.date | None, previous_
         soil_capacity=soil_a.soil_capacity,
     )
     steps.append(_step("scoring", "Ocena, pewność, przyczyny i rekomendacje", "done", ms=int((perf_counter() - s) * 1000)))
+    # ── ranking „Co tu posiać?” (A5b-2a): 17 upraw × 10 sezonów na pogodzie i glebie tej działki ──
+    s = perf_counter()
+    suggestions = None
+    area_ha = None
+    if not soil_a.not_agricultural and soil_a.wod_mm is not None:
+        share = soil_a.agricultural_share if soil_a.agricultural_share else 1.0
+        if cultivated_area_ha is not None:
+            area_ha, area_est, area_note = cultivated_area_ha, False, "Powierzchnia uprawy podana przez rolnika."
+        else:
+            area_ha, area_est = round(p.area_ha * share, 2), True
+            area_note = (f"Oszacowanie: powierzchnia działki z geometrii ULDK ({p.area_ha:.2f} ha) × udział gruntów "
+                         f"rolnych wg IUNG ({round(100 * share)}%). Podaj własną powierzchnię uprawy, jeśli jest inna.")
+        rep_map = map_sum.representative if map_sum else None
+        ctx = sugg.Context(
+            wod_mm=soil_a.wod_mm, category=soil_cat, complex_code=rep_map.complex_code if rep_map else None,
+            voivodeship=p.voivodeship, area_ha=area_ha, area_estimated=area_est, area_note=area_note, history=crop_hist,
+            soil_txt=facts.get("soil_txt") or "gleba",
+        )
+        try:
+            suggestions = await asyncio.to_thread(sugg.build, w, analysis_date, ctx, settings.history_years)
+        except Exception as exc:  # noqa: BLE001 – ranking nie może wywrócić analizy
+            steps.append(_step("suggestions", "Ranking „Co tu posiać?”", "error", note=exc.__class__.__name__))
+    if suggestions is not None:
+        steps.append(_step("suggestions", "Ranking „Co tu posiać?” (17 upraw × 10 sezonów)", "done",
+                           ms=int((perf_counter() - s) * 1000)))
     steps.append(_step("total", "Cała analiza", "done", ms=int((perf_counter() - t0) * 1000)))
 
     return AnalysisResponse(
@@ -707,7 +750,9 @@ async def _run(parcel_id: str, crop: str | None, date: dt.date | None, previous_
         field_state=field_c,
         terrain=terrain_c,
         terrain_note=terrain_note,
-        suggestions=None,  # A5b-2: ranking „Co tu posiać?”
+        suggestions=suggestions,
+        crop_history=crop_hist,
+        cultivated_area_ha=area_ha,
         history=history,
         causes=causes,
         recommendations=evaluation.recommendations,
@@ -727,10 +772,13 @@ async def get_analysis(
     crop: str | None = Query(None, description="Uprawa (15 upraw IUNG SMSR); bez uprawy – „Stan działki”"),
     date: dt.date | None = Query(None, description="Data analizy (domyślnie dziś, maks. 10 lat wstecz)"),
     previous_crop: str | None = Query(None, description="Uprawa w poprzednim roku (15 upraw albo 'nie_wiem') – płodozmian"),
+    crop_history: str | None = Query(None, description="Historia pola: 1–3 uprawy po przecinku, pierwsza = rok temu "
+                                                       "(crop_id z crops.csv albo 'nie_wiem'), np. 'zyto,rzepak'"),
+    cultivated_area_ha: float | None = Query(None, description="Powierzchnia uprawy w ha (domyślnie działka × udział gruntów rolnych)"),
 ) -> AnalysisResponse:
     """Pełna analiza wodna działki: ULDK → równolegle pogoda 10 lat, gleba IUNG, klasy EGiB, SoilGrids, mapa
     glebowo-rolnicza, prognoza (dla dziś) → model wody w glebie → ocena → pewność → przyczyny → rekomendacje.
     Awaria jednego źródła = brak danych i niższa pewność; 502 tylko bez działki (ULDK) albo bez pogody.
     Bez `crop` – stan działki (gleba, zapas wody pod pokryciem referencyjnym FAO-56, bilans opad − ET0),
     `crop`, `crop_season`, `irrigation` = null."""
-    return await run_analysis(parcel_id, crop, date, previous_crop)
+    return await run_analysis(parcel_id, crop, date, previous_crop, crop_history, cultivated_area_ha)

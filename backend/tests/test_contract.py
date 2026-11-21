@@ -15,6 +15,7 @@ from app.schemas.analysis import AnalysisResponse
 
 SAMPLE = Path(__file__).resolve().parents[2] / "frontend" / "src" / "mocks" / "analysis.sample.json"
 SAMPLE_NO_CROP = SAMPLE.with_name("analysis.no-crop.sample.json")
+SAMPLE_HISTORY = SAMPLE.with_name("analysis.no-crop-history.sample.json")
 TYPES_TS = Path(__file__).resolve().parents[2] / "frontend" / "src" / "api" / "types.ts"
 
 
@@ -25,10 +26,17 @@ def client():
 
 
 @pytest.mark.skipif(not SAMPLE.exists(), reason="brak katalogu frontend/ obok backend/")
-@pytest.mark.parametrize("sample", [SAMPLE, SAMPLE_NO_CROP], ids=["z_uprawa", "bez_uprawy"])
+@pytest.mark.parametrize("sample", [SAMPLE, SAMPLE_NO_CROP, SAMPLE_HISTORY], ids=["z_uprawa", "bez_uprawy", "z_historia"])
 def test_frontend_sample_matches_contract(sample):
     data = json.loads(sample.read_text(encoding="utf-8"))
     a = AnalysisResponse.model_validate(data)
+    if sample == SAMPLE_HISTORY:  # A5b-2a: ranking z historią pola i podaną powierzchnią
+        assert a.crop_history == ["pszenica_ozima", "rzepak"] and a.cultivated_area_ha == 0.5
+        rank = {i.crop_id: i for g in a.suggestions.groups for i in g.items}
+        assert rank["rzepak"].category == "odradzane" and rank["rzepak"].rotation.status == "naruszenie"
+        assert not a.suggestions.area.estimated
+    if sample != SAMPLE:
+        assert a.suggestions is not None and {g.key for g in a.suggestions.groups} == {"polowe", "wieloletnie"}
     if sample == SAMPLE_NO_CROP:  # A5b-1: odpowiedź bez uprawy
         assert a.crop is None and a.crop_season is None and a.irrigation is None and a.field_state is not None
     # zasady z kontraktu
