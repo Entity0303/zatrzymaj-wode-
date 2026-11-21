@@ -172,7 +172,14 @@ export type CropPhase =
   | 'po_zbiorze'
 
 /** nie_praktykowane – uprawy, których w Polsce się nie nawadnia (zboża, rzepak, strączkowe): bez dawek */
-export type IrrigationStatus = 'zalecane' | 'niepotrzebne' | 'nieuzasadnione_w_fazie' | 'nie_praktykowane' | 'brak_danych'
+export type IrrigationStatus =
+  | 'zalecane'
+  | 'niepotrzebne'
+  | 'nieuzasadnione_w_fazie'
+  | 'nie_praktykowane'
+  /** A5b-2b: kukurydza / tytoń przy niedoborze – bez dawek, tylko informacja w `message` */
+  | 'informacyjne'
+  | 'brak_danych'
 
 /** nawadnianie w praktyce w Polsce: nie stosuje się / rzadko / typowe */
 export type IrrigationPractice = 'not_practiced' | 'optional' | 'common'
@@ -578,9 +585,38 @@ export type SuggestionGroup = {
 }
 
 /** ranking upraw dla tej działki i gleby na pogodzie z 10 sezonów; plony zawsze BEZ nawadniania */
+/** A5b-2b: uprawa wieloletnia – bez kategorii, niska pewność, osobna analiza opłacalności */
+export type PerennialSuggestion = {
+  crop_id: RankingCropId
+  label: string
+  yield_typical_t_ha?: number | null
+  yield_weak_t_ha?: number | null
+  weak_year: number
+  drought_risk_years: number
+  years_simulated: number
+  total_typical_t?: number | null
+  total_weak_t?: number | null
+  soil_suitability: SoilSuitability
+  soil_suitability_label: string
+  irrigation_practice: IrrigationPractice
+  confidence?: Confidence
+  note: string
+  source_tags?: SourceTag[]
+}
+
+export type PerennialSection = {
+  /** 'Uprawy wieloletnie – inwestycja na lata' */
+  label: string
+  note: string
+  items: PerennialSuggestion[]
+}
+
 export type CropSuggestions = {
   seasons: number[]
+  /** od A5b-2b tylko „uprawy polowe” */
   groups: SuggestionGroup[]
+  /** A5b-2b: uprawy wieloletnie osobno, bez ✅/🟡/❌ */
+  perennials?: PerennialSection | null
   area: CultivatedArea
   crop_history?: string[]
   /** bez historii: 'Podaj, co rosło w ostatnich latach – uwzględnimy płodozmian.' */
@@ -589,6 +625,53 @@ export type CropSuggestions = {
   limitations?: string[]
   compute_ms?: number | null
   source_tag: SourceTag
+}
+
+// ── Werdykt działki (A5b-2b) ──────────────────────────────────────────────────────────────
+
+export type VerdictKind = 'gleba' | 'opady' | 'teren' | 'uprawy' | 'woda' | 'uprawa_wybrana'
+/** ok #5BB37F / warn #E8B931 / bad #C8453B */
+export type VerdictLevel = 'ok' | 'warn' | 'bad'
+
+export type VerdictStatement = {
+  kind: VerdictKind
+  level: VerdictLevel
+  /** 1–2 proste zdania z liczbami */
+  text: string
+  numbers?: Record<string, number | string | null>
+}
+
+export type VerdictCrop = {
+  crop_id: RankingCropId
+  label: string
+  /** dla ❌ – jeden powód */
+  reason?: string | null
+}
+
+/** werdykt działki w 10 sekund – deterministyczny, bez AI */
+export type Verdict = {
+  /** np. 'Dobra działka z wilgotnym obniżeniem' */
+  headline: string
+  level: VerdictLevel
+  /** 4–6 pozycji */
+  statements: VerdictStatement[]
+  /** ✅ 2–4 najlepsze uprawy polowe */
+  crops_good?: VerdictCrop[]
+  /** ❌ odradzane z jednym powodem */
+  crops_bad?: VerdictCrop[]
+  note: string
+}
+
+/** analiza po punkcie bez granic działki (ULDK nie odpowiada) */
+export type ApproximateArea = {
+  /** [lon, lat] */
+  center: number[]
+  side_m: number
+  area_ha: number
+  reason: string
+  /** 'Obszar przybliżony – brak granic działki z ULDK…' */
+  note: string
+  voivodeship_note?: string | null
 }
 
 // ── Teren i spływ wody z NMT (A6) ──────────────────────────────────────────────────────────
@@ -648,7 +731,8 @@ export type Terrain = {
   /** zawsze 4 strefy w stałej kolejności: górka, stok, płasko, dołek */
   zones: TerrainZone[]
   zone_share_pct: Record<TerrainZoneKey, number>
-  soil_group: 'lekka' | 'zwiezla' | 'nieznana'
+  /** A5b-2b: etykieta ważona udziałem; 'zwiezla' – już nieużywane */
+  soil_group: 'lekka' | 'srednia' | 'ciezka' | 'organiczna' | 'zwiezla' | 'nieznana'
   soil_group_label: string
   /** 2–3 zdania o terenie prostym językiem */
   summary: string
@@ -701,6 +785,10 @@ export type AnalysisResponse = {
   terrain?: Terrain | null
   /** A6: dlaczego brak analizy terenu */
   terrain_note?: string | null
+  /** A5b-2b: werdykt działki (null: grunt nierolny / brak danych) */
+  verdict?: Verdict | null
+  /** A5b-2b: obszar przybliżony zamiast działki (analiza po punkcie lon/lat) */
+  approximate_area?: ApproximateArea | null
   history: History
   causes: Cause[]
   recommendations: Recommendation[]

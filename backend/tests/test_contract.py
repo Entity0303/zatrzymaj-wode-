@@ -36,7 +36,7 @@ def test_frontend_sample_matches_contract(sample):
         assert rank["rzepak"].category == "odradzane" and rank["rzepak"].rotation.status == "naruszenie"
         assert not a.suggestions.area.estimated
     if sample != SAMPLE:
-        assert a.suggestions is not None and {g.key for g in a.suggestions.groups} == {"polowe", "wieloletnie"}
+        assert a.suggestions is not None and {g.key for g in a.suggestions.groups} <= {"polowe", "wieloletnie"}
     if sample == SAMPLE_NO_CROP:  # A5b-1: odpowiedź bez uprawy
         assert a.crop is None and a.crop_season is None and a.irrigation is None and a.field_state is not None
     # zasady z kontraktu
@@ -121,3 +121,20 @@ def test_openapi_exposes_contract(client):
     schemas = client.get("/openapi.json").json()["components"]["schemas"]
     for name in ("AnalysisResponse", "Indicators", "Recommendation", "Reliability", "Parcel", "Forecast"):
         assert name in schemas
+
+
+SAMPLE_WEAK_VERDICT = SAMPLE.with_name("verdict.weak.sample.json")
+
+
+@pytest.mark.skipif(not SAMPLE_WEAK_VERDICT.exists(), reason="brak katalogu frontend/ obok backend/")
+def test_verdict_samples_match_contract():
+    """A5b-2b: werdykt dobrej (201305, w analysis.sample.json) i słabej działki (piasek, obszar przybliżony)."""
+    from app.schemas.analysis import ApproximateArea, Verdict
+
+    good = AnalysisResponse.model_validate(json.loads(SAMPLE.read_text(encoding="utf-8"))).verdict
+    assert good is not None and good.level in ("ok", "warn") and not good.crops_bad
+    weak = json.loads(SAMPLE_WEAK_VERDICT.read_text(encoding="utf-8"))
+    v = Verdict.model_validate(weak["verdict"])
+    ApproximateArea.model_validate(weak["approximate_area"])
+    assert v.level == "bad" and {"pszenica_ozima", "rzepak"} <= {c.crop_id for c in v.crops_bad}
+    assert "zyto" in {c.crop_id for c in v.crops_good}

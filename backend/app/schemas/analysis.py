@@ -302,8 +302,10 @@ CropPhase = Literal[
 ]
 """Faza uprawy w dacie analizy. Wrażliwe na niedobór (stres, nawadnianie): poczatkowa, rozwoj, pelnia."""
 
-IrrigationStatus = Literal["zalecane", "niepotrzebne", "nieuzasadnione_w_fazie", "nie_praktykowane", "brak_danych"]
-"""nie_praktykowane – uprawy, których w Polsce się nie nawadnia (zboża, rzepak, strączkowe): bez dawek (D48)."""
+IrrigationStatus = Literal["zalecane", "niepotrzebne", "nieuzasadnione_w_fazie", "nie_praktykowane", "informacyjne",
+                           "brak_danych"]
+"""nie_praktykowane – uprawy, których w Polsce się nie nawadnia (zboża, rzepak, strączkowe): bez dawek (D48);
+informacyjne – uprawy nawadniane rzadko (kukurydza, tytoń) przy niedoborze wody: bez dawek, tylko informacja (D64, D67)."""
 
 IrrigationPractice = Literal["not_practiced", "optional", "common"]
 """Nawadnianie w praktyce w Polsce: nie stosuje się / rzadko (gdy jest woda i sprzęt) / typowe."""
@@ -450,11 +452,38 @@ class SuggestionGroup(Contract):
     items: list[CropSuggestion] = Field(description="Od najlepszej: polecane → możliwe → odradzane")
 
 
+class PerennialSuggestion(Contract):
+    """Uprawa wieloletnia – bez kategorii ✅/🟡/❌ (inwestycja na lata, osobna analiza opłacalności), niska pewność."""
+
+    crop_id: RankingCropId
+    label: str
+    yield_typical_t_ha: float | None = None
+    yield_weak_t_ha: float | None = None
+    weak_year: int
+    drought_risk_years: int = Field(ge=0)
+    years_simulated: int
+    total_typical_t: float | None = None
+    total_weak_t: float | None = None
+    soil_suitability: SoilSuitability
+    soil_suitability_label: str
+    irrigation_practice: IrrigationPractice
+    confidence: Confidence = "ograniczona"
+    note: str = Field(description="Np. 'Wymaga osobnej analizy opłacalności…'")
+    source_tags: list[SourceTag] = Field(default_factory=list)
+
+
+class PerennialSection(Contract):
+    label: str = Field(description="'Uprawy wieloletnie – inwestycja na lata'")
+    note: str = Field(description="Wymaga osobnej analizy opłacalności – nie oceniamy jak upraw polowych")
+    items: list[PerennialSuggestion]
+
+
 class CropSuggestions(Contract):
     """Ranking upraw dla tej działki i gleby na pogodzie z 10 sezonów. Plony zawsze BEZ nawadniania."""
 
     seasons: list[int] = Field(description="Sezony użyte w symulacji")
-    groups: list[SuggestionGroup]
+    groups: list[SuggestionGroup] = Field(description="Od A5b-2b tylko „uprawy polowe” (wieloletnie – w `perennials`)")
+    perennials: PerennialSection | None = Field(None, description="Uprawy wieloletnie – osobno, bez kategorii, niska pewność")
     area: CultivatedArea
     crop_history: list[str] = Field(default_factory=list, description="Historia upraw z zapytania (0 = rok temu)")
     rotation_hint: str | None = Field(None, description="Bez historii: 'Podaj, co rosło w ostatnich latach…'")
@@ -462,6 +491,48 @@ class CropSuggestions(Contract):
     limitations: list[str] = Field(default_factory=list)
     compute_ms: int | None = None
     source_tag: SourceTag
+
+
+# ── Werdykt działki (A5b-2b) ────────────────────────────────────────────────────────────────
+
+VerdictKind = Literal["gleba", "opady", "teren", "uprawy", "woda", "uprawa_wybrana"]
+VerdictLevel = Literal["ok", "warn", "bad"]
+
+
+class VerdictStatement(Contract):
+    kind: VerdictKind
+    level: VerdictLevel = Field(description="ok #5BB37F / warn #E8B931 / bad #C8453B")
+    text: str = Field(description="1–2 proste zdania z liczbami (szablony rules/verdict.yaml)")
+    numbers: dict[str, float | int | str | None] = Field(default_factory=dict, description="Liczby użyte w zdaniu")
+
+
+class VerdictCrop(Contract):
+    crop_id: RankingCropId
+    label: str
+    reason: str | None = Field(None, description="Dla ❌ – jeden powód, np. 'za mało wody na tej glebie'")
+
+
+class Verdict(Contract):
+    """Werdykt działki w 10 sekund: gdzie dobrze, gdzie źle, co siać, czego nie siać, co zrobić z wodą.
+    Deterministyczny – te same dane dają te same zdania (bez AI)."""
+
+    headline: str = Field(description="Jedno zdanie ogólne, np. 'Dobra działka z wilgotnym obniżeniem'")
+    level: VerdictLevel
+    statements: list[VerdictStatement] = Field(description="4–6 pozycji: gleba, opady, teren, uprawy, woda, uprawa_wybrana")
+    crops_good: list[VerdictCrop] = Field(default_factory=list, description="✅ 2–4 najlepsze uprawy polowe")
+    crops_bad: list[VerdictCrop] = Field(default_factory=list, description="❌ odradzane (z jednym powodem)")
+    note: str = Field(description="Skąd zdania: obliczenia z danych działki, bez modelu językowego")
+
+
+class ApproximateArea(Contract):
+    """Analiza po punkcie bez granic działki (ULDK nie odpowiada / punkt poza znanymi działkami)."""
+
+    center: list[float] = Field(description="[lon, lat] klikniętego punktu")
+    side_m: float = Field(description="Bok kwadratu, m (100 m = 1 ha)")
+    area_ha: float
+    reason: str = Field(description="Dlaczego obszar przybliżony, np. 'ULDK GUGiK: usługa chwilowo ogranicza ruch'")
+    note: str = Field(description="'Obszar przybliżony – brak granic działki z ULDK'")
+    voivodeship_note: str | None = Field(None, description="Jak ustalono województwo (do plonów GUS)")
 
 
 # ── Teren i spływ wody z NMT (A6) ───────────────────────────────────────────────────────────
@@ -520,8 +591,9 @@ class Terrain(Contract):
 
     zones: list[TerrainZone] = Field(description="Zawsze 4 strefy: górka, stok, płasko, dołek (kolejność stała)")
     zone_share_pct: dict[str, float] = Field(description="Udziały stref, %: sucha_gorka, stok, plasko, mokry_dolek")
-    soil_group: Literal["lekka", "zwiezla", "nieznana"] = Field(description="Gleba użyta w ocenie stref (kat. I–II lekka, III–IV zwięzła)")
-    soil_group_label: str = Field(description="Np. 'gleba zwięzła (kat. III)'")
+    soil_group: Literal["lekka", "srednia", "ciezka", "organiczna", "zwiezla", "nieznana"] = Field(
+        description="Gleba użyta w ocenie stref – etykieta ważona udziałem (A5b-2b); 'zwiezla' – już nieużywane")
+    soil_group_label: str = Field(description="Np. 'gleba średnia: glina lekka pylasta 78%, piasek gliniasty lekki 22%'")
     summary: str = Field(description="2–3 zdania o terenie prostym językiem")
     relief_m: float | None = Field(None, description="Różnica wysokości w działce, m")
     elev_min_m: float | None = None
@@ -651,6 +723,8 @@ class AnalysisResponse(Contract):
     soil: Soil
     field_state: FieldState | None = Field(None, description="Stan działki bez względu na uprawę (null: grunt nierolny / brak danych)")
     terrain: Terrain | None = Field(None, description="Teren i spływ wody z NMT (null = brak danych, powód w terrain_note)")
+    verdict: Verdict | None = Field(None, description="Werdykt działki (null: grunt nierolny / brak danych)")
+    approximate_area: ApproximateArea | None = Field(None, description="Obszar przybliżony zamiast działki (analiza po punkcie)")
     terrain_note: str | None = Field(None, description="Dlaczego brak analizy terenu, np. 'NMT GUGiK nie odpowiada'")
     suggestions: CropSuggestions | None = Field(None, description="Ranking „Co tu posiać?” (null: grunt nierolny / brak danych)")
     crop_history: list[str] = Field(default_factory=list, description="Historia upraw z zapytania: 1–3 lata, indeks 0 = rok temu (crop_id albo 'nie_wiem')")

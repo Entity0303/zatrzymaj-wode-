@@ -9229,5 +9229,92 @@
       "note": null,
       "duration_ms": 517
     }
-  ]
+  ],
+  "verdict": {
+    "headline": "Dobra działka z wilgotnym obniżeniem",
+    "level": "warn",
+    "statements": [
+      {
+        "kind": "gleba",
+        "level": "ok",
+        "text": "Na działce są dwie gleby: 78% – glina lekka pylasta i 22% – piasek gliniasty lekki. Przeważa gleba dobra – trzyma wodę (ok. 166 mm wody dostępnej dla roślin).",
+        "numbers": {
+          "wod_mm": 166,
+          "grupa": "srednia",
+          "srednia_kategoria": 2.78,
+          "zrodlo": "mapa glebowo-rolnicza",
+          "udzial_a": 78,
+          "udzial_b": 22
+        }
+      },
+      {
+        "kind": "opady",
+        "level": "warn",
+        "text": "W maju–czerwcu często brakuje wody – w 3 z 10 lat; średnio 704 mm opadów na rok (407 mm od kwietnia do września). Dla porównania: średnio w Polsce ok. 600 mm na rok.",
+        "numbers": {
+          "year_mm": 704,
+          "season_mm": 407,
+          "deficit_years": 3,
+          "years": 10,
+          "first": 2016,
+          "last": 2025,
+          "norma_mm": 600
+        }
+      },
+      {
+        "kind": "teren",
+        "level": "warn",
+        "text": "56% działki to stok – po ulewie część wody spływa w dół i zabiera glebę. 32% działki to obniżenie, gdzie spływa i zbiera się woda – wilgotniej, po ulewach może być podmokło.",
+        "numbers": {
+          "sucha_gorka": 0,
+          "stok": 56,
+          "plasko": 12,
+          "mokry_dolek": 32
+        }
+      },
+      {
+        "kind": "uprawy",
+        "level": "ok",
+        "text": "Bezpiecznie posiejesz rzepak, pszenicę ozimą, jęczmień ozimy i jęczmień jary. W najsuchszym 2018 roku pszenica straciłaby tu ok. 21% plonu. Na tej ziemi żadna z popularnych upraw nie jest odradzana.",
+        "numbers": {
+          "polecane": 9,
+          "odradzane": 0,
+          "mozliwe": 5
+        }
+      },
+      {
+        "kind": "woda",
+        "level": "warn",
+        "text": "Co zrobić z wodą: zatrzymaj wodę z jesienno-zimowych opadów i roztopów; sprawdź rów przy miejscu odpływu – zastawka zatrzyma wodę; do rozważenia: małe oczko przy odpływie.",
+        "numbers": {
+          "dzialania": 3
+        }
+      }
+    ],
+    "crops_good": [
+      {
+        "crop_id": "rzepak",
+        "label": "Rzepak i rzepik",
+        "reason": null
+      },
+      {
+        "crop_id": "pszenica_ozima",
+        "label": "Pszenica ozima",
+        "reason": null
+      },
+      {
+        "crop_id": "jeczmien_ozimy",
+        "label": "Jęczmień ozimy",
+        "reason": null
+      },
+      {
+        "crop_id": "jeczmien_jary",
+        "label": "Jęczmień jary",
+        "reason": null
+      }
+    ],
+    "crops_bad": [],
+    "note": "Zdania policzone z danych tej działki (gleba, pogoda z 10 lat, teren, symulacja upraw) według stałych szablonów – bez modelu językowego; te same dane dają te same zdania."
+  },
+  "approximate_area": null
 }

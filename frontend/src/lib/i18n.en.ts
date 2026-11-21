@@ -414,6 +414,7 @@ export const EN: Record<string, string> = {
   'Niepotrzebne': 'Not needed',
   'Nie w tej fazie': 'Not at this stage',
   'Nie stosuje się': 'Not practised',
+  'Informacja': 'Information',
   'Dawka': 'Dose',
   'Pierwsza': 'First',
   'Powtarzaj': 'Repeat',
