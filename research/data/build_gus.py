@@ -57,6 +57,17 @@ MAPPING: dict[str, tuple[list[int], list[int] | None, str]] = {
                        "borówki, pozostałe jagodowe (bez truskawek); w BDL od 2021"),
     "truskawki": ([1751742], [1751740], "plon wyliczony = zbiory / powierzchnia; w BDL od 2021"),
     "tyton": ([47768], None, ""),
+    # C2b – gatunki zbóż i łubin. GUS BDL podaje formę ozimą/jarą tylko w powierzchni zasiewów
+    # (temat P1877, bez danych dla województw) – plon jest dla gatunku ogółem.
+    "pszenica_ozima": ([4332], None, "pszenica ogółem (ozima + jara); forma ozima to ok. 85–90% powierzchni (szac.)"),
+    "zyto": ([4338], None, "żyto ogółem (w praktyce prawie wyłącznie ozime)"),
+    "pszenzyto_ozime": ([4356], None, "pszenżyto ogółem (ozime + jare); forma ozima przeważa (szac.)"),
+    "jeczmien_ozimy": ([4344], None, "jęczmień ogółem – GUS nie podaje plonu osobno dla formy ozimej; "
+                                     "jęczmień ozimy plonuje zwykle wyżej niż ogółem (szac.)"),
+    "jeczmien_jary": ([4344], None, "jęczmień ogółem – GUS nie podaje plonu osobno dla formy jarej"),
+    "owies": ([4350], None, "owies ogółem"),
+    "lubin": ([47740], None, "ZASTĘPNIK: łubinu brak w BDL (wyszukiwanie „łubin” – 0 zmiennych); "
+                             "użyto roślin strączkowych razem – plon łubinu może się różnić"),
 }
 MISSING = {"chmiel": "brak zmiennej plonu, zbiorów ani powierzchni chmielu w BDL na poziomie województw "
                      "(są tylko ceny skupu i płatności ARiMR)"}

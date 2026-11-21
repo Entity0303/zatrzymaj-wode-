@@ -5,9 +5,9 @@ Pobrano i sprawdzono: **2026-11-21**.
 
 | Plik | Co to jest |
 |---|---|
-| `crops.csv` | 15 upraw IUNG SMSR: Kc, fazy, terminy, Ky, korzenie, p, nawadnianie, płodozmian, gleby, źródła |
+| `crops.csv` | 15 upraw IUNG SMSR + 7 gatunków (C2b): Kc, fazy, terminy, Ky, korzenie, p, nawadnianie, płodozmian, gleby, źródła |
 | `gus_variables.csv` | zmienna GUS BDL „plon z 1 ha” dla każdej uprawy (sprawdzone na żywo) + osobny wiersz dla braków |
-| `gus_yields_woj.csv` | plony dt/ha: 16 województw × 2016–2025 (2029 wierszy) |
+| `gus_yields_woj.csv` | plony dt/ha: 16 województw × 2016–2025 (3149 wierszy) |
 | `build_gus.py` | odtwarza oba pliki GUS; odpowiedzi API są zapisane w `gus_raw/`, więc drugi raz GUS nie jest odpytywany |
 | `validate.py`, `test_validate.py` | walidacja spójności (`python research/data/validate.py`, `python -m pytest research/data -q`) |
 
@@ -33,6 +33,28 @@ Pobrano i sprawdzono: **2026-11-21**.
 - **`ky_fazy` kukurydzy i zbóż jarych**: szacunek. W sprawdzonej tabeli są tylko wartości sezonowe.
 - **Tytoń**: Kc, fazy, Zr i p to założenie backendu, bo w FAO-56 go nie ma.
 - **Cała część agrotechniczna**: przerwy, przedplony, gleby i `irrigation_practice`.
+
+## C2b – gatunki zbóż i łubin
+- **Nowe wiersze**: `pszenica_ozima`, `zyto`, `pszenzyto_ozime`, `jeczmien_ozimy`, `jeczmien_jary`, `owies`, `lubin`.
+- **`group_id`**: backend liczy wodę modelem grupy (`zboza_ozime`, `zboza_jare`, `straczkowe`). Dla upraw bez gatunków `group_id` = `crop_id`. Gatunki nie mają własnego `backend_id`.
+- **Fazy gatunków**: proporcje FAO-56 grupy przeskalowane do terminów gatunku (np. jęczmień ozimy zbiór 5 VII, owies 10 VIII), tą samą metodą co w backendzie.
+- **`in_ranking`**: `nie` dla `zboza_ozime` i `zboza_jare` (zastąpione przez gatunki) oraz `rzepak_jesien`, `chmiel`, `tyton`. W rankingu jest 17 upraw.
+  - `straczkowe` zostaje w rankingu jako groch, bobik i fasola, bo łubin ich nie zastępuje.
+- **`wrazliwosc_na_susze`** (niska / srednia / wysoka): nowa kolumna dla wszystkich upraw, szac. Gatunki zbóż od najmniej wrażliwego: żyto (niska, Ky 0,80) < pszenżyto, jęczmień ozimy (0,90) < pszenica ozima (1,00, FAO-33) < jęczmień jary (1,10) < owies (1,15).
+- **Ky**: FAO-33 zawiera tylko pszenicę. Ky żyta, pszenżyta, jęczmienia, owsa i łubinu to szacunki, które mają oddawać kolejność wrażliwości, a nie dokładne wartości.
+- **Gleby (kompleksy przydatności rolniczej)**:
+  - pszenica: odpowiednie 1, 2, 3, 4, 8; nieodpowiednie 5, 6, 7, 9 i kat. IUNG I,
+  - żyto: odpowiednie 3–7 oraz kat. I–III,
+  - pszenżyto: 2–5, 8,
+  - jęczmień: 1, 2, 4, 8 (nie znosi gleb kwaśnych),
+  - owies: 4, 5, 8, 9 (znosi gleby kwaśne i wilgotne, nie znosi suchych piasków),
+  - łubin: 4–7 i kat. I–II (gleby lekkie i kwaśne).
+
+  Na tej podstawie działa werdykt „na kompleksie 6–7 nie siej pszenicy, siej żyto” (test `test_wheat_vs_rye_soils_and_drought`).
+- **Przedplony**: pszenica jest wrażliwa na zboża kłosowe i kukurydzę na ziarno, a owies jest dla niej przedplonem fitosanitarnym. Żyto znosi uprawę po sobie (przerwa 0). Owies wymaga przerwy 3 lat (mątwik owsiany), łubin 4 lat (fuzarioza, antraknoza).
+- **GUS**: żyto 4338, pszenżyto 4356 i owies 4350 to plony gatunku ogółem.
+  - Formy ozime i jare GUS rozdziela tylko w powierzchni zasiewów (temat P1877), i to nie na poziomie województw. Dlatego `jeczmien_ozimy` i `jeczmien_jary` mają wspólną zmienną 4344 (jęczmień ogółem).
+  - **Łubinu nie ma w BDL**: wyszukiwanie „łubin”, „bobik” i „groch” daje 0 zmiennych. Zastępnikiem są rośliny strączkowe razem (47740), oznaczone „ZASTĘPNIK” w `uwagi`.
 
 ## GUS BDL – ograniczenia
 - **Ozime i jare**: GUS nie rozdziela form. Dla zbóż ozimych zastępnikiem jest pszenica ogółem (4332), dla jarych jęczmień ogółem (4344).

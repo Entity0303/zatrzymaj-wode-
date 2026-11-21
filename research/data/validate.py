@@ -13,13 +13,15 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 
-REQUIRED = ["crop_id", "name_pl", "backend_id", "iung_name", "kc_ini", "kc_mid", "kc_end",
+REQUIRED = ["crop_id", "name_pl", "backend_id", "group_id", "in_ranking", "iung_name",
+            "kc_ini", "kc_mid", "kc_end",
             "faza_ini_dni", "faza_dev_dni", "faza_mid_dni", "faza_late_dni",
-            "typowy_siew", "typowy_zbior", "ozima", "ky_total", "ky_fazy",
+            "typowy_siew", "typowy_zbior", "ozima", "ky_total", "ky_fazy", "wrazliwosc_na_susze",
             "root_depth_min_m", "root_depth_max_m", "p_depletion", "irrigation_practice",
             "min_przerwa_lat", "zle_przedplony", "dobre_przedplony",
             "gleby_odpowiednie", "gleby_nieodpowiednie", "zrodla"]
 IRRIGATION = {"not_practiced", "optional", "common"}
+SENSITIVITY = {"niska", "srednia", "wysoka"}
 PHASE_KEYS = {"ini", "dev", "mid", "late"}
 IUNG_CATS = {"I", "II", "III", "IV"}
 KOMPLEKSY = {str(i) for i in range(1, 15)} | {"1z", "2z", "3z"}
@@ -79,8 +81,23 @@ def validate_crops(rows: list[dict]) -> list[str]:
     if dup:
         errs.append(f"powtórzone crop_id: {sorted(dup)}")
     known = set(ids)
+    by_id = {r["crop_id"]: r for r in rows}
     for r in rows:
         cid = r["crop_id"] or "?"
+        # grupa modelu wody i ranking
+        g = r["group_id"]
+        if g not in known:
+            errs.append(f"{cid}: group_id {g!r} nie istnieje")
+        elif by_id[g]["group_id"] != g:
+            errs.append(f"{cid}: group_id {g!r} nie jest grupą (jej group_id = {by_id[g]['group_id']!r})")
+        elif g != cid and by_id[g]["ozima"] != r["ozima"]:
+            errs.append(f"{cid}: ozima={r['ozima']} różni się od grupy {g} ({by_id[g]['ozima']})")
+        if g != cid and r["backend_id"]:
+            errs.append(f"{cid}: gatunek w grupie {g} nie powinien mieć własnego backend_id")
+        if r["in_ranking"] not in ("tak", "nie"):
+            errs.append(f"{cid}: in_ranking ma być tak/nie ({r['in_ranking']!r})")
+        if r["wrazliwosc_na_susze"] not in SENSITIVITY:
+            errs.append(f"{cid}: wrazliwosc_na_susze ∉ {sorted(SENSITIVITY)}")
         if not re.fullmatch(r"[a-z0-9_]+", cid):
             errs.append(f"{cid}: crop_id tylko [a-z0-9_]")
         for k in ("name_pl", "iung_name"):
@@ -144,6 +161,12 @@ def validate_crops(rows: list[dict]) -> list[str]:
         _soils(r["gleby_nieodpowiednie"], "gleby_nieodpowiednie", errs, cid)
         if len(r["zrodla"].strip()) < 10:
             errs.append(f"{cid}: brak źródła (zrodla)")
+    # grupa z gatunkami musi być w rankingu sama albo przez co najmniej jeden gatunek
+    # (uprawy bez gatunków, np. chmiel, mogą być celowo poza rankingiem)
+    for g in {r["group_id"] for r in rows if r["group_id"] in known}:
+        members = [r for r in rows if r["group_id"] == g]
+        if len(members) > 1 and not any(m["in_ranking"] == "tak" for m in members):
+            errs.append(f"grupa {g}: ani grupa, ani żaden gatunek nie jest w rankingu")
     return errs
 
 
@@ -152,7 +175,7 @@ def validate_gus(crop_ids: set[str], variables: list[dict], yields: list[dict]) 
     for r in variables:
         if r["crop_id"] not in crop_ids:
             errs.append(f"gus_variables: nieznane crop_id {r['crop_id']!r}")
-        if not r["var_id"] and "BRAK DANYCH" not in r["uwagi"]:
+        if r["crop_id"] in crop_ids and not r["var_id"] and "BRAK DANYCH" not in r["uwagi"]:
             errs.append(f"gus_variables: {r['crop_id']} bez var_id i bez opisu braku")
     covered = {r["crop_id"] for r in variables}
     if crop_ids - covered:
