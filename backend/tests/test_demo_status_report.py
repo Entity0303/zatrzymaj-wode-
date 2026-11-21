@@ -99,7 +99,7 @@ def test_warmup_disabled_state():
 
 def _mock_probes(fail: str | None = None):
     urls = [settings.uldk_url, settings.nasa_power_url, settings.open_meteo_forecast_url, settings.iung_wms_url,
-            settings.kieg_url, settings.soilgrids_url, settings.soil_map_url]
+            settings.kieg_url, settings.soilgrids_url, settings.soil_map_url, settings.nmt_url]
     for u in urls:
         body = "0\n201305_2.0038.6/1\n" if u == settings.uldk_url else "{}"
         respx.get(u).mock(return_value=httpx.Response(503) if u == fail else httpx.Response(200, text=body))
@@ -109,7 +109,7 @@ def _mock_probes(fail: str | None = None):
 def test_status_all_ok(client):
     _mock_probes()
     b = client.get("/api/status").json()
-    assert b["all_ok"] is True and len(b["services"]) == 7
+    assert b["all_ok"] is True and len(b["services"]) == 8
     names = [s["name"] for s in b["services"]]
     assert names[:3] == ["ULDK GUGiK", "NASA POWER", "Open-Meteo"] and "SoilGrids (ISRIC)" in names
     assert all(s["response_ms"] is not None and s["cache_entries"] >= 0 for s in b["services"])
@@ -147,8 +147,7 @@ def test_uldk_redirect_is_retried():
 
 
 @respx.mock
-def test_uldk_persistent_redirect_is_source_error(monkeypatch):
-    monkeypatch.setattr(uldk, "RETRY_DELAY_S", 0)
+def test_uldk_persistent_redirect_is_source_error():
     respx.get(settings.uldk_url).mock(return_value=httpx.Response(302, headers={"location": "https://x/resp/uldk.php"}))
     with pytest.raises(SourceError) as e:
         asyncio.run(uldk.by_id("201305_2.0038.6/1"))
@@ -175,7 +174,8 @@ def test_report_pdf_with_polish_text(client):
     assert ortho.called
     text = _pdf_text(r.content)
     for phrase in ("Paszport wodny działki", "Co mogę zrobić?", "Skąd te dane", "Gleba i teren", "Dlaczego?",
-                   "Wygenerowano", "Raport ma charakter pomocniczy", "Zboża ozime", "glina lekka pylasta", "Wody Polskie"):
+                   "Wygenerowano", "Raport ma charakter pomocniczy", "Zboża ozime", "glina lekka pylasta", "Zbóż w Polsce się nie nawadnia",
+                   "Stan działki"):
         assert phrase in text, phrase
     assert "ż" in text and "ą" in text and "ł" in text and "ę" in text  # polskie znaki w tekście PDF
     pages = len(PdfReader(io.BytesIO(r.content)).pages)
@@ -192,8 +192,8 @@ def test_report_pdf_without_orthophoto(client):
 
 @respx.mock
 def test_report_errors_like_analysis(client):
-    r = client.get("/api/report.pdf", params={"parcel_id": "x"})
-    assert r.status_code == 422 and "Wybierz uprawę" in r.json()["detail"]["message"]
+    r = client.get("/api/report.pdf", params={"parcel_id": "x", "crop": "banany"})
+    assert r.status_code == 422 and "Nieznana uprawa" in r.json()["detail"]["message"]
 
 
 @respx.mock

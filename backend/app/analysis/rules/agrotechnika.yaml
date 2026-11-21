@@ -1,4 +1,4 @@
-# Reguły AGROTECHNIKI – kategoria druga. Konsultacja z mentorem (D40): przy silnej suszy nawozy nie działają,
+# Reguły AGROTECHNIKI – kategoria druga. Ekoschematy tylko z listy ARiMR 2026 (D51). Konsultacja z mentorem (D40): przy silnej suszy nawozy nie działają,
 # ważny płodozmian i ekoschematy; działania na następny sezon (odmiany, płodozmian) – niżej niż działania „teraz”.
 rules:
   - id: agrotechnika.odloz_nawozenie
@@ -7,7 +7,6 @@ rules:
     confidence: srednia
     timing: teraz
     permit: none
-    eco_scheme: PLAN_NAWOZENIA
     when:
       all:
         - {fact: strong_stress, eq: true}
@@ -91,7 +90,6 @@ rules:
     confidence: srednia
     timing: przed_sezonem
     permit: none
-    eco_scheme: E_ZSU
     when:
       all:
         - {fact: crop_kind, ne: wieloletnia}
@@ -132,3 +130,34 @@ rules:
     description: "Gleba kat. I zmieści tylko ok. {wod_mm} mm wody – {crop_label} potrzebuje jej dużo w lipcu i sierpniu. Na takich glebach mniej ryzykowne są zboża ozime i rośliny o krótszym okresie wegetacji."
     why:
       - "Uprawa o dużym zapotrzebowaniu na wodę na glebie bardzo podatnej na suszę."
+
+  # ── uprawy, których w Polsce się nie nawadnia (D48) – zamiast nawadniania przy stresie wodnym ──
+  - id: agrotechnika.bez_nawadniania_parowanie
+    category: agrotechnika
+    priority: 92
+    confidence: srednia
+    timing: teraz
+    permit: none
+    when:
+      all:
+        - {fact: irrigation_practice, eq: not_practiced}
+        - {fact: water_stress_7d, eq: true}
+    title: "Ogranicz straty wody – bez uprawek i z odchwaszczaniem"
+    description: "{no_irrigation_txt}. W strefie korzeni jest {water_pct}% wody dostępnej{stress_when_txt}. Nie wykonuj teraz zabiegów mechanicznych, które przesuszają glebę, i nie dopuść do zachwaszczenia – chwasty zabierają wodę roślinom."
+    why:
+      - "Rośliny w fazie wrażliwej odczuwają już brak wody albo odczują go w ciągu 7 dni."
+
+  - id: agrotechnika.bez_nawadniania_termin_zabiegow
+    category: agrotechnika
+    priority: 88
+    confidence: srednia
+    timing: teraz
+    permit: none
+    when:
+      all:
+        - {fact: irrigation_practice, eq: not_practiced}
+        - {fact: water_stress_7d, eq: true}
+    title: "Zabiegi rano lub wieczorem"
+    description: "Opryski wykonuj wcześnie rano albo wieczorem, przy wyższej wilgotności powietrza – w upale rośliny w stresie wodnym gorzej znoszą zabiegi, a ciecz szybciej odparowuje. Parowanie (ET0) w ostatnich dniach: ok. {et0_recent_mm_day} mm na dobę."
+    why:
+      - "Przy niedoborze wody i dużym parowaniu termin zabiegu decyduje o jego skuteczności."

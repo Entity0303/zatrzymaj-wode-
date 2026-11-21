@@ -61,6 +61,7 @@ def mock_all() -> dict[str, respx.Route]:
         "kieg": respx.get(settings.kieg_url).mock(return_value=httpx.Response(200, text=KIEG_CLASSES)),
         "sg": respx.get(settings.soilgrids_url).mock(return_value=httpx.Response(200, json=SOILGRIDS)),
         "map": respx.get(settings.soil_map_url).mock(return_value=httpx.Response(200, text=SOIL_MAP)),
+        "nmt": respx.post(settings.nmt_url).mock(return_value=httpx.Response(503)),  # A6: bez NMT (teren = null)
     }
 
 
@@ -122,7 +123,9 @@ def test_permit_for_every_rule_and_category():
     assert {r.permit for r in rules if r.category == "agrotechnika"} == {"none"}
     by_id = {r.id: r.permit for r in rules}
     assert by_id["retencja.zastawka_na_rowie"] == by_id["retencja.oczko_w_zaglebieniu"] == "maybe"
-    assert by_id["retencja.mokradlo_srodpolne"] == "maybe" and by_id["retencja.pas_buforowy_na_stoku"] == "none"
+    # A6 (D59): „zostaw podmokły fragment” to brak prac – bez formalności (wcześniej D42: maybe)
+    assert by_id["retencja.mokradlo_srodpolne"] == "none" and by_id["retencja.pas_buforowy_na_stoku"] == "none"
+    assert by_id["retencja.oczko_opcja"] == "maybe"
     for r in evaluate(stress_facts()).recommendations:
         assert r.permit_note
         assert (r.permit_url is None) == (r.permit == "none")
@@ -189,7 +192,7 @@ def test_postpone_fertilization_under_strong_stress():
     recs = evaluate(stress_facts()).recommendations
     odloz = next(r for r in recs if r.id == "agrotechnika.odloz_nawozenie")
     assert odloz.in_panel and "nie zadziała" in odloz.title and "15% wody" in odloz.description
-    assert odloz.eco_scheme and "nawożenia" in odloz.eco_scheme.practice
+    assert odloz.eco_scheme is None  # A5b-1: bez ekoschematu przy „odłóż nawożenie”
     assert not any(r.id == "agrotechnika.odloz_nawozenie" for r in evaluate(facts()).recommendations)
 
 
@@ -211,7 +214,7 @@ def test_eco_schemes_without_amounts():
         assert "ARiMR" in e.note and "zł" not in e.practice + e.name + e.note
     by_id = {r.id: r for r in load_rules()}
     assert by_id["retencja.po_zbiorze_miedzyplon"].eco_scheme == "E_MPW"
-    assert by_id["agrotechnika.plodozmian"].eco_scheme == "E_ZSU"
+    assert by_id["agrotechnika.plodozmian"].eco_scheme is None  # E_ZSU poza listą ARiMR 2026
     assert by_id["retencja.prochnica"].eco_scheme == "E_WSG"
     rec = next(r for r in evaluate(facts()).recommendations if r.id == "retencja.po_zbiorze_miedzyplon")
     assert rec.eco_scheme.name.startswith("Rolnictwo węglowe") and rec.eco_scheme.code == "E_MPW"
@@ -221,7 +224,7 @@ def test_crop_rotation_rule():
     same = facts(previous_crop="zboza_ozime", previous_crop_label="zboża ozime", same_crop=True,
                  cereal_after_cereal=True, rotation_issue="ta sama uprawa drugi rok z rzędu")
     rec = next(r for r in evaluate(same, limit=False).recommendations if r.id == "agrotechnika.plodozmian")
-    assert rec.permit == "none" and rec.when == "przed_sezonem" and rec.eco_scheme.practice == "Zróżnicowana struktura upraw"
+    assert rec.permit == "none" and rec.when == "przed_sezonem" and rec.eco_scheme is None
     assert "Rok temu zboża ozime, teraz zboża ozime – ta sama uprawa" in rec.description
     other = facts(previous_crop="rzepak", previous_crop_label="rzepak i rzepik", same_crop=False, cereal_after_cereal=False)
     assert "agrotechnika.plodozmian" not in [r.id for r in evaluate(other, limit=False).recommendations]

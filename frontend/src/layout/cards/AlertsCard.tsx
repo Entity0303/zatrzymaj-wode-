@@ -27,7 +27,7 @@ export function AlertsCard({ analysis }: { analysis: AnalysisResponse | null }) 
       text: t('Działka {numer} – {what}', { numer, what: t(risk.note ?? risk.label ?? '') }),
       tone: risk.status === 'warn' ? 'text-amber' : 'text-danger',
     })
-  if (analysis.irrigation.status === 'zalecane')
+  if (analysis.irrigation?.status === 'zalecane')
     alerts.push({ icon: ShowerHead, text: t('Działka {numer} – nawadnianie: {what}', { numer, what: t(analysis.irrigation.message) }), tone: 'text-water' })
 
   return (

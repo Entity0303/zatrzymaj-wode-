@@ -8,9 +8,16 @@ services:
         required: false
     environment:
       - WATCHFILES_FORCE_POLLING=true
+      # trwały cache wszystkich źródeł (A5d, D53) – plik w wolumenie, przeżywa restart i reload
+      - CACHE_DB=/data/cache.sqlite
+      # tryb demo offline (D55): DEMO_OFFLINE=true docker compose up – tylko cache, zero zapytań zewnętrznych
+      - DEMO_OFFLINE=${DEMO_OFFLINE:-false}
     volumes:
       - ./backend/app:/app/app
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+      - ./backend/scripts:/app/scripts
+      - ./reports:/reports
+      - cache-data:/data
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --reload-dir app
 
   frontend:
     build: ./frontend
@@ -23,3 +30,6 @@ services:
       - ./frontend/src:/app/src
     depends_on:
       - backend
+
+volumes:
+  cache-data:

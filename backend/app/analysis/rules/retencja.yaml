@@ -1,4 +1,4 @@
-# Reguły RETENCJI – kategoria pierwsza („retain water where it falls”).
+# Reguły RETENCJI – kategoria pierwsza. Ekoschematy tylko z listy ARiMR 2026 (D51). („retain water where it falls”).
 # Podstawa: docs/kowr/KOWR - Podstawy naukowe.pdf – retencja glebowa (międzyplony, resztki pożniwne,
 # ograniczenie intensywnej uprawy, materia organiczna) i krajobrazowa (oczka, mokradła, strefy buforowe,
 # zadrzewienia). Konsultacja z mentorem 21.11 (D40): mało i jasno, najpierw to, co bez pozwolenia.
@@ -114,6 +114,78 @@ rules:
     why:
       - "W uprawach wieloletnich okrywa gleby to najprostsza retencja glebowa."
 
+  # ── uprawy, których w Polsce się nie nawadnia (D48): przy stresie wodnym zamiast nawadniania ──
+  - id: retencja.bez_nawadniania_zatrzymaj_wode
+    category: retencja
+    priority: 99
+    confidence: srednia
+    timing: teraz
+    permit: none
+    when:
+      all:
+        - {fact: irrigation_practice, eq: not_practiced}
+        - {fact: water_stress_7d, eq: true}
+    title: "Zatrzymaj wodę w glebie – zamiast nawadniania"
+    description: "{no_irrigation_txt}. Nie ugniataj gleby ciężkim sprzętem i zostaw na polu resztki roślin – deszcz wsiąknie wtedy zamiast spłynąć. Po zbiorze od razu rozdrobnij słomę i wysiej międzyplon, żeby odbudować zapas wody na następny sezon."
+    why:
+      - "W strefie korzeni jest {water_pct}% wody dostępnej{stress_when_txt}."
+      - "Od {season_start_txt} bilans wody (opad − parowanie) wynosi {balance_mm} mm – {balance_vs_mean_txt}."
+
+  # ── analiza bez uprawy (A5b-1): retencja niezależna od uprawy, wg pory roku ──
+  - id: retencja.dzialka_jesien_zima
+    category: retencja
+    priority: 85
+    confidence: srednia
+    timing: teraz
+    permit: none
+    eco_scheme: E_USU
+    when:
+      all:
+        - {fact: has_crop, eq: false}
+        - {fact: month, in: [11, 12, 1, 2, 3]}
+        - {fact: water_pct, exists: true}
+    title: "Zatrzymaj wodę z jesienno-zimowych opadów i roztopów"
+    description: "W profilu gleby jest {water_pct}% wody dostępnej ({water_description}). Nie orz na zimę – zostaw resztki pożniwne, szorstką powierzchnię albo międzyplon ozimy: woda z deszczu i roztopów wsiąknie zamiast spłynąć."
+    why:
+      - "Jesień i zima to główny okres odbudowy zapasu wody w glebie."
+      - "Bilans wody z ostatnich 30 dni: {kbw30_mm} mm ({kbw30_vs_mean_txt})."
+
+  - id: retencja.dzialka_wiosna
+    category: retencja
+    priority: 85
+    confidence: srednia
+    timing: teraz
+    permit: none
+    eco_scheme: E_USU
+    when:
+      all:
+        - {fact: has_crop, eq: false}
+        - {fact: month, in: [4, 5, 6]}
+        - {fact: water_pct, exists: true}
+    title: "Ogranicz uprawki i nie zostawiaj gołej gleby"
+    description: "W profilu gleby jest {water_pct}% wody dostępnej ({water_description}). Rób jak najmniej przejazdów i nie odwracaj roli – każda uprawka przesusza wierzchnią warstwę; goła gleba traci wodę najszybciej."
+    why:
+      - "Ograniczenie intensywnej uprawy zmniejsza straty wody przez parowanie."
+      - "Bilans wody z ostatnich 30 dni: {kbw30_mm} mm ({kbw30_vs_mean_txt})."
+
+  - id: retencja.dzialka_lato_jesien
+    category: retencja
+    priority: 85
+    confidence: srednia
+    timing: teraz
+    permit: none
+    eco_scheme: E_MPW
+    when:
+      all:
+        - {fact: has_crop, eq: false}
+        - {fact: month, in: [7, 8, 9, 10]}
+        - {fact: water_pct, exists: true}
+    title: "Po zbiorze: międzyplon i słoma na polu"
+    description: "W profilu gleby jest {water_pct}% wody dostępnej ({water_description}). Po zbiorze zostaw rozdrobnioną słomę i wysiej międzyplon – okryta gleba mniej paruje i zatrzyma więcej wody z jesiennych opadów."
+    why:
+      - "Międzyplony i resztki pożniwne zwiększają próchnicę i infiltrację – to podstawowa metoda retencji glebowej."
+      - "Bilans wody z ostatnich 30 dni: {kbw30_mm} mm ({kbw30_vs_mean_txt})."
+
   # ── zależne od gleby ──
   - id: retencja.prochnica
     category: retencja
@@ -123,9 +195,8 @@ rules:
     permit: none
     eco_scheme: E_WSG
     when:
-      any:
+      all:
         - {fact: light_soil, eq: true}
-        - {fact: rain_retention, eq: ucieka}
     title: "Zwiększaj próchnicę – lekka gleba trzyma mało wody"
     description: "Gleba ({soil_txt}) zatrzymuje mało wody. Każdy dodatkowy procent próchnicy zwiększa jej pojemność wodną – mieszaj słomę z glebą, wysiewaj międzyplony, stosuj obornik lub kompost."
     why:
@@ -162,34 +233,58 @@ rules:
     why:
       - "Lekka gleba i suchy sezon – działanie długoterminowe."
 
-  # ── wymagają danych o terenie / wodach w okolicy (A6/A7) – wyłączone do tego czasu ──
+  # ── z terenu (A6, NMT): requires: [terrain] – włączone, gdy jest analiza terenu (D59) ──
+  # Progi oczka (analysis/terrain_interpret.py): „glowna” = zagłębienie bez odpływu ≥ 0,3 m, zlewnia ≥ 0,5 ha,
+  # działka ≥ 0,5 ha; „opcja” = brak wyraźnego zagłębienia (oczko przy odpływie) albo mała działka, zlewnia ≥ 0,5 ha,
+  # działka ≥ 0,3 ha. Formalności oczka: ogólnie (progi Prawa wodnego / budowlanego nie zweryfikowane – D59).
   - id: retencja.oczko_w_zaglebieniu
     category: retencja
     priority: 95
     confidence: srednia
     timing: przed_sezonem
     permit: maybe
+    permit_note: "Oczko lub zbiornik może wymagać zgłoszenia lub pozwolenia (Prawo wodne, Prawo budowlane) – zależy od wielkości, głębokości i miejsca. Przed pracami zapytaj w Wodach Polskich i w starostwie."
     requires: [terrain]
     when:
       all:
-        - {fact: depression_area_m2, gt: 0}
-        - {fact: depression_catchment_ha, gt: 0.3}
+        - {fact: terrain_pond, eq: glowna}
     title: "Oczko wodne w zagłębieniu"
-    description: "W zagłębieniu ({depression_area_m2} m²) zbiera się woda z ok. {depression_catchment_ha} ha – małe oczko lub mokradło zatrzyma ją na działce."
+    description: "Woda z ok. {pond_catchment_ha} ha zbiera się {pond_place_txt}. Małe oczko (ok. {pond_area_m2} m²) zatrzyma ją na działce – z jednej ulewy 20 mm spłynie tu ok. {pond_inflow_runoff_m3} m³ wody."
+    why:
+      - "Zagłębienie bez odpływu ma ok. {pond_depth_m} m głębokości – woda i tak tu stoi."
+
+  - id: retencja.oczko_opcja
+    category: retencja
+    priority: 30
+    confidence: ograniczona
+    timing: przed_sezonem
+    permit: maybe
+    permit_note: "Oczko lub zbiornik może wymagać zgłoszenia lub pozwolenia (Prawo wodne, Prawo budowlane) – zależy od wielkości, głębokości i miejsca. Przed pracami zapytaj w Wodach Polskich i w starostwie."
+    requires: [terrain]
+    when:
+      all:
+        - {fact: terrain_pond, eq: opcja}
+    title: "Do rozważenia: małe oczko przy odpływie"
+    description: "Na działce nie ma wyraźnego zagłębienia, ale woda z ok. {pond_catchment_ha} ha zbiera się {pond_place_txt}. Jeśli to miejsce bywa podmokłe, małe oczko (ok. {pond_area_m2} m²) zatrzyma część wody – z ulewy 20 mm ok. {pond_inflow_runoff_m3} m³."
+    why:
+      - "To opcja, nie pierwsze działanie: najpierw zatrzymanie wody w glebie (resztki roślin, międzyplony, mniej uprawek)."
+      - "Teren działki: różnica wysokości {terrain_relief_m} m, powierzchnia {parcel_area_ha_terrain} ha."
 
   - id: retencja.zastawka_na_rowie
     category: retencja
-    priority: 92
-    confidence: srednia
+    priority: 50
+    confidence: ograniczona
     timing: teraz
     permit: maybe
-    requires: [water_nearby, terrain]
+    permit_note: "Zastawka na rowie wymaga zgody właściciela rowu lub spółki wodnej i może wymagać zgłoszenia wodnoprawnego – sprawdź w Wodach Polskich."
+    requires: [terrain]
     when:
       all:
-        - {fact: ditch_distance_m, lt: 200}
-        - {fact: outflow_to_ditch, eq: true}
-    title: "Zastawka na rowie"
-    description: "Woda odpływa z działki do rowu {ditch_distance_m} m dalej – zastawka (w porozumieniu ze spółką wodną) zatrzyma ją w okolicy."
+        - {fact: culvert_candidate, eq: true}
+    title: "Sprawdź rów przy miejscu odpływu – zastawka zatrzyma wodę"
+    description: "Woda z {outlet_share_pct}% działki ucieka w jednym miejscu (kierunek: {outlet_direction}), a na działkę spływa woda z ok. {inflow_ha} ha powyżej. Jeśli tam biegnie rów melioracyjny, zastawka (w porozumieniu ze spółką wodną) przytrzyma wodę w okolicy."
+    why:
+      - "Rowów jeszcze nie sprawdzamy na mapie (BDOT10k w przygotowaniu) – zobacz na miejscu, czy rów jest."
 
   - id: retencja.pas_buforowy_na_stoku
     category: retencja
@@ -197,22 +292,27 @@ rules:
     confidence: srednia
     timing: przed_sezonem
     permit: none
+    eco_scheme: E_MIOD
     requires: [terrain]
     when:
       all:
-        - {fact: slope_max_pct, gt: 5}
-    title: "Pas trwałej zieleni w poprzek stoku"
-    description: "Spadek do {slope_max_pct}% – pas zieleni w poprzek stoku zatrzyma spływ i glebę."
+        - {fact: buffer_strip, eq: true}
+    title: "Pas zieleni lub zadrzewienie w poprzek stoku"
+    description: "Spadek dochodzi do {slope_max_pct}%, a strome miejsca (ponad 5%) to {steep_share_pct}% działki. Pas trawy, roślin miododajnych albo krzewów (ok. {buffer_length_m} m, szer. ok. 10 m) w poprzek spływu zatrzyma wodę i glebę po ulewie."
+    why:
+      - "Na stoku woda z ulewy szybko odpływa i zabiera glebę – pas zieleni ją hamuje i pozwala wsiąknąć."
 
   - id: retencja.mokradlo_srodpolne
     category: retencja
     priority: 60
     confidence: ograniczona
     timing: przed_sezonem
-    permit: maybe
-    requires: [terrain, water_nearby]
+    permit: none
+    requires: [terrain]
     when:
       all:
-        - {fact: wet_spot_area_m2, gt: 500}
-    title: "Zachowaj mokre miejsce jako mokradło"
-    description: "Okresowo podmokły fragment ({wet_spot_area_m2} m²) lepiej pozostawić jako mokradło – magazynuje wodę dla okolicy."
+        - {fact: wet_spot_area_m2, gte: 500}
+    title: "Zostaw podmokły fragment jako mokradło"
+    description: "W zagłębieniu bez odpływu (ok. {wet_spot_area_m2} m² działki) woda stoi po deszczu. Zamiast go osuszać i uprawiać, zostaw go jako mokradło – magazynuje wodę dla okolicy."
+    why:
+      - "Uprawy w takim miejscu i tak wymakają w mokre lata."

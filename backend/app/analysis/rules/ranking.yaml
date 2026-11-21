@@ -1,0 +1,28 @@
+# Ranking „Co tu posiać?” (A5b-2a, D61–D62) – współczynniki i progi. To SZACUNKI do kalibracji z agronomem.
+# Klucz `ranking` – silnik rekomendacji (recommendations.py) tego pliku nie wczytuje.
+ranking:
+  # Plon potencjalny Ym = percentyl plonów GUS w województwie (10 lat) × współczynnik gleby
+  gus_percentile: 90
+  # Przydatność gleby działki dla uprawy (kolumny gleby_odpowiednie / gleby_nieodpowiednie w crops.csv):
+  # „neutralna” = przeciętna gleba województwa (kalibracja do średniej GUS)
+  soil_factor:
+    odpowiednia: 1.08
+    neutralna: 1.00
+    nieodpowiednia: 0.75
+  loss_threshold: 0.20        # „rok suszy” = strata plonu > 20%
+  # kategorie
+  recommended:                # ✅ polecane: gleba odpowiednia i …
+    max_risk_years: 3         # … strata > 20% najwyżej w 3 z 10 lat
+    min_median_relative: 0.80 # … i typowy plon ≥ 80% plonu odniesienia
+  discouraged:                # ❌ odradzane: gleba nieodpowiednia, złamany płodozmian albo (gleba przeciętna i …)
+    min_risk_years: 5         # … strata > 20% w co najmniej połowie lat
+    max_median_relative: 0.70 # … albo typowy plon < 70% plonu odniesienia)
+  # Gleba ODPOWIEDNIA nigdy nie daje „odradzane” z powodu wody – najwyżej „możliwe” (na słabej ziemi
+  # coś trzeba posiać: żyto, łubin)
+  # ocena do kolejności w kategorii: 100 × mediana plonu względnego − kara × lata ryzyka + gleba + płodozmian
+  score:
+    risk_year_penalty: 4
+    soil_bonus: {odpowiednia: 8, neutralna: 0, nieodpowiednia: -25}
+    rotation_plus: 5
+    rotation_warning: -8
+  min_seasons: 5              # mniej pełnych sezonów z danymi = brak pozycji w rankingu

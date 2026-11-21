@@ -51,6 +51,31 @@ def examples(today: dt.date | None = None) -> list[DemoExample]:
                         date=e.date or today, previous_crop=e.previous_crop) for e in EXAMPLES]
 
 
+async def ready_examples() -> list[DemoExample]:
+    """Przykłady, które jury może bezpiecznie kliknąć (D55). Normalnie – wszystkie. W trybie DEMO_OFFLINE – tylko te,
+    które liczą się z samego cache (szybka próba run_analysis, ~0,05 s); przy otwartym bezpieczniku ULDK – tylko
+    z działką znaną z cache / app/data/demo_parcels.json. Lista nigdy nie jest pusta z tego powodu (gdy nic nie
+    przechodzi – wszystkie, żeby było widać komunikat zamiast pustego ekranu)."""
+    from app.core.cache import breaker
+    from app.routers.analysis import run_analysis  # import tu – unikamy cyklu
+    from app.sources import uldk
+
+    all_ex = examples()
+    if settings.demo_offline:
+        ok = []
+        for e in all_ex:
+            try:
+                await run_analysis(e.parcel_id, e.crop, e.date, e.previous_crop)
+                ok.append(e)
+            except Exception:  # noqa: BLE001 – brak danych w cache = przykład ukryty
+                continue
+        return ok or all_ex
+    if breaker(uldk.SOURCE).open:
+        known = [e for e in all_ex if uldk.known_by_id(e.parcel_id) is not None]
+        return known or all_ex
+    return all_ex
+
+
 # ── rozgrzewka (B2) ─────────────────────────────────────────────────────────────────────────
 
 _state: dict[str, WarmupItem] = {}

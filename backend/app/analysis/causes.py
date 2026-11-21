@@ -5,7 +5,8 @@ Surowe wagi (D37):
 - parowanie – nadwyżka ET0 względem średniej: (ET0 − średnia) / średnia, gdy ET0 > średnia,
 - gleba – mała pojemność wodna: kat. I 0,50; II 0,35; III 0,20; IV 0,10,
 - uprawa – zapotrzebowanie w obecnej fazie: 0,15 × Kc w fazach wrażliwych, 0,05 poza nimi,
-- teren i spływ – brak danych (A6), udział 0.
+- teren i spływ (A6, D58) – 0,2 × udział stoków i górek w działce (tam woda z ulewy ucieka / najszybciej przesycha);
+  bez analizy NMT – „brak danych”, udział 0.
 Udziały = wagi / suma wag (tylko czynniki z danymi), zaokrąglone, suma dokładnie 1.
 """
 
@@ -16,6 +17,7 @@ SOIL_WEIGHT = {1: 0.50, 2: 0.35, 3: 0.20, 4: 0.10}
 SOIL_WORD = {1: "bardzo mało", 2: "mało", 3: "średnio dużo", 4: "dużo"}
 CROP_WEIGHT_PER_KC = 0.15
 CROP_WEIGHT_OFF = 0.05
+TERRAIN_WEIGHT = 0.2
 
 
 def _fmt(v: float) -> str:
@@ -58,6 +60,15 @@ def build_causes(f: Facts) -> list[Cause]:
         raw.append((w, Cause(factor="uprawa", title="Wymagania uprawy", share=0, description=desc,
                              source_tag=SourceTag(kind="szacunek_modelu", source="FAO-56 (Kc)"))))
 
+    runoff = f.get("terrain_runoff_pct")
+    if runoff is not None:
+        wet = f.get("terrain_wet_pct") or 0
+        desc = f"stoki i górki na {runoff}% działki – tu woda z ulewy spływa lub szybko przesycha"
+        if wet:
+            desc += f"; obniżenia, gdzie zbiera się woda {wet}%"
+        raw.append((TERRAIN_WEIGHT * runoff / 100, Cause(factor="teren", title="Teren i spływ", share=0, description=desc,
+                                                          source_tag=SourceTag(kind="pomiar", source="NMT GUGiK"))))
+
     total = sum(w for w, _ in raw)
     causes: list[Cause] = []
     if total > 0:
@@ -68,6 +79,8 @@ def build_causes(f: Facts) -> list[Cause]:
         for (w, c), s in zip(raw, shares):
             causes.append(c.model_copy(update={"share": max(0.0, s)}))
     causes.sort(key=lambda c: -c.share)
+    if runoff is not None:
+        return causes
     causes.append(Cause(factor="teren", title="Teren i spływ", share=0.0,
                         description="brak danych (analiza terenu w przygotowaniu)",
                         source_tag=SourceTag(kind="brak_danych", source="NMT GUGiK")))
