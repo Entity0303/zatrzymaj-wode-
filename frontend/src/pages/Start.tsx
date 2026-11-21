@@ -15,6 +15,7 @@ import { MapControls } from '@/features/map/MapControls'
 import { POLAND_CENTER, ParcelMap, type BaseMap } from '@/features/map/ParcelMap'
 import { MobileSheetHeader } from '@/features/parcel-panel/MobileSheetHeader'
 import { ParcelPanel } from '@/features/parcel-panel/ParcelPanel'
+import { ParcelSummary } from '@/features/parcel-panel/ParcelSummary'
 import { Passport } from '@/features/passport/Passport'
 import { exampleDate, type Example } from '@/features/parcel-panel/examples'
 import { InfraReportWizard } from '@/features/infra-reports/InfraReportWizard'
@@ -131,6 +132,8 @@ export default function Start() {
 
   // komputer/tablet: dolny pasek kart tylko na życzenie (mniej rzeczy naraz na ekranie)
   const cardsShown = !isMobile && ui.cards
+  // komputer: przy wybranej działce domyślnie mała karta podsumowania, pełny panel na życzenie
+  const summaryOnly = !isMobile && !ui.panel && search.phase === 'parcel' && !passportOpen && !infra
   const FLOAT_BOTTOM = cardsShown ? 16 + CARDS_H + 24 : 16 // dół panelu i legendy
   const CONTROLS_BOTTOM = cardsShown ? FLOAT_BOTTOM + 28 : 16 + TOGGLE_H + 36 // kontrolki nad skalą mapy
   const MAP_BOTTOM_DESKTOP = cardsShown ? 16 + CARDS_H + 2 : 16 + TOGGLE_H + 4 // skala i atrybucje
@@ -586,7 +589,11 @@ export default function Start() {
                   ? 'absolute top-[128px] right-4 z-[1100] flex flex-col overflow-hidden rounded-xl bg-surface shadow-float'
                   : 'absolute top-[128px] right-4 z-[1100] flex w-[340px] flex-col overflow-hidden rounded-xl bg-surface shadow-float xl:w-[380px]'
               }
-              style={{ bottom: FLOAT_BOTTOM, width: passportOpen ? `min(${PASSPORT_W}px, calc(100% - 120px))` : undefined }}
+              style={{
+                bottom: summaryOnly ? undefined : FLOAT_BOTTOM,
+                maxHeight: summaryOnly ? `calc(100% - 128px - ${FLOAT_BOTTOM}px)` : undefined,
+                width: passportOpen ? `min(${PASSPORT_W}px, calc(100% - 120px))` : undefined,
+              }}
             >
               <div className="min-h-0 flex-1 overflow-y-auto p-5">
                 {infraOpen ? (
@@ -601,8 +608,31 @@ export default function Start() {
                   </div>
                 ) : passportOpen && analysis ? (
                   <Passport analysis={analysis} onClose={closePassport} report={report} onCopyLink={copyLink} onShowOnMap={showOnMap} />
+                ) : summaryOnly && parcel ? (
+                  <div className="-m-5">
+                    <ParcelSummary
+                      parcel={parcel}
+                      crop={crop}
+                      onCropChange={panelProps.onCropChange}
+                      run={run}
+                      onRetryAnalysis={retryAnalysis}
+                      onExpand={() => setUi({ panel: true })}
+                      onOpenPassport={openPassport}
+                    />
+                  </div>
                 ) : (
-                  <ParcelPanel {...panelProps} />
+                  <>
+                    {!isMobile && search.phase === 'parcel' && (
+                      <button
+                        type="button"
+                        onClick={() => setUi({ panel: false })}
+                        className="-mt-2 mb-2 ml-auto flex h-9 w-fit items-center gap-1 rounded-full px-3 text-sm font-medium text-text-muted hover:bg-surface-2"
+                      >
+                        <ChevronUp className="size-4" aria-hidden /> {t('Zwiń panel')}
+                      </button>
+                    )}
+                    <ParcelPanel {...panelProps} />
+                  </>
                 )}
               </div>
             </aside>

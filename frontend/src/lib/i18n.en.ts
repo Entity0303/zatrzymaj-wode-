@@ -658,4 +658,7 @@ export const EN: Record<string, string> = {
   'Pokaż szczegóły': 'Show details',
   'Ukryj szczegóły': 'Hide details',
   'Faza uprawy, woda w glebie, nawadnianie, gleba, postęp analizy': 'Crop stage, soil water, irrigation, soil, analysis progress',
+  // zwinięty panel działki
+  'Pełny panel': 'Full panel',
+  'Zwiń panel': 'Collapse panel',
 }
