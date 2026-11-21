@@ -12,6 +12,7 @@ const STATUS: Record<IrrigationStatus, { label: string; cls: string }> = {
   zalecane: { label: 'Zalecane', cls: 'bg-water-soft text-[#1d5d96]' },
   niepotrzebne: { label: 'Niepotrzebne', cls: 'bg-ok-soft text-brand' },
   nieuzasadnione_w_fazie: { label: 'Nie w tej fazie', cls: 'bg-surface-2 text-text-muted' },
+  nie_praktykowane: { label: 'Nie stosuje się', cls: 'bg-surface-2 text-text-muted' },
   brak_danych: { label: 'Brak danych', cls: 'border border-nodata/60 bg-nodata-soft text-text-muted' },
 }
 

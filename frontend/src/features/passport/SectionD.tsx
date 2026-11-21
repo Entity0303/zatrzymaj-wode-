@@ -43,7 +43,7 @@ export function SectionD({ analysis, onShowOnMap }: { analysis: AnalysisResponse
                 onShowOnMap={r.location && onShowOnMap ? () => onShowOnMap(r.location!) : undefined}
               />
             ))}
-            {cat === 'nawadnianie' && <IrrigationCard plan={analysis.irrigation} />}
+            {cat === 'nawadnianie' && analysis.irrigation && <IrrigationCard plan={analysis.irrigation} />}
           </div>
         )
       })}

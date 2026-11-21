@@ -159,7 +159,7 @@ export function ParcelPanel({
       )}
       {/* SPEC 15.1: grunt nierolny – zamiast oceny suszy komunikat, bez wskaźników i zaleceń */}
       {nonAgri ? <NonAgriculturalCard soil={analysis!.soil} /> : <StatusCard crop={crop} analysis={analysis} onOpen={analysis ? onOpenPassport : undefined} />}
-      {analysis && !nonAgri && <CropSeasonCard season={analysis.crop_season} analysisDate={analysis.analysis_date} />}
+      {analysis && !nonAgri && analysis.crop_season && <CropSeasonCard season={analysis.crop_season} analysisDate={analysis.analysis_date} />}
       {crop && (
         <details open={settings.mode === 'doradca' || undefined} className="group rounded-xl border bg-surface p-3.5">
           <summary className="flex min-h-6 cursor-pointer list-none items-center justify-between text-sm font-medium">
@@ -182,7 +182,7 @@ export function ParcelPanel({
           <section className="space-y-3">
             <SectionTitle>{t('Co zrobić?')}</SectionTitle>
             <WhatToDo analysis={analysis} onShowOnMap={onShowOnMap} />
-            {analysis && <IrrigationCard plan={analysis.irrigation} />}
+            {analysis?.irrigation && <IrrigationCard plan={analysis.irrigation} />}
           </section>
         </>
       )}

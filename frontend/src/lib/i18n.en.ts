@@ -413,6 +413,7 @@ export const EN: Record<string, string> = {
   'Zalecane': 'Recommended',
   'Niepotrzebne': 'Not needed',
   'Nie w tej fazie': 'Not at this stage',
+  'Nie stosuje się': 'Not practised',
   'Dawka': 'Dose',
   'Pierwsza': 'First',
   'Powtarzaj': 'Repeat',
