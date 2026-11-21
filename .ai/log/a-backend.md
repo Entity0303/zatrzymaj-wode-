@@ -4,6 +4,18 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-22 12:30 · `a/backend` · A11: satelita Sentinel-2 w backendzie
+**Co:** (GUGiK nieodpytywany; sieć – tylko Earth Search / AWS przez `core/http.request`; backend w DEMO_OFFLINE)
+- **Źródło** (D86): `sources/sentinel.py` – STAC (POST, `fields`), nagłówek COG z rzadkiego bufora przez tifffile (BSD-3), tylko kafle okna działki (Range, równolegle), jedna ponowna próba odczytu; prototyp osoby C przez `git show`, bez merge.
+- **Obliczenia** (D87): `analysis/satellite.py` + `rules/satellite.yaml` – siatka działki w UTM sceny, SCL → pasma tylko dla sceny z ≥ 70% widocznej działki, piksele z odbiciem ≤ 0 odrzucone (zimą NDVI fałszywie 1,0), NDVI / NDMI mediany, rok temu ±20 dni (tylko NDVI), zdanie i poziom z wartości; NDMI tylko w sezonie przy NDVI ≥ 0,5 (progi −0,1 / 0,2).
+- **API** (D88): `GET/POST /api/satellite` (`routers/satellite.py`), analiza tylko z cache (`pending` + tło), raport najpierw liczy satelitę, `/api/layers/kondycja|wilgotnosc` (PNG data URI, bbox, legenda; 404 bez sceny), werdykt `rosliny`, wskaźniki i pewność; `sentinel_enabled` (testy bez Earth Search).
+- **Pomiar na żywo (budżet 15 s / 10 MB, 22.11.2026):** 201305 – 8,3 s, 8,4 MB, 18 zapytań, scena 16.11.2026 NDVI 0,857 NDMI −0,242 (widać 73,8% – reszta zbyt ciemna), rok temu 04.11.2025 NDVI 0,832 → „…pole zielone – prawdopodobnie wzeszło zboże ozime, rzepak lub międzyplon. Zieleń podobna jak rok temu.”; Notecka (obszar przybliżony) – 6,7 s, 7,35 MB, scena 05.11.2026 NDVI 0,485 NDMI 0,102 → „…mało zieleni – pole po zbiorze albo młode rośliny.” (rok temu z rozgrzewki: 19.10.2025, NDVI 0,504 – „podobna”). Szereg: 201305 – 11 punktów (245 s, 68,5 MB), Notecka – 15 (183 s, 109 MB). Warstwy PNG 0,4–1,5 kB.
+- **Raport:** szczegółowy – str. 4 „Z satelity” (201305: 10 stron, Notecka: 9); skrócone nadal 2 strony; PDF + PNG w `reports/examples/` (`*-z-satelity.png`).
+**Pliki:** `backend/app/{sources/sentinel.py, analysis/satellite.py, analysis/rules/satellite.yaml, routers/satellite.py}`, `backend/scripts/warm_satellite.py` (nowe / przepisane), `analysis/{confidence,verdict}.py`, `routers/{analysis,layers,reports}.py`, `schemas/{analysis,layers}.py`, `core/{config,http}.py`, `report/{builder.py,charts.py,report.css,templates/report.html}`, `scripts/warm_demo.py`, `main.py`, `requirements.txt` (tifffile), testy (`test_a11.py` – 28; `conftest.py`, `test_a6.py`, `test_contract.py`); frontend: `api/types.ts`, `mocks/{analysis.choice,satellite,layers.kondycja,layers.wilgotnosc}.sample.json`.
+**Kontrakt:** TAK (addytywnie) – `/api/satellite`, `satellite` w analizie, `VerdictKind` `rosliny`, pola legendy w `LayerResponse` (`contract-changes.md`, wpis A11 „Dla Mefju”).
+
+---
+
 ## 2026-11-22 08:30 · `a/backend` · A7: opad ze stacji IMGW jako źródło główne
 **Co:** (GUGiK nieodpytywany; IMGW – tylko skrypt budujący magazyn; backend w DEMO_OFFLINE)
 - **Magazyn IMGW** (D82): `scripts/build_imgw.py` → `app/data/imgw/opady.npz` 1,09 MB (449 stacji, 2016-01-01 – 2026-10-31, 855 plików, 171 s; odświeżenie 10 s) – w repo. Parser i reguły z prototypu osoby C (`git show origin/c/research:research/precip/…`, bez merge).
