@@ -59,6 +59,18 @@ class Settings(BaseSettings):
     # zapasowe wyniki terenu z app/data/terrain (prawdziwe NMT z 21.11, osoba C) – gdy NMT nie odpowiada (D57)
     terrain_saved_results: bool = True
 
+    # wyszukiwanie miejsc po nazwie (A5c, D73): PRNG GUGiK (WFS) → rezerwa Nominatim OSM → słownik demo
+    prng_url: str = "https://mapy.geoportal.gov.pl/wss/service/PZGIK/PRNG/WFS/GeographicalNames"
+    prng_timeout_s: float = 8.0
+    prng_min_interval_s: float = 1.2     # odstęp między zapytaniami do PRNG (po serii szybkich zapytań serwer odrzuca połączenia)
+    prng_retry_delay_s: float = 3.0
+    prng_breaker_s: float = 60.0
+    nominatim_url: str = "https://nominatim.openstreetmap.org"
+    nominatim_timeout_s: float = 6.0
+    nominatim_min_interval_s: float = 1.1  # polityka OSM: najwyżej 1 zapytanie na sekundę
+    nominatim_breaker_s: float = 60.0
+    search_timeout_s: float = 14.0        # łączny limit jednego wyszukiwania
+
     # przykłady demo: rozgrzewka cache przy starcie (w tle) i co tyle godzin
     demo_warmup: bool = True
     demo_warmup_interval_h: float = 6.0

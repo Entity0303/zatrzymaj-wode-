@@ -1,0 +1,104 @@
+{
+  "_opis": "Słownik miejscowości dla działek demo (A5c, D73) – zapis z PRNG GUGiK z 2026-11-21; wyszukiwanie po nazwie działa z nim offline. Odtwarza: scripts/build_places_demo.py.",
+  "places": [
+    {
+      "name": "Wnory-Wandy",
+      "type": "miejscowosc",
+      "type_label": "wieś",
+      "gmina": "Kobylin-Borzymy",
+      "powiat": "wysokomazowiecki",
+      "wojewodztwo": "podlaskie",
+      "lon": 22.599151,
+      "lat": 53.064661,
+      "prng_id": "149352"
+    },
+    {
+      "name": "Szczytno",
+      "type": "miejscowosc",
+      "type_label": "wieś",
+      "gmina": "Kampinos",
+      "powiat": "warszawski zachodni",
+      "wojewodztwo": "mazowieckie",
+      "lon": 20.355311,
+      "lat": 52.249321,
+      "prng_id": "135077"
+    },
+    {
+      "name": "Rybczewice Drugie",
+      "type": "miejscowosc",
+      "type_label": "wieś",
+      "gmina": "Rybczewice",
+      "powiat": "świdnicki",
+      "wojewodztwo": "lubelskie",
+      "lon": 22.852752,
+      "lat": 51.036212,
+      "prng_id": "118850"
+    },
+    {
+      "name": "Rybczewice Pierwsze",
+      "type": "miejscowosc",
+      "type_label": "wieś",
+      "gmina": "Rybczewice",
+      "powiat": "świdnicki",
+      "wojewodztwo": "lubelskie",
+      "lon": 22.859003,
+      "lat": 51.037836,
+      "prng_id": "118851"
+    },
+    {
+      "name": "Lasotka",
+      "type": "miejscowosc",
+      "type_label": "wieś",
+      "gmina": "Iłów",
+      "powiat": "sochaczewski",
+      "wojewodztwo": "mazowieckie",
+      "lon": 20.000383,
+      "lat": 52.326728,
+      "prng_id": "66717"
+    },
+    {
+      "name": "Szadłowice",
+      "type": "miejscowosc",
+      "type_label": "wieś",
+      "gmina": "Gniewkowo",
+      "powiat": "inowrocławski",
+      "wojewodztwo": "kujawsko-pomorskie",
+      "lon": 18.335054,
+      "lat": 52.845527,
+      "prng_id": "134228"
+    },
+    {
+      "name": "Stęszew",
+      "type": "miejscowosc",
+      "type_label": "miasto",
+      "gmina": "Stęszew",
+      "powiat": "poznański",
+      "wojewodztwo": "wielkopolskie",
+      "lon": 16.703759,
+      "lat": 52.280596,
+      "prng_id": "131158"
+    },
+    {
+      "name": "Korfantów",
+      "type": "miejscowosc",
+      "type_label": "miasto",
+      "gmina": "Korfantów",
+      "powiat": "nyski",
+      "wojewodztwo": "opolskie",
+      "lon": 17.597711,
+      "lat": 50.486228,
+      "prng_id": "58405"
+    },
+    {
+      "name": "Tczów",
+      "type": "miejscowosc",
+      "type_label": "wieś",
+      "gmina": "Tczów",
+      "powiat": "zwoleński",
+      "wojewodztwo": "mazowieckie",
+      "lon": 21.445824,
+      "lat": 51.326098,
+      "prng_id": "139271"
+    }
+  ]
+}

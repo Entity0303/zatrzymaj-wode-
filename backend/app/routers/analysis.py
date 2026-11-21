@@ -26,7 +26,7 @@ from app.analysis.causes import build_causes
 from app.analysis.confidence import ConfidenceInputs, reliability
 from app.analysis.crops import ALL_CROPS, CROPS, PHASE_LABELS
 from app.analysis import field_state as fs
-from app.analysis import approx_area, soil_consistency, soil_label
+from app.analysis import approx_area, drawn_field, soil_consistency, soil_label
 from app.analysis import verdict as verdict_mod
 from app.analysis import suggestions as sugg
 from app.analysis import terrain_interpret
@@ -51,7 +51,7 @@ from app.core.cache import stale_scope
 from app.core.config import settings
 from app.core.http import SourceError, http_error, in_poland
 from app.routers.parcel import parcel_out, resolve_parcel
-from app.schemas.analysis import ApproximateArea
+from app.schemas.analysis import AnalysisRequest, ApproximateArea
 from app.schemas.parcel import DataSource
 from app.sources import uldk
 from app.schemas.analysis import (
@@ -520,12 +520,12 @@ def validate_params(crop: str | None, analysis_date: dt.date, previous_crop: str
 async def run_analysis(
     parcel_id: str | None, crop: str | None, analysis_date: dt.date | None = None, previous_crop: str | None = None,
     crop_history: str | None = None, cultivated_area_ha: float | None = None,
-    lon: float | None = None, lat: float | None = None,
+    lon: float | None = None, lat: float | None = None, geometry: dict | None = None,
 ) -> AnalysisResponse:
     """Pełna analiza (wspólna dla /api/analysis, raportu PDF i rozgrzewki przykładów demo)."""
     with stale_scope() as stale_hits:
         return await _run(parcel_id, crop, analysis_date, previous_crop, stale_hits, crop_history, cultivated_area_ha,
-                          lon, lat)
+                          lon, lat, geometry)
 
 
 async def _resolve_point(lon: float, lat: float) -> tuple[uldk.Parcel, ApproximateArea | None]:
@@ -545,7 +545,7 @@ async def _resolve_point(lon: float, lat: float) -> tuple[uldk.Parcel, Approxima
 
 async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, previous_crop: str | None,
                stale_hits: list, crop_history: str | None = None, cultivated_area_ha: float | None = None,
-               lon: float | None = None, lat: float | None = None,
+               lon: float | None = None, lat: float | None = None, geometry: dict | None = None,
                ) -> AnalysisResponse:
     t0 = perf_counter()
     today = dt.date.today()
@@ -565,7 +565,16 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
     # ── 1. działka (ULDK) ──
     s = perf_counter()
     approx = None
-    if parcel_id:
+    drawn = geometry is not None
+    if drawn and (parcel_id or lon is not None or lat is not None):
+        raise HTTPException(status_code=422, detail={"message": "Podaj albo obrys pola (geometry), albo numer działki, "
+                                                                 "albo punkt na mapie – nie kilka naraz."})
+    if drawn:
+        try:
+            p = await drawn_field.resolve(geometry)
+        except drawn_field.DrawnError as exc:
+            raise HTTPException(status_code=422, detail={"message": str(exc)}) from exc
+    elif parcel_id:
         try:
             p = await asyncio.wait_for(resolve_parcel(parcel_id, None, None), timeout=settings.uldk_timeout_s * 2 + 1)
         except SourceError as exc:
@@ -576,7 +585,8 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
         p, approx = await _resolve_point(lon, lat)
     else:
         raise HTTPException(status_code=422, detail={"message": "Podaj numer działki albo punkt na mapie (lon, lat)."})
-    steps.append(_step("parcel", "Szukam działki (ULDK GUGiK)", "done" if approx is None else "error",
+    steps.append(_step("parcel", "Obrys pola narysowany przez rolnika" if drawn else "Szukam działki (ULDK GUGiK)",
+                       "done" if approx is None else "error",
                        note=None if approx is None else "obszar przybliżony – " + approx.reason,
                        ms=int((perf_counter() - s) * 1000)))
     c = p.geom_4326.centroid
@@ -607,7 +617,7 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
     ) = await asyncio.gather(
         timed("NASA POWER", load_weather_history(c.x, c.y, analysis_date)),
         timed("IUNG-PIB", iung.soil_for_parcel(p.geom_2180)),
-        timed("KIEG / EGiB GUGiK", kieg.classes_for_parcel(p.id, p.geom_2180)) if approx is None
+        timed("KIEG / EGiB GUGiK", kieg.classes_for_parcel(p.id, p.geom_2180)) if approx is None and not drawn
         else asyncio.sleep(0, result=(None, 0)),
         timed("Open-Meteo (prognoza)", _forecast_days(c.x, c.y)) if is_today else asyncio.sleep(0, result=(None, 0)),
         timed(soilgrids.SOURCE, soilgrids.texture_at(rp.x, rp.y)),
@@ -710,7 +720,7 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
         soil_map=sm_status or "brak", soil_map_error=err(sm_res),
         soil_map_year=sm_rep.mapped_year if sm_status == "ok" else None,
         stale=list(stale_hits),
-        soil_conflict=cons.conflict, approximate=approx is not None,
+        soil_conflict=cons.conflict, approximate=approx is not None, drawn=drawn,
         terrain=terrain_c is not None, terrain_error=None if terrain_c is not None else terrain_note,
         terrain_saved=bool(tr_saved), terrain_limitations=terrain_c.limitations if terrain_c else [],
         soil_basis_label=soil_consistency.LABELS[cons.contract.basis] if cons.substituted and cons.contract else None,
@@ -829,3 +839,17 @@ async def get_analysis(
     Bez `crop` – stan działki (gleba, zapas wody pod pokryciem referencyjnym FAO-56, bilans opad − ET0),
     `crop`, `crop_season`, `irrigation` = null."""
     return await run_analysis(parcel_id, crop, date, previous_crop, crop_history, cultivated_area_ha, lon, lat)
+
+
+@router.post(
+    "/analysis",
+    response_model=AnalysisResponse,
+    responses={404: {"model": ErrorDetail}, 409: {"description": "Kilka działek"},
+               422: {"description": "Brak uprawy / zła data / zły obrys pola"}, 502: {"model": ErrorDetail}},
+)
+async def post_analysis(req: AnalysisRequest) -> AnalysisResponse:
+    """To samo co GET /api/analysis, ale parametry w treści – potrzebne dla własnego obrysu pola (`geometry`:
+    GeoJSON Polygon w WGS84; zbyt długi na adres URL). Odpowiedź: `parcel.source = "drawn"`, nazwa „Pole narysowane
+    przez rolnika”, powierzchnia z kształtu; cała analiza (werdykt, ranking, teren) jak dla działki."""
+    return await run_analysis(req.parcel_id, req.crop, req.date, req.previous_crop, req.crop_history,
+                              req.cultivated_area_ha, req.lon, req.lat, req.geometry)

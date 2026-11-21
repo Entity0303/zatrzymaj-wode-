@@ -1,0 +1,322 @@
+{
+  "_opis": "A5c: przykłady odpowiedzi GET /api/search?q= (zapis prawdziwych odpowiedzi z 2026-11-21, ULDK był wtedy blokowany – wyniki działek ze znanych działek demo). Klucze: parcel_id = identyfikator TERYT, obreb_numer = „obręb numer”, name = sama nazwa (lista miejscowości z gminami, przycięta do 10), empty = brak wyników.",
+  "parcel_id": {
+    "query": "201305_2.0038.6/1",
+    "interpreted_as": "parcel_id",
+    "results": [
+      {
+        "kind": "parcel",
+        "id": "201305_2.0038.6/1",
+        "label": "Wnory-Wandy 6/1, gm. Kobylin-Borzymy, pow. wysokomazowiecki, podlaskie",
+        "name": "Wnory-Wandy 6/1",
+        "lon": 22.600425,
+        "lat": 53.050212,
+        "parcel_id": "201305_2.0038.6/1",
+        "type": null,
+        "type_label": null,
+        "gmina": "Kobylin-Borzymy",
+        "powiat": "wysokomazowiecki",
+        "wojewodztwo": "podlaskie",
+        "bbox": [
+          22.599915,
+          53.049633,
+          22.601866,
+          53.050408
+        ],
+        "bbox_approx": false,
+        "area_ha": 0.5822,
+        "source": "ULDK GUGiK"
+      }
+    ],
+    "total": 1,
+    "truncated": false,
+    "hint": null,
+    "notices": [],
+    "attribution": null
+  },
+  "obreb_numer": {
+    "query": "Wnory-Wandy 6/1",
+    "interpreted_as": "obreb_numer",
+    "results": [
+      {
+        "kind": "parcel",
+        "id": "201305_2.0038.6/1",
+        "label": "Wnory-Wandy 6/1, gm. Kobylin-Borzymy, pow. wysokomazowiecki, podlaskie",
+        "name": "Wnory-Wandy 6/1",
+        "lon": 22.600425,
+        "lat": 53.050212,
+        "parcel_id": "201305_2.0038.6/1",
+        "type": null,
+        "type_label": null,
+        "gmina": "Kobylin-Borzymy",
+        "powiat": "wysokomazowiecki",
+        "wojewodztwo": "podlaskie",
+        "bbox": [
+          22.599915,
+          53.049633,
+          22.601866,
+          53.050408
+        ],
+        "bbox_approx": false,
+        "area_ha": 0.5822,
+        "source": "ULDK GUGiK"
+      }
+    ],
+    "total": 1,
+    "truncated": false,
+    "hint": null,
+    "notices": [],
+    "attribution": null
+  },
+  "name": {
+    "query": "Brzeźno",
+    "interpreted_as": "name",
+    "results": [
+      {
+        "kind": "place",
+        "id": "prng:11486",
+        "label": "Brzeźno, gm. Prusice, pow. trzebnicki, dolnośląskie",
+        "name": "Brzeźno",
+        "lon": 16.870875,
+        "lat": 51.362632,
+        "parcel_id": null,
+        "type": "miejscowosc",
+        "type_label": "wieś",
+        "gmina": "Prusice",
+        "powiat": "trzebnicki",
+        "wojewodztwo": "dolnośląskie",
+        "bbox": [
+          16.85588,
+          51.35263,
+          16.88588,
+          51.37263
+        ],
+        "bbox_approx": true,
+        "area_ha": null,
+        "source": "PRNG GUGiK"
+      },
+      {
+        "kind": "place",
+        "id": "prng:11511",
+        "label": "Brzeźno, gm. Koneck, pow. aleksandrowski, kujawsko-pomorskie",
+        "name": "Brzeźno",
+        "lon": 18.743656,
+        "lat": 52.823961,
+        "parcel_id": null,
+        "type": "miejscowosc",
+        "type_label": "wieś",
+        "gmina": "Koneck",
+        "powiat": "aleksandrowski",
+        "wojewodztwo": "kujawsko-pomorskie",
+        "bbox": [
+          18.72866,
+          52.81396,
+          18.75866,
+          52.83396
+        ],
+        "bbox_approx": true,
+        "area_ha": null,
+        "source": "PRNG GUGiK"
+      },
+      {
+        "kind": "place",
+        "id": "prng:11512",
+        "label": "Brzeźno, gm. Lipno, pow. lipnowski, kujawsko-pomorskie",
+        "name": "Brzeźno",
+        "lon": 19.049083,
+        "lat": 52.850844,
+        "parcel_id": null,
+        "type": "miejscowosc",
+        "type_label": "wieś",
+        "gmina": "Lipno",
+        "powiat": "lipnowski",
+        "wojewodztwo": "kujawsko-pomorskie",
+        "bbox": [
+          19.03408,
+          52.84084,
+          19.06408,
+          52.86084
+        ],
+        "bbox_approx": true,
+        "area_ha": null,
+        "source": "PRNG GUGiK"
+      },
+      {
+        "kind": "place",
+        "id": "prng:11514",
+        "label": "Brzeźno, gm. Pruszcz, pow. świecki, kujawsko-pomorskie",
+        "name": "Brzeźno",
+        "lon": 18.134329,
+        "lat": 53.336272,
+        "parcel_id": null,
+        "type": "miejscowosc",
+        "type_label": "wieś",
+        "gmina": "Pruszcz",
+        "powiat": "świecki",
+        "wojewodztwo": "kujawsko-pomorskie",
+        "bbox": [
+          18.11933,
+          53.32627,
+          18.14933,
+          53.34627
+        ],
+        "bbox_approx": true,
+        "area_ha": null,
+        "source": "PRNG GUGiK"
+      },
+      {
+        "kind": "place",
+        "id": "prng:11510",
+        "label": "Brzeźno, gm. Lubicz, pow. toruński, kujawsko-pomorskie",
+        "name": "Brzeźno",
+        "lon": 18.766568,
+        "lat": 53.090881,
+        "parcel_id": null,
+        "type": "miejscowosc",
+        "type_label": "wieś",
+        "gmina": "Lubicz",
+        "powiat": "toruński",
+        "wojewodztwo": "kujawsko-pomorskie",
+        "bbox": [
+          18.75157,
+          53.08088,
+          18.78157,
+          53.10088
+        ],
+        "bbox_approx": true,
+        "area_ha": null,
+        "source": "PRNG GUGiK"
+      },
+      {
+        "kind": "place",
+        "id": "prng:11528",
+        "label": "Brzeźno, gm. Śliwice, pow. tucholski, kujawsko-pomorskie",
+        "name": "Brzeźno",
+        "lon": 18.259653,
+        "lat": 53.717182,
+        "parcel_id": null,
+        "type": "miejscowosc",
+        "type_label": "wieś",
+        "gmina": "Śliwice",
+        "powiat": "tucholski",
+        "wojewodztwo": "kujawsko-pomorskie",
+        "bbox": [
+          18.24465,
+          53.70718,
+          18.27465,
+          53.72718
+        ],
+        "bbox_approx": true,
+        "area_ha": null,
+        "source": "PRNG GUGiK"
+      },
+      {
+        "kind": "place",
+        "id": "prng:11519",
+        "label": "Brzeźno, gm. Dorohusk, pow. chełmski, lubelskie",
+        "name": "Brzeźno",
+        "lon": 23.629346,
+        "lat": 51.165602,
+        "parcel_id": null,
+        "type": "miejscowosc",
+        "type_label": "wieś",
+        "gmina": "Dorohusk",
+        "powiat": "chełmski",
+        "wojewodztwo": "lubelskie",
+        "bbox": [
+          23.61435,
+          51.1556,
+          23.64435,
+          51.1756
+        ],
+        "bbox_approx": true,
+        "area_ha": null,
+        "source": "PRNG GUGiK"
+      },
+      {
+        "kind": "place",
+        "id": "prng:11491",
+        "label": "Brzeźno, gm. Lubiszyn, pow. gorzowski, lubuskie",
+        "name": "Brzeźno",
+        "lon": 14.905996,
+        "lat": 52.795977,
+        "parcel_id": null,
+        "type": "miejscowosc",
+        "type_label": "wieś",
+        "gmina": "Lubiszyn",
+        "powiat": "gorzowski",
+        "wojewodztwo": "lubuskie",
+        "bbox": [
+          14.891,
+          52.78598,
+          14.921,
+          52.80598
+        ],
+        "bbox_approx": true,
+        "area_ha": null,
+        "source": "PRNG GUGiK"
+      },
+      {
+        "kind": "place",
+        "id": "prng:11493",
+        "label": "Brzeźno, gm. Pszczew, pow. międzyrzecki, lubuskie",
+        "name": "Brzeźno",
+        "lon": 15.768335,
+        "lat": 52.550932,
+        "parcel_id": null,
+        "type": "miejscowosc",
+        "type_label": "przysiółek wsi",
+        "gmina": "Pszczew",
+        "powiat": "międzyrzecki",
+        "wojewodztwo": "lubuskie",
+        "bbox": [
+          15.75333,
+          52.54093,
+          15.78334,
+          52.56093
+        ],
+        "bbox_approx": true,
+        "area_ha": null,
+        "source": "PRNG GUGiK"
+      },
+      {
+        "kind": "place",
+        "id": "prng:11487",
+        "label": "Brzeźno, gm. Sulęcin, pow. sulęciński, lubuskie",
+        "name": "Brzeźno",
+        "lon": 15.07035,
+        "lat": 52.424512,
+        "parcel_id": null,
+        "type": "miejscowosc",
+        "type_label": "wieś",
+        "gmina": "Sulęcin",
+        "powiat": "sulęciński",
+        "wojewodztwo": "lubuskie",
+        "bbox": [
+          15.05535,
+          52.41451,
+          15.08535,
+          52.43451
+        ],
+        "bbox_approx": true,
+        "area_ha": null,
+        "source": "PRNG GUGiK"
+      }
+    ],
+    "total": 37,
+    "truncated": true,
+    "hint": "Dużo wyników – dopisz gminę, np. Brzeźno, Prusice.",
+    "notices": [],
+    "attribution": null
+  },
+  "empty": {
+    "query": "xyzabc",
+    "interpreted_as": "name",
+    "results": [],
+    "total": 0,
+    "truncated": false,
+    "hint": "Wpisz nazwę wsi albo obręb i numer działki, np. Wnory-Wandy 6/1",
+    "notices": [],
+    "attribution": null
+  }
+}

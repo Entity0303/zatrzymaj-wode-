@@ -18,6 +18,9 @@ settings.demo_parcels_preload = False
 settings.terrain_saved_results = False  # zapisane wyniki terenu (app/data/terrain) – tylko w testach A6, jawnie
 settings.uldk_retry_delays_s = [0.0, 0.0]
 settings.nmt_retry_delay_s = 0.0
+settings.prng_min_interval_s = 0.0  # A5c: bez odstępów między zapytaniami do geokoderów w testach
+settings.prng_retry_delay_s = 0.0
+settings.nominatim_min_interval_s = 0.0
 
 
 @pytest.fixture(autouse=True)

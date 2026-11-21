@@ -15,6 +15,7 @@ from fastapi import APIRouter, Query, Response
 from app.core.http import not_implemented
 from app.report.builder import build_pdf, filename
 from app.routers.analysis import run_analysis
+from app.schemas.analysis import AnalysisRequest
 from app.schemas.reports import ReportMeta, ReportRequest
 
 router = APIRouter(prefix="/api/reports", tags=["raporty"])
@@ -52,6 +53,22 @@ async def get_report_pdf_now(
     """Liczy analizę (jak GET /api/analysis) i zwraca „Paszport wodny działki” w PDF (A4, do druku)."""
     t0 = perf_counter()
     a = await run_analysis(parcel_id, crop, date, previous_crop, crop_history, cultivated_area_ha, lon, lat)
+    pdf = await build_pdf(a)
+    return Response(pdf, media_type="application/pdf", headers={
+        "Content-Disposition": f'attachment; filename="{filename(a)}"',
+        "X-Generation-Ms": str(int((perf_counter() - t0) * 1000)),
+    })
+
+
+@pdf_router.post("/report.pdf", response_class=Response,
+                 responses={200: {"content": {"application/pdf": {}}, "description": "Raport PDF (A4)"},
+                            422: {"description": "Brak uprawy / zła data / zły obrys pola"},
+                            502: {"description": "Brak działki lub pogody"}})
+async def post_report_pdf_now(req: AnalysisRequest) -> Response:
+    """Raport PDF dla własnego obrysu pola (`geometry`) albo działki – parametry w treści (jak POST /api/analysis)."""
+    t0 = perf_counter()
+    a = await run_analysis(req.parcel_id, req.crop, req.date, req.previous_crop, req.crop_history,
+                           req.cultivated_area_ha, req.lon, req.lat, req.geometry)
     pdf = await build_pdf(a)
     return Response(pdf, media_type="application/pdf", headers={
         "Content-Disposition": f'attachment; filename="{filename(a)}"',

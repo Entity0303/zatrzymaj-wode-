@@ -29,6 +29,77 @@ export type Parcel = {
   powierzchnia_ha: number
   geometria: GeoJSON.Polygon | GeoJSON.MultiPolygon
   zrodlo: DataSource
+  /** A5c: uldk – działka z ewidencji; drawn – pole narysowane przez rolnika; approximate – 1 ha wokół punktu (brak granic) */
+  source?: 'uldk' | 'drawn' | 'approximate'
+  /** np. „Pole narysowane przez rolnika” (null dla działki z ULDK) */
+  name?: string | null
+}
+
+// ── Wyszukiwanie: GET /api/search?q= (A5c) ──────────────────────────────────────────────────
+
+export type SearchKind = 'parcel' | 'place'
+export type PlaceType = 'miejscowosc' | 'gmina' | 'obreb'
+/** jak backend rozpoznał zapytanie */
+export type QueryInterpretation = 'parcel_id' | 'obreb_numer' | 'name' | 'empty' | 'unrecognized'
+
+export type SearchResult = {
+  kind: SearchKind
+  /** parcel: identyfikator ULDK; place: id źródła, np. „prng:139268” */
+  id: string
+  /** gotowy tekst do listy, np. „Tczów, gm. Tczów, pow. zwoleński, mazowieckie” */
+  label: string
+  /** parcel: „obręb numer”; place: nazwa miejscowości */
+  name: string
+  /** środek (WGS84) – do przybliżenia mapy; parcel: punkt wewnątrz działki */
+  lon: number
+  lat: number
+  /** tylko parcel – do GET /api/analysis?parcel_id= */
+  parcel_id?: string | null
+  /** tylko place */
+  type?: PlaceType | null
+  /** np. „wieś”, „miasto”, „osada”, „gmina” */
+  type_label?: string | null
+  gmina?: string | null
+  powiat?: string | null
+  wojewodztwo?: string | null
+  /** lon_min, lat_min, lon_max, lat_max (EPSG:4326) – do fitBounds; parcel: obrys działki */
+  bbox?: [number, number, number, number] | null
+  /** true = bbox wyznaczony wokół punktu (źródło podało tylko punkt) */
+  bbox_approx?: boolean
+  /** tylko parcel – z geometrii */
+  area_ha?: number | null
+  /** „ULDK GUGiK” | „PRNG GUGiK” | „OpenStreetMap Nominatim” | „słownik demo” */
+  source: string
+}
+
+export type SearchResponse = {
+  query: string
+  interpreted_as: QueryInterpretation
+  /** maks. 10 */
+  results: SearchResult[]
+  /** ile wyników pasuje (lista jest przycięta do 10) */
+  total: number
+  truncated: boolean
+  /** podpowiedź dla rolnika (brak wyników, za dużo wyników) */
+  hint?: string | null
+  /** czego nie udało się sprawdzić (źródło niedostępne) */
+  notices?: string[]
+  /** atrybucja źródła, gdy wymagana (OSM) */
+  attribution?: string | null
+}
+
+/** Treść POST /api/analysis i POST /api/report.pdf – dokładnie jedno z: parcel_id, lon+lat, geometry (A5c) */
+export type AnalysisRequest = {
+  parcel_id?: string | null
+  lon?: number | null
+  lat?: number | null
+  /** własny obrys pola: GeoJSON Polygon w WGS84 ([lon, lat]); 0,05–200 ha, w Polsce, bez samoprzecięć */
+  geometry?: GeoJSON.Polygon | null
+  crop?: string | null
+  date?: string | null
+  previous_crop?: string | null
+  crop_history?: string | null
+  cultivated_area_ha?: number | null
 }
 
 /** `detail` przy HTTP 409 */

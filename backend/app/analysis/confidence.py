@@ -31,6 +31,7 @@ PENALTY = {
     "teren_brak": 10,
     "frakcje_brak": 5,  # brak SoilGrids – bez przepuszczalności i uziarnienia
     "gleba_konflikt": 10,
+    "pole_narysowane": 4,  # obrys rolnika – brak EGiB, dokładny obrys z mapy (D75)
     "obszar_przyblizony": 15,  # brak granic działki z ULDK – kwadrat 1 ha wokół punktu (D69)  # źródła gleby różnią się (mapa glebowo-rolnicza / IUNG / SoilGrids, D49)
 }
 LEVELS: list[tuple[int, Confidence]] = [(75, "wysoka"), (50, "srednia"), (0, "ograniczona")]
@@ -75,6 +76,7 @@ class ConfidenceInputs:
     stale: list[StaleHit] = field(default_factory=list)
     soil_conflict: bool = False
     approximate: bool = False
+    drawn: bool = False  # obrys narysowany przez rolnika (A5c, D75)
     terrain_error: str | None = None  # A6: powód braku analizy terenu
     terrain_saved: bool = False  # teren z zapisanego wyniku (NMT nie odpowiadał)
     terrain_limitations: list[str] = field(default_factory=list)
@@ -109,6 +111,8 @@ def premises(i: ConfidenceInputs) -> list[Premise]:
         add("data_historyczna", "data historyczna – ryzyko na 7 dni ze scenariusza typowej pogody")
     if i.approximate:
         add("obszar_przyblizony", "obszar przybliżony – brak dokładnych granic działki")
+    if i.drawn:
+        add("pole_narysowane", "pole narysowane przez rolnika – bez granic ewidencyjnych i klas bonitacyjnych")
     if i.soil_conflict:
         add("gleba_konflikt", "źródła gleby różnią się – sprawdź glebę na polu")
     if i.soilgrids == "brak":
@@ -215,6 +219,9 @@ def reliability(i: ConfidenceInputs) -> tuple[Reliability, list[Premise], int]:
     if i.approximate:
         lim.insert(0, "Obszar przybliżony – brak dokładnych granic działki: gleba i teren dla kwadratu 1 ha wokół punktu, "
                       "województwo (plony GUS) przybliżone.")
+    if i.drawn:
+        lim.insert(0, "Pole narysowane przez rolnika – to nie jest działka ewidencyjna: powierzchnia z kształtu, bez klas "
+                      "bonitacyjnych (EGiB); gleba i teren dla narysowanego obrysu.")
     if i.weather_name and not i.weather_fallback:
         lim.insert(0, f"Pogoda uśredniona dla obszaru {i.weather_resolution} ({i.weather_name}).")
     if i.wb:

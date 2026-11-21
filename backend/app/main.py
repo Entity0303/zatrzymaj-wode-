@@ -14,7 +14,7 @@ from app.core.cache import store
 from app.core.config import settings
 from app.core.http import close_client
 from app.demo import warmup_loop
-from app.routers import analysis, demo, infra_reports, layers, parcel, reports, status, weather
+from app.routers import analysis, demo, infra_reports, layers, parcel, reports, search, status, weather
 from app.sources import uldk
 
 
@@ -46,7 +46,7 @@ app.add_middleware(
 )
 
 for r in (parcel.router, weather.router, analysis.router, layers.router, reports.router, reports.pdf_router,
-          infra_reports.router, demo.router, status.router):
+          infra_reports.router, demo.router, status.router, search.router):
     app.include_router(r)
 
 

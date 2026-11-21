@@ -156,6 +156,12 @@ def parcel_name(a: AnalysisResponse) -> tuple[str, str]:
         lon, lat = a.approximate_area.center
         return (f"Obszar przybliżony ({lat:.4f} N, {lon:.4f} E)",
                 f"ok. {a.approximate_area.area_ha:g} ha · woj. {p.wojewodztwo} (przybliżone)")
+    if p.source == "drawn":
+        where = ", ".join(x for x in (f"gm. {p.gmina}" if p.gmina not in ("", "nieznana") else "",
+                                       p.powiat if p.powiat not in ("", "nieznany") else "") if x)
+        return (p.name or "Pole narysowane przez rolnika",
+                f"{num(p.powierzchnia_ha, 2, 'ha')} (z kształtu) · {where + ' · ' if where else ''}woj. {p.wojewodztwo} · "
+                "nie jest działką ewidencyjną")
     return (f"Działka {p.numer}, obręb {p.obreb}",
             f"gm. {p.gmina}, {p.powiat}, woj. {p.wojewodztwo} · {p.id} · {num(p.powierzchnia_ha, 2, 'ha')}")
 
@@ -176,6 +182,8 @@ def history_labels(a: AnalysisResponse) -> str:
 
 
 def analysis_url(a: AnalysisResponse) -> str:
+    if a.parcel.source == "drawn":  # obrysu nie da się zapisać w adresie – link do aplikacji
+        return settings.public_url.rstrip("/") + "/"
     if a.approximate_area:
         lon, lat = a.approximate_area.center
         return f"{settings.public_url.rstrip('/')}/?{urlencode({'lon': lon, 'lat': lat, 'data': a.analysis_date.isoformat()})}"

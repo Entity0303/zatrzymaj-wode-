@@ -1,0 +1,80 @@
+<?xml version='1.0' encoding="UTF-8" ?>
+<wfs:FeatureCollection
+   xmlns:ms="http://mapserver.gis.umn.edu/mapserver"
+   xmlns:gml="http://www.opengis.net/gml/3.2"
+   xmlns:wfs="http://www.opengis.net/wfs/2.0"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://mapserver.gis.umn.edu/mapserver http://mapy.geoportal.gov.pl/wss/service/PZGiK/PRNG/WFS/GeographicalNames?SERVICE=WFS&amp;VERSION=2.0.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=ms:M1_UrzedoweNazwyMiejscowosci&amp;OUTPUTFORMAT=application%2Fgml%2Bxml%3B%20version%3D3.2 http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd"
+   timeStamp="2026-11-21T20:53:08" numberMatched="2" numberReturned="2">
+      <wfs:boundedBy>
+      	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
+      		<gml:lowerCorner>51.326098 18.799444</gml:lowerCorner>
+      		<gml:upperCorner>54.088056 21.445824</gml:upperCorner>
+      	</gml:Envelope>
+      </wfs:boundedBy>
+    <wfs:member>
+      <ms:M1_UrzedoweNazwyMiejscowosci gml:id="M1_UrzedoweNazwyMiejscowosci.139268">
+        <gml:boundedBy>
+        	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
+        		<gml:lowerCorner>54.088056 18.799444</gml:lowerCorner>
+        		<gml:upperCorner>54.088056 18.799444</gml:upperCorner>
+        	</gml:Envelope>
+        </gml:boundedBy>
+        <ms:msGeometry>
+          <gml:Point gml:id="M1_UrzedoweNazwyMiejscowosci.139268.1" srsName="urn:ogc:def:crs:EPSG::4326">
+            <gml:pos>54.088056 18.799444</gml:pos>
+          </gml:Point>
+        </ms:msGeometry>
+        <ms:IDIIP>PL.PZGiK.320.NGRP.139268</ms:IDIIP>
+        <ms:IDENTYFIKATORPRNG>139268</ms:IDENTYFIKATORPRNG>
+        <ms:IDENTYFIKATORSIMC>0934903</ms:IDENTYFIKATORSIMC>
+        <ms:NAZWAGLOWNA>Tczew</ms:NAZWAGLOWNA>
+        <ms:STATUSNAZWY>urzędowa</ms:STATUSNAZWY>
+        <ms:RODZAJOBIEKTU>miasto</ms:RODZAJOBIEKTU>
+        <ms:NAZWAMIEJSCOWOSCINADR></ms:NAZWAMIEJSCOWOSCINADR>
+        <ms:DOPELNIACZ>-wa</ms:DOPELNIACZ>
+        <ms:PRZYMIOTNIK>tczewski</ms:PRZYMIOTNIK>
+        <ms:GMINA>Tczew-gmina miejska</ms:GMINA>
+        <ms:POWIAT>tczewski</ms:POWIAT>
+        <ms:WOJEWODZTWO>pomorskie</ms:WOJEWODZTWO>
+        <ms:IDENTYFIKATORGMINY>2214011</ms:IDENTYFIKATORGMINY>
+        <ms:NAZWYOBOCZNE></ms:NAZWYOBOCZNE>
+        <ms:NAZWYDODATKOWE></ms:NAZWYDODATKOWE>
+        <ms:NAZWYHISTORYCZNE></ms:NAZWYHISTORYCZNE>
+        <ms:SKALA_WYSWIETLANIA>1:1000000</ms:SKALA_WYSWIETLANIA>
+      </ms:M1_UrzedoweNazwyMiejscowosci>
+    </wfs:member>
+    <wfs:member>
+      <ms:M1_UrzedoweNazwyMiejscowosci gml:id="M1_UrzedoweNazwyMiejscowosci.139271">
+        <gml:boundedBy>
+        	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
+        		<gml:lowerCorner>51.326098 21.445824</gml:lowerCorner>
+        		<gml:upperCorner>51.326098 21.445824</gml:upperCorner>
+        	</gml:Envelope>
+        </gml:boundedBy>
+        <ms:msGeometry>
+          <gml:Point gml:id="M1_UrzedoweNazwyMiejscowosci.139271.1" srsName="urn:ogc:def:crs:EPSG::4326">
+            <gml:pos>51.326098 21.445824</gml:pos>
+          </gml:Point>
+        </ms:msGeometry>
+        <ms:IDIIP>PL.PZGiK.320.NGRP.139271</ms:IDIIP>
+        <ms:IDENTYFIKATORPRNG>139271</ms:IDENTYFIKATORPRNG>
+        <ms:IDENTYFIKATORSIMC>0639943</ms:IDENTYFIKATORSIMC>
+        <ms:NAZWAGLOWNA>Tczów</ms:NAZWAGLOWNA>
+        <ms:STATUSNAZWY>urzędowa</ms:STATUSNAZWY>
+        <ms:RODZAJOBIEKTU>wieś</ms:RODZAJOBIEKTU>
+        <ms:NAZWAMIEJSCOWOSCINADR></ms:NAZWAMIEJSCOWOSCINADR>
+        <ms:DOPELNIACZ>Tczowa</ms:DOPELNIACZ>
+        <ms:PRZYMIOTNIK>tczowski</ms:PRZYMIOTNIK>
+        <ms:GMINA>Tczów-gmina wiejska</ms:GMINA>
+        <ms:POWIAT>zwoleński</ms:POWIAT>
+        <ms:WOJEWODZTWO>mazowieckie</ms:WOJEWODZTWO>
+        <ms:IDENTYFIKATORGMINY>1436042</ms:IDENTYFIKATORGMINY>
+        <ms:NAZWYOBOCZNE></ms:NAZWYOBOCZNE>
+        <ms:NAZWYDODATKOWE></ms:NAZWYDODATKOWE>
+        <ms:NAZWYHISTORYCZNE></ms:NAZWYHISTORYCZNE>
+        <ms:SKALA_WYSWIETLANIA>1:250000</ms:SKALA_WYSWIETLANIA>
+      </ms:M1_UrzedoweNazwyMiejscowosci>
+    </wfs:member>
+</wfs:FeatureCollection>
+
