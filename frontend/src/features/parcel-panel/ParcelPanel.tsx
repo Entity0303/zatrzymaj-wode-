@@ -17,6 +17,7 @@ import { IrrigationCard } from './IrrigationCard'
 import { KeyMetrics as Metrics } from './KeyMetrics'
 import { NonAgriculturalCard } from './NonAgriculturalCard'
 import { PanelEmpty } from './PanelEmpty'
+import type { Example } from './examples'
 import { ParcelHeader } from './ParcelHeader'
 import { SectionTitle } from './SectionTitle'
 import { SoilCard } from './SoilCard'
@@ -48,6 +49,7 @@ export function ParcelPanel({
   onOpenPassport,
   onShowOnMap,
   onReportInfra,
+  onExample,
 }: {
   state: SearchPhase
   crop: CropId | null
@@ -75,10 +77,12 @@ export function ParcelPanel({
   onShowOnMap?: (g: GeoJSON.Geometry) => void
   /** zgłoszenie stanu rowu / zbiornika w okolicy (SPEC 11) */
   onReportInfra?: () => void
+  /** pusty stan: przykładowe analizy jednym klikiem */
+  onExample?: (e: Example) => void
 }) {
   const { t } = useLang()
   const [settings] = useSettings()
-  if (state.phase === 'idle') return <PanelEmpty onFocusSearch={onFocusSearch} onLocate={onLocate} />
+  if (state.phase === 'idle') return <PanelEmpty onFocusSearch={onFocusSearch} onLocate={onLocate} onExample={onExample} />
 
   if (state.phase === 'loading')
     return (

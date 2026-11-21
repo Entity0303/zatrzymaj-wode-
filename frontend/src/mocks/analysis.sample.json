@@ -42,14 +42,15 @@
     "zrodlo": {
       "nazwa": "ULDK GUGiK",
       "url": "https://uldk.gugik.gov.pl/",
-      "pobrano": "2026-11-21T16:17:35+00:00",
-      "uwagi": "ZAPIS ODPOWIEDZI /api/analysis dla 201305_2.0038.6/1, zboża ozime, 2018-06-10 (wygenerowano 2026-11-21). Plik służy tylko do pracy nad UI (?dane=przykladowe) – UI zawsze pokazuje napis „DANE PRZYKŁADOWE”."
+      "pobrano": "2026-11-21T16:47:28+00:00",
+      "uwagi": "ZAPIS ODPOWIEDZI /api/analysis dla 201305_2.0038.6/1, zboża ozime, 2018-06-10, przedplon zboża ozime (wygenerowano 2026-11-21, A5). Plik służy tylko do pracy nad UI (?dane=przykladowe) – UI zawsze pokazuje napis „DANE PRZYKŁADOWE”."
     }
   },
   "crop": "zboza_ozime",
+  "previous_crop": "zboza_ozime",
   "analysis_date": "2018-06-10",
   "historical": true,
-  "generated_at": "2026-11-21T16:17:39Z",
+  "generated_at": "2026-11-21T16:47:31Z",
   "status": {
     "level": "danger",
     "score": 8,
@@ -205,6 +206,50 @@
     "non_agricultural": false,
     "non_agricultural_reason": null,
     "non_agricultural_note": null,
+    "texture": {
+      "sand_pct": 66.5,
+      "silt_pct": 24.4,
+      "clay_pct": 9.1,
+      "organic_carbon_pct": 3.74,
+      "texture_class": "glina piaszczysta",
+      "texture_code": "sandy_loam",
+      "depth": "0–30 cm",
+      "source_tag": {
+        "kind": "szacunek_modelu",
+        "date": null,
+        "source": "SoilGrids (ISRIC), 250 m"
+      }
+    },
+    "permeability": {
+      "ksat_mm_h": 85.0,
+      "label": "bardzo duża",
+      "rain_retention": "ucieka",
+      "description": "Woda z ulewy szybko wsiąka, ale gleba mało jej zatrzymuje – przesiąka w głąb, poza zasięg korzeni.",
+      "method": "Saxton i Rawls (2006), frakcje i węgiel organiczny z SoilGrids",
+      "source_tag": {
+        "kind": "obliczenia",
+        "date": null,
+        "source": "SoilGrids + Saxton i Rawls (2006)"
+      }
+    },
+    "soil_map": {
+      "complex_code": "6",
+      "complex_label": "żytni słaby",
+      "species_code": "pgl",
+      "species_label": "piasek gliniasty lekki",
+      "deeper": [
+        "piasek słabogliniasty",
+        "piasek luźny"
+      ],
+      "soil_type_code": "Bw",
+      "mapped_year": 1973,
+      "source_tag": {
+        "kind": "pomiar",
+        "date": null,
+        "source": "Mapa glebowo-rolnicza 1:5000 (GUGiK)"
+      }
+    },
+    "texture_note": null,
     "source_tag": {
       "kind": "pomiar",
       "date": null,
@@ -1395,32 +1440,128 @@
   ],
   "recommendations": [
     {
-      "id": "agrotechnika.odmiany_odporne",
-      "category": "agrotechnika",
-      "title": "Wybierz odmiany odporne na suszę",
-      "description": "W tym sezonie było 21 dni stresu wodnego, średnio w ostatnich 10 latach 3,5. Odmiany tolerujące suszę lub wcześniejsze zmniejszą straty.",
-      "why": "Stres wodny w sezonie był co najmniej półtora raza częstszy niż zwykle. Dane: stress_ratio: 6, dni stresu wodnego w sezonie: 21 dni.",
+      "id": "retencja.po_zbiorze_miedzyplon",
+      "category": "retencja",
+      "title": "Po zbiorze: międzyplon i słoma na polu",
+      "description": "Od 1 marca bilans wody (opad − parowanie) wynosi −111 mm – o 90 mm mniej niż zwykle. Po zbiorze wysiej międzyplon i zostaw rozdrobnioną słomę – gleba zatrzyma więcej wody z jesiennych i zimowych opadów na następny sezon.",
+      "why": "Międzyplony i resztki pożniwne zwiększają próchnicę i infiltrację – to podstawowa metoda retencji glebowej. W tym sezonie było już 21 dni stresu wodnego (średnio 3,5). Dane: bilans wody od początku sezonu (opad − parowanie): −111 mm.",
       "inputs": [
         {
-          "name": "stress_ratio",
-          "value": 6.0,
-          "unit": null,
-          "source": "analiza",
-          "date": null
-        },
-        {
-          "name": "Dni stresu wodnego w sezonie",
-          "value": 21.0,
-          "unit": "dni",
-          "source": "Model wody w glebie FAO-56",
+          "name": "Bilans wody od początku sezonu (opad − parowanie)",
+          "value": -110.6,
+          "unit": "mm",
+          "source": "NASA POWER",
           "date": null
         }
       ],
       "confidence": "srednia",
       "location": null,
-      "rule_id": "agrotechnika.odmiany_odporne",
+      "rule_id": "retencja.po_zbiorze_miedzyplon",
+      "priority": 80,
+      "in_panel": true,
+      "when": "po_zbiorze",
+      "when_label": "po zbiorze",
+      "permit": "none",
+      "permit_note": "Bez formalności – możesz to zrobić sam.",
+      "permit_url": null,
+      "warning": null,
+      "eco_scheme": {
+        "name": "Rolnictwo węglowe i zarządzanie składnikami odżywczymi",
+        "practice": "Międzyplony ozime lub wsiewki śródplonowe",
+        "code": "E_MPW",
+        "note": "Sprawdź aktualne warunki w ARiMR."
+      }
+    },
+    {
+      "id": "retencja.prochnica",
+      "category": "retencja",
+      "title": "Zwiększaj próchnicę – lekka gleba trzyma mało wody",
+      "description": "Gleba (kat. III, piasek gliniasty lekki) zatrzymuje mało wody. Każdy dodatkowy procent próchnicy zwiększa jej pojemność wodną – mieszaj słomę z glebą, wysiewaj międzyplony, stosuj obornik lub kompost.",
+      "why": "Gleby ubogie w materię organiczną szybciej przesychają; wzrost próchnicy poprawia pojemność wodną. Gleba zmieści ok. 166 mm wody dostępnej dla roślin. Woda z ulewy: szybko wsiąka i ucieka w głąb (przepuszczalność ok. 85 mm/h). Dane: woda z ulewy: szybko wsiąka i ucieka w głąb.",
+      "inputs": [
+        {
+          "name": "Woda z ulewy",
+          "value": "szybko wsiąka i ucieka w głąb",
+          "unit": null,
+          "source": "SoilGrids + Saxton i Rawls (2006)",
+          "date": null
+        }
+      ],
+      "confidence": "srednia",
+      "location": null,
+      "rule_id": "retencja.prochnica",
+      "priority": 60,
+      "in_panel": false,
+      "when": "po_zbiorze",
+      "when_label": "po zbiorze",
+      "permit": "none",
+      "permit_note": "Bez formalności – możesz to zrobić sam.",
+      "permit_url": null,
+      "warning": null,
+      "eco_scheme": {
+        "name": "Rolnictwo węglowe i zarządzanie składnikami odżywczymi",
+        "practice": "Wymieszanie słomy z glebą",
+        "code": "E_WSG",
+        "note": "Sprawdź aktualne warunki w ARiMR."
+      }
+    },
+    {
+      "id": "agrotechnika.odloz_nawozenie",
+      "category": "agrotechnika",
+      "title": "Odłóż nawożenie – przy suszy nawóz nie zadziała",
+      "description": "W strefie korzeni jest 17% wody dostępnej, ryzyko niedoboru wody w 7 dni: wysokie. Bez wody korzenie nie pobiorą składników – nawóz (zwłaszcza azot pogłównie) podaj dopiero po wydatnym deszczu albo nawodnieniu.",
+      "why": "Rośliny w fazie wrażliwej odczuwają już brak wody albo odczują go w ciągu kilku dni.",
+      "inputs": [],
+      "confidence": "srednia",
+      "location": null,
+      "rule_id": "agrotechnika.odloz_nawozenie",
+      "priority": 95,
+      "in_panel": true,
+      "when": "teraz",
+      "when_label": "teraz",
+      "permit": "none",
+      "permit_note": "Bez formalności – możesz to zrobić sam.",
+      "permit_url": null,
+      "warning": null,
+      "eco_scheme": {
+        "name": "Rolnictwo węglowe i zarządzanie składnikami odżywczymi",
+        "practice": "Opracowanie i przestrzeganie planu nawożenia",
+        "code": null,
+        "note": "Sprawdź aktualne warunki w ARiMR."
+      }
+    },
+    {
+      "id": "agrotechnika.plodozmian",
+      "category": "agrotechnika",
+      "title": "Zmień uprawę – wprowadź płodozmian",
+      "description": "Rok temu zboża ozime, teraz zboża ozime – ta sama uprawa drugi rok z rzędu. W kolejnym sezonie wprowadź roślinę z innej grupy (strączkowe, rzepak, okopowe) albo międzyplon – poprawia to strukturę gleby i jej zdolność zatrzymywania wody.",
+      "why": "Monokultura i zboże po zbożu pogarszają strukturę gleby i zwiększają podatność na suszę. Dane: uprawa w poprzednim roku: zboża ozime.",
+      "inputs": [
+        {
+          "name": "Uprawa w poprzednim roku",
+          "value": "zboża ozime",
+          "unit": null,
+          "source": "wybór rolnika",
+          "date": null
+        }
+      ],
+      "confidence": "srednia",
+      "location": null,
+      "rule_id": "agrotechnika.plodozmian",
       "priority": 55,
-      "in_panel": true
+      "in_panel": false,
+      "when": "przed_sezonem",
+      "when_label": "przed następnym sezonem",
+      "permit": "none",
+      "permit_note": "Bez formalności – możesz to zrobić sam.",
+      "permit_url": null,
+      "warning": null,
+      "eco_scheme": {
+        "name": "Rolnictwo węglowe i zarządzanie składnikami odżywczymi",
+        "practice": "Zróżnicowana struktura upraw",
+        "code": "E_ZSU",
+        "note": "Sprawdź aktualne warunki w ARiMR."
+      }
     },
     {
       "id": "nawadnianie.plan_dawek",
@@ -1433,7 +1574,14 @@
       "location": null,
       "rule_id": "nawadnianie.plan_dawek",
       "priority": 100,
-      "in_panel": true
+      "in_panel": true,
+      "when": "teraz",
+      "when_label": "teraz",
+      "permit": "required",
+      "permit_note": "Wymaga pozwolenia wodnoprawnego (pobór wody) – Wody Polskie.",
+      "permit_url": "https://www.gov.pl/web/wody-polskie",
+      "warning": "Obarczone dużym ryzykiem błędu – traktuj jako wskazówkę i sprawdź na polu.",
+      "eco_scheme": null
     }
   ],
   "reliability": {
@@ -1473,6 +1621,22 @@
         "note": null
       },
       {
+        "name": "SoilGrids (ISRIC)",
+        "used_for": "frakcje gleby 0–30 cm, przepuszczalność",
+        "data_date": null,
+        "resolution": "250 m",
+        "status": "ok",
+        "note": "model globalny"
+      },
+      {
+        "name": "Mapa glebowo-rolnicza (GUGiK)",
+        "used_for": "kompleks i gatunek gleby (informacyjnie)",
+        "data_date": null,
+        "resolution": "1:5000",
+        "status": "ok",
+        "note": "mapa z ok. 1973 r."
+      },
+      {
         "name": "Sentinel-2 L2A",
         "used_for": "kondycja i wilgotność roślin",
         "data_date": null,
@@ -1498,12 +1662,14 @@
       }
     ],
     "completeness": {
-      "available": 3,
-      "total": 6
+      "available": 4,
+      "total": 7
     },
     "limitations": [
       "Pogoda uśredniona dla obszaru ok. 50 km (NASA POWER).",
       "WOD to wartość typowa dla kategorii gleby (środek przedziału IUNG), nie pomiar na tej działce.",
+      "Frakcje gleby i przepuszczalność z modelu globalnego SoilGrids (250 m) – wartości orientacyjne, nie pomiar na tej działce.",
+      "Mapa glebowo-rolnicza opracowana ok. 1973 r. – stan gleby mógł się zmienić.",
       "Brak zdjęć satelitarnych – kondycja i wilgotność roślin w przygotowaniu.",
       "Brak analizy terenu – spływ wody przyjęty w uproszczeniu (20% opadu powyżej 20 mm na dobę).",
       "Model wody w glebie FAO-56 z parametrami tabelarycznymi upraw – nie uwzględnia odmiany, nawożenia ani poziomu wód gruntowych.",
@@ -1516,28 +1682,42 @@
       "label": "Szukam działki (ULDK GUGiK)",
       "state": "done",
       "note": null,
-      "duration_ms": 239
+      "duration_ms": 260
     },
     {
       "id": "weather",
       "label": "Pobieram pogodę z 10 lat (NASA POWER)",
       "state": "done",
       "note": null,
-      "duration_ms": 1709
+      "duration_ms": 1817
     },
     {
       "id": "soil",
       "label": "Sprawdzam glebę (IUNG-PIB)",
       "state": "done",
       "note": null,
-      "duration_ms": 379
+      "duration_ms": 369
     },
     {
       "id": "egib",
       "label": "Klasy bonitacyjne (EGiB)",
       "state": "done",
       "note": null,
-      "duration_ms": 3691
+      "duration_ms": 389
+    },
+    {
+      "id": "soilgrids",
+      "label": "Frakcje i przepuszczalność gleby (SoilGrids)",
+      "state": "done",
+      "note": null,
+      "duration_ms": 3642
+    },
+    {
+      "id": "soil_map",
+      "label": "Mapa glebowo-rolnicza (GUGiK)",
+      "state": "done",
+      "note": null,
+      "duration_ms": 171
     },
     {
       "id": "forecast",
@@ -1572,14 +1752,14 @@
       "label": "Ocena, pewność, przyczyny i rekomendacje",
       "state": "done",
       "note": null,
-      "duration_ms": 38
+      "duration_ms": 57
     },
     {
       "id": "total",
       "label": "Cała analiza",
       "state": "done",
       "note": null,
-      "duration_ms": 4003
+      "duration_ms": 3993
     }
   ]
 }

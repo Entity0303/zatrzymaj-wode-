@@ -1,10 +1,20 @@
-import { LocateFixed, MousePointerClick, Search } from 'lucide-react'
+import { ChevronRight, LocateFixed, MousePointerClick, Search } from 'lucide-react'
+import { EXAMPLES, type Example } from './examples'
 import { EmptyState } from '@/components/EmptyState'
 import { FieldIllustration } from '@/components/FieldIllustration'
 import { useLang } from '@/lib/i18n'
 
 /** Panel bez wybranej działki (SPEC 6, 15.1). */
-export function PanelEmpty({ onFocusSearch, onLocate }: { onFocusSearch: () => void; onLocate: () => void }) {
+export function PanelEmpty({
+  onFocusSearch,
+  onLocate,
+  onExample,
+}: {
+  onFocusSearch: () => void
+  onLocate: () => void
+  /** „Zobacz przykład” – jeden klik = pełna analiza */
+  onExample?: (e: Example) => void
+}) {
   const { t } = useLang()
   const ways = [
     { icon: Search, title: 'Wpisz numer działki', text: 'np. Szczytno 112/11', action: onFocusSearch },
@@ -12,9 +22,38 @@ export function PanelEmpty({ onFocusSearch, onLocate }: { onFocusSearch: () => v
     { icon: LocateFixed, title: 'Moja lokalizacja', text: 'gdy stoisz na polu', action: onLocate },
   ]
   return (
+    <div className="space-y-6">
+      {onExample && (
+        <section aria-labelledby="examples-h" className="space-y-3">
+          <h2 id="examples-h" className="font-display text-xl leading-7 font-semibold text-brand-dark">
+            {t('Zobacz przykład')}
+          </h2>
+          <p className="-mt-2 text-sm leading-5 text-text-muted">{t('Jeden klik – pełna analiza prawdziwej działki.')}</p>
+          <ul className="grid grid-cols-2 gap-2.5">
+            {EXAMPLES.map((e) => (
+              <li key={e.id}>
+                <button
+                  type="button"
+                  onClick={() => onExample(e)}
+                  className="group flex h-full min-h-28 w-full flex-col gap-2 rounded-xl border bg-surface p-3 text-left transition-colors hover:border-brand/50 hover:bg-sage-soft"
+                >
+                  <span className={`flex size-9 items-center justify-center rounded-full ${e.tone}`}>
+                    <e.icon className="size-5" aria-hidden />
+                  </span>
+                  <span className="flex items-center gap-1 text-base leading-5 font-semibold">
+                    {t(e.title)}
+                    <ChevronRight className="size-4 text-text-muted transition-transform group-hover:translate-x-0.5" aria-hidden />
+                  </span>
+                  <span className="text-sm leading-5 text-text-muted">{t(e.text)}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     <EmptyState
       illustration={<FieldIllustration className="w-40" />}
-      title="Znajdź swoją działkę"
+      title={onExample ? 'Albo znajdź swoją działkę' : 'Znajdź swoją działkę'}
       description="Pokażemy granice pola i jego stan wodny."
     >
       <ul className="space-y-2 text-left">
@@ -48,5 +87,6 @@ export function PanelEmpty({ onFocusSearch, onLocate }: { onFocusSearch: () => v
         })}
       </ul>
     </EmptyState>
+    </div>
   )
 }

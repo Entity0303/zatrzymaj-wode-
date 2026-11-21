@@ -10,6 +10,7 @@ kolejne linie to rekordy z polami rozdzielonymi '|', w kolejności z parametru `
 WKT może mieć prefiks 'SRID=2180;'. Geometria w EPSG:2180 jako (wschód, północ).
 """
 
+import asyncio
 import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -17,7 +18,7 @@ from datetime import datetime, timezone
 import httpx
 from shapely.geometry.base import BaseGeometry
 
-from app.core.cache import TTLCache
+from app.core.cache import TTLCache, cached_fetch
 from app.core.config import settings
 from app.core.geo import parse_wkt, to_wgs84
 from app.core.http import NotFoundError, SourceError, get_client
@@ -28,7 +29,9 @@ _RESULT_FIELDS = ["geom_wkt", "id", "voivodeship", "county", "commune", "region"
 # pełny identyfikator: TERYT gminy (6 cyfr) _ typ (1 cyfra) . obręb (4 cyfry) . numer
 _FULL_ID = re.compile(r"^\d{6}_\d\.\d{4}\.\S+$")
 
-_cache: TTLCache[list["Parcel"]] = TTLCache(ttl_s=24 * 3600, max_items=512)
+ATTEMPTS = 6
+RETRY_DELAY_S = 0.25
+_cache: TTLCache[list["Parcel"]] = TTLCache(ttl_s=7 * 24 * 3600, max_items=512, name="ULDK GUGiK")
 
 
 @dataclass
@@ -108,36 +111,47 @@ def parse_response(text: str) -> list[Parcel]:
 
 
 async def _get(params: dict) -> str:
-    """GET z timeoutem i jedną ponowną próbą przy błędzie połączenia."""
+    """GET z timeoutem i ponowieniem przy błędzie połączenia albo przekierowaniu.
+
+    ULDK przy dużym ruchu odpowiada 302 -> integracja01.gugik.gov.pl/resp/uldk.php, który zwraca pozorne „0”
+    ze śmieciową geometrią (sprawdzone 2026-11-21). Przekierowania nie śledzimy: to chwilowa niedostępność,
+    nie „brak działki” – ponawiamy kilka razy z narastającą przerwą, za każdym razem na nowym połączeniu (D45).
+    """
     timeout = httpx.Timeout(settings.uldk_timeout_s)
-    last_exc: Exception | None = None
-    for _ in range(2):
+    last = "brak odpowiedzi"
+    for attempt in range(ATTEMPTS):
+        if attempt:
+            await asyncio.sleep(RETRY_DELAY_S * attempt)
         try:
-            resp = await get_client().get(settings.uldk_url, params=params, timeout=timeout)
+            # ponowienie po przekierowaniu – na nowym połączeniu (keep-alive potrafi „przykleić się” do węzła,
+            # który odsyła wszystkie zapytania na resp/uldk.php)
+            headers = {"Connection": "close"} if attempt else None
+            resp = await get_client().get(settings.uldk_url, params=params, timeout=timeout, follow_redirects=False,
+                                          headers=headers)
         except httpx.TimeoutException as exc:
             raise SourceError(
                 SOURCE, f"usługa nie odpowiada (przekroczono {settings.uldk_timeout_s:.0f} s)"
             ) from exc
         except httpx.TransportError as exc:
-            last_exc = exc
+            last = f"brak połączenia z usługą ({exc.__class__.__name__})"
+            continue
+        if 300 <= resp.status_code < 400:
+            last = "usługa chwilowo ogranicza ruch (przekierowanie) – spróbuj za chwilę"
             continue
         if resp.status_code >= 400:
             raise SourceError(SOURCE, f"usługa zwróciła błąd HTTP {resp.status_code}")
         return resp.text
-    raise SourceError(
-        SOURCE, f"brak połączenia z usługą ({last_exc.__class__.__name__})"
-    ) from last_exc
+    raise SourceError(SOURCE, last)
 
 
 async def _query(params: dict) -> list[Parcel]:
     params = {**params, "result": ",".join(_RESULT_FIELDS), "srid": "2180"}
     key = tuple(sorted(params.items()))
-    hit = _cache.get(key)
-    if hit is not None:
-        return hit
-    parcels = parse_response(await _get(params))
-    _cache.set(key, parcels)
-    return parcels
+
+    async def download() -> list[Parcel]:
+        return parse_response(await _get(params))
+
+    return await cached_fetch(_cache, key, SOURCE, download)
 
 
 def clear_cache() -> None:

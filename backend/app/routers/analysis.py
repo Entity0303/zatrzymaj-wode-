@@ -2,8 +2,8 @@
 
 Kontrakt odpowiedzi: app/schemas/analysis.py (AnalysisResponse).
 
-Kolejność (A4): ULDK → równolegle pogoda 10 lat (NASA POWER, zapasowo archiwum Open-Meteo), gleba IUNG,
-klasy EGiB, prognoza Open-Meteo (gdy data = dziś) → bilans wody i model FAO-56 (analysis.water_balance)
+Kolejność (A4/A5): ULDK → równolegle pogoda 10 lat (NASA POWER, zapasowo archiwum Open-Meteo), gleba IUNG,
+klasy EGiB, frakcje SoilGrids, mapa glebowo-rolnicza, prognoza Open-Meteo (gdy data = dziś) → bilans wody i model FAO-56 (analysis.water_balance)
 → ocena (analysis.scoring) → pewność (analysis.confidence) → przyczyny (analysis.causes) → rekomendacje
 (analysis.recommendations, reguły YAML). Awaria jednego źródła obniża pewność, nie wywraca analizy.
 Endpointy /api/dev/* – TYMCZASOWE (usunąć przy końcowym sprzątaniu).
@@ -28,6 +28,7 @@ from app.analysis.crops import CROPS, PHASE_LABELS
 from app.analysis.facts import build_facts
 from app.analysis.recommendations import Evaluation, evaluate
 from app.analysis.scoring import overall_status
+from app.analysis.soil_texture import enrich_soil
 from app.analysis.water_balance import (
     HorizonDay,
     SoilWaterResult,
@@ -38,6 +39,7 @@ from app.analysis.water_balance import (
     soil_water_model,
 )
 from app.analysis.water_balance import to_contract as model_to_contract
+from app.core.cache import stale_scope
 from app.core.config import settings
 from app.core.http import SourceError, http_error, in_poland
 from app.routers.parcel import parcel_out, resolve_parcel
@@ -60,7 +62,7 @@ from app.schemas.analysis import (
     YearStress,
 )
 from app.schemas.parcel import ErrorDetail
-from app.sources import iung, kieg, weather_openmeteo, weather_power
+from app.sources import iung, kieg, soil_map, soilgrids, weather_openmeteo, weather_power
 
 router = APIRouter(prefix="/api", tags=["analiza"])
 
@@ -446,6 +448,9 @@ async def dev_water(
 # ═══ PEŁNE /api/analysis (A4) ═══════════════════════════════════════════════════════════════
 
 ANALYSIS_BUDGET_S = 27.0  # cała analiza < 30 s (wymóg KOWR) – zapas na serializację
+# twardy limit całego pobrania na źródło (D45) – limit httpx dotyczy pojedynczej operacji, nie całego zapytania
+SOURCE_LIMIT_S = {"IUNG-PIB": 15.0, "KIEG / EGiB GUGiK": 6.5, "Open-Meteo (prognoza)": 10.0,
+                  "SoilGrids (ISRIC)": 12.5, "Mapa glebowo-rolnicza (GUGiK)": 8.0}
 
 
 def _step(id_: str, label: str, state: str, note: str | None = None, ms: int | None = None) -> LoadingStep:
@@ -467,8 +472,8 @@ def _balance_indicator(wb) -> Indicator:
     note = None
     if wb.deviation_mm is not None and wb.mean_balance_mm is not None:
         more = "mniej" if wb.deviation_mm < 0 else "więcej"
-        note = (f"o {abs(wb.deviation_mm):.0f} mm {more} niż zwykle (średnia 10 lat {wb.mean_balance_mm:.0f} mm), "
-                f"od {wb.season_start:%d.%m}")
+        mean = f"{wb.mean_balance_mm:.0f}".replace("-", "−")
+        note = f"o {abs(wb.deviation_mm):.0f} mm {more} niż zwykle (średnia 10 lat {mean} mm), od {wb.season_start:%d.%m}"
     return Indicator(value=wb.current_balance_mm, unit="mm", status=status, note=note,
                      source_tag=wb.history.source_tag)
 
@@ -481,31 +486,33 @@ def _hg_share(w, sums) -> float | None:
     return float((m == "HG").mean()) if len(m) else None
 
 
-@router.get(
-    "/analysis",
-    response_model=AnalysisResponse,
-    responses={404: {"model": ErrorDetail}, 409: {"description": "Kilka działek"}, 422: {"description": "Brak uprawy / zła data"},
-               502: {"model": ErrorDetail}},
-)
-async def get_analysis(
-    parcel_id: str = Query(description="Pełny identyfikator działki ULDK (albo „obręb numer”)"),
-    crop: str | None = Query(None, description="Uprawa (15 upraw IUNG SMSR)"),
-    date: dt.date | None = Query(None, description="Data analizy (domyślnie dziś, maks. 10 lat wstecz)"),
-) -> AnalysisResponse:
-    """Pełna analiza wodna działki: ULDK → równolegle pogoda 10 lat, gleba IUNG, klasy EGiB, prognoza (dla dziś)
-    → model wody w glebie → ocena → pewność → przyczyny → rekomendacje. Awaria jednego źródła = brak danych
-    i niższa pewność; 502 tylko bez działki (ULDK) albo bez pogody."""
-    t0 = perf_counter()
-    today = dt.date.today()
-    analysis_date = date or today
+def validate_params(crop: str | None, analysis_date: dt.date, previous_crop: str | None, today: dt.date) -> None:
     if not crop:
         raise HTTPException(status_code=422, detail={"message": "Wybierz uprawę – od niej zależy ocena wody w glebie."})
     if crop not in CROPS:
         raise HTTPException(status_code=422, detail={"message": f"Nieznana uprawa: {crop}."})
+    if previous_crop and previous_crop != "nie_wiem" and previous_crop not in CROPS:
+        raise HTTPException(status_code=422, detail={"message": f"Nieznana uprawa z poprzedniego roku: {previous_crop}."})
     if analysis_date > today:
         raise HTTPException(status_code=422, detail={"message": "Data analizy nie może być z przyszłości."})
     if analysis_date < shift_years(today, settings.history_years):
         raise HTTPException(status_code=422, detail={"message": f"Data analizy może być najwyżej {settings.history_years} lat wstecz."})
+
+
+async def run_analysis(
+    parcel_id: str, crop: str | None, analysis_date: dt.date | None = None, previous_crop: str | None = None
+) -> AnalysisResponse:
+    """Pełna analiza (wspólna dla /api/analysis, raportu PDF i rozgrzewki przykładów demo)."""
+    with stale_scope() as stale_hits:
+        return await _run(parcel_id, crop, analysis_date, previous_crop, stale_hits)
+
+
+async def _run(parcel_id: str, crop: str | None, date: dt.date | None, previous_crop: str | None,
+               stale_hits: list) -> AnalysisResponse:
+    t0 = perf_counter()
+    today = dt.date.today()
+    analysis_date = date or today
+    validate_params(crop, analysis_date, previous_crop, today)
     crop_obj = get_crop(crop)
     steps: list[LoadingStep] = []
 
@@ -519,40 +526,53 @@ async def get_analysis(
         raise http_error(SourceError("ULDK GUGiK", "usługa nie odpowiada")) from exc
     steps.append(_step("parcel", "Szukam działki (ULDK GUGiK)", "done", ms=int((perf_counter() - s) * 1000)))
     c = p.geom_4326.centroid
+    rp = p.geom_4326.representative_point()
 
     # ── 2. źródła równolegle, z łącznym limitem czasu ──
     remaining = max(3.0, ANALYSIS_BUDGET_S - (perf_counter() - t0))
 
     async def timed(name: str, coro):
         st = perf_counter()
+        limit = min(remaining, SOURCE_LIMIT_S.get(name, remaining))
         try:
-            res = await asyncio.wait_for(coro, timeout=remaining)
+            res = await asyncio.wait_for(coro, timeout=limit)
         except SourceError as exc:
             res = exc
         except asyncio.TimeoutError:
-            res = SourceError(name, "przekroczono limit czasu analizy")
+            res = SourceError(name, f"brak odpowiedzi w {limit:.0f} s")
         return res, int((perf_counter() - st) * 1000)
 
     is_today = analysis_date == today
-    (w_res, w_ms), (iung_res, iung_ms), (kieg_res, kieg_ms), (fc_res, fc_ms) = await asyncio.gather(
+    (
+        (w_res, w_ms), (iung_res, iung_ms), (kieg_res, kieg_ms), (fc_res, fc_ms), (sg_res, sg_ms), (sm_res, sm_ms),
+    ) = await asyncio.gather(
         timed("NASA POWER", load_weather_history(c.x, c.y, analysis_date)),
         timed("IUNG-PIB", iung.soil_for_parcel(p.geom_2180)),
         timed("KIEG / EGiB GUGiK", kieg.classes_for_parcel(p.id, p.geom_2180)),
         timed("Open-Meteo (prognoza)", _forecast_days(c.x, c.y)) if is_today else asyncio.sleep(0, result=(None, 0)),
+        timed(soilgrids.SOURCE, soilgrids.texture_at(rp.x, rp.y)),
+        timed(soil_map.SOURCE, soil_map.soil_map_at(rp.x, rp.y)),
     )
     if isinstance(w_res, SourceError):  # bez pogody nic nie da się policzyć
         raise http_error(w_res)
     w = w_res.weather
+
+    def state(res) -> str:
+        return "error" if isinstance(res, SourceError) else "done"
+
+    def err(res) -> str | None:
+        return res.message if isinstance(res, SourceError) else None
+
     steps.append(_step("weather", f"Pobieram pogodę z 10 lat ({w.source})", "done",
                        note="źródło zapasowe" if w_res.fallback_used else None, ms=w_ms))
-    steps.append(_step("soil", "Sprawdzam glebę (IUNG-PIB)", "error" if isinstance(iung_res, SourceError) else "done",
-                       note=iung_res.message if isinstance(iung_res, SourceError) else None, ms=iung_ms))
-    kieg_note = kieg_res.message if isinstance(kieg_res, SourceError) else (kieg_res.note if kieg_res else None)
-    steps.append(_step("egib", "Klasy bonitacyjne (EGiB)", "error" if isinstance(kieg_res, SourceError) else "done",
-                       note=kieg_note, ms=kieg_ms))
+    steps.append(_step("soil", "Sprawdzam glebę (IUNG-PIB)", state(iung_res), note=err(iung_res), ms=iung_ms))
+    kieg_note = err(kieg_res) or (kieg_res.note if kieg_res else None)
+    steps.append(_step("egib", "Klasy bonitacyjne (EGiB)", state(kieg_res), note=kieg_note, ms=kieg_ms))
+    steps.append(_step("soilgrids", "Frakcje i przepuszczalność gleby (SoilGrids)", state(sg_res), note=err(sg_res), ms=sg_ms))
+    sm_note = err(sm_res) or (None if sm_res is not None else "brak konturu w tym miejscu")
+    steps.append(_step("soil_map", "Mapa glebowo-rolnicza (GUGiK)", state(sm_res), note=sm_note, ms=sm_ms))
     if is_today:
-        steps.append(_step("forecast", "Prognoza pogody (Open-Meteo)", "error" if isinstance(fc_res, SourceError) else "done",
-                           note=fc_res.message if isinstance(fc_res, SourceError) else None, ms=fc_ms))
+        steps.append(_step("forecast", "Prognoza pogody (Open-Meteo)", state(fc_res), note=err(fc_res), ms=fc_ms))
     else:
         steps.append(_step("forecast", "Prognoza pogody", "done", note="data historyczna – scenariusz typowej pogody", ms=0))
     steps.append(_step("satellite", "Zdjęcia satelitarne", "pending", note="w przygotowaniu – brak danych"))
@@ -561,7 +581,7 @@ async def get_analysis(
     # ── 3. obliczenia ──
     s = perf_counter()
     soil_a = assess_soil(iung_res, kieg_res)
-    soil_c = soil_to_contract(soil_a)
+    soil_c, soil_lim = enrich_soil(soil_to_contract(soil_a), sg_res, sm_res)
     wb = build_history(w, analysis_date, years=settings.history_years)
     sums = season_sums(w, analysis_date, years=settings.history_years)
     forecast = None if fc_res is None or isinstance(fc_res, SourceError) else fc_res
@@ -577,16 +597,22 @@ async def get_analysis(
                        note=no_model, ms=int((perf_counter() - s) * 1000)))
 
     s = perf_counter()
-    facts = build_facts(crop_obj, analysis_date, soil_a, model, wb, sums)
+    prev = previous_crop if previous_crop in CROPS else None
+    facts = build_facts(crop_obj, analysis_date, soil_a, model, wb, sums, soil_c=soil_c, previous_crop=prev)
     status = overall_status(facts, soil_c)
     causes = [] if soil_a.not_agricultural else build_causes(facts)
-    evaluation = evaluate(facts) if model else Evaluation([])
+    evaluation = evaluate(facts) if model and not soil_a.not_agricultural else Evaluation([])
+    sm_status = None if isinstance(sm_res, SourceError) else ("ok" if sm_res is not None else "brak_konturu")
     rel, _premises, _points = reliability(ConfidenceInputs(
         analysis_date=analysis_date, today=today, parcel_fetched=p.fetched_at.date(), weather_name=w.source,
         weather_resolution=w.resolution, weather_fallback=w_res.fallback_used, weather_notes=w_res.notes,
         weather_until=wb.data_until, forecast_ok=(None if not is_today else forecast is not None),
-        forecast_error=fc_res.message if isinstance(fc_res, SourceError) else None, soil=soil_a, model=model, wb=wb,
-        hg_share_season=_hg_share(w, sums),
+        forecast_error=err(fc_res), soil=soil_a, model=model, wb=wb,
+        hg_share_season=_hg_share(w, sums), extra_limitations=soil_lim,
+        soilgrids="brak" if isinstance(sg_res, SourceError) else "ok", soilgrids_error=err(sg_res),
+        soil_map=sm_status or "brak", soil_map_error=err(sm_res),
+        soil_map_year=sm_res.mapped_year if sm_status == "ok" else None,
+        stale=list(stale_hits),
     ))
     history = wb.history.model_copy(update={"stress_days_by_year": out.stress_days_by_year})
     no_sat = SourceTag(kind="brak_danych", source="Sentinel-2 L2A")
@@ -605,6 +631,7 @@ async def get_analysis(
     return AnalysisResponse(
         parcel=parcel_out(p),
         crop=crop,
+        previous_crop=previous_crop or None,
         analysis_date=analysis_date,
         historical=analysis_date < today,
         generated_at=dt.datetime.now(dt.timezone.utc).replace(microsecond=0),
@@ -620,3 +647,21 @@ async def get_analysis(
         reliability=rel,
         steps=steps,
     )
+
+
+@router.get(
+    "/analysis",
+    response_model=AnalysisResponse,
+    responses={404: {"model": ErrorDetail}, 409: {"description": "Kilka działek"}, 422: {"description": "Brak uprawy / zła data"},
+               502: {"model": ErrorDetail}},
+)
+async def get_analysis(
+    parcel_id: str = Query(description="Pełny identyfikator działki ULDK (albo „obręb numer”)"),
+    crop: str | None = Query(None, description="Uprawa (15 upraw IUNG SMSR)"),
+    date: dt.date | None = Query(None, description="Data analizy (domyślnie dziś, maks. 10 lat wstecz)"),
+    previous_crop: str | None = Query(None, description="Uprawa w poprzednim roku (15 upraw albo 'nie_wiem') – płodozmian"),
+) -> AnalysisResponse:
+    """Pełna analiza wodna działki: ULDK → równolegle pogoda 10 lat, gleba IUNG, klasy EGiB, SoilGrids, mapa
+    glebowo-rolnicza, prognoza (dla dziś) → model wody w glebie → ocena → pewność → przyczyny → rekomendacje.
+    Awaria jednego źródła = brak danych i niższa pewność; 502 tylko bez działki (ULDK) albo bez pogody."""
+    return await run_analysis(parcel_id, crop, date, previous_crop)

@@ -868,6 +868,9 @@ def to_contract(res: SoilWaterResult, crop: Crop, analysis_date: date, no_model_
         rec = Recommendation(
             id="nawadnianie-model",
             category="nawadnianie",
+            when="teraz", when_label="teraz", permit="required",
+            permit_note="Wymaga pozwolenia wodnoprawnego (pobór wody) – Wody Polskie.",
+            permit_url="https://www.gov.pl/web/wody-polskie",
             title="Nawadnianie " + ("teraz" if irr.first_date == analysis_date else f"ok. {irr.first_date:%d.%m}"),
             description=irr.message + ".",
             why=(

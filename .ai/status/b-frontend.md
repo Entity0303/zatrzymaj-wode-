@@ -18,11 +18,11 @@ _Stan na: 2026-11-21_
 - `b/frontend` (jedna długa gałąź; B1 z `b/wyglad-grafiki` już scalone) – merge do `main` tylko przy kamieniach milowych, bez PR na zadanie
 
 ## Następne
-0. **Uwagi mentora (jury ma 3 min):** po merge `origin/a/backend` z nowym kontraktem – pusty stan z 4 kartami „Zobacz przykład” (`GET /api/demo/examples`), pole „Co rosło w zeszłym roku?” (+ `przedplon` w linku i raporcie), odznaki formalności / ostrzeżenie / ekoschemat w rekomendacjach (3 w panelu, 5 w paszporcie), gleba: piasek/pył/ił %, uziarnienie, przepuszczalność, ulewa, typ gleby.
+0. **Uwagi mentora (jury ma 3 min):** karty „Zobacz przykład” są (B10, lista lokalna) – podmienić na `GET /api/demo/examples`; po merge `origin/a/backend` z nowym kontraktem – pole „Co rosło w zeszłym roku?” (+ `przedplon` w linku i raporcie), odznaki formalności / ostrzeżenie / ekoschemat w rekomendacjach (3 w panelu, 5 w paszporcie), gleba: piasek/pył/ił %, uziarnienie, przepuszczalność, ulewa, typ gleby.
 1. Widok 3D (SPEC 8, P3) – na końcu.
-2. Tablet (768–1279 px) – sprawdzić zrzutami jak komputer i telefon.
 
 ## Blokery / pytania do drugiej osoby
+- A: `/api/parcel` 404 dla 4 działek testowych z `.ai/test-parcels.md` (szczegóły w dzienniku B10) – przykłady używają na razie tylko działających (6/1 Wnory-Wandy, 112/11 Szczytno).
 - A: zgłoszenia rowów (`/api/infra-reports`, `/confirm`, `/letter`) i raport PDF (`/api/report.pdf`) – frontend gotowy, czeka na endpointy (dziś 501/404). Pole na zdjęcie w `InfraReportIn`? (dziś zdjęcie zostaje na urządzeniu).
 - A: format obiektów warstw (`features[].properties`: `kind`, `color`, `label`) – propozycja w dzienniku B8; frontend rysuje już dane z `/api/layers`, czeka na endpoint (dziś 501).
 - A: przełącznik PL | EN (D40) – czy backend może przyjmować `lang` i zwracać teksty (błędy, rekomendacje) po angielsku? Do tego czasu zostają po polsku.

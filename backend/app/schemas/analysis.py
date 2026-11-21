@@ -52,6 +52,23 @@ CropId = Literal[
 ]
 """15 upraw IUNG SMSR (lista etykiet: frontend/src/lib/crops.ts)."""
 
+PreviousCropId = Literal[
+    "zboza_ozime", "zboza_jare", "kukurydza_ziarno", "kukurydza_kiszonka", "rzepak", "rzepak_jesien", "ziemniak",
+    "burak_cukrowy", "straczkowe", "warzywa", "drzewa_owocowe", "krzewy_owocowe", "truskawki", "chmiel", "tyton",
+    "nie_wiem",
+]
+"""Uprawa w poprzednim roku (przedplon): 15 upraw IUNG + „nie wiem”."""
+
+PermitLevel = Literal["none", "maybe", "required"]
+"""Formalności: none – bez formalności; maybe – może wymagać zgłoszenia wodnoprawnego;
+required – wymaga pozwolenia wodnoprawnego (Wody Polskie)."""
+
+RecommendationWhen = Literal["teraz", "po_zbiorze", "przed_sezonem"]
+"""Kiedy działać: teraz / po zbiorze / przed następnym sezonem."""
+
+RainRetention = Literal["ucieka", "zatrzymuje", "splywa"]
+"""Co dzieje się z wodą z ulewy: szybko wsiąka i ucieka w głąb / dobrze ją zatrzymuje / ryzyko spływu i zastoisk."""
+
 StepState = Literal["done", "active", "error", "pending"]
 SourceAvailability = Literal["ok", "czesciowo", "brak"]
 CauseFactor = Literal["opady", "parowanie", "gleba", "teren", "uprawa", "inne"]
@@ -134,6 +151,47 @@ class Soil(Contract):
     non_agricultural: bool = False
     non_agricultural_reason: NonAgriculturalReason | None = None
     non_agricultural_note: str | None = Field(None, description="Gotowy komunikat dla rolnika (SPEC 15.1)")
+    texture: "SoilTexture | None" = Field(None, description="Frakcje i klasa uziarnienia 0–30 cm (SoilGrids)")
+    permeability: "SoilPermeability | None" = Field(None, description="Przepuszczalność i zachowanie wody przy ulewie")
+    soil_map: "SoilMapInfo | None" = Field(None, description="Mapa glebowo-rolnicza (GUGiK): kompleks i gatunek gleby")
+    texture_note: str | None = Field(None, description="Powód braku frakcji / mapy glebowo-rolniczej, np. 'SoilGrids nie odpowiada'")
+    source_tag: SourceTag
+
+
+class SoilTexture(Contract):
+    """Uziarnienie wierzchniej warstwy gleby (0–30 cm) – SoilGrids 250 m (ISRIC), średnia ważona 0–5, 5–15, 15–30 cm."""
+
+    sand_pct: float = Field(ge=0, le=100, description="Piasek (0,05–2 mm), %")
+    silt_pct: float = Field(ge=0, le=100, description="Pył (0,002–0,05 mm), %")
+    clay_pct: float = Field(ge=0, le=100, description="Ił (< 0,002 mm), %")
+    organic_carbon_pct: float | None = Field(None, description="Węgiel organiczny, % (próchnica ≈ 1,72 × węgiel)")
+    texture_class: str = Field(description="Klasa uziarnienia po polsku (trójkąt USDA), np. 'glina piaszczysta'")
+    texture_code: str = Field(description="Kod klasy USDA, np. 'sandy_loam'")
+    depth: str = Field(description="Głębokość, np. '0–30 cm'")
+    source_tag: SourceTag
+
+
+class SoilPermeability(Contract):
+    """Przepuszczalność gleby (Ksat) z frakcji i węgla organicznego – Saxton i Rawls (2006)."""
+
+    ksat_mm_h: float = Field(ge=0, description="Przewodnictwo wodne w stanie nasycenia, mm/h")
+    label: str = Field(description="Opis: bardzo duża / duża / średnia / mała / bardzo mała")
+    rain_retention: RainRetention
+    description: str = Field(description="Co dzieje się z wodą z ulewy – zdanie dla rolnika")
+    method: str = Field(description="Np. 'Saxton i Rawls (2006), frakcje z SoilGrids'")
+    source_tag: SourceTag
+
+
+class SoilMapInfo(Contract):
+    """Mapa glebowo-rolnicza 1:5000 (PZGiK, usługa WMS Geoportalu) – kontur w środku działki."""
+
+    complex_code: str | None = Field(None, description="Kompleks przydatności rolniczej, np. '2', '5', '2z'")
+    complex_label: str | None = Field(None, description="Np. 'pszenny dobry'")
+    species_code: str | None = Field(None, description="Gatunek (uziarnienie) wierzchniej warstwy, np. 'pgl'")
+    species_label: str | None = Field(None, description="Np. 'piasek gliniasty lekki'")
+    deeper: list[str] = Field(default_factory=list, description="Utwory głębszych warstw (opisy), od góry")
+    soil_type_code: str | None = Field(None, description="Typ/podtyp gleby, np. 'Bw' (brunatna wyługowana)")
+    mapped_year: int | None = Field(None, description="Rok opracowania mapy (aktualność)")
     source_tag: SourceTag
 
 
@@ -293,6 +351,22 @@ class Recommendation(Contract):
     rule_id: str | None = Field(None, description="Id reguły z analysis/rules/*.yaml")
     priority: int = Field(0, description="Ważność w obrębie kategorii (większa = ważniejsza)")
     in_panel: bool = Field(False, description="Pokazać w panelu działki (maks. 3: po jednej z kategorii); reszta – paszport")
+    when: RecommendationWhen = Field(description="Kiedy działać")
+    when_label: str = Field(description="Np. 'teraz', 'po zbiorze', 'przed następnym sezonem'")
+    permit: PermitLevel = Field(description="Formalności")
+    permit_note: str = Field(description="Np. 'Bez formalności – możesz to zrobić sam.'")
+    permit_url: str | None = Field(None, description="Link do Wód Polskich (dla maybe / required)")
+    warning: str | None = Field(None, description="Przy niskiej pewności: 'obarczone dużym ryzykiem błędu'")
+    eco_scheme: "EcoScheme | None" = Field(None, description="Powiązany ekoschemat ARiMR (bez kwot dopłat)")
+
+
+class EcoScheme(Contract):
+    """Ekoschemat (PS WPR, ARiMR) powiązany z rekomendacją – tylko informacja, bez kwot dopłat."""
+
+    name: str = Field(description="Np. 'Rolnictwo węglowe i zarządzanie składnikami odżywczymi'")
+    practice: str = Field(description="Np. 'Międzyplony ozime lub wsiewki śródplonowe'")
+    code: str | None = Field(None, description="Kod praktyki, np. 'E_MPW'")
+    note: str = Field(description="Np. 'Sprawdź aktualne warunki w ARiMR.'")
 
 
 # ── E. Wiarygodność ─────────────────────────────────────────────────────────────────────────
@@ -337,6 +411,7 @@ class LoadingStep(Contract):
 class AnalysisResponse(Contract):
     parcel: Parcel
     crop: CropId
+    previous_crop: PreviousCropId | None = Field(None, description="Uprawa w poprzednim roku (jeśli podana)")
     analysis_date: dt.date
     historical: bool = Field(description="True, gdy analysis_date < dziś (analiza historyczna)")
     generated_at: dt.datetime
@@ -351,3 +426,7 @@ class AnalysisResponse(Contract):
     recommendations: list[Recommendation] = Field(description="retencja → agrotechnika → nawadnianie")
     reliability: Reliability
     steps: list[LoadingStep]
+
+
+Soil.model_rebuild()
+Recommendation.model_rebuild()

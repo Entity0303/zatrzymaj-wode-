@@ -1,9 +1,27 @@
-# Reguły AGROTECHNIKI (zmiany w uprawie) – kategoria druga w kolejności.
+# Reguły AGROTECHNIKI – kategoria druga. Konsultacja z mentorem (D40): przy silnej suszy nawozy nie działają,
+# ważny płodozmian i ekoschematy; działania na następny sezon (odmiany, płodozmian) – niżej niż działania „teraz”.
 rules:
+  - id: agrotechnika.odloz_nawozenie
+    category: agrotechnika
+    priority: 95
+    confidence: srednia
+    timing: teraz
+    permit: none
+    eco_scheme: PLAN_NAWOZENIA
+    when:
+      all:
+        - {fact: strong_stress, eq: true}
+    title: "Odłóż nawożenie – przy suszy nawóz nie zadziała"
+    description: "W strefie korzeni jest {water_pct}% wody dostępnej, ryzyko niedoboru wody w 7 dni: {risk}. Bez wody korzenie nie pobiorą składników – nawóz (zwłaszcza azot pogłównie) podaj dopiero po wydatnym deszczu albo nawodnieniu."
+    why:
+      - "Rośliny w fazie wrażliwej odczuwają już brak wody albo odczują go w ciągu kilku dni."
+
   - id: agrotechnika.ograniczenie_parowania
     category: agrotechnika
     priority: 70
     confidence: srednia
+    timing: teraz
+    permit: none
     when:
       all:
         - {fact: sensitive, eq: true}
@@ -20,13 +38,15 @@ rules:
     category: agrotechnika
     priority: 65
     confidence: srednia
+    timing: teraz
+    permit: none
     when:
       all:
         - {fact: sensitive, eq: true}
         - {fact: crop, in: [warzywa, truskawki, krzewy_owocowe, drzewa_owocowe]}
         - {fact: water_pct, lt: 70}
     title: "Ściółkuj glebę wokół roślin"
-    description: "Mulcz ze słomy, kory lub agrowłókniny ogranicza parowanie i nagrzewanie gleby. W strefie korzeni jest {water_pct}% wody dostępnej."
+    description: "Ściółka ze słomy, kory lub agrowłókniny ogranicza parowanie i nagrzewanie gleby. W strefie korzeni jest {water_pct}% wody dostępnej."
     why:
       - "Uprawa ogrodnicza w fazie wrażliwej przy malejącym zapasie wody."
 
@@ -34,6 +54,8 @@ rules:
     category: agrotechnika
     priority: 75
     confidence: srednia
+    timing: teraz
+    permit: none
     when:
       all:
         - {fact: phase, in: [przed_siewem]}
@@ -46,10 +68,47 @@ rules:
     why:
       - "Zapas wody przed siewem jest mniejszy niż zwykle lub sezon zapowiada się sucho."
 
-  - id: agrotechnika.odmiany_odporne
+  - id: agrotechnika.zachowaj_wilgoc_przed_siewem_ozimin
+    category: agrotechnika
+    priority: 60
+    confidence: srednia
+    timing: teraz
+    permit: none
+    when:
+      all:
+        - {fact: phase, in: [po_zbiorze, wschody_jesienne]}
+        - {fact: month, in: [8, 9, 10]}
+        - {fact: crop_kind, in: [ozima, jesienna]}
+        - {fact: water_pct, lt: 50}
+    title: "Uprawa przedsiewna płytko, z wałowaniem"
+    description: "W profilu jest tylko {water_pct}% wody dostępnej. Płytka uprawa i wałowanie po siewie zachowają wilgoć potrzebną do wschodów."
+    why:
+      - "Mały zapas wody w okresie siewu ozimin."
+
+  - id: agrotechnika.plodozmian
     category: agrotechnika
     priority: 55
     confidence: srednia
+    timing: przed_sezonem
+    permit: none
+    eco_scheme: E_ZSU
+    when:
+      all:
+        - {fact: crop_kind, ne: wieloletnia}
+      any:
+        - {fact: same_crop, eq: true}
+        - {fact: cereal_after_cereal, eq: true}
+    title: "Zmień uprawę – wprowadź płodozmian"
+    description: "Rok temu {previous_crop_label}, teraz {crop_label_lower} – {rotation_issue}. W kolejnym sezonie wprowadź roślinę z innej grupy (strączkowe, rzepak, okopowe) albo międzyplon – poprawia to strukturę gleby i jej zdolność zatrzymywania wody."
+    why:
+      - "Monokultura i zboże po zbożu pogarszają strukturę gleby i zwiększają podatność na suszę."
+
+  - id: agrotechnika.odmiany_odporne
+    category: agrotechnika
+    priority: 45
+    confidence: srednia
+    timing: przed_sezonem
+    permit: none
     when:
       all:
         - {fact: stress_ratio, gte: 1.5}
@@ -61,8 +120,10 @@ rules:
 
   - id: agrotechnika.uprawy_mniej_wymagajace
     category: agrotechnika
-    priority: 45
+    priority: 40
     confidence: ograniczona
+    timing: przed_sezonem
+    permit: none
     when:
       all:
         - {fact: soil_category, eq: 1}
@@ -71,18 +132,3 @@ rules:
     description: "Gleba kat. I zmieści tylko ok. {wod_mm} mm wody – {crop_label} potrzebuje jej dużo w lipcu i sierpniu. Na takich glebach mniej ryzykowne są zboża ozime i rośliny o krótszym okresie wegetacji."
     why:
       - "Uprawa o dużym zapotrzebowaniu na wodę na glebie bardzo podatnej na suszę."
-
-  - id: agrotechnika.zachowaj_wilgoc_przed_siewem_ozimin
-    category: agrotechnika
-    priority: 60
-    confidence: srednia
-    when:
-      all:
-        - {fact: phase, in: [po_zbiorze, wschody_jesienne]}
-        - {fact: month, in: [8, 9, 10]}
-        - {fact: crop_kind, in: [ozima, jesienna]}
-        - {fact: water_pct, lt: 50}
-    title: "Uprawa przedsiewna płytko, z wałowaniem"
-    description: "W profilu jest tylko {water_pct}% wody dostępnej. Płytka uprawa i wałowanie po siewie zachowają wilgoć potrzebną do wschodów."
-    why:
-      - "Mały zapas wody w okresie siewu ozimin."
