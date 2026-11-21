@@ -12,7 +12,7 @@ _Stan na: 2026-11-21_
 - **B1 – wygląd dopasowany do grafik wzorcowych** (`ref-desktop`, `ref-mobile`, nowa `ref-style` – wykonana przez nas, źródło `design/ref-style.src.html`): pływające elementy bez linii, pogoda·data·język w jednej pigułce, dolny pasek jako jedna karta z podziałami, płaskie karty w panelu, karta stanu ze strzałką ›, okrąg z torem -soft w kolorze stanu, legendy (pasek 6 px, próbka „Chmury”), lewy pasek z kartą hasła jak na ref-desktop.
 
 ## W trakcie (gałąź)
-- `b/wyglad-grafiki` (B1, od `b/frontend`) – do scalenia z `b/frontend`; merge do `main` tylko przy kamieniach milowych, bez PR na zadanie
+- `b/frontend` (jedna długa gałąź; B1 z `b/wyglad-grafiki` już scalone) – merge do `main` tylko przy kamieniach milowych, bez PR na zadanie
 
 ## Następne
 1. Sprawdzić B1 w przeglądarce (komputer, tablet, telefon; z `?dane=przykladowe`) – dotąd weryfikacja tylko `npm run build`.
