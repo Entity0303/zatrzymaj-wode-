@@ -37,11 +37,14 @@ export function ExploreBar({
   search,
   locate,
   onExample,
+  examples = EXAMPLES,
 }: {
   isMobile: boolean
   search: ReactNode
   locate: ReactNode
   onExample: (e: Example) => void
+  /** lista z /api/demo/examples */
+  examples?: Example[]
 }) {
   const { t, lang, setLang } = useLang()
 
@@ -79,7 +82,7 @@ export function ExploreBar({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="z-[1500] w-80 rounded-xl">
             <DropdownMenuLabel className="text-xs tracking-wider text-text-muted uppercase">{t('Zobacz przykład')}</DropdownMenuLabel>
-            {EXAMPLES.map((e) => (
+            {examples.map((e) => (
               <DropdownMenuItem key={e.id} className="min-h-11 text-sm" onSelect={() => onExample(e)}>
                 <span className={`flex size-7 items-center justify-center rounded-full ${e.tone}`}>
                   <e.icon className="size-4" />

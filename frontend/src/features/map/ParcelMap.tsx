@@ -16,6 +16,7 @@ import type { Status } from '@/theme/status'
 import { parcelBounds, type MapInsets } from './geo'
 import { layerByKey, type LayerKey } from './layers'
 import { ParcelLabel } from './ParcelLabel'
+import { SoilSusceptibilityLayer } from './SoilSusceptibilityLayer'
 import { InfraPins } from '@/features/infra-reports/InfraPins'
 import { useLang } from '@/lib/i18n'
 
@@ -29,8 +30,7 @@ const ORTO_WMTS =
   '?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=ORTOFOTOMAPA&STYLE=default' +
   '&FORMAT=image/jpeg&TILEMATRIXSET=EPSG:3857&TILEMATRIX=EPSG:3857:{z}&TILEROW={y}&TILECOL={x}'
 
-/** Start bez działki w adresie: pola uprawne z bliska (okolice działki z przykładu „Susza 2018”, Podlasie). */
-const INTRO_VIEW: [number, number] = [53.047, 22.594]
+/** Start bez działki w adresie: cała Polska (z podatnością gleb na suszę – „susza + gleba” od pierwszego spojrzenia). */
 
 function IntroView({ active }: { active: boolean }) {
   const map = useMap()
@@ -39,7 +39,10 @@ function IntroView({ active }: { active: boolean }) {
     // tylko przy pierwszym wejściu – powrót z działki zostawia mapę tam, gdzie była
     if (!active || done.current) return
     done.current = true
-    map.setView(INTRO_VIEW, 13, { animate: false })
+    map.setView(POLAND_CENTER, 6, { animate: false })
+    // komputer: karta powitalna po lewej – Polska z mapą gleb przesunięta w prawą część ekranu
+    const w = map.getSize().x
+    if (w >= 1024) map.panBy([-Math.round(w * 0.2), 0], { animate: false })
   }, [active, map])
   return null
 }
@@ -124,8 +127,10 @@ type Props = {
   onClosePopup: () => void
   /** miejsce rekomendacji („Pokaż na mapie”) */
   highlight?: GeoJSON.Geometry | null
-  /** ekran powitalny – widok pól z bliska */
+  /** ekran powitalny – widok całej Polski */
   intro?: boolean
+  /** podatność gleb na suszę (IUNG) – mapa startowa */
+  soil?: boolean
   /** zgłoszenia rowów/zbiorników wokół działki; zmiana `infraRefresh` = ponowne pobranie */
   infraRefresh?: number
 }
@@ -150,6 +155,7 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
     onClosePopup,
     highlight,
     intro = false,
+    soil = false,
     infraRefresh = 0,
   },
   ref,
@@ -277,6 +283,7 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
       )}
 
       <IntroView active={intro} />
+      {soil && <SoilSusceptibilityLayer />}
       <InfraPins bbox={infraBox} refresh={infraRefresh} />
 
       <FitTo parcel={parcel} candidates={candidates} insets={insets} reducedMotion={reducedMotion} />

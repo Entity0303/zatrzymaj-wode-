@@ -18,6 +18,9 @@ import { MobileSheetHeader } from '@/features/parcel-panel/MobileSheetHeader'
 import { ParcelPanel } from '@/features/parcel-panel/ParcelPanel'
 import { ParcelSummary } from '@/features/parcel-panel/ParcelSummary'
 import { ExploreBar } from '@/features/intro/ExploreBar'
+import { IntroHero } from '@/features/intro/IntroHero'
+import { useDemoExamples } from '@/features/intro/useDemoExamples'
+import { SOIL_SUSCEPTIBILITY_LEGEND } from '@/features/map/SoilSusceptibilityLayer'
 import { LocateButton } from '@/features/search/LocateButton'
 import { Passport } from '@/features/passport/Passport'
 import { exampleDate, type Example } from '@/features/parcel-panel/examples'
@@ -111,6 +114,9 @@ export default function Start() {
   const reqId = useRef(0)
   // uprawa z linku – przypisywana do działki, gdy wyszukiwanie ją znajdzie
   const pendingCrop = useRef(link.uprawa)
+  // karta powitalna (B0): tylko przy wejściu bez działki w linku; znika po pierwszym działaniu
+  const [hero, setHero] = useState(() => !link.dzialka)
+  const demoExamples = useDemoExamples()
   // przykład jednym klikiem: na telefonie po znalezieniu działki szuflada do połowy (wynik od razu widoczny)
   const expandAfterFind = useRef(false)
   // ?widok=paszport – po pierwszej gotowej analizie od razu paszport wodny
@@ -233,6 +239,7 @@ export default function Start() {
   /** jedno pole wyszukiwania, 3 rodzaje zapytań: identyfikator / „obręb numer” → działka, sama nazwa → miejsce */
   const onSearch = (q: string) => {
     userActed.current = true
+    setHero(false)
     if (isPlaceQuery(q)) return searchPlace(q)
     setPlaces([])
     setPlaceError(null)
@@ -263,6 +270,7 @@ export default function Start() {
 
   function onMapClick(lon: number, lat: number) {
     userActed.current = true
+    setHero(false)
     if (infra?.picking) {
       setInfra({ point: [lon, lat], picking: false })
       if (isMobile) setSnap('full')
@@ -295,6 +303,7 @@ export default function Start() {
 
   function locate() {
     userActed.current = true
+    setHero(false)
     const fail = (message: string) => {
       setSearch({
         phase: 'error',
@@ -423,6 +432,7 @@ export default function Start() {
   // ── „Zobacz przykład”: działka + uprawa + data jednym klikiem ───────────────────────────────
   function openExample(e: Example) {
     userActed.current = true
+    setHero(false)
     pendingCrop.current = e.crop
     setPassportFor(null)
     setAsOf(exampleDate(e))
@@ -612,6 +622,7 @@ export default function Start() {
             highlight={infra ? infraMarker : highlight}
             infraRefresh={infraRefresh}
             intro={intro}
+            soil={intro}
             insets={insets}
             reducedMotion={reducedMotion}
             onMapClick={onMapClick}
@@ -622,11 +633,29 @@ export default function Start() {
 
           {intro ? (
             <>
-              <ExploreBar
-                isMobile={isMobile}
-                search={searchBar}
-                locate={<LocateButton locating={locating} onClick={locate} iconOnly />}
-                onExample={openExample}
+              {hero ? (
+                <IntroHero
+                  search={searchBar}
+                  locate={<LocateButton locating={locating} onClick={locate} iconOnly />}
+                  examples={demoExamples}
+                  onExample={openExample}
+                />
+              ) : (
+                <ExploreBar
+                  isMobile={isMobile}
+                  search={searchBar}
+                  locate={<LocateButton locating={locating} onClick={locate} iconOnly />}
+                  onExample={openExample}
+                  examples={demoExamples}
+                />
+              )}
+              {/* legenda mapy startowej: podatność gleb na suszę (IUNG) */}
+              <LegendCard
+                title="Podatność gleb na suszę"
+                legend={SOIL_SUSCEPTIBILITY_LEGEND}
+                status="IUNG-PIB · tereny nierolnicze bez koloru"
+                compact={isMobile}
+                className={isMobile ? 'absolute right-3 bottom-20 z-[1100] w-52' : 'absolute right-4 bottom-4 z-[1300]'}
               />
               <MapControls
                 className={isMobile ? 'absolute top-[76px] right-3 z-[1000]' : 'absolute bottom-4 left-4 z-[1000]'}

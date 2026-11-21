@@ -723,4 +723,15 @@ export const EN: Record<string, string> = {
   'Działki zapisane gwiazdką': 'Parcels you starred',
   'Poprzednie paszporty wodne': 'Previous water passports',
   'Mapa, tryb, język, zapisane dane': 'Map, mode, language, saved data',
+  // karta powitalna i mapa gleb (B0)
+  'Sprawdź, ile wody trzyma Twoja ziemia, co tu posiać i jak zatrzymać wodę na polu.': 'See how much water your soil holds, what to sow here and how to keep water on the field.',
+  'Numer działki albo nazwa miejscowości – albo kliknij pole na mapie.': 'Parcel number or village name – or click a field on the map.',
+  'Zobacz przykład:': 'See an example:',
+  'Jak to działa': 'How it works',
+  'Znajdź działkę': 'Find the parcel',
+  'Zobacz werdykt': 'See the verdict',
+  'Podatność gleb na suszę': 'Soil susceptibility to drought',
+  'IUNG-PIB · tereny nierolnicze bez koloru': 'IUNG-PIB · non-farmland left uncoloured',
+  'Mokry rok 2021': 'Wet year 2021',
+  'Kukurydza – stan dziś': 'Maize – status today',
 }

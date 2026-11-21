@@ -2,6 +2,7 @@
 import type {
   AnalysisResponse,
   CropId,
+  DemoExample,
   Forecast,
   InfraReport,
   InfraReportIn,
@@ -89,6 +90,8 @@ export const api = {
     }
     return get<PlaceSearchResponse>('/api/places', { q }, signal)
   },
+  /** GET /api/demo/examples – przykłady „jednym klikiem” (działki rozgrzane w pamięci serwera) */
+  demoExamples: (signal?: AbortSignal) => get<DemoExample[]>('/api/demo/examples', {}, signal),
   /** GET /api/report.pdf – te same parametry co analiza; odpowiedź to plik PDF */
   reportPdf: async (parcelId: string, crop: CropId, date: string): Promise<Blob> => {
     const params: Record<string, string> = { parcel_id: parcelId, crop, date }
