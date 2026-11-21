@@ -4,6 +4,11 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-21 · `b/frontend` · B18: bez podświetlenia pól uprawnych
+**Co:** usunięte podświetlenie pól (WMS IUNG ze stylem SLD) – na prośbę B wyglądało tandetnie: warstwa, przełącznik w menu, zielony kwadrat w podpowiedzi i ustawienie `farmland`. Podpowiedź: „Przybliż mapę i kliknij swoje pole”. Reszta trybu przeglądania (B17) bez zmian.
+**Pliki:** `frontend/src/features/map/FarmlandLayer.tsx` (usunięty), `frontend/src/features/map/ParcelMap.tsx`, `frontend/src/features/intro/ExploreBar.tsx`, `frontend/src/pages/Start.tsx`, `frontend/src/lib/{storage,i18n.en}.ts`.
+**Kontrakt API:** nie.
+
 ## 2026-11-21 · `b/frontend` · B17: przeglądanie mapy zamiast karty powitalnej, pola uprawne podświetlone
 **Co:** start bez działki = mapa do swobodnego przesuwania i przybliżania (jak w mapach internetowych), widok pól z bliska (zoom 13, okolice „Susza 2018”) – tylko przy pierwszym wejściu. Pola uprawne podświetlone: WMS IUNG-PIB `Susza:katgl_landuse2024` z własnym stylem `SLD_BODY` (kody 1–5 = szałwia, 11–14 przezroczyste) – sprawdzone na żywo; przełącznik w menu. Mały pasek: logo, wyszukiwarka, „Moja lokalizacja”, „Przykłady” (menu), menu (Moje działki, Raporty, Ustawienia, pola uprawne, język); kontrolki mapy; podpowiedź „Zielone to pola uprawne – kliknij swoje pole”. Interfejs działki dopiero po wybraniu działki (klik / wyszukanie / lokalizacja / przykład); błędy wyszukiwania i lista kandydatów zostają w trybie przeglądania. „Wróć do mapy” (górny pasek, × w zwiniętej karcie) zamyka działkę, czyści link, mapa zostaje w miejscu. Usunięta karta powitalna (`IntroHero`). Granice działek KIEG nie dodane – WMS przekierowuje i zwraca obraz ~11 MB na kafel. Uwaga: w czasie testu ULDK GUGiK nie odpowiadał (502, `/api/status`), klik w nowe pole sprawdzony tylko komunikatem błędu; ścieżka działka → powrót sprawdzona na przykładzie z pamięci serwera (1440 / 390 px).
 **Pliki:** `frontend/src/features/intro/ExploreBar.tsx` (nowy), `frontend/src/features/intro/IntroHero.tsx` (usunięty), `frontend/src/features/map/{FarmlandLayer,ParcelMap}.tsx`, `frontend/src/features/parcel-panel/ParcelSummary.tsx`, `frontend/src/layout/TopBar.tsx`, `frontend/src/pages/Start.tsx`, `frontend/src/lib/{storage,i18n.en}.ts`.

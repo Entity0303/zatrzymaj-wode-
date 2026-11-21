@@ -534,7 +534,6 @@ export default function Start() {
             highlight={infra ? infraMarker : highlight}
             infraRefresh={infraRefresh}
             intro={intro}
-            farmland={intro && ui.farmland}
             insets={insets}
             reducedMotion={reducedMotion}
             onMapClick={onMapClick}
@@ -550,8 +549,6 @@ export default function Start() {
                 search={searchBar}
                 locate={<LocateButton locating={locating} onClick={locate} iconOnly />}
                 onExample={openExample}
-                farmland={ui.farmland}
-                onFarmlandChange={(v) => setUi({ farmland: v })}
               />
               <MapControls
                 className={isMobile ? 'absolute top-[76px] right-3 z-[1000]' : 'absolute bottom-4 left-4 z-[1000]'}

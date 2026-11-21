@@ -17,7 +17,6 @@ import type { Status } from '@/theme/status'
 import { parcelBounds, type MapInsets } from './geo'
 import { layerByKey, type LayerKey } from './layers'
 import { ParcelLabel } from './ParcelLabel'
-import { FarmlandLayer } from './FarmlandLayer'
 import { InfraPins } from '@/features/infra-reports/InfraPins'
 import { useLang } from '@/lib/i18n'
 
@@ -128,8 +127,6 @@ type Props = {
   highlight?: GeoJSON.Geometry | null
   /** ekran powitalny – widok pól z bliska */
   intro?: boolean
-  /** podświetlenie pól uprawnych (IUNG) */
-  farmland?: boolean
   /** zgłoszenia rowów/zbiorników wokół działki; zmiana `infraRefresh` = ponowne pobranie */
   infraRefresh?: number
 }
@@ -154,7 +151,6 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
     onClosePopup,
     highlight,
     intro = false,
-    farmland = false,
     infraRefresh = 0,
   },
   ref,
@@ -283,7 +279,6 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
       )}
 
       <IntroView active={intro} />
-      {farmland && <FarmlandLayer />}
       <InfraPins bbox={infraBox} refresh={infraRefresh} />
 
       <FitTo parcel={parcel} candidates={candidates} insets={insets} reducedMotion={reducedMotion} />
