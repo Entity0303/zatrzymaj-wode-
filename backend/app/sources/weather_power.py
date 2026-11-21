@@ -1,44 +1,28 @@
-"""NASA POWER — dobowe dane meteorologiczne dla punktu (społeczność AG).
+"""NASA POWER — dobowe dane meteorologiczne dla punktu (społeczność AG). Główne źródło pogody (D1).
 
 https://power.larc.nasa.gov/docs/services/api/temporal/daily/
-Brakujące wartości mają kod -999.
-
-TODO (osoba A): pobieranie 10 lat równolegle z innymi źródłami, cache, tylko dane sprzed
-daty analizy; oznaczać dni liczone metodą Hargreavesa w wiarygodności.
+Parametry: PRECTOTCORR (opad), T2M_MAX/T2M_MIN, RH2M, WS2M, ALLSKY_SFC_SW_DWN.
+Brakujące wartości mają kod -999 (także ostatnie dni przed dziś – opóźnienie źródła).
+Rozdzielczość ok. 0,5° × 0,625° (~50 km). 10 lat w jednym zapytaniu ~1,6 s.
 """
 
-from dataclasses import dataclass, field
 from datetime import date
 
 import numpy as np
 
-from app.analysis.et0 import et0_hargreaves, et0_penman_monteith
+from app.analysis.et0 import DailyWeather, apply_et0, densify
+from app.core.cache import TTLCache
 from app.core.config import settings
-from app.core.http import SourceError, get_client
+from app.core.http import SourceError, get_with_retry
 
 SOURCE = "NASA POWER (społeczność AG)"
+SOURCE_SHORT = "NASA POWER"
+SOURCE_URL = "https://power.larc.nasa.gov/"
+RESOLUTION = "ok. 50 km"
 PARAMS = ["PRECTOTCORR", "T2M_MAX", "T2M_MIN", "RH2M", "WS2M", "ALLSKY_SFC_SW_DWN"]
 
-
-@dataclass
-class DailyWeather:
-    dates: list[date]
-    precip: np.ndarray  # mm
-    tmax: np.ndarray  # °C
-    tmin: np.ndarray  # °C
-    rh: np.ndarray  # %
-    wind2m: np.ndarray  # m/s
-    radiation: np.ndarray  # MJ m-2 dzień-1
-    elevation_m: float
-    lat: float
-    lon: float
-    et0: np.ndarray = field(default_factory=lambda: np.array([]))  # mm
-    et0_method: np.ndarray = field(default_factory=lambda: np.array([]))  # "PM" / "HG" / ""
-
-    @property
-    def climatic_water_balance(self) -> np.ndarray:
-        """Klimatyczny bilans wodny KBW = P − ET0 [mm/dzień]."""
-        return self.precip - self.et0
+# dane historyczne się nie zmieniają; kilka godzin wystarcza, by doszły świeże dni
+_cache: TTLCache[DailyWeather] = TTLCache(ttl_s=6 * 3600, max_items=256)
 
 
 def _series(param_block: dict, keys: list[str]) -> np.ndarray:
@@ -51,51 +35,64 @@ def parse_response(payload: dict) -> DailyWeather:
     try:
         block = payload["properties"]["parameter"]
         lon, lat, *rest = payload["geometry"]["coordinates"]
+        keys = sorted(block["PRECTOTCORR"].keys())
+        dates = np.array([f"{k[:4]}-{k[4:6]}-{k[6:8]}" for k in keys], dtype="datetime64[D]")
+        cols = {
+            "precip": _series(block["PRECTOTCORR"], keys),
+            "tmax": _series(block["T2M_MAX"], keys),
+            "tmin": _series(block["T2M_MIN"], keys),
+            "rh": _series(block["RH2M"], keys),
+            "wind2m": _series(block["WS2M"], keys),
+            "radiation": _series(block["ALLSKY_SFC_SW_DWN"], keys),
+        }
     except (KeyError, TypeError, ValueError) as exc:
         raise SourceError(SOURCE, "nieoczekiwany format odpowiedzi") from exc
-    elev = float(rest[0]) if rest else 0.0
-    keys = sorted(block["PRECTOTCORR"].keys())
-    dates = [date(int(k[:4]), int(k[4:6]), int(k[6:8])) for k in keys]
+    elev = float(rest[0]) if rest and rest[0] is not None and float(rest[0]) > -998 else 0.0
+    dates, cols = densify(dates, cols)
     w = DailyWeather(
         dates=dates,
-        precip=_series(block["PRECTOTCORR"], keys),
-        tmax=_series(block["T2M_MAX"], keys),
-        tmin=_series(block["T2M_MIN"], keys),
-        rh=_series(block["RH2M"], keys),
-        wind2m=_series(block["WS2M"], keys),
-        radiation=_series(block["ALLSKY_SFC_SW_DWN"], keys),
-        elevation_m=elev,
         lat=float(lat),
         lon=float(lon),
+        elevation_m=elev,
+        source=SOURCE_SHORT,
+        source_url=SOURCE_URL,
+        resolution=RESOLUTION,
+        **cols,
     )
-    _compute_et0(w)
-    return w
+    return apply_et0(w)
 
 
-def _compute_et0(w: DailyWeather) -> None:
-    doy = np.array([d.timetuple().tm_yday for d in w.dates], dtype=float)
-    pm = et0_penman_monteith(w.tmax, w.tmin, w.rh, w.wind2m, w.radiation, w.lat, w.elevation_m, doy)
-    hg = et0_hargreaves(w.tmax, w.tmin, w.lat, doy)
-    pm_ok = ~np.isnan(pm)
-    hg_ok = ~np.isnan(hg)
-    w.et0 = np.where(pm_ok, pm, hg)
-    w.et0_method = np.where(pm_ok, "PM", np.where(hg_ok, "HG", ""))
+def cache_key(lon: float, lat: float, start: date, end: date) -> tuple:
+    """Zaokrąglenie do 0,1° – sąsiednie działki trafiają w to samo zapytanie (rozdzielczość ~50 km)."""
+    return (round(lon, 1), round(lat, 1), start.isoformat(), end.isoformat())
 
 
 async def fetch(lon: float, lat: float, start: date, end: date) -> DailyWeather:
+    """Dane dobowe od `start` do `end` włącznie. SourceError, gdy usługa nie odpowie."""
+    key = cache_key(lon, lat, start, end)
+    hit = _cache.get(key)
+    if hit is not None:
+        return hit
     params = {
         "parameters": ",".join(PARAMS),
         "community": "AG",
-        "longitude": f"{lon:.4f}",
-        "latitude": f"{lat:.4f}",
+        "longitude": f"{key[0]:.1f}",
+        "latitude": f"{key[1]:.1f}",
         "start": start.strftime("%Y%m%d"),
         "end": end.strftime("%Y%m%d"),
         "format": "JSON",
     }
+    resp = await get_with_retry(
+        settings.nasa_power_url, params, source=SOURCE, timeout_s=settings.nasa_power_timeout_s, retries=1
+    )
     try:
-        resp = await get_client().get(settings.nasa_power_url, params=params)
-        resp.raise_for_status()
         payload = resp.json()
-    except Exception as exc:  # noqa: BLE001
-        raise SourceError(SOURCE, f"usługa niedostępna ({exc.__class__.__name__})") from exc
-    return parse_response(payload)
+    except ValueError as exc:
+        raise SourceError(SOURCE, "odpowiedź nie jest poprawnym JSON") from exc
+    w = parse_response(payload)
+    _cache.set(key, w)
+    return w
+
+
+def clear_cache() -> None:
+    _cache.clear()

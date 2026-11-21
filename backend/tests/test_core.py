@@ -71,7 +71,7 @@ def _power_payload():
 
 def test_power_parse_and_et0():
     w = weather_power.parse_response(_power_payload())
-    assert w.dates == [date(2026, 7, 1), date(2026, 7, 2), date(2026, 7, 3)]
+    assert list(w.dates.astype(object)) == [date(2026, 7, 1), date(2026, 7, 2), date(2026, 7, 3)]
     assert np.isnan(w.precip[2])
     assert list(w.et0_method) == ["PM", "PM", "HG"]  # brak promieniowania -> Hargreaves
     assert w.et0[0] > w.et0[1]  # dzień słoneczny paruje więcej niż pochmurny
@@ -80,10 +80,8 @@ def test_power_parse_and_et0():
 
 
 def test_soil_shares_and_wod():
-    res = iung.SoilResult([
-        iung.SoilSample(0, 0, 2), iung.SoilSample(0, 0, 2), iung.SoilSample(0, 0, 3),
-        iung.SoilSample(0, 0, 11), iung.SoilSample(0, 0, None),
-    ])
+    # 5 punktów: 2, 2, 3, 11 i jeden bez danych
+    res = iung.SoilResult(counts={2: 2, 3: 1, 11: 1}, method="punkty", nodata=1)
     assert res.dominant == 2
     assert res.shares[2] == 0.5
     assert res.agricultural_share == 0.75

@@ -4,18 +4,21 @@ https://open-meteo.com/en/docs  (dane CC BY 4.0, bez klucza API)
 Używane: temperatura i kod pogody teraz; dziennie: kod pogody, temp. maks./min.,
 suma opadu [mm], parowanie ET0 FAO-56 [mm].
 
-TODO: archiwum ERA5-Land (archive-api.open-meteo.com) jako źródło opcjonalne – w sieci
-hackathonu zwraca 429, więc fallback na NASA POWER (weather_power.py).
+Archiwum (archive-api.open-meteo.com) – źródło ZAPASOWE historii pogody, używane tylko gdy
+NASA POWER nie odpowie; ma dzienny limit na IP (429 = niedostępność) – patrz fetch_archive().
 """
 
 from dataclasses import dataclass
 from datetime import date, datetime
 
 import httpx
+import numpy as np
+
+from app.analysis.et0 import DailyWeather, apply_et0, densify
 
 from app.core.cache import TTLCache
 from app.core.config import settings
-from app.core.http import SourceError, get_client
+from app.core.http import SourceError, get_client, get_with_retry
 
 SOURCE = "Open-Meteo (prognoza)"
 SOURCE_URL = "https://open-meteo.com/"
@@ -120,9 +123,11 @@ def parse_response(payload: dict) -> Forecast:
         raise SourceError(SOURCE, "nieoczekiwany format odpowiedzi") from exc
 
 
-async def fetch(lon: float, lat: float, days: int = 16) -> Forecast:
+async def fetch(lon: float, lat: float, days: int = 16, past_days: int = 0) -> Forecast:
+    """Prognoza na `days` dni od dziś; `past_days` > 0 dokłada ostatnie dni z modelu (uzupełnienie
+    opóźnienia NASA POWER w modelu wody w glebie)."""
     # zaokrąglenie do ~1 km: lepsze trafienia w cache, a rozdzielczość modelu i tak jest większa
-    key = (round(lon, 2), round(lat, 2), days)
+    key = (round(lon, 2), round(lat, 2), days, past_days)
     hit = _cache.get(key)
     if hit is not None:
         return hit
@@ -135,6 +140,8 @@ async def fetch(lon: float, lat: float, days: int = 16) -> Forecast:
         "timezone": "Europe/Warsaw",
         "forecast_days": str(days),
     }
+    if past_days:
+        params["past_days"] = str(past_days)
     try:
         resp = await get_client().get(
             settings.open_meteo_forecast_url, params=params, timeout=httpx.Timeout(10.0)
@@ -154,3 +161,80 @@ async def fetch(lon: float, lat: float, days: int = 16) -> Forecast:
 
 def clear_cache() -> None:
     _cache.clear()
+
+
+# ── Archiwum (ERA5) – ZAPASOWE źródło historii pogody, gdy NASA POWER nie odpowie (D1) ──────
+# https://open-meteo.com/en/docs/historical-weather-api – limit dzienny na IP; 429 = niedostępność.
+
+ARCHIVE_SOURCE = "Open-Meteo – archiwum (ERA5)"
+ARCHIVE_SOURCE_SHORT = "Open-Meteo archiwum"
+ARCHIVE_URL = "https://open-meteo.com/en/docs/historical-weather-api"
+ARCHIVE_RESOLUTION = "ok. 10–25 km"
+ARCHIVE_DAILY = "precipitation_sum,et0_fao_evapotranspiration,temperature_2m_max,temperature_2m_min"
+
+_archive_cache: TTLCache[DailyWeather] = TTLCache(ttl_s=6 * 3600, max_items=256)
+
+
+def parse_archive(payload: dict) -> DailyWeather:
+    """Seria dobowa z archiwum. Brak promieniowania/wilgotności/wiatru → ET0 ze źródła („OM”),
+    a gdy go brak – Hargreaves z temperatury (apply_et0)."""
+    try:
+        daily = payload["daily"]
+        dates = np.array(daily["time"], dtype="datetime64[D]")
+
+        def col(name: str) -> np.ndarray:
+            return np.array([np.nan if v is None else v for v in daily.get(name, [None] * len(dates))], dtype=float)
+
+        cols = {
+            "precip": col("precipitation_sum"),
+            "tmax": col("temperature_2m_max"),
+            "tmin": col("temperature_2m_min"),
+            "et0_provided": col("et0_fao_evapotranspiration"),
+        }
+        lat, lon = float(payload["latitude"]), float(payload["longitude"])
+    except (KeyError, TypeError, ValueError) as exc:
+        raise SourceError(ARCHIVE_SOURCE, "nieoczekiwany format odpowiedzi") from exc
+    dates, cols = densify(dates, cols)
+    w = DailyWeather(
+        dates=dates,
+        lat=lat,
+        lon=lon,
+        elevation_m=float(payload.get("elevation") or 0.0),
+        source=ARCHIVE_SOURCE_SHORT,
+        source_url=ARCHIVE_URL,
+        resolution=ARCHIVE_RESOLUTION,
+        **cols,
+    )
+    return apply_et0(w)
+
+
+async def fetch_archive(lon: float, lat: float, start: date, end: date) -> DailyWeather:
+    key = (round(lon, 1), round(lat, 1), start.isoformat(), end.isoformat())
+    hit = _archive_cache.get(key)
+    if hit is not None:
+        return hit
+    params = {
+        "latitude": f"{key[1]:.1f}",
+        "longitude": f"{key[0]:.1f}",
+        "start_date": start.isoformat(),
+        "end_date": end.isoformat(),
+        "daily": ARCHIVE_DAILY,
+        "timezone": "Europe/Warsaw",
+    }
+    resp = await get_with_retry(
+        settings.open_meteo_archive_url,
+        params,
+        source=ARCHIVE_SOURCE,
+        timeout_s=settings.open_meteo_archive_timeout_s,
+        retries=0,  # źródło zapasowe – bez ponawiania, żeby zmieścić się w 30 s
+    )
+    try:
+        w = parse_archive(resp.json())
+    except ValueError as exc:
+        raise SourceError(ARCHIVE_SOURCE, "odpowiedź nie jest poprawnym JSON") from exc
+    _archive_cache.set(key, w)
+    return w
+
+
+def clear_archive_cache() -> None:
+    _archive_cache.clear()

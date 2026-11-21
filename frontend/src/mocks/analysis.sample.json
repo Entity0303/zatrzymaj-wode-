@@ -90,6 +90,19 @@
       "source_tag": { "kind": "pomiar", "date": null, "source": "IUNG-PIB SMSR" }
     }
   },
+  "soil": {
+    "dominant_code": 2,
+    "dominant_label": "Kategoria II – podatna na suszę",
+    "shares": [{ "code": 2, "label": "Kategoria II – podatna na suszę", "share": 1.0 }],
+    "agricultural_share": 1.0,
+    "wod_mm": 148.7,
+    "classes": null,
+    "classes_note": "Powiat nie udostępnia klas bonitacyjnych w usłudze KIEG.",
+    "non_agricultural": false,
+    "non_agricultural_reason": null,
+    "non_agricultural_note": null,
+    "source_tag": { "kind": "pomiar", "date": null, "source": "IUNG-PIB" }
+  },
   "history": {
     "period_start": "2016-01-01",
     "period_end": "2026-06-14",
@@ -126,6 +139,10 @@
       { "month": 6, "current_mm": 12, "mean_mm": 66 }
     ],
     "summary": "W 6 z 10 ostatnich lat w maju–lipcu brakowało wody. Najgorszy był 2018 (41 dni stresu).",
+    "balance_deviation_mm": -84,
+    "balance_rank": { "lower_years": 1, "of_years": 10 },
+    "longest_dry_spell": { "days": 17, "end_date": "2026-06-12" },
+    "band_years": [2025, 2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016],
     "source_tag": { "kind": "obliczenia", "date": "2026-06-14", "source": "NASA POWER" }
   },
   "causes": [
