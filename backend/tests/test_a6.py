@@ -192,20 +192,24 @@ def test_nmt_mostly_missing_is_error():
 
 
 def test_zone_rating_with_soil():
+    """A5b-2b (D66): grupy lekka / średnia / ciężka (dawne „zwięzła” rozdzielone); strefa dołka = obniżenie."""
     f = {"zone_share_pct": {"sucha_gorka": 50.0, "stok": 0.4, "plasko": 30.0, "mokry_dolek": 20.0}}
-    light = {z.key: z for z in TI.zones(f, 2)}
-    heavy = {z.key: z for z in TI.zones(f, 3)}
+    light = {z.key: z for z in TI.zones(f, "lekka")}
+    medium = {z.key: z for z in TI.zones(f, "srednia")}
+    heavy = {z.key: z for z in TI.zones(f, "ciezka")}
     unknown = {z.key: z for z in TI.zones(f, None)}
-    assert light["mokry_dolek"].rating == "dobrze" and heavy["mokry_dolek"].rating == "zle"  # dołek: piasek + / glina −
-    assert light["sucha_gorka"].rating == "zle" and heavy["sucha_gorka"].rating == "uwaga"  # górka na piasku – najgorzej
-    assert light["plasko"].rating == heavy["plasko"].rating == "dobrze"
+    assert light["mokry_dolek"].rating == "dobrze" and heavy["mokry_dolek"].rating == "zle"  # obniżenie: piasek + / glina ciężka −
+    assert medium["mokry_dolek"].rating == "uwaga" and "może być podmokło" in medium["mokry_dolek"].sentence
+    assert light["sucha_gorka"].rating == "zle" and medium["sucha_gorka"].rating == "uwaga"  # górka na piasku – najgorzej
+    assert light["plasko"].rating == medium["plasko"].rating == heavy["plasko"].rating == "dobrze"
     assert heavy["stok"].rating is None and heavy["stok"].sentence is None  # < 1% – bez oceny
     assert light["sucha_gorka"].sentence.startswith("50% działki to górka")
-    assert "20% działki to dołek" in heavy["mokry_dolek"].sentence and "wymakać" in heavy["mokry_dolek"].sentence
-    assert unknown["mokry_dolek"].rating == "uwaga"
-    assert [z.key for z in TI.zones(f, 3)] == ["sucha_gorka", "stok", "plasko", "mokry_dolek"]
-    assert [z.color for z in TI.zones(f, 3)] == ["#8B6B4A", "#E8B931", "#5BB37F", "#2F80C9"]
-    assert TI.soil_group(1) == "lekka" and TI.soil_group(4) == "zwiezla" and TI.soil_group(None) == "nieznana"
+    assert "20% działki to obniżenie" in heavy["mokry_dolek"].sentence and "wymakać" in heavy["mokry_dolek"].sentence
+    assert unknown["mokry_dolek"].rating == "uwaga" and medium["mokry_dolek"].label == "obniżenie – zbiera się woda"
+    assert [z.key for z in TI.zones(f, "srednia")] == ["sucha_gorka", "stok", "plasko", "mokry_dolek"]
+    assert [z.color for z in TI.zones(f, "srednia")] == ["#8B6B4A", "#E8B931", "#5BB37F", "#2F80C9"]
+    assert TI.soil_group(1) == "lekka" and TI.soil_group(3) == "srednia" and TI.soil_group(4) == "ciezka"
+    assert TI.soil_group(None) == "nieznana"
 
 
 def test_summary_plain_language_from_research_facts():
@@ -213,18 +217,19 @@ def test_summary_plain_language_from_research_facts():
     assert 2 <= s.count(".") <= 4 and "TWI" not in s and "D8" not in s
     assert "lekko nachylona" in s and "2,0 m" in s and "południowy zachód" in s and "z całej działki" in s
     assert "3,6 ha" in s  # dopływ 36 328 m² spoza działki
-    assert "Nie ma zagłębień" in s
+    # obniżenie (strefa) ≠ zagłębienie bez odpływu: 0 zagłębień – o zagłębieniach nic, o obniżeniach – tak (D66)
+    assert "zagłębie" not in s and "W obniżeniach (32% działki) zbiera się woda" in s
 
 
 def test_contract_from_research_facts():
-    t = TI.to_contract(RESEARCH, 3)
+    t = TI.to_contract(RESEARCH, "srednia")
     assert t.zone_share_pct == {"sucha_gorka": 0.0, "stok": 56.4, "plasko": 11.5, "mokry_dolek": 32.1}
     assert t.relief_m == 2.0 and t.slope_mean_pct == 3.1 and t.slope_max_pct == 6.1
     assert t.main_flow_direction_short == "SW" and t.outlets[0].share_of_parcel_pct == 100.0
     assert t.inflow_from_outside_ratio == 6.25 and t.depressions_count == 0 and t.largest_depression is None
-    assert t.soil_group == "zwiezla" and t.confidence == "wysoka" and t.details.twi_mean == 8.54
+    assert t.soil_group == "srednia" and t.confidence == "wysoka" and t.details.twi_mean == 8.54
     dolek = next(z for z in t.zones if z.key == "mokry_dolek")
-    assert dolek.rating == "zle" and dolek.sentence.startswith("32% działki to dołek")
+    assert dolek.rating == "uwaga" and dolek.sentence.startswith("32% działki to obniżenie")
 
 
 # ── progi oczka i reguły z terenu (D59) ────────────────────────────────────────────────────
@@ -313,7 +318,7 @@ def test_analysis_with_terrain_from_nmt(client):
         assert t is not None and a.terrain_note is None
         assert sum(t.zone_share_pct.values()) == pytest.approx(100.0, abs=0.5)
         assert t.depressions_count >= 1 and t.largest_depression.max_depth_m > 0.3  # misa 1,5 m
-        assert t.main_flow_direction_short in ("SW", "S", "W") and t.soil_group == "zwiezla"
+        assert t.main_flow_direction_short in ("SW", "S", "W") and t.soil_group == "srednia"
         assert any(z.sentence for z in t.zones) and t.summary and t.source_tag.source.startswith("NMT GUGiK")
         steps = {s.id: s for s in a.steps}
         assert steps["terrain"].state == "done"
@@ -431,5 +436,5 @@ def test_report_pdf_terrain_section(client):
     r = client.get("/api/report.pdf", params=Q)
     assert r.status_code == 200
     text = "\n".join(p.extract_text() for p in PdfReader(io.BytesIO(r.content)).pages)
-    for phrase in ("Teren działki", "dołek – woda stoi", "32% działki to dołek", "Teren (NMT GUGiK)", "Dla dociekliwych"):
+    for phrase in ("Gleba i teren", "obniżenie – zbiera się woda", "32% działki to obniżenie", "Teren (NMT GUGiK)", "Dla dociekliwych"):
         assert phrase in text, phrase

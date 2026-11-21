@@ -1,0 +1,106 @@
+# Werdykt działki (A5b-2b, D68): szablony zdań i progi dobrze / uwaga / źle. Deterministycznie – bez AI.
+# Klucz `verdict` (nie `rules`) – silnik rekomendacji tego pliku nie wczytuje. Wartości w {} wylicza analysis/verdict.py.
+verdict:
+  thresholds:
+    # norma opadów dla Polski (IMGW, wielolecie ok. 600 mm/rok; półrocze IV–IX ok. 60%) – szacunek do porównań
+    precip_norm_year_mm: 600
+    precip_norm_season_mm: 370
+    precip_low_ratio: 0.85          # rok < 85% normy = mało opadów (uwaga)
+    # „w maju–czerwcu brakowało wody”: klimatyczny bilans wodny (opad − ET0) V–VI < −100 mm
+    kbw_may_june_deficit_mm: -100
+    deficit_years_warn: 3           # ≥ 3 z 10 lat = uwaga
+    deficit_years_bad: 5            # ≥ 5 z 10 lat = źle
+    terrain_zone_min_pct: 15        # strefy terenu w zdaniu: ≥ 15% działki (najwyżej 2)
+    crops_good_max: 4
+    crops_good_min: 2
+    crops_bad_max: 4
+    water_actions_max: 3
+
+  soil:
+    lekka: {level: bad, text: "Ziemia słaba – {opis}, mało trzyma wody (ok. {wod} mm wody dostępnej dla roślin)."}
+    srednia: {level: ok, text: "Ziemia dobra – {opis}, dobrze trzyma wodę (ok. {wod} mm wody dostępnej dla roślin)."}
+    ciezka: {level: ok, text: "Ziemia mocna – {opis}, trzyma dużo wody (ok. {wod} mm), ale po długich deszczach wolno obsycha."}
+    organiczna: {level: warn, text: "Gleba organiczna (torf, mursz) – dużo wody, ale latem przesycha i osiada; wymaga ostrożnej uprawy."}
+    nieznana: {level: warn, text: "Brak dokładnych danych o glebie – ocena wody przybliżona."}
+    two_soils: "Na działce są dwie gleby: {a_pct}% – {a_name} i {b_pct}% – {b_name}."
+    two_soils_tail:
+      lekka: "Przeważa gleba lekka – mało trzyma wody (ok. {wod} mm wody dostępnej dla roślin)."
+      srednia: "Przeważa gleba dobra – trzyma wodę (ok. {wod} mm wody dostępnej dla roślin)."
+      ciezka: "Przeważa gleba mocna – trzyma dużo wody (ok. {wod} mm)."
+
+  precip:
+    ok: "Opady wystarczają – w maju–czerwcu brakowało wody tylko w {deficit_years} z {years} lat; średnio {year_mm} mm opadów na rok ({season_mm} mm od kwietnia do września)."
+    warn: "W maju–czerwcu często brakuje wody – w {deficit_years} z {years} lat; średnio {year_mm} mm opadów na rok ({season_mm} mm od kwietnia do września)."
+    low: "Opady niskie – średnio {year_mm} mm na rok ({season_mm} mm od kwietnia do września); w maju–czerwcu brakowało wody w {deficit_years} z {years} lat."
+    bad: "Opady za niskie wiosną – w {deficit_years} z {years} lat w maju–czerwcu brakowało wody; średnio {year_mm} mm opadów na rok ({season_mm} mm od kwietnia do września)."
+    # porównanie z normą neutralnie: NASA POWER (PRECTOTCORR, ~50 km) daje ok. 15–20% więcej niż normy stacji IMGW
+    norm_tail: " Dla porównania: średnio w Polsce ok. {norm_mm} mm na rok."
+
+  crops:
+    best: "Bezpiecznie posiejesz {best}."
+    best_possible: "Najlepiej wypadają tu {best}, ale w suche lata i one tracą."
+    wheat_dry_year: " Nawet w suchym {year} roku pszenica straciłaby tu tylko ok. {loss}% plonu."
+    wheat_dry_year_big: " W najsuchszym {year} roku pszenica straciłaby tu ok. {loss}% plonu."
+    wheat_small_loss_max_pct: 20  # „tylko” – gdy strata w najgorszym roku ≤ 20%
+    bad: "Tu nie siej {bad} – {reason}."
+    none_bad: " Na tej ziemi żadna z popularnych upraw nie jest odradzana."
+    instead: "Siej {instead}."
+    reasons:
+      gleba_lekka: "za mało wody na tej glebie"
+      gleba: "ta gleba im nie pasuje"
+      woda: "susza zbyt często zabiera ponad 20% plonu"
+      plodozmian: "za krótka przerwa w płodozmianie"
+
+  water:
+    text: "Co zrobić z wodą: {actions}."
+    none: "Co zrobić z wodą: zostaw na polu resztki roślin i nie zostawiaj gołej ziemi – woda wsiąknie zamiast spłynąć."
+
+  terrain_missing: "Brak danych o ukształtowaniu terenu – nie wiemy, gdzie na działce jest sucho, a gdzie mokro."
+
+  chosen_crop: "{crop} ({phase}): {headline}."
+
+  # Nagłówek – pierwsza pasująca reguła (warunki: poziomy pozycji, liczba „źle”, udziały stref terenu)
+  headlines:
+    - {if: {gleba: bad, opady: bad}, text: "Słaba, sucha działka – siej rośliny odporne na suszę"}
+    - {if: {gleba: bad}, text: "Słaba, piaszczysta działka – siej rośliny odporne na suszę"}
+    - {if: {bad_count_gte: 2}, text: "Trudna działka – mało wody dla wymagających upraw"}
+    - {if: {gleba: ok, opady: [ok, warn], dry_pct_gte: 30}, text: "Dobra działka z suchą górką"}
+    - {if: {gleba: ok, opady: [ok, warn], wet_pct_gte: 15}, text: "Dobra działka z wilgotnym obniżeniem"}
+    - {if: {gleba: ok, opady: ok}, text: "Dobra działka – trzyma wodę"}
+    - {if: {gleba: ok}, text: "Dobra ziemia, ale w suche lata brakuje wody"}
+    - {if: {}, text: "Przeciętna działka – uważaj w suche lata"}
+
+  # forma „czego” (nie siej …) i „co” (siej …)
+  genitive:
+    pszenica_ozima: "pszenicy ozimej"
+    zyto: "żyta"
+    pszenzyto_ozime: "pszenżyta"
+    jeczmien_ozimy: "jęczmienia ozimego"
+    jeczmien_jary: "jęczmienia jarego"
+    owies: "owsa"
+    lubin: "łubinu"
+    rzepak: "rzepaku"
+    kukurydza_ziarno: "kukurydzy na ziarno"
+    kukurydza_kiszonka: "kukurydzy na kiszonkę"
+    ziemniak: "ziemniaków"
+    burak_cukrowy: "buraków cukrowych"
+    straczkowe: "roślin strączkowych"
+    warzywa: "warzyw"
+  accusative:
+    pszenica_ozima: "pszenicę ozimą"
+    zyto: "żyto"
+    pszenzyto_ozime: "pszenżyto"
+    jeczmien_ozimy: "jęczmień ozimy"
+    jeczmien_jary: "jęczmień jary"
+    owies: "owies"
+    lubin: "łubin"
+    rzepak: "rzepak"
+    kukurydza_ziarno: "kukurydzę na ziarno"
+    kukurydza_kiszonka: "kukurydzę na kiszonkę"
+    ziemniak: "ziemniaki"
+    burak_cukrowy: "buraki cukrowe"
+    straczkowe: "rośliny strączkowe"
+    warzywa: "warzywa"
+  # najczęściej siane uprawy polowe – pierwszeństwo na liście ❌ (żeby rolnik od razu zobaczył swoje)
+  popular: [pszenica_ozima, rzepak, kukurydza_ziarno, jeczmien_jary, jeczmien_ozimy, pszenzyto_ozime, zyto, ziemniak,
+            burak_cukrowy, owies, kukurydza_kiszonka, lubin, straczkowe, warzywa]

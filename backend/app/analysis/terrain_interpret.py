@@ -48,16 +48,13 @@ def rules() -> dict:
 
 
 def soil_group(category: int | None) -> str:
-    if category in (1, 2):
-        return "lekka"
-    if category in (3, 4):
-        return "zwiezla"
-    return "nieznana"
+    """Grupa z samej kategorii I–IV (gdy brak etykiety ważonej z analysis/soil_label.py)."""
+    return {1: "lekka", 2: "lekka", 3: "srednia", 4: "ciezka"}.get(category, "nieznana")
 
 
-def zones(facts: dict, category: int | None) -> list[TerrainZone]:
+def zones(facts: dict, group: str | None) -> list[TerrainZone]:
     r = rules()
-    group = soil_group(category)
+    group = group if group in r["soil_groups"] else "nieznana"
     shares = facts.get("zone_share_pct") or {}
     out = []
     for key in ZONE_ORDER:
@@ -110,16 +107,18 @@ def summary(facts: dict) -> str:
         word = "zagłębienie" if n == 1 else "zagłębienia" if n < 5 else "zagłębień"
         parts.append(f"Na działce jest {n} {word} bez odpływu, gdzie zbiera się woda"
                      + (f" (największe zmieści ok. {_fmt(vol)} m³)." if vol else "."))
-    else:
-        parts.append("Nie ma zagłębień, w których woda stałaby dłużej po deszczu.")
+    else:  # o zagłębieniach bez odpływu mówimy tylko, gdy są (D66); obniżenia (strefa) – osobno
+        wet = (facts.get("zone_share_pct") or {}).get("mokry_dolek") or 0.0
+        if wet >= 5:
+            parts.append(f"W obniżeniach ({round(wet)}% działki) zbiera się woda spływająca z wyższych miejsc.")
     return " ".join(parts)
 
 
-def to_contract(facts: dict, soil_category: int | None, data_date: dt.date | None = None,
-                saved_note: str | None = None) -> Terrain:
-    group = soil_group(soil_category)
+def to_contract(facts: dict, group: str | None, data_date: dt.date | None = None,
+                saved_note: str | None = None, soil_text: str | None = None) -> Terrain:
     r = rules()
-    glabel = r["soil_groups"][group] + (f" (kat. {ROMAN[soil_category]})" if soil_category in ROMAN else "")
+    group = group if group in r["soil_groups"] else "nieznana"
+    glabel = soil_text or r["soil_groups"][group]
     largest = facts.get("largest_depression")
     method = facts.get("method") or {}
     lim = list(facts.get("limitations") or [])
@@ -130,7 +129,7 @@ def to_contract(facts: dict, soil_category: int | None, data_date: dt.date | Non
     if conf not in ("wysoka", "srednia", "ograniczona"):
         conf = "srednia"
     return Terrain(
-        zones=zones(facts, soil_category),
+        zones=zones(facts, group),
         zone_share_pct={k: float((facts.get("zone_share_pct") or {}).get(k) or 0.0) for k in ZONE_ORDER},
         soil_group=group, soil_group_label=glabel,
         summary=summary(facts),
@@ -234,11 +233,11 @@ def _round(obj):
     return obj
 
 
-def layer_teren(geojson: dict, facts: dict, parcel_4326: BaseGeometry | None, soil_category: int | None = None) -> dict:
+def layer_teren(geojson: dict, facts: dict, parcel_4326: BaseGeometry | None, soil_group_key: str | None = None) -> dict:
     """Strefy (poligony) przycięte do działki, z kolorem i etykietą (dymek: nazwa + udział; zdanie z oceną
     gleby – tylko gdy podano kategorię gleby, w panelu jest pełna ocena z `terrain.zones`)."""
     tol = max(0.5, (facts.get("grid_step_m") or 5.0) * 0.4) / 111_000  # ~0,4 kroku siatki
-    zone_info = {z.key: z for z in zones(facts, soil_category)}
+    zone_info = {z.key: z for z in zones(facts, soil_group_key)}
     feats = []
     for f in geojson.get("features", []):
         p = f["properties"]
@@ -250,8 +249,8 @@ def layer_teren(geojson: dict, facts: dict, parcel_4326: BaseGeometry | None, so
             continue
         feats.append({"type": "Feature", "geometry": _round(geom), "properties": {
             "kind": FRONT_KIND[z.key], "zone": z.key, "color": z.color, "share_pct": z.share_pct,
-            "rating": z.rating if soil_category else None,
-            "label": f"{z.label} · {round(z.share_pct)}% działki" + (f" – {z.sentence}" if soil_category and z.sentence else "")}})
+            "rating": z.rating if soil_group_key else None,
+            "label": f"{z.label} · {round(z.share_pct)}% działki" + (f" – {z.sentence}" if soil_group_key and z.sentence else "")}})
     return {"type": "FeatureCollection", "features": feats}
 
 

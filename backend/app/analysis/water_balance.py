@@ -781,9 +781,9 @@ def optional_irrigation_info(res: SoilWaterResult) -> IrrigationResult:
     """Uprawy nawadniane w Polsce rzadko (kukurydza, tytoń): bez dawek i harmonogramu (D64)."""
     d = res.season_deficit_mm or 0.0
     if d >= OPTIONAL_DEFICIT_MIN_MM:
-        return IrrigationResult("nie_praktykowane", f"W tym sezonie brakuje ok. {d:.0f} mm wody; {OPTIONAL_TAIL}")
+        return IrrigationResult("informacyjne", f"W tym sezonie brakuje ok. {d:.0f} mm wody; {OPTIONAL_TAIL}")
     if res.days_to_stress is not None and res.days_to_stress <= RISK_MEDIUM_DAYS:
-        return IrrigationResult("nie_praktykowane", f"Rośliny wkrótce odczują brak wody; {OPTIONAL_TAIL}")
+        return IrrigationResult("informacyjne", f"Rośliny wkrótce odczują brak wody; {OPTIONAL_TAIL}")
     return IrrigationResult("niepotrzebne", "Wody na razie wystarcza – w tym sezonie uprawie jej nie brakowało.")
 
 

@@ -11,6 +11,7 @@ from typing import Any
 from app.analysis.crops import CROPS, Crop, no_irrigation_sentence
 from app.analysis.field_state import FieldStateResult
 from app.analysis.soil import SoilAssessment
+from app.analysis.soil_label import SoilProfile
 from app.analysis.water_balance import (
     RecentBalance,
     SeasonSums,
@@ -128,6 +129,7 @@ def build_facts(
     previous_crop: str | None = None,
     field: FieldStateResult | None = None,
     recent: RecentBalance | None = None,
+    soil_profile: "SoilProfile | None" = None,
 ) -> Facts:
     """Fakty na datę analizy. `crop` = None – analiza bez uprawy: stan wody z modelu pokrycia referencyjnego
     (`field`), brak faktów zależnych od uprawy (faza, stres, nawadnianie)."""
@@ -259,6 +261,11 @@ def build_facts(
     v["light_soil"] = None if (tex is None and smap is None and v["soil_category"] is None) else bool(
         sandy_map or sandy_sg or (v["soil_category"] is not None and v["soil_category"] <= 2)
     )
+    if soil_profile is not None and soil_profile.group != "nieznana":
+        # A5b-2b (D66): etykieta ważona udziałem gatunków (mapa glebowo-rolnicza) – nie jeden punkt / jedno źródło
+        v["light_soil"] = soil_profile.group == "lekka"
+        v["soil_txt"] = soil_profile.text
+        v["soil_group"] = soil_profile.group
     v["irrigation_confidence"] = "srednia" if v["horizon_kind"] == "prognoza" else "ograniczona"
     if model and model.irrigation and model.irrigation.first_date:
         fd = model.irrigation.first_date

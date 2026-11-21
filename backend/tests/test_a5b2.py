@@ -178,10 +178,12 @@ def test_weak_soil_rye_not_wheat_good_soil_wheat():
 
 def test_ranking_structure_and_item_fields():
     sug = S.build(weather(), date(2018, 11, 21), ctx())
-    assert [g.key for g in sug.groups] == ["polowe", "wieloletnie"]
-    per = {i.crop_id for i in sug.groups[1].items}
+    assert [g.key for g in sug.groups] == ["polowe"]  # A5b-2b: wieloletnie osobno, bez kategorii
+    per = {i.crop_id for i in sug.perennials.items}
     assert per == {"drzewa_owocowe", "krzewy_owocowe", "truskawki"} and not per & {i.crop_id for i in sug.groups[0].items}
-    assert len(items(sug)) == 17 and sug.seasons[-1] == 2018 and len(sug.seasons) >= 10
+    assert sug.perennials.label == "Uprawy wieloletnie – inwestycja na lata"
+    assert all(p.confidence == "ograniczona" and "osobnej analizy opłacalności" in p.note for p in sug.perennials.items)
+    assert len(items(sug)) == 14 and sug.seasons[-1] == 2018 and len(sug.seasons) >= 10
     order = {"polecane": 0, "mozliwe": 1, "odradzane": 2}
     for g in sug.groups:
         cats = [order[i.category] for i in g.items]
@@ -193,7 +195,7 @@ def test_ranking_structure_and_item_fields():
     assert w.irrigation_practice == "not_practiced" and w.confidence == "srednia" and len(w.source_tags) == 2
     low = items(sug)["lubin"]
     assert low.confidence == "ograniczona" and "szacunek" in low.confidence_note and "łubinu nie ma" in low.confidence_note
-    assert items(sug)["krzewy_owocowe"].confidence == "ograniczona"
+    assert next(p for p in sug.perennials.items if p.crop_id == "krzewy_owocowe").confidence == "ograniczona"
     assert sug.rotation_hint.startswith("Podaj, co rosło") and "BEZ" not in sug.note and "bez nawadniania" in sug.note
 
 
@@ -349,8 +351,8 @@ def test_maize_optional_no_doses_only_information():
     w = synth(date(2006, 8, 1), date(2018, 7, 19), _dry_2018, _et0_seasonal)
     r = soil_water_model(w, get_crop("kukurydza_ziarno"), WOD, date(2018, 7, 20), soil_category=3)
     assert r.sensitive and r.irrigation.dose_mm is None and r.irrigation.doses_7d is None
-    assert r.irrigation.status in ("nie_praktykowane", "niepotrzebne")
-    if r.irrigation.status == "nie_praktykowane":
+    assert r.irrigation.status in ("informacyjne", "niepotrzebne")
+    if r.irrigation.status == "informacyjne":
         assert "deszczowni" in r.irrigation.message and "Wody Polskie" in r.irrigation.message
     f = facts(crop="kukurydza_ziarno", irrigation_practice="optional", irrigation_status="zalecane",
               irrigation_message="27,5 mm teraz", irrigation_when="teraz", season_deficit_mm=62.0, days_to_stress=0)

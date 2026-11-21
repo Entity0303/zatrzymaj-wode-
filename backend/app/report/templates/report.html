@@ -7,18 +7,97 @@
 </head>
 <body>
 
-{# 1. Nagłówek #}
-<div class="header">
-  <div>
-    <div class="brand">
-      <svg width="22" height="26" viewBox="0 0 22 26"><path d="M11 1 C11 1 2 11.5 2 17 a9 9 0 0 0 18 0 C20 11.5 11 1 11 1z" fill="#2F80C9"/><path d="M6 17 q5 4 10 0" stroke="#fff" stroke-width="1.6" fill="none"/></svg>
-      <span class="name">ZATRZYMAJ WODĘ</span>
+{# ═══ STRONA 1: WERDYKT (A5b-2b) – czytelna z odległości ═══ #}
+<section class="p1">
+  <div class="p1-head">
+    <div>
+      <div class="brand">
+        <svg width="22" height="26" viewBox="0 0 22 26"><path d="M11 1 C11 1 2 11.5 2 17 a9 9 0 0 0 18 0 C20 11.5 11 1 11 1z" fill="#2F80C9"/><path d="M6 17 q5 4 10 0" stroke="#fff" stroke-width="1.6" fill="none"/></svg>
+        <span class="name">ZATRZYMAJ WODĘ</span>
+      </div>
+      <div class="p1-title">Werdykt działki</div>
+      <div class="p1-parcel">{{ parcel_name }}</div>
+      <div class="muted small">{{ parcel_place }} · data analizy {{ a.analysis_date|date_pl }}{% if a.crop %} · uprawa: {{ crop_label }}{% else %} · bez wybranej uprawy{% endif %}</div>
     </div>
-    <h1>{{ title }}</h1>
-    <p class="muted">Wygenerowano: {{ generated|date_pl }} · data analizy: <b>{{ a.analysis_date|date_pl }}</b>{% if a.historical %} (analiza historyczna – tylko dane sprzed tej daty){% endif %}</p>
+    <div class="qr">{{ qr }}<div class="tiny muted">Zeskanuj – analiza online</div></div>
   </div>
-  <div class="qr">{{ qr }}<div class="tiny muted">Zeskanuj – analiza online</div><div class="tiny muted">{{ url_host }}</div></div>
-</div>
+  {% if a.approximate_area %}<div class="approx">⚠ {{ a.approximate_area.note }} <span class="small">({{ a.approximate_area.reason }})</span></div>{% endif %}
+  {% if v %}
+  <div class="headline" style="border-left-color: {{ LV[v.level][1] }}">{{ v.headline }}</div>
+  <div class="p1-grid">
+    <div class="stmts">
+      {% for st in v.statements %}
+      <div class="stmt"><span class="ico" style="background: {{ LV[st.level][1] }}">{{ LV[st.level][0] }}</span>
+        <div><div class="kind">{{ KIND[st.kind] }}</div><div class="txt">{{ st.text }}</div></div></div>
+      {% endfor %}
+    </div>
+    <div class="side">
+      <div class="map small-map">
+        {% if ortho %}<img src="{{ ortho }}" alt="ortofotomapa">{% else %}<div class="nomap">Ortofotomapa niedostępna</div>{% endif %}
+        {{ zones_map }}
+        {{ outline }}
+      </div>
+      {% if terrain %}
+      <div class="zbar">{{ zone_bar }}</div>
+      <div class="zleg">{% for z in terrain.zones if z.share_pct >= 1 %}<span><i style="background:{{ z.color }}"></i>{{ z.label }} {{ z.share_pct|num(0, '%') }}</span>{% endfor %}</div>
+      {% else %}<div class="tiny muted">Teren: brak danych NMT.</div>{% endif %}
+    </div>
+  </div>
+  <div class="crops">
+    {% if v.crops_good %}<div class="crow"><span class="clabel ok-l">Siej</span>{% for c in v.crops_good %}<span class="chip good">✓ {{ c.label }}</span>{% endfor %}</div>{% endif %}
+    {% if v.crops_bad %}<div class="crow"><span class="clabel bad-l">Nie siej</span>{% for c in v.crops_bad[:6] %}<span class="chip bad">✕ {{ c.label }}</span>{% endfor %}</div>
+    <div class="tiny muted">Powód: {{ v.crops_bad[0].reason }}.</div>{% else %}<div class="small muted">Żadna z popularnych upraw polowych nie jest tu odradzana.</div>{% endif %}
+  </div>
+  {% if water_actions %}
+  <div class="wact"><div class="kind">Co zrobić z wodą – najpierw</div>
+    <ol>{% for r in water_actions %}<li>{{ r.title }}{% if r.permit != 'none' %} <span class="tiny muted">({{ r.permit_note }})</span>{% endif %}</li>{% endfor %}</ol></div>
+  {% endif %}
+  <div class="tiny muted">{{ v.note }}</div>
+  {% else %}
+  <div class="headline" style="border-left-color: #B8BDB9">{{ a.status.headline }}</div>
+  <p class="big">{{ a.status.summary }}</p>
+  {% endif %}
+</section>
+
+{# ═══ STRONA 2: CO TU POSIAĆ? ═══ #}
+{% if sug %}
+<section class="page-break">
+  <div class="p2-title">Co tu posiać?</div>
+  <p class="small">Sezony {{ sug.seasons|first }}–{{ sug.seasons|last }}. {{ sug.note }}</p>
+  <p class="small"><b>Powierzchnia uprawy:</b> {{ sug.area.value_ha|num(2, 'ha') }}{% if sug.area.estimated %} <span class="muted">({{ sug.area.note }})</span>{% endif %}
+    <b>Historia pola:</b> {% if history_labels %}{{ history_labels }}{% else %}nie podano. {{ sug.rotation_hint }}{% endif %}</p>
+  {% for g in sug.groups %}
+  <table class="rank">
+    <tr><th></th><th>Uprawa</th><th>Typowo</th><th>Razem</th><th>Słaby rok</th><th>Ryzyko suszy</th><th>Dlaczego</th></tr>
+    {% for i in g.items %}
+    <tr class="{{ i.category }}">
+      <td><span class="cico" style="background: {{ CAT[i.category][1] }}">{{ CAT[i.category][0] }}</span></td>
+      <td><b>{{ i.label }}</b>{% if i.confidence == 'ograniczona' %}<div class="tiny muted">szacunek</div>{% endif %}</td>
+      <td class="num">{{ i.yield_typical_t_ha|num(1, 't/ha') }}</td>
+      <td class="num">{{ i.total_typical_t|num(1, 't') }}</td>
+      <td class="num">{{ i.yield_weak_t_ha|num(1, 't/ha') }}<div class="tiny muted">{{ i.weak_year }}</div></td>
+      <td class="num">{{ i.drought_risk_years }} na {{ i.years_simulated }} lat</td>
+      <td class="why2">{{ i.reason }}{% for n in i.rotation.notes %}<div class="tiny {{ 'bad-t' if i.rotation.status == 'naruszenie' else 'muted' }}">{{ n }}</div>{% endfor %}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% endfor %}
+  <p class="tiny muted">Ryzyko suszy = w ilu sezonach na 10 susza zabrałaby ponad 20% plonu. Plony bez nawadniania; cena skupu – później.</p>
+  {% if sug.perennials %}
+  <h3 style="margin-top:6pt">{{ sug.perennials.label }}</h3>
+  <p class="tiny muted">{{ sug.perennials.note }}</p>
+  <table class="rank per">
+    <tr><th>Uprawa</th><th>Typowo</th><th>Słaby rok</th><th>Ryzyko suszy</th><th>Uwagi</th></tr>
+    {% for p in sug.perennials.items %}<tr><td>{{ p.label }}</td><td class="num">{{ p.yield_typical_t_ha|num(1, 't/ha') }}</td><td class="num">{{ p.yield_weak_t_ha|num(1, 't/ha') }} ({{ p.weak_year }})</td><td class="num">{{ p.drought_risk_years }} na {{ p.years_simulated }}</td><td>{{ p.note }}</td></tr>{% endfor %}
+  </table>
+  {% endif %}
+</section>
+{% endif %}
+
+<div class="page-break"></div>
+{# ═══ DALEJ: szczegóły ═══ #}
+<h1 class="sub">Szczegóły: {{ title }}</h1>
+<p class="muted small">Wygenerowano: {{ generated|date_pl }} · data analizy: <b>{{ a.analysis_date|date_pl }}</b>{% if a.historical %} (analiza historyczna – tylko dane sprzed tej daty){% endif %}</p>
 
 {# 2. Dane działki #}
 <h2>Działka</h2>
@@ -37,13 +116,6 @@
       {% endif %}
       <tr><td>Gleba</td><td>{{ a.soil.dominant_label or 'brak danych' }}{% if a.soil.wod_mm is not none %} · zmieści ok. {{ a.soil.wod_mm|num(0, 'mm') }} wody{% endif %}{% if a.soil.consistency and a.soil.consistency.status == 'conflict' %} <span class="muted small">(źródła gleby różnią się – zob. „Gleba i teren”)</span>{% endif %}</td></tr>
     </table>
-  </div>
-  <div class="map-cap">
-    <div class="map">
-      {% if ortho %}<img src="{{ ortho }}" alt="ortofotomapa">{% else %}<div class="nomap">Ortofotomapa niedostępna</div>{% endif %}
-      {{ outline }}
-    </div>
-    <div class="tiny muted">Ortofotomapa: Geoportal GUGiK · obrys: ULDK · wycinek ok. {{ map_side_m }} × {{ map_side_m }} m</div>
   </div>
 </div>
 
@@ -137,31 +209,6 @@
 </div>
 {% endif %}
 
-{# 3b. Teren działki (A6) #}
-<div class="keep">
-<h2>Teren działki{% if terrain %} <span class="tag">{{ terrain.soil_group_label }}</span>{% endif %}</h2>
-{% if terrain %}
-<div class="grid2">
-  <div>
-    {{ zone_bar }}
-    <div class="legend small muted">{% for z in terrain.zones %}<span><i style="background:{{ z.color }}"></i>{{ z.label }} {{ z.share_pct|num(0, '%') }}</span>{% endfor %}</div>
-    <p>{{ terrain.summary }}</p>
-    <ul class="zones">{% for z in terrain.zones if z.sentence %}<li><span class="pill" style="background: {{ RATING[z.rating][1] }}; color: #fff">{{ RATING[z.rating][0] }}</span> {{ z.sentence }}</li>{% endfor %}</ul>
-  </div>
-  <div class="map-cap">
-    <div class="map">
-      {% if ortho %}<img src="{{ ortho }}" alt="ortofotomapa">{% endif %}
-      {{ zones_map }}
-      {{ outline }}
-    </div>
-    <div class="tiny muted">Strefy terenu z NMT GUGiK · szczegóły w części „Gleba i teren”</div>
-  </div>
-</div>
-{% else %}
-<p class="muted">{{ a.terrain_note or 'Brak analizy terenu.' }}</p>
-{% endif %}
-</div>
-
 {# 4. Na tle 10 lat (B) #}
 <div class="keep">
 <h2>B. Na tle 10 lat <span class="tag">{{ a.history.period_start|date_pl }} – {{ a.history.period_end|date_pl }}</span></h2>
@@ -172,7 +219,7 @@
   <div class="legend small muted"><span><i style="background:#C8453B"></i>ten sezon (zielony, gdy powyżej średniej)</span><span><i style="background:#2F80C9"></i>średnia{% if a.history.band_years %} z lat {{ a.history.band_years|min }}–{{ a.history.band_years|max }}{% endif %}</span><span><i style="background:#E3F0FB;height:8pt"></i>zakres min–max</span></div>
 </div>
 </div>
-<div class="grid2">
+<div class="grid2 charts-small">
   {% if a.crop %}<div class="chart"><h3>Dni stresu wodnego w sezonach</h3>{{ chart_stress }}<div class="tiny muted">czerwony – bieżący sezon; b.d. – brak danych</div></div>{% endif %}
   <div class="chart"><h3>Opad w miesiącach, mm</h3>{{ chart_precip }}<div class="tiny muted">niebieski – ten rok, szary – średnia z 10 lat</div></div>
 </div>

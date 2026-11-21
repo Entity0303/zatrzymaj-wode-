@@ -195,11 +195,10 @@ rules:
     permit: none
     eco_scheme: E_WSG
     when:
-      any:
+      all:
         - {fact: light_soil, eq: true}
-        - {fact: rain_retention, eq: ucieka}
-    title: "Zwiększaj próchnicę – gleba zatrzyma więcej wody"
-    description: "Gleba ({soil_txt}) słabo zatrzymuje wodę w zasięgu korzeni – jest lekka albo woda szybko przesiąka w głąb. Każdy dodatkowy procent próchnicy zwiększa jej pojemność wodną – mieszaj słomę z glebą, wysiewaj międzyplony, stosuj obornik lub kompost."
+    title: "Zwiększaj próchnicę – lekka gleba trzyma mało wody"
+    description: "Gleba ({soil_txt}) zatrzymuje mało wody. Każdy dodatkowy procent próchnicy zwiększa jej pojemność wodną – mieszaj słomę z glebą, wysiewaj międzyplony, stosuj obornik lub kompost."
     why:
       - "Gleby ubogie w materię organiczną szybciej przesychają; wzrost próchnicy poprawia pojemność wodną."
       - "Gleba zmieści ok. {wod_mm} mm wody dostępnej dla roślin."

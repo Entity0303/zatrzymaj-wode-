@@ -312,7 +312,7 @@ def test_report_pdf_without_crop(client):
                    "Skąd te dane", "Zgodność źródeł gleby"):
         assert phrase in text, phrase
     assert "Paszport wodny" not in text and "Dni stresu" not in text
-    assert len(reader.pages) <= 4
+    assert len(reader.pages) <= 6  # A5b-2b: werdykt + ranking + szczegóły – maks. 6 stron
 
 
 def test_unknown_crop_still_422(client):

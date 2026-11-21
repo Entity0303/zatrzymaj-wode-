@@ -144,7 +144,41 @@ def zones_overlay(a: AnalysisResponse, bbox: tuple[float, float, float, float], 
     return charts.zones_svg(shapes, px, px)
 
 
+LEVEL = {"ok": ("✓", "#5BB37F"), "warn": ("!", "#E8B931"), "bad": ("✕", "#C8453B")}
+CAT_ICON = {"polecane": ("✓", "#5BB37F"), "mozliwe": ("~", "#E8B931"), "odradzane": ("✕", "#C8453B")}
+KIND_LABEL = {"gleba": "Gleba", "opady": "Opady", "teren": "Teren", "uprawy": "Co siać", "woda": "Woda",
+              "uprawa_wybrana": "Wybrana uprawa"}
+
+
+def parcel_name(a: AnalysisResponse) -> tuple[str, str]:
+    p = a.parcel
+    if a.approximate_area:
+        lon, lat = a.approximate_area.center
+        return (f"Obszar przybliżony ({lat:.4f} N, {lon:.4f} E)",
+                f"ok. {a.approximate_area.area_ha:g} ha · woj. {p.wojewodztwo} (przybliżone)")
+    return (f"Działka {p.numer}, obręb {p.obreb}",
+            f"gm. {p.gmina}, {p.powiat}, woj. {p.wojewodztwo} · {p.id} · {num(p.powierzchnia_ha, 2, 'ha')}")
+
+
+def water_actions(a: AnalysisResponse) -> list:
+    """3 działania wodne na stronę 1 – retencja przed agrotechniką, bez niepewnych (z ostrzeżeniem)."""
+    recs = [r for r in a.recommendations if r.category in ("retencja", "agrotechnika")]
+    recs.sort(key=lambda r: (r.category != "retencja", bool(r.warning), not r.in_panel))
+    return recs[:3]
+
+
+def history_labels(a: AnalysisResponse) -> str:
+    from app.analysis.crops import ALL_CROPS
+
+    names = ["rok temu", "2 lata temu", "3 lata temu"]
+    parts = [f"{names[k]}: {ALL_CROPS[h].label.lower() if h in ALL_CROPS else 'nie wiem'}" for k, h in enumerate(a.crop_history)]
+    return "; ".join(parts)
+
+
 def analysis_url(a: AnalysisResponse) -> str:
+    if a.approximate_area:
+        lon, lat = a.approximate_area.center
+        return f"{settings.public_url.rstrip('/')}/?{urlencode({'lon': lon, 'lat': lat, 'data': a.analysis_date.isoformat()})}"
     q = {"dzialka": a.parcel.id}
     if a.crop:
         q["uprawa"] = a.crop
@@ -193,6 +227,9 @@ def render_html(a: AnalysisResponse, ortho: str | None, generated: dt.datetime |
         "chart_precip": Markup(charts.precip_chart(h.monthly_precip) or ""),
         "water_bar": Markup(charts.bar(a.indicators.soil_water_pct.value, "#2F80C9")),
         "terrain": a.terrain,
+        "v": a.verdict, "sug": a.suggestions, "LV": LEVEL, "CAT": CAT_ICON, "KIND": KIND_LABEL,
+        "parcel_name": parcel_name(a)[0], "parcel_place": parcel_name(a)[1], "water_actions": water_actions(a),
+        "history_labels": history_labels(a),
         "zone_bar": Markup(charts.zone_bar(a.terrain.zones) or "") if a.terrain else "",
         "zones_map": Markup(zones_overlay(a, bbox)),
         "RATING": {"dobrze": ("dobrze", "#5BB37F"), "uwaga": ("uwaga", "#E8B931"), "zle": ("źle", "#C8453B")},

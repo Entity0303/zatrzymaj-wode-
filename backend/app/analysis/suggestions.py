@@ -41,6 +41,8 @@ from app.schemas.analysis import (
     CropSuggestion,
     CropSuggestions,
     CultivatedArea,
+    PerennialSection,
+    PerennialSuggestion,
     RotationCheck,
     SourceTag,
     SuggestionGroup,
@@ -53,6 +55,9 @@ GUS_SOURCE = "GUS BDL – plony z 1 ha wg województw"
 MODEL_SOURCE = "Model wody w glebie FAO-56 + plon FAO-33"
 SEASON_PHASES = ("poczatkowa", "rozwoj", "pelnia", "dojrzewanie")
 PERENNIAL_NOTE = "Uprawa wieloletnia – decyzja na wiele lat; plon dotyczy plantacji w pełni owocowania."
+PERENNIAL_LABEL = "Uprawy wieloletnie – inwestycja na lata"
+PERENNIAL_SECTION_NOTE = ("Sady, krzewy i truskawki wymagają osobnej analizy opłacalności (nakłady, rynek, nawadnianie) – "
+                          "nie oceniamy ich jak upraw polowych; liczby to tylko orientacja.")
 CATEGORY_LABEL = {"polecane": "polecane", "mozliwe": "możliwe", "odradzane": "odradzane"}
 SUIT_LABEL = {"odpowiednia": "gleba odpowiednia", "neutralna": "gleba przeciętna dla tej uprawy",
               "nieodpowiednia": "gleba nieodpowiednia"}
@@ -180,17 +185,16 @@ def reference_level(w: DailyWeather, crop: Crop, last: date, years: int = 10) ->
 
 
 def soil_suitability(crop: Crop, category: int | None, complex_code: str | None) -> str:
-    """odpowiednia / neutralna / nieodpowiednia. Kompleks przydatności (mapa glebowo-rolnicza) ma pierwszeństwo
-    przed kategorią IUNG; kompleks znany, ale niewymieniony dla uprawy = gleba przeciętna (neutralna)."""
+    """odpowiednia / neutralna / nieodpowiednia. Znany kompleks przydatności (mapa glebowo-rolnicza 1:5000, badania
+    terenowe) decyduje sam – jak w kolejności źródeł gleby D49; kategoria IUNG – gdy kompleksu nie ma (D70)."""
     k = (complex_code or "").strip()
-    if k and k in crop.soils_bad_complex:
-        return "nieodpowiednia"
+    if k.isdigit():  # kompleksy gruntów ornych 1–14
+        if k in crop.soils_bad_complex:
+            return "nieodpowiednia"
+        return "odpowiednia" if k in crop.soils_ok_complex else "neutralna"
     if category is not None and category in crop.soils_bad_iung:
         return "nieodpowiednia"
-    if k and k in crop.soils_ok_complex:
-        return "odpowiednia"
-    known_complex = k.isdigit()  # kompleksy gruntów ornych 1–14
-    if category is not None and category in crop.soils_ok_iung and not known_complex:
+    if category is not None and category in crop.soils_ok_iung:
         return "odpowiednia"
     return "neutralna"
 
@@ -323,13 +327,15 @@ class Context:
     area_note: str
     history: list[str] = field(default_factory=list)
     soil_txt: str = "gleba"
+    soil_group: str | None = None  # etykieta ważona (analysis/soil_label.py); None – z kategorii / kompleksu
 
 
 def build(w: DailyWeather, analysis_date: date, ctx: Context, years: int = 10) -> CropSuggestions | None:
     t0 = perf_counter()
     cfg = config()
     last = last_usable_day(analysis_date)
-    light_soil = ctx.category in (1, 2) or (ctx.complex_code or "") in ("6", "7")
+    light_soil = (ctx.soil_group == "lekka" if ctx.soil_group not in (None, "nieznana")
+                  else ctx.category in (1, 2) or (ctx.complex_code or "") in ("6", "7"))
     groups: dict[str, list[CropSuggestion]] = {"polowe": [], "wieloletnie": []}
     seasons: set[int] = set()
     for crop in RANKING_CROPS:
@@ -393,8 +399,20 @@ def build(w: DailyWeather, analysis_date: date, ctx: Context, years: int = 10) -
         )
         groups["wieloletnie" if crop.kind == "wieloletnia" else "polowe"].append(item)
     order = {"polecane": 0, "mozliwe": 1, "odradzane": 2}
+    perennials = None
+    if groups["wieloletnie"]:  # D67: bez kategorii, osobna sekcja, niska pewność, poza werdyktem
+        per = sorted(groups["wieloletnie"], key=lambda i: -i.score)
+        perennials = PerennialSection(label=PERENNIAL_LABEL, note=PERENNIAL_SECTION_NOTE, items=[PerennialSuggestion(
+            crop_id=i.crop_id, label=i.label, yield_typical_t_ha=i.yield_typical_t_ha, yield_weak_t_ha=i.yield_weak_t_ha,
+            weak_year=i.weak_year, drought_risk_years=i.drought_risk_years, years_simulated=i.years_simulated,
+            total_typical_t=i.total_typical_t, total_weak_t=i.total_weak_t, soil_suitability=i.soil_suitability,
+            soil_suitability_label=i.soil_suitability_label, irrigation_practice=i.irrigation_practice,
+            confidence="ograniczona",
+            note=f"{i.soil_suitability_label.capitalize()}; strata ponad 20% plonu w {i.drought_risk_years} na "
+                 f"{i.years_simulated} lat. Wymaga osobnej analizy opłacalności.",
+            source_tags=i.source_tags) for i in per])
     out_groups = []
-    for key, label in (("polowe", "uprawy polowe"), ("wieloletnie", "uprawy wieloletnie")):
+    for key, label in (("polowe", "uprawy polowe"),):
         items = sorted(groups[key], key=lambda i: (order[i.category], -i.score))
         items = [i.model_copy(update={"rank": k + 1}) for k, i in enumerate(items)]
         if items:
@@ -403,7 +421,7 @@ def build(w: DailyWeather, analysis_date: date, ctx: Context, years: int = 10) -
         return None
     has_history = any(h != HISTORY_UNKNOWN for h in ctx.history)
     return CropSuggestions(
-        seasons=sorted(seasons), groups=out_groups,
+        seasons=sorted(seasons), groups=out_groups, perennials=perennials,
         area=CultivatedArea(value_ha=round(ctx.area_ha, 2), estimated=ctx.area_estimated, note=ctx.area_note),
         crop_history=ctx.history,
         rotation_hint=None if has_history else "Podaj, co rosło w ostatnich latach – uwzględnimy płodozmian.",

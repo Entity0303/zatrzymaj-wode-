@@ -65,7 +65,7 @@ def build_causes(f: Facts) -> list[Cause]:
         wet = f.get("terrain_wet_pct") or 0
         desc = f"stoki i górki na {runoff}% działki – tu woda z ulewy spływa lub szybko przesycha"
         if wet:
-            desc += f"; dołki {wet}%"
+            desc += f"; obniżenia, gdzie zbiera się woda {wet}%"
         raw.append((TERRAIN_WEIGHT * runoff / 100, Cause(factor="teren", title="Teren i spływ", share=0, description=desc,
                                                           source_tag=SourceTag(kind="pomiar", source="NMT GUGiK"))))
 

@@ -1,17 +1,19 @@
-# Teren × gleba (A6, D58): ocena każdej strefy terenu z NMT razem z glebą + jedno zdanie dla rolnika.
+# Teren × gleba (A6 D58, poprawione w A5b-2b D66): ocena każdej strefy terenu z NMT razem z glebą + jedno zdanie.
 # Klucz główny `teren_gleba` (nie `rules`) – silnik rekomendacji (recommendations.py) tego pliku nie wczytuje.
-# Gleba: lekka = kategoria I–II (piaski, piaski gliniaste), zwiezla = III–IV (gliny, pyły, iły), nieznana = brak danych.
-# Kategoria gleby = ta, której używa model wody (soil.consistency.category_used – mapa glebowo-rolnicza > IUNG > SoilGrids).
-# Logika (kontekst produktowy A6): dołek na piasku = plus (najwilgotniej), dołek na glinie = minus (woda stoi,
-# uprawy wymakają), górka na piasku = najgorzej.
-# Szablon: {pct} – udział strefy w działce (liczba całkowita, %). Strefa < 1% działki – bez oceny i zdania.
+# Gleba (analysis/soil_label.py – etykieta ważona udziałem gatunków z mapy glebowo-rolniczej / kategorii IUNG):
+#   lekka (piaski, kat. I–II), srednia (gliny lekkie, pyły, kat. III), ciezka (gliny ciężkie, iły, kat. IV),
+#   organiczna (torfy, mursze), nieznana. Dawne „zwiezla” (III + IV razem) – usunięte: glina lekka to nie gleba zwięzła.
+# Strefa „dołek” = OBNIŻENIE, do którego spływa i gdzie zbiera się woda (TPI / TWI) – wilgotniej, po ulewach może być
+# podmokło. To NIE to samo co „zagłębienie bez odpływu” (priority-flood) – o nim mówimy tylko, gdy jest (D66).
+# Logika: obniżenie na piasku = plus (najwilgotniej w suszy), na glinie ciężkiej = minus (woda stoi, wymakanie);
+# górka na piasku = najgorzej. Szablon: {pct} – udział strefy w działce (%). Strefa < 1% – bez oceny i zdania.
 # rating: dobrze | uwaga | zle
 
 labels:
   sucha_gorka: "górka – sucho"
   stok: "stok – woda ucieka"
   plasko: "płasko – dobre warunki"
-  mokry_dolek: "dołek – woda stoi"
+  mokry_dolek: "obniżenie – zbiera się woda"
 
 colors:  # uzgodnione z B (contract-changes A6)
   sucha_gorka: "#8B6B4A"
@@ -21,17 +23,25 @@ colors:  # uzgodnione z B (contract-changes A6)
 
 soil_groups:
   lekka: "gleba lekka"
-  zwiezla: "gleba zwięzła"
+  srednia: "gleba średnia"
+  ciezka: "gleba ciężka"
+  organiczna: "gleba organiczna"
   nieznana: "gleba nieznana"
 
 teren_gleba:
   sucha_gorka:
     lekka:
       rating: zle
-      sentence: "{pct}% działki to górka na lekkiej glebie – tu najszybciej brakuje wody, najgorsze miejsce w suszy."
-    zwiezla:
+      sentence: "{pct}% działki to górka na lekkiej glebie – najsuchsze miejsce, w suche lata plon spada tu najbardziej."
+    srednia:
       rating: uwaga
-      sentence: "{pct}% działki to górka – najsuchsze miejsce na polu, choć gleba trzyma wodę lepiej niż piasek."
+      sentence: "{pct}% działki to górka – najsuchsze miejsce na polu, w suche lata plon spada tu najbardziej."
+    ciezka:
+      rating: uwaga
+      sentence: "{pct}% działki to górka – najsuchsze miejsce na polu, choć ciężka gleba trzyma wodę dłużej."
+    organiczna:
+      rating: uwaga
+      sentence: "{pct}% działki to górka – najsuchsze miejsce na polu."
     nieznana:
       rating: uwaga
       sentence: "{pct}% działki to górka – najsuchsze miejsce na polu."
@@ -39,9 +49,15 @@ teren_gleba:
     lekka:
       rating: uwaga
       sentence: "{pct}% działki to stok – woda z ulewy ucieka w dół, a lekka gleba zatrzymuje jej mało."
-    zwiezla:
+    srednia:
       rating: uwaga
-      sentence: "{pct}% działki to stok – po ulewie woda spływa po powierzchni i zabiera glebę."
+      sentence: "{pct}% działki to stok – po ulewie część wody spływa w dół i zabiera glebę."
+    ciezka:
+      rating: uwaga
+      sentence: "{pct}% działki to stok – ciężka gleba wolno chłonie wodę, po ulewie dużo jej spływa."
+    organiczna:
+      rating: uwaga
+      sentence: "{pct}% działki to stok – po ulewie część wody spływa w dół."
     nieznana:
       rating: uwaga
       sentence: "{pct}% działki to stok – po ulewie część wody spływa w dół."
@@ -49,19 +65,31 @@ teren_gleba:
     lekka:
       rating: dobrze
       sentence: "{pct}% działki jest płaska – woda rozkłada się równo (na lekkiej glebie i tak przesycha szybciej)."
-    zwiezla:
+    srednia:
       rating: dobrze
       sentence: "{pct}% działki jest płaska – tu są najlepsze warunki wodne."
+    ciezka:
+      rating: dobrze
+      sentence: "{pct}% działki jest płaska – dobre warunki, ale po długich deszczach woda wolno wsiąka."
+    organiczna:
+      rating: dobrze
+      sentence: "{pct}% działki jest płaska – woda rozkłada się równo."
     nieznana:
       rating: dobrze
       sentence: "{pct}% działki jest płaska – woda rozkłada się równo."
   mokry_dolek:
     lekka:
       rating: dobrze
-      sentence: "{pct}% działki to dołek – na lekkiej glebie to najwilgotniejsze i najlepsze miejsce w suszy."
-    zwiezla:
+      sentence: "{pct}% działki to obniżenie, gdzie spływa i zbiera się woda – na lekkiej glebie to najwilgotniejsze i najlepsze miejsce w suszy."
+    srednia:
+      rating: uwaga
+      sentence: "{pct}% działki to obniżenie, gdzie spływa i zbiera się woda – wilgotniej, po ulewach może być podmokło."
+    ciezka:
       rating: zle
-      sentence: "{pct}% działki to dołek – na zwięzłej glebie wiosną i po ulewach stoi tu woda, uprawy mogą wymakać."
+      sentence: "{pct}% działki to obniżenie, gdzie spływa i zbiera się woda – na ciężkiej glebie po ulewach i wiosną stoi tu woda, uprawy mogą wymakać."
+    organiczna:
+      rating: uwaga
+      sentence: "{pct}% działki to obniżenie, gdzie zbiera się woda – często podmokło."
     nieznana:
       rating: uwaga
-      sentence: "{pct}% działki to dołek – zbiera się tu woda, wiosną może stać."
+      sentence: "{pct}% działki to obniżenie, gdzie spływa i zbiera się woda – wilgotniej, po ulewach może być podmokło."
