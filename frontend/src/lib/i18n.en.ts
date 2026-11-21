@@ -705,4 +705,12 @@ export const EN: Record<string, string> = {
   'Faza uprawy, woda w glebie, nawadnianie, gleba, teren, postęp analizy': 'Crop stage, soil water, irrigation, soil, terrain, analysis progress',
   'Faza uprawy, woda w glebie, gleba, teren, postęp analizy': 'Crop stage, soil water, soil, terrain, analysis progress',
   'Teren, postęp analizy': 'Terrain, analysis progress',
+  // widok 3D
+  'Ta przeglądarka nie obsługuje widoku 3D': 'This browser does not support the 3D view',
+  'Wróć do mapy 2D': 'Back to the 2D map',
+  'Teren działki w 3D. Przeciągnij prawym przyciskiem, aby obrócić.': 'Parcel terrain in 3D. Drag with the right mouse button to rotate.',
+  'Widok z góry': 'View from above',
+  'Widok z boku': 'Side view',
+  '3D poglądowo: rzeźba z publicznego modelu terenu (~30 m), wysokości ×{x}. Prawy przycisk / Ctrl + przeciągnij = obrót. Analiza korzysta z dokładnego NMT GUGiK.': '3D for illustration: relief from a public terrain model (~30 m), heights ×{x}. Right button / Ctrl + drag = rotate. The analysis uses the precise GUGiK elevation model.',
+  'Wczytuję widok 3D…': 'Loading the 3D view…',
 }

@@ -1,5 +1,5 @@
 import type { Map as LeafletMap } from 'leaflet'
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { ChevronDown, ChevronUp, LayoutPanelTop } from 'lucide-react'
 import L from 'leaflet'
@@ -66,6 +66,9 @@ const TOGGLE_H = 44
 
 const round1 = (v: number) => Math.round(v * 10) / 10
 
+// Widok 3D – osobny plik i biblioteka (MapLibre GL), pobierane dopiero po kliknięciu „3D”
+const Terrain3D = lazy(() => import('@/features/map3d/Terrain3D'))
+
 // Komputer: paszport wodny jako szeroki panel (SPEC 7)
 const PASSPORT_W = 640
 
@@ -84,6 +87,7 @@ export default function Start() {
   const [link] = useState(readLink)
   const [asOf, setAsOf] = useState(link.data ?? todayIso())
   const [layer, setLayer] = useState<LayerKey>('kondycja')
+  const [view, setView] = useState<'2d' | '3d'>('2d')
   const [settings] = useSettings()
   const [ui, setUi] = useUiPrefs()
   const [baseMap, setBaseMap] = useState<BaseMap>(settings.baseMap)
@@ -538,6 +542,7 @@ export default function Start() {
     setHighlight(null)
     setInsidePopup(null)
     setPendingPoint(null)
+    setView('2d')
     writeLink({ dzialka: null, uprawa: null, data: null, widok: null })
     if (isMobile) setSnap('collapsed')
   }
@@ -630,6 +635,22 @@ export default function Start() {
             </>
           ) : (
           <div className="contents ui-appear">
+          {view === '3d' && parcel && (
+            <Suspense
+              fallback={
+                <div className="absolute inset-0 z-[500] flex items-center justify-center bg-bg/60 text-sm font-medium text-text-muted">
+                  {t('Wczytuję widok 3D…')}
+                </div>
+              }
+            >
+              <Terrain3D
+                parcel={parcel}
+                layerData={layerState.phase === 'ok' ? layerState.data : null}
+                reducedMotion={reducedMotion}
+                onClose={() => setView('2d')}
+              />
+            </Suspense>
+          )}
           <TopBar
             onBack={backToExplore}
             isMobile={isMobile}
@@ -641,6 +662,12 @@ export default function Start() {
             onAsOfChange={setAsOf}
             layer={layer}
             onLayerChange={setLayer}
+            view={view}
+            onViewChange={(v) => {
+              setView(v)
+              // w 3D najciekawszy jest teren
+              if (v === '3d' && (layer === 'kondycja' || layer === 'wilgotnosc')) setLayer('teren')
+            }}
           />
 
           {/* telefon: przy pełnej szufladzie napis zasłaniałby nagłówek działki */}
@@ -657,6 +684,7 @@ export default function Start() {
           )}
 
           {/* ── kontrolki mapy: komputer – lewy dolny róg; telefon – po prawej (SPEC 5.2, 12) ── */}
+          {view === '2d' && (
           <MapControls
             className={isMobile ? 'absolute top-[120px] right-3 z-[1000]' : 'absolute left-4 z-[1000]'}
             style={isMobile ? undefined : { bottom: CONTROLS_BOTTOM }}
@@ -668,6 +696,7 @@ export default function Start() {
             baseMap={baseMap}
             onBaseMapChange={setBaseMap}
           />
+          )}
 
           {/* ── legenda aktywnej warstwy (SPEC 5.3) ── */}
           {/* telefon: tylko przy zwiniętej szufladzie – wyżej zasłaniałaby działkę na małym kawałku mapy */}

@@ -4,6 +4,7 @@ import { useLang } from '@/lib/i18n'
 import { DateField } from '@/components/DateField'
 import { LanguageToggle } from '@/components/LanguageToggle'
 import { LayerPills } from '@/features/map/LayerPills'
+import { ViewToggle } from '@/features/map/ViewToggle'
 import type { LayerKey } from '@/features/map/layers'
 import { LocateButton } from '@/features/search/LocateButton'
 
@@ -22,6 +23,8 @@ export function TopBar({
   onAsOfChange,
   layer,
   onLayerChange,
+  view,
+  onViewChange,
 }: {
   /** wraca do przeglądania mapy (zamyka działkę) */
   onBack?: () => void
@@ -36,6 +39,9 @@ export function TopBar({
   onAsOfChange: (v: string) => void
   layer: LayerKey
   onLayerChange: (k: LayerKey) => void
+  /** 2D / 3D (SPEC 8) */
+  view: '2d' | '3d'
+  onViewChange: (v: '2d' | '3d') => void
 }) {
   const { t } = useLang()
   if (isMobile)
@@ -56,7 +62,10 @@ export function TopBar({
           <LocateButton locating={locating} onClick={onLocate} iconOnly />
           <LanguageToggle compact />
         </div>
-        <LayerPills value={layer} onChange={onLayerChange} className="pointer-events-auto px-3 pb-2" />
+        <div className="pointer-events-auto flex items-center gap-2 px-3 pb-2">
+          <LayerPills value={layer} onChange={onLayerChange} className="min-w-0 flex-1" />
+          <ViewToggle value={view} onChange={onViewChange} />
+        </div>
       </div>
     )
   return (
@@ -82,6 +91,7 @@ export function TopBar({
       </div>
       <div className="flex max-w-full items-center gap-3 [&>*]:pointer-events-auto">
         <LayerPills value={layer} onChange={onLayerChange} className="min-w-0 py-1" />
+        <ViewToggle value={view} onChange={onViewChange} />
       </div>
     </div>
   )

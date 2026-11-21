@@ -19,7 +19,7 @@ _Stan na: 2026-11-21_
 
 ## Następne
 0. **Uwagi mentora (jury ma 3 min):** karty „Zobacz przykład” są (B10, lista lokalna) – podmienić na `GET /api/demo/examples`; po merge `origin/a/backend` z nowym kontraktem – pole „Co rosło w zeszłym roku?” (+ `przedplon` w linku i raporcie), odznaki formalności / ostrzeżenie / ekoschemat w rekomendacjach (3 w panelu, 5 w paszporcie), gleba: piasek/pył/ił %, uziarnienie, przepuszczalność, ulewa, typ gleby.
-1. Widok 3D (SPEC 8, P3) – na końcu.
+1. Widok 3D – zrobiony (B21) na kaflach ~30 m; dokładniej po endpoincie siatki NMT od A (propozycja w dzienniku B21).
 
 ## Blokery / pytania do drugiej osoby
 - **A – PROŚBA (MUST HAVE, wyszukiwanie miejsca):** endpoint `GET /api/places?q=Tczów` → `{ places: Place[], total }`, 404 gdy brak; `Place = { id (TERYT obrębu/gminy), name, kind: 'obreb'|'gmina', gmina, powiat, wojewodztwo, bbox: [lon_min, lat_min, lon_max, lat_max] }`, kolejność: najpierw dokładna nazwa. Źródło: ULDK `GetRegionByNameOrId` / `GetCommuneByNameOrId`. Propozycja typów: `frontend/src/api/places.proposal.ts` – po zgodzie przenieść do `types.ts` + `schemas/places.py`. Frontend gotowy (B19): sama nazwa (bez cyfr) → lista miejsc → przybliżenie mapy → klik w pole (`GetParcelByXY`); identyfikator i „obręb numer” jak dotąd.
