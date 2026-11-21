@@ -198,3 +198,16 @@ Weryfikacja: `tsc -b` przechodzi; `vite build` – lokalnie i w kontenerze brak 
 - Karta wyboru: pod nazwą pokaż `group_note` (gdy jest), potem `why`; `rotation.notes` – nie powtarzaj, gdy `why` już mówi o płodozmianie (zawiera „po sobie”). `choice_notes` – drobnym szarym tekstem pod kartami.
 - „Lepsze możliwości”: chip `relation` (lepsza – zielony, podobna – szarozielony), nazwa, „X na 10 lat”, `why` (mówi, w czym lepsza). Pusta lista = nie pokazuj nagłówka.
 **Łamie zgodność:** tak – tylko nazwy pól `seasonal_balance_by_year` (dodane w A5e, nieużywane jeszcze przez frontend); reszta addytywna.
+
+### 2026-11-22 · gałąź `a/backend` · A7 – opad ze stacji IMGW, `precip_sources`
+**Zmiany (addytywne; `backend/app/schemas/analysis.py` + `frontend/src/api/types.ts`; przykład w `mocks/analysis.choice.sample.json`):**
+- `AnalysisResponse` + **`precip_sources: PrecipSources | null`**: `main` (`imgw` | `imgw_daleko` | `nasa`), `main_label`, `stations[]` (`PrecipStation`: code, name, kind `synop|klimat|opad`, kind_label, distance_km, weight, coverage_pct, lon, lat), `nasa_factor`, `nasa_vs_imgw_pct`, `common_days`, `filled_days`, `filled_from`, `filled_earlier_days`, `agreement` (`zgodne` | `roznia_sie` | `mocno_sie_roznia` | `brak_danych`), `agreement_label`, `windows[]` (`PrecipWindow`: key `sezon|ostatnie_30_dni|wielolecie`, label, start, end, imgw_mm, nasa_mm, difference_pct, rating), **`sentence`**, `confidence_lowered`, `source_tag`.
+- **Zmiana wartości (bez zmiany typów):** opad, bilans, status, `seasonal_balance_by_year`, ranking i werdykt liczone z opadu IMGW (suchszy o ok. 14–23% niż NASA) – liczby w odpowiedziach się zmieniły; w `reliability.sources` nowy wiersz „IMGW-PIB (stacje)”, a wiersz pogody nazywa się „IMGW-PIB (opad) + NASA POWER (parowanie)”; `verdict` – zdanie o opadach z porównaniem do normy („…pomiar ze stacji IMGW”).
+- `suggestions.choice[].why` przy płodozmianie: „Pszenica ozima rosła tu rok temu – lepiej zrobić rok przerwy.”
+
+**Dla Mefju:**
+- **Zdanie o źródłach opadów** (`precip_sources.sentence`) – w paszporcie (sekcja „Skąd te dane”) i drobnym tekstem w karcie Werdyktu pod pozycją „Opady”: np. „Opady liczymy ze stacji IMGW Burzyn (27 km). Dane satelitarno-modelowe NASA pokazują o 14% więcej – przyjmujemy pomiar ze stacji.”
+- **Stacja i odległość:** w paszporcie lista `stations[]` – „{name} ({kind_label}) · {distance_km} km · waga {weight × 100}%”; na mapie można pokazać znaczniki stacji (`lon`, `lat`). `main = imgw_daleko` → żółty dopisek „stacje dalej niż 30 km – opad mniej pewny”; `main = nasa` → „brak stacji IMGW w pobliżu – opad z modelu NASA”.
+- **Zgodność źródeł:** odznaka z `agreement_label` (zgodne – zielona, różnią się – żółta, mocno się różnią – czerwona; `brak_danych` – szara); w rozwinięciu tabelka `windows[]` (okno, IMGW mm, NASA mm, różnica %). `filled_days > 0` → dopisek „ostatnie {filled_days} dni (od {filled_from}) – dane NASA przeliczone do poziomu stacji”.
+**Pliki frontendu zmienione przez A:** `src/api/types.ts`, mock `src/mocks/analysis.choice.sample.json`.
+**Łamie zgodność:** nie (pole dodane, opcjonalne).
