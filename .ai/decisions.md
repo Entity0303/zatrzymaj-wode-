@@ -90,3 +90,32 @@ Wpis: data · decyzja · uzasadnienie · konsekwencje. Zmieniany w osobnym mały
 ### D22 · 2026-11-21 · Klasy EGiB z KIEG: tylko nasza działka, brak = normalny stan
 **Uzasadnienie:** odpowiedź KIEG dotyczy działki w punkcie – punkt przy granicy może trafić w sąsiada. Wiele powiatów nie publikuje klas.
 **Konsekwencje:** zapytanie w środku działki + 3 punktach, bierzemy tylko wiersze z „Identyfikator działki” = nasza działka; klasy z „Oznaczenie konturu”. Brak klas → notka „Powiat nie udostępnia klas…”, bez obniżania pewności (D4). Nie odczytujemy „Grupy rejestrowej” ani pól o właścicielach.
+
+### D23 · 2026-11-21 · Parametry upraw: FAO-56 tab. 11/12/22 + kalendarz PL; założenia tam, gdzie FAO-56 milczy
+**Uzasadnienie:** jedno spójne, cytowalne źródło dla Kc, faz, Zr i p. Tab. 11 opisuje kalendarze innych klimatów, więc długości faz dopasowano do terminów w Polsce (zadanie A3): ozime i rzepak ozimy – wegetacja od 1 III; zboża jare – siew 8 IV (środek 1–15 IV); kukurydza – 1 V; ziemniak – 20 IV; burak – 1 IV; wieloletnie – 1 IV–31 X; rzepak jesień – od 20 VIII.
+**Założenia (brak w tabelach FAO-56 lub w zadaniu):** kukurydza na kiszonkę – Kc_end 0,50 i faza dojrzewania 30 dni; rzepak jesień – Kc_mid 0,80, bez fazy dojrzewania (do ok. 28 XI); tytoń – wszystkie parametry przez analogię (brak w tab. 12/22); strączkowe – siew 15 IV; warzywa – start 20 IV, fazy 20/30/50/20, Zr 0,5 m, p 0,4; krzewy owocowe, truskawki – fazy dopasowane do 1 IV–31 X; chmiel – faza dojrzewania wydłużona do 31 X.
+**Konsekwencje:** `analysis/crops.py`, źródło każdej wartości w komentarzu; korzenie od startu sezonu mają głębokość maksymalną (bez modelu wzrostu korzeni – uproszczenie, zawyża TAW na początku sezonu upraw jarych).
+
+### D24 · 2026-11-21 · Kc_mid i Kc_end bez korekty klimatycznej (FAO-56 równ. 62)
+**Uzasadnienie:** wartości tab. 12 są dla RHmin ≈ 45% i u2 ≈ 2 m/s – warunki zbliżone do Polski latem; korekta wymaga wysokości roślin i dziennego RHmin, a zmienia Kc zwykle o < 0,05.
+**Konsekwencje:** prostszy model; możliwa korekta przy kalibracji do IUNG SMSR.
+
+### D25 · 2026-11-21 · TAW z WOD IUNG skalowanej do głębokości korzeni; RAW = p · TAW
+**Uzasadnienie:** WOD z IUNG traktujemy jako wodę dostępną w profilu ok. 1 m. Korzenie płytsze – proporcjonalnie mniej (ziemniak 0,5 m → 50% WOD), głębsze – bez zwiększania (pod 1 m brak danych o glebie).
+**Konsekwencje:** `taw_from_wod()`; p z tab. 22 bez korekty na ETc (FAO-56 dopuszcza p + 0,04·(5 − ETc)) – do rozważenia przy kalibracji.
+
+### D26 · 2026-11-21 · Opad efektywny: spływ 20% części opadu powyżej 20 mm/dzień
+**Uzasadnienie:** prosty, zachowawczy wzór bez danych o terenie (A3). Parametry `runoff_threshold` i `runoff_fraction` są argumentami modelu – nadpisze je analiza terenu z NMT (spadki).
+**Konsekwencje:** nadmiar wody ponad pojemność polową = przesiąkanie (Dr ≥ 0), raportowane jako `percolation_mm`.
+
+### D27 · 2026-11-21 · Ryzyko 7 dni i „stres za X dni”
+**Uzasadnienie:** rolnik potrzebuje odpowiedzi „kiedy rośliny zaczną cierpieć”. Horyzont 16 dni = zasięg prognozy Open-Meteo.
+**Konsekwencje:** data analizy = dziś → prognoza Open-Meteo (opad, ET0), `source_tag = prognoza`; data historyczna (lub brak prognozy) → scenariusz typowej pogody: mediana opadu i ET0 z tych samych dni w 10 poprzednich latach, `source_tag = szacunek_modelu`. Luka opóźnienia NASA POWER (2–4 dni przed datą analizy) uzupełniana danymi Open-Meteo `past_days=7`, a gdy ich brak – scenariuszem (ograniczenie w odpowiedzi). Klasy: **wysokie** – RAW przekroczone już lub w ≤ 3 dni; **średnie** – 4–7 dni; **niskie** – później albo wcale w horyzoncie. Status „danger” (Susza), gdy stres trwa i Ks < 0,5.
+
+### D28 · 2026-11-21 · Zapas wody na start sezonu
+**Uzasadnienie:** po suchej zimie profil nie jest pełny. Bez danych o wilgotności gleby przyjmujemy pojemność polową, zmniejszoną o deficyt bilansu P − ET0 w oknie przed sezonem: Dr0 = min(TAW, |bilans|), gdy bilans ujemny (mm za mm – proporcjonalnie do TAW).
+**Konsekwencje:** okno od 1 XI roku poprzedniego do startu (siew/wegetacja wiosenna); dla siewu letnio-jesiennego (rzepak jesień) od 1 VII – okno od listopada objęłoby całe lato poprzedniej uprawy. Zakres pobieranej pogody rozszerzony do 1 XI (rok sezonu − 11) – okno najstarszego sezonu porównawczego. Brak danych w oknie (> 20%) → start z pełnym profilem + ograniczenie.
+
+### D29 · 2026-11-21 · Nawadnianie i stan poza sezonem
+**Uzasadnienie:** zalecenie tylko wtedy, gdy model pokazuje stres teraz lub w ciągu 7 dni; dawka liczona, nie zgadywana.
+**Konsekwencje:** dawka = ubytek do pojemności polowej w dniu przekroczenia RAW, zaokrąglona do 5 mm (min. 5 mm); powyżej 40 mm dopisek „w praktyce w N dawkach po ok. 30–35 mm”. Rekomendacja w formacie kontraktu (`category = nawadnianie`, dane wejściowe, pewność: średnia przy prognozie, ograniczona przy scenariuszu). Przed sezonem uprawy – brak wskaźników „na dziś” i brak dni stresu; po sezonie – tylko podsumowanie dni stresu zakończonego sezonu na tle 10 lat.
