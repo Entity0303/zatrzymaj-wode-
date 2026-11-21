@@ -4,6 +4,37 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-21 20:30 · `a/backend` · A5b-1: stan działki bez uprawy, nawadnianie wg praktyki, ekoschematy, status poza sezonem, zgodność gleby
+**Co:**
+- **1. Nawadnianie (D48):** `Crop.irrigation_practice` (not_practiced: zboża, rzepak, strączkowe; optional: kukurydza, burak, tytoń; common: ziemniak, warzywa, sady, owoce miękkie, chmiel). `not_practiced` → `irrigation.status = nie_praktykowane`, bez dawek; silnik pomija kategorię „nawadnianie”; 3 reguły zastępcze przy stresie ≤ 7 dni (`retencja.bez_nawadniania_zatrzymaj_wode`, `agrotechnika.bez_nawadniania_parowanie`, `agrotechnika.bez_nawadniania_termin_zabiegow`) ze zdaniem „Zbóż w Polsce się nie nawadnia – liczy się zatrzymanie wody w glebie”. `optional` – dopisek w planie dawek.
+- **2. Ekoschematy (D51):** katalog = E_MPW, E_USU, E_WSG, E_PN, E_MIOD, E_EKSTUZ; usunięte E_ZSU, plan nawożenia i TUZ bez kodu; „Odłóż nawożenie” bez ekoschematu; kod spoza listy = `RuleError`.
+- **3. Status poza sezonem (D52):** `scoring.reserve_status` – 0,6 × woda w profilu + 0,4 × pozycja KBW 30 dni wśród 10 lat (`water_balance.recent_balance`); `OverallStatus.scope/scope_label`. „Kukurydza dziś” (zastępczo 201305): 39 → **49, „poza sezonem”**, bez kar za historię sezonu i stres.
+- **4. Gleba (D49):** `analysis/soil_consistency.py` + `soil_map.soil_map_for_parcel` (9 punktów). Badanie 201305: działka na dwóch konturach (piasek gliniasty lekki – kompleks 6 / glina lekka pylasta – kompleks 2), IUNG 75% III / 25% I – **zgodne**; „konflikt” był skutkiem jednego punktu. Porównanie udziałów gleb lekkich (> 40 p.p. = konflikt), przy konflikcie kategoria i WOD z mapy, −10 pkt pewności; bez IUNG – mapa / SoilGrids.
+- **5. Bez uprawy (D50):** `analysis/field_state.py` – pokrycie referencyjne FAO-56 (trawa, Kc 1, p 0,5, profil 1 m), przebieg od 1 XI z pasmem 10 lat, ranking dnia, KBW 30 dni; `/api/analysis` i `/api/report.pdf` bez `crop` (PDF „Stan wodny działki”, `stan-wodny-dzialki-….pdf`); `field_state` liczone zawsze; 3 reguły retencji bez uprawy wg pory roku; `suggestions = null` pod A5b-2.
+- **Kontrakt** (wpis A5b-1, „Dla Mefju”) + minimalne poprawki typów w 5 plikach `frontend/` (za zgodą właściciela) – `npm run build` OK (w kontenerze po `npm install`; obraz frontendu nie ma Fraunces).
+- **ULDK GUGiK odpowiadał 302 (ograniczenie ruchu) przez całą sesję** → `scripts/smoke_cached_uldk.py`: smoke w procesie z zapisaną odpowiedzią ULDK dla 201305 (fikstura), reszta źródeł na żywo. Działki wymagające ULDK – 502 (do powtórki, status „Do zrobienia na żywo”).
+- Testy: 238 bez sieci (`docker run --network none`), w tym `tests/test_a5b.py` (29) i przykład bez uprawy w `test_contract`.
+- Smoke A5b-1:
+
+| Przykład | Uprawa | Status | Wynik | Zaleceń | Nawadnianie | Ekoschematy | soil.consistency |
+|---|---|---|---|---|---|---|---|
+| Susza 2018 | zboża ozime | danger – w sezonie | 8 | 5 | nie (nie_praktykowane) | E_MPW | ok |
+| Mokry rok 2021 | zboża ozime | warn – w sezonie | 59 | 2 | nie (nie_praktykowane) | E_MPW, E_WSG | ok |
+| Kukurydza – stan dziś | kukurydza_ziarno | błąd 502 | – | – | – | – | – |
+| To nie jest pole | zboza_ozime | błąd 502 | – | – | – | – | – |
+| Stan działki (bez uprawy) | — (bez uprawy) | risk – stan wody na działce | 43 | 2 | nie (brak sekcji) | E_USU, E_WSG | ok |
+| Stan działki 10.06.2018 (bez uprawy) | — (bez uprawy) | danger – stan wody na działce | 18 | 2 | nie (brak sekcji) | E_USU, E_WSG | ok |
+| 201305_2.0038.6/1 | zboża ozime | ok – poza sezonem | 71 | 3 | nie (nie_praktykowane) | E_WSG | ok |
+| 061704_2.0011.383/2 | kukurydza_ziarno | błąd 502 | – | – | – | – | – |
+| 040703_5.0020.76 | zboza_ozime | błąd 502 | – | – | – | – | – |
+| 302114_5.0018.445 | zboza_ozime | błąd 502 | – | – | – | – | – |
+| 160703_5.0011.945 | zboza_ozime | błąd 502 | – | – | – | – | – |
+| 143203_2.0027.112/11 | zboza_ozime | błąd 502 | – | – | – | – | – |
+
+  PDF-y: `reports/examples/susza-2018.pdf` (5 str.), `mokry-rok-2021.pdf` (4), **`stan-dzialki-bez-uprawy.pdf`** (4, nowy); `kukurydza-dzis.pdf` i `to-nie-jest-pole.pdf` – jeszcze z A5 (ULDK).
+**Pliki:** `backend/app/analysis/{crops,facts,scoring,confidence,recommendations,water_balance,field_state,soil_consistency}.py`, `backend/app/analysis/rules/*.yaml`, `backend/app/sources/soil_map.py`, `backend/app/routers/analysis.py`, `backend/app/report/{builder,charts}.py`, `backend/app/report/templates/report.html`, `backend/app/schemas/analysis.py`, `backend/scripts/{smoke,smoke_cached_uldk}.py`, `backend/tests/{test_a5b,test_a5,test_analysis,test_contract,test_demo_status_report,test_water_model}.py`; `frontend/src/api/types.ts`, `frontend/src/mocks/{analysis.sample,analysis.no-crop.sample}.json`, `frontend/src/{features/parcel-panel/IrrigationCard,features/parcel-panel/ParcelPanel,features/passport/SectionD,layout/cards/AlertsCard}.tsx`, `frontend/src/lib/{storage,i18n.en}.ts`; `reports/examples/*.pdf`; `.ai/*`.
+**Kontrakt API:** TAK – `crop`/`crop_season`/`irrigation` mogą być null, `field_state`, `suggestions`, `OverallStatus.scope(_label)`, `Soil.consistency`, `IrrigationStatus.nie_praktykowane`, `IrrigationPlan.practice` (osobny commit, `contract-changes.md`).
+
 ## 2026-11-21 19:30 · `integracja` · INT1: połączenie a/backend + b/frontend (bez main)
 **Co:**
 - Gałąź `integracja` od `origin/main` (kamień milowy 1) + `origin/b/frontend` (B10, B11 – bez konfliktów) + `origin/a/backend` (A5, `bb2df36`).

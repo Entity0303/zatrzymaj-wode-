@@ -1,6 +1,6 @@
 # Status – osoba A (Dominik), backend
 
-_Stan na: 2026-11-21 19:30_
+_Stan na: 2026-11-21 20:30_
 
 ## Zrobione
 - Wyszukiwanie działki ULDK: pełny identyfikator, „obręb numer”, punkt; `GET /api/parcel` (409 lista kandydatów, 404, 502 z nazwą źródła), timeout 10 s + jedna ponowna próba, cache 24 h.
@@ -19,23 +19,33 @@ _Stan na: 2026-11-21 19:30_
   - `app/demo.py` + `GET /api/demo/examples` (4 przykłady), rozgrzewka cache w tle przy starcie (`DEMO_WARMUP`), `GET /api/status`, **`GET /api/report.pdf`** (WeasyPrint, A4, SPEC 10.2, QR);
   - odporność: cache z TTL na wpis + przeterminowany wpis przy awarii (pewność −1 poziom), limity na źródło, bezpiecznik, ULDK 302 = chwilowa niedostępność (wcześniej błędnie 404);
   - `backend/scripts/smoke.py`, raporty przykładów w `reports/examples/`.
-- Testy: 210 bez sieci (sprawdzone w kontenerze bez sieci) + 5 live. Smoke A5: 10/10 OK; po rozgrzewce przykłady 0,01–0,05 s, PDF 1,1–2,5 s.
+- **A5b-1 (gałąź `a/backend`) – fundament „Stan działki” + poprawki merytoryczne:**
+  - nawadnianie wg praktyki (`irrigation_practice`, D48): zboża, rzepak, strączkowe – bez dawek (`nie_praktykowane`), zamiast tego 3 reguły (zatrzymanie wody, bez uprawek + odchwaszczanie, zabiegi rano/wieczorem) i zdanie „Zbóż w Polsce się nie nawadnia…”; kukurydza, burak, tytoń – z dopiskiem; „Susza 2018” – zero zaleceń nawadniania;
+  - ekoschematy tylko E_MPW, E_USU, E_WSG, E_PN, E_MIOD, E_EKSTUZ (D51), kod spoza listy = błąd wczytania;
+  - status poza sezonem i bez uprawy = 0,6 woda w profilu + 0,4 bilans 30 dni (D52), `status.scope/scope_label`;
+  - zgodność gleby (`soil.consistency`, D49): mapa glebowo-rolnicza w 9 punktach, porównanie udziałów gleb lekkich z IUNG; 201305 = dwie gleby, źródła zgodne;
+  - analiza i PDF bez uprawy: `field_state` (pokrycie referencyjne FAO-56, D50, przebieg od 1 XI z pasmem 10 lat, KBW 30 dni), `crop`/`crop_season`/`irrigation` = null, `suggestions` = null (A5b-2), PDF „Stan wodny działki”;
+  - kontrakt (A5b-1 w `contract-changes.md`) + minimalne poprawki typów w 5 plikach frontendu (za zgodą właściciela);
+  - `scripts/smoke_cached_uldk.py` – smoke w procesie z zapisanym obrysem ULDK (gdy ULDK ogranicza ruch).
+- Testy: **238 bez sieci** (`docker run --network none`) + 5 live (A5: 210). Smoke A5b-1 (obrys 201305 z zapisu ULDK, reszta na żywo): 5/5 przypadków 201305 OK; analiza 0,02–6,2 s, PDF 1,2–2,8 s.
 
 ## W trakcie (gałąź)
-- `a/backend` – A5 gotowe; **merge do `main` robi właściciel repo po przejrzeniu** (B może już teraz `git merge origin/a/backend`).
-- `integracja` (INT1, 2026-11-21 19:30) – `main` + `b/frontend` (B11) + `a/backend` (A5) połączone i sprawdzone (pytest 210, build, docker, curl); **nie scalone do `main`**. Decyzja B o języku = teraz **D47**.
+- `a/backend` – A5b-1 gotowe (commit + push); **do `main` nie mergowane**.
+
+## Do zrobienia NA ŻYWO (ULDK GUGiK ograniczał ruch – 302 przez całą sesję A5b-1)
+1. `scripts/smoke.py` na pełnych przykładach – przypadki z ULDK: „Kukurydza – stan dziś” (061704), „To nie jest pole” (143203) i 5 działek z `test-parcels.md` (dziś 502).
+2. Ponownie wygenerować `reports/examples/kukurydza-dzis.pdf` i `to-nie-jest-pole.pdf` – **są jeszcze z A5** (stara logika: m.in. „Ryzyko 39” poza sezonem). Nowe: `susza-2018.pdf`, `mokry-rok-2021.pdf`, `stan-dzialki-bez-uprawy.pdf`.
+3. Kontrola „Kukurydza dziś” na właściwej działce 061704 (zastępczo na 201305: „poza sezonem”, 49 pkt – bez kar za stres kukurydzy).
+4. Zbadać zgodność gleby na 061704 (IUNG IV/III, mapa – pył zwykły na piasku) i pozostałych działkach testowych.
 
 ## Następne
-1. Teren z NMT (`sources/nmt.py`, `analysis/terrain.py`) + rowy BDOT10k – włączy reguły `requires: terrain / water_nearby` (oczko, zastawka, pas buforowy, mokradło) i mapkę miejsc w raporcie.
-2. Sentinel-2 NDVI/NDMI – `crop_health`, `plant_moisture`; pewność może dojść do „wysokiej”.
-3. Kalibracja do IUNG SMSR (kukurydza 2018) i weryfikacja nazw ekoschematów z instrukcją ARiMR 2026.
-4. README (wymóg KOWR 4.2), `/api/layers`, sprzątanie `/api/dev/*`.
+1. **A5b-2 „Co tu posiać?”** – symulacja 15 upraw na pogodzie z 10 lat → `suggestions` (dziś null).
+2. Kalibracja progów statusu poza sezonem / bez uprawy (np. profil 61% w listopadzie = „Ryzyko 49”) i z IUNG SMSR.
+3. Teren z NMT + rowy BDOT10k (u osoby C – patrz pamięć), Sentinel-2.
+4. README, `/api/layers`, sprzątanie `/api/dev/*`, trwały cache (SQLite) – reloady czyszczą cache w pamięci.
 
 ## Blokery / pytania do drugiej osoby
-- **B: kontrakt A5** (`contract-changes.md`): `Recommendation` + `when`/`when_label`, `permit`/`permit_note`/`permit_url`, `warning`, `eco_scheme`; `Soil` + `texture`, `permeability`, `soil_map`, `texture_note`; `previous_crop` w zapytaniu i odpowiedzi; nowe `GET /api/demo/examples`, `GET /api/status`, `GET /api/report.pdf`.
-- **B: panel filtruje po `in_panel`** (maks. 3); paszport pokazuje całą listę (maks. 5). Ostrzeżenie (`warning`) wyraźnie, formalności z linkiem, ekoschemat, „Kiedy: …”.
-- **B: wybór przedplonu** (opcjonalny, z „Nie wiem”) obok uprawy → `previous_crop`.
-- **B: przycisk „Pobierz raport”** → `/api/report.pdf` z tymi samymi parametrami co analiza.
-- **B: link z kodu QR w raporcie:** `{PUBLIC_URL}/?dzialka=<id>&uprawa=<crop>&data=<RRRR-MM-DD>&przedplon=<crop>` – frontend powinien po wejściu z takim adresem od razu uruchomić analizę (dziś nie obsługuje parametrów).
-- **B: przykłady demo** – np. 4 przyciski na ekranie startowym z `GET /api/demo/examples` (wynik zawsze przez normalne `/api/analysis`).
-- B: `stress_days_by_year` – `null` = „Brak danych”, nie 0; `crop_health`/`plant_moisture` – `brak_danych` (satelita w przygotowaniu).
+- **B (Mefju): panel działki pokazuje „Stan działki” od razu po wybraniu działki – `GET /api/analysis` bez `crop` → `field_state`, `soil.consistency`, rekomendacje retencyjne** (szczegóły i lista plików frontendu zmienionych przez A: `contract-changes.md`, wpis A5b-1, „Dla Mefju”).
+- B: `IrrigationCard` – status `nie_praktykowane` (dziś etykieta „Nie stosuje się”); `status.scope_label` („poza sezonem”) przy karcie stanu; `storage.ts` – czy zapamiętywać analizę bez uprawy.
+- B: obraz kontenera frontendu nie ma `@fontsource-variable/fraunces` – `docker compose build frontend`.
+- Wcześniejsze prośby A5 (pola rekomendacji, gleba, `previous_crop`, `/api/demo/examples`, raport PDF) – bez zmian.
