@@ -2,7 +2,8 @@
 
 Buduje sekcję `history` kontraktu /api/analysis (schemas/analysis.py: History) oraz metryki,
 których kontrakt nie przewiduje (odchylenie od średniej, percentyl, najdłuższa susza
-opadowa, dane do dnia X) – w `WaterBalanceResult`.
+opadowa, lata porównawcze – od rozszerzenia kontraktu także w `History`; dane do dnia X,
+ograniczenia) – w `WaterBalanceResult`.
 
 Zasady:
 - tylko dane SPRZED daty analizy (ostatni dzień = data analizy − 1),
@@ -20,7 +21,7 @@ from datetime import date, timedelta
 import numpy as np
 
 from app.analysis.et0 import DailyWeather
-from app.schemas.analysis import BandPoint, History, MonthlyPrecip, SeriesPoint, SourceTag
+from app.schemas.analysis import BalanceRank, BandPoint, DrySpell, History, MonthlyPrecip, SeriesPoint, SourceTag
 
 MAX_MISSING_YEAR = 0.10  # rok porównawczy z większym udziałem braków pomijamy
 MAX_MISSING_MONTH = 0.20  # miesiąc z większym udziałem braków = brak sumy
@@ -277,6 +278,10 @@ def build_history(
         stress_days_by_year=[],  # wypełni model wody w glebie (zadanie A3) – nie zgadujemy
         monthly_precip=monthly,
         summary=summary,
+        balance_deviation_mm=_r1(deviation),
+        balance_rank=BalanceRank(lower_years=lower_years, of_years=len(band_years)) if lower_years is not None else None,
+        longest_dry_spell=DrySpell(days=dry_len, end_date=dry_end),
+        band_years=band_years,
         source_tag=SourceTag(kind="obliczenia", date=data_until, source=tag_source),
     )
     return WaterBalanceResult(

@@ -179,6 +179,11 @@ def test_cumulative_balance_and_band():
     assert r.deviation_mm == pytest.approx(-2.0 * SEASON_DAYS + 0.55 * SEASON_DAYS, abs=0.1)
     assert r.lower_years == 0 and r.percentile == 0.0
     assert h.stress_days_by_year == []  # wypełni model wody w glebie (A3)
+    # pola dodane do kontraktu (contract-changes 2026-11-21)
+    assert h.balance_deviation_mm == pytest.approx(-1.45 * SEASON_DAYS, abs=0.1)
+    assert (h.balance_rank.lower_years, h.balance_rank.of_years) == (0, 10)
+    assert h.longest_dry_spell.days == 0 and h.longest_dry_spell.end_date is None
+    assert h.band_years == list(range(2017, 2007, -1))
     assert h.source_tag.kind == "obliczenia" and h.source_tag.date == date(2018, 7, 14)
     assert "Niższy bilans był w 0 z 10 lat" in h.summary
     assert r.limitations == []
@@ -210,6 +215,7 @@ def test_longest_dry_spell():
     r = build_history(synth(date(2008, 1, 1), date(2018, 7, 14), precip, _et0), date(2018, 7, 15))
     assert r.longest_dry_spell_days == 20
     assert r.longest_dry_spell_end == date(2018, 5, 20)
+    assert r.history.longest_dry_spell.days == 20 and r.history.longest_dry_spell.end_date == date(2018, 5, 20)
     assert longest_run(np.array([True, True, False, True, True, True])) == (3, 5)
 
 
