@@ -59,10 +59,11 @@ def test_ts_types_name_every_contract_field():
     walk(AnalysisResponse)
 
 
-def test_analysis_endpoint_is_501(client):
-    r = client.get("/api/analysis", params={"parcel_id": "143203_2.0027.112/11", "crop": "zboza_ozime"})
-    assert r.status_code == 501
-    assert "w budowie" in r.json()["detail"]["message"]
+def test_analysis_endpoint_requires_crop(client):
+    # pełne /api/analysis (A4) – scenariusze z mockami źródeł w test_analysis.py; tu bez sieci
+    r = client.get("/api/analysis", params={"parcel_id": "143203_2.0027.112/11"})
+    assert r.status_code == 422
+    assert "Wybierz uprawę" in r.json()["detail"]["message"]
 
 
 def test_analysis_rejects_unknown_crop(client):

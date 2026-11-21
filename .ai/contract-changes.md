@@ -36,3 +36,11 @@ WOD jako wskaźnik dalej w `indicators.soil_capacity`.
 - `irrigation: IrrigationPlan` – `status` (`zalecane` | `niepotrzebne` | `nieuzasadnione_w_fazie` | `brak_danych`), `message` („25 mm teraz, powtórz za ok. 5 dni”), `dose_mm` (≤ 35), `first_date`, `interval_days`, `total_7d_mm`, `doses_7d`, `source_tag`.
 `indicators.soil_water_pct/mm` mają teraz wartość także poza sezonem (zakres opisuje `soil_water.scope`).
 **Łamie zgodność:** tak dla odpowiedzi (3 nowe pola wymagane; `/api/analysis` dziś 501, mock zaktualizowany).
+
+### 2026-11-21 · gałąź `a/backend` · A4 (uzgodnione co do zasady)
+**`Recommendation` + `priority: int` i `in_panel: bool`** (`schemas/analysis.py` ↔ `types.ts`, mock).
+Silnik reguł zwraca pełną listę (retencja → agrotechnika → nawadnianie, w grupie od najważniejszej); `in_panel = true` ma maks. 3 rekomendacje – najważniejsza z każdej grupy (SPEC 6.5). Paszport pokazuje całą listę. **Dla B:** panel powinien filtrować po `in_panel`, a nie brać pierwszych 3.
+**Łamie zgodność:** nie (pola z wartościami domyślnymi).
+
+### 2026-11-21 · gałąź `a/backend` · A4 – przykład (bez zmiany kontraktu)
+`frontend/src/mocks/analysis.sample.json` zastąpiony **zapisem prawdziwej odpowiedzi** `/api/analysis` (201305_2.0038.6/1, zboża ozime, 2018-06-10: status „Susza”, plan nawadniania, 101 dni historii). Dopisek w `parcel.zrodlo.uwagi`; UI dalej pokazuje „DANE PRZYKŁADOWE”.

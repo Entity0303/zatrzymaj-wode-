@@ -1,5 +1,5 @@
 /**
- * Słownik EN (D35): klucz = tekst polski z kodu, wartość = tłumaczenie angielskie.
+ * Słownik EN (D40): klucz = tekst polski z kodu, wartość = tłumaczenie angielskie.
  * {zmienne} muszą mieć te same nazwy co w kluczu. Brak wpisu = tekst polski (w trybie dev ostrzeżenie w konsoli).
  * Nowy tekst w UI → dopisz go tutaj.
  */

@@ -2,7 +2,7 @@ import { createContext, useContext } from 'react'
 import { EN } from './i18n.en'
 
 /**
- * Język interfejsu (D35): domyślnie polski, opcjonalnie angielski.
+ * Język interfejsu (D40): domyślnie polski, opcjonalnie angielski.
  * Kluczem tłumaczenia jest SAM TEKST POLSKI – kod pozostaje czytelny po polsku:
  *   t('Szukam działki') · t('Znaleziono {n} działek', { n: 3 })
  * Brak wpisu w słowniku EN = tekst polski (bezpieczny zapas, np. teksty z backendu).

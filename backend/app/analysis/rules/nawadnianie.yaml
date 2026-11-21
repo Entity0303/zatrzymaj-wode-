@@ -1,0 +1,27 @@
+# Reguły NAWADNIANIA – kategoria ostatnia (opcjonalna). Plan dawek z modelu FAO-56 (A3b, D33).
+rules:
+  - id: nawadnianie.plan_dawek
+    category: nawadnianie
+    priority: 100
+    confidence_fact: irrigation_confidence
+    when:
+      all:
+        - {fact: irrigation_status, eq: zalecane}
+    title: "Nawadnianie {irrigation_when}"
+    description: "{irrigation_message}."
+    why:
+      - "Rośliny w fazie wrażliwej zaczną odczuwać brak wody w ciągu 7 dni albo już go odczuwają; dawka dobrana do gleby kat. {soil_category_roman}."
+
+  - id: nawadnianie.przygotuj
+    category: nawadnianie
+    priority: 60
+    confidence: ograniczona
+    when:
+      all:
+        - {fact: sensitive, eq: true}
+        - {fact: irrigation_status, eq: niepotrzebne}
+        - {fact: days_to_stress, gte: 8}
+    title: "Przygotuj nawadnianie"
+    description: "Na razie wody wystarcza, ale przy obecnej pogodzie rośliny zaczną odczuwać jej brak za ok. {days_to_stress} dni."
+    why:
+      - "Stres wodny przewidywany w horyzoncie 16 dni."

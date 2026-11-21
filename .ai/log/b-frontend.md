@@ -4,6 +4,11 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-21 · `b/frontend` · merge `origin/a/backend` (A4: pełne /api/analysis)
+**Co:** scalone A4 (ocena, pewność, przyczyny, silnik reguł, pełne `/api/analysis`; mock = prawdziwa odpowiedź). Konflikt w `.ai/decisions.md` – A zajęła D35–D39, przełącznik języka przenumerowany na **D40** (wcześniej D30 → D35). Kontrakt: `Recommendation.priority`, `in_panel` – panel pokazuje rekomendacje z `in_panel` (po jednej z kategorii), w kolejności retencja → agrotechnika → nawadnianie, w kategorii wg `priority`. Weryfikacja: `npm run build`, `pytest` 150 passed.
+**Pliki:** `.ai/decisions.md`, `frontend/src/features/parcel-panel/WhatToDo.tsx`, odwołania D40 (`i18n.ts`, `i18n.en.ts`, `LanguageProvider`, `LanguageToggle`, status B) + pliki A z merge.
+**Kontrakt API:** TAK (zmiana A, przyjęta) → `.ai/contract-changes.md`.
+
 ## 2026-11-21 · `b/frontend` · B3: linki do analizy i raport PDF (uwagi mentora, część 1)
 **Co:** stan w adresie `?dzialka=&uprawa=&data=` (`lib/deepLink.ts`): otwarcie linku od razu wyszukuje działkę (przy kilku wynikach – lista, uprawa przypisana po wyborze) i liczy analizę; adres w pasku aktualizowany na bieżąco (`replaceState`, inne parametry np. `?dane=przykladowe` zostają); zła uprawa / data spoza 10 lat w linku są ignorowane. Przycisk „Kopiuj link do tej analizy” w panelu (gdy brak schowka – podpowiedź, by skopiować adres z paska). „Pobierz raport PDF” → `GET /api/report.pdf?parcel_id=&crop=&date=` (te same parametry co analiza; aktywny po gotowej analizie, także „Raport” w szufladzie telefonu); błędy po polsku z tym, co działa dalej (404/501 → „Raport PDF jest jeszcze w budowie”). `przedplon` – czekam na nazwę pola w kontrakcie, nie zgadujemy.
 **Pliki:** `frontend/src/lib/deepLink.ts`, `frontend/src/features/reports/useReportDownload.ts`, `frontend/src/api/client.ts` (`reportPdf`), `frontend/src/pages/Start.tsx`, `frontend/src/features/parcel-panel/{ParcelPanel,MobileSheetHeader}.tsx`, `frontend/src/lib/i18n.en.ts`.

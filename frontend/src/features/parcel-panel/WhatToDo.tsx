@@ -10,8 +10,13 @@ const CONFIDENCE = { wysoka: 'wysoka', srednia: 'średnia', ograniczona: 'ograni
 export function WhatToDo({ analysis }: { analysis?: AnalysisResponse | null }) {
   const { t } = useLang()
   if (analysis?.recommendations.length) {
-    const recs = [...analysis.recommendations]
-      .sort((a, b) => ORDER.indexOf(a.category) - ORDER.indexOf(b.category))
+    // backend wskazuje, co pokazać w panelu (`in_panel`, po jednej z kategorii); bez flag – wg priorytetu
+    const all = analysis.recommendations
+    const flagged = all.filter((r) => r.in_panel)
+    const recs = [...(flagged.length ? flagged : all)]
+      .sort(
+        (a, b) => ORDER.indexOf(a.category) - ORDER.indexOf(b.category) || (b.priority ?? 0) - (a.priority ?? 0),
+      )
       .slice(0, 3) // panel: maks. 3 (SPEC 6.5); pełna lista w paszporcie
     return (
       <div className="space-y-3">

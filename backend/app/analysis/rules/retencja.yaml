@@ -1,0 +1,149 @@
+# Reguły RETENCJI (zatrzymanie wody w glebie i krajobrazie) – kategoria pierwsza w kolejności.
+# Kierunki działań wg listy z zadania A4 („Podstawy naukowe” KOWR: retencja glebowa i krajobrazowa).
+# Składnia: analysis/recommendations.py. Fakt = None → warunek fałszywy; brak liczby w tekście → reguła pominięta.
+rules:
+  - id: retencja.miedzyplon_po_zbiorze
+    category: retencja
+    priority: 90
+    confidence: srednia
+    when:
+      all:
+        - {fact: phase, in: [po_zbiorze]}
+        - {fact: month, in: [7, 8, 9]}
+      any:
+        - {fact: soil_category, lte: 2}
+        - {fact: water_pct, lt: 60}
+        - {fact: balance_percentile, lt: 40}
+    title: "Wysiej międzyplon po zbiorze"
+    description: "Międzyplon osłoni glebę przed parowaniem, a jego korzenie i resztki zwiększą próchnicę – gleba zatrzyma więcej wody na kolejny sezon. Teraz w profilu jest {water_pct}% wody dostępnej."
+    why:
+      - "Pole po zbiorze stoi bez okrywy, a zapas wody w glebie jest niewielki lub gleba słabo trzyma wodę."
+
+  - id: retencja.resztki_pozniwne
+    category: retencja
+    priority: 70
+    confidence: srednia
+    when:
+      all:
+        - {fact: phase, in: [po_zbiorze]}
+        - {fact: soil_category, lte: 3}
+    title: "Zostaw rozdrobnione resztki pożniwne"
+    description: "Słoma i resztki płytko wymieszane z glebą ograniczają parowanie i spływ, a z czasem zwiększają próchnicę. Gleba kat. {soil_category_roman} zmieści tylko ok. {wod_mm} mm wody."
+    why:
+      - "Na glebach podatnych na suszę każda warstwa ochronna zmniejsza straty wody."
+
+  - id: retencja.uprawa_uproszczona
+    category: retencja
+    priority: 75
+    confidence: srednia
+    when:
+      all:
+        - {fact: phase, in: [po_zbiorze, przed_siewem]}
+        - {fact: soil_category, lte: 2}
+    title: "Uprawa uproszczona zamiast orki"
+    description: "Orka odwraca i przesusza wierzchnią warstwę gleby. Uprawa bezorkowa lub płytka z pozostawieniem resztek zatrzymuje więcej wody w glebie kat. {soil_category_roman} (ok. {wod_mm} mm wody dostępnej)."
+    why:
+      - "Gleba lekka – straty wody przy orce są największe."
+
+  - id: retencja.prochnica
+    category: retencja
+    priority: 50
+    confidence: srednia
+    when:
+      all:
+        - {fact: soil_category, lte: 2}
+        - {fact: non_agricultural, eq: false}
+    title: "Zwiększaj zawartość próchnicy"
+    description: "Obornik, kompost, poplony i pozostawianie resztek podnoszą próchnicę, a gleba z większą ilością próchnicy zmieści więcej wody niż dzisiejsze ok. {wod_mm} mm."
+    why:
+      - "Gleba kat. {soil_category_roman} należy do najbardziej podatnych na suszę – próchnica to główna dźwignia jej pojemności wodnej."
+
+  - id: retencja.woda_z_roztopow
+    category: retencja
+    priority: 80
+    confidence: srednia
+    when:
+      all:
+        - {fact: month, in: [11, 12, 1, 2, 3]}
+        - {fact: off_season, eq: true}
+      any:
+        - {fact: water_pct, lt: 90}
+        - {fact: soil_category, lte: 2}
+    title: "Zatrzymaj wodę z roztopów i zimowych opadów"
+    description: "Nie zostawiaj gołej, zbitej roli: okrywa roślinna, resztki lub szorstka powierzchnia pozwalają wodzie wsiąkać zamiast spływać. Teraz profil ma {water_pct}% wody dostępnej."
+    why:
+      - "Zima to główny okres odbudowy zapasu wody w glebie przed sezonem."
+
+  - id: retencja.odbudowa_zapasu_jesienia
+    category: retencja
+    priority: 85
+    confidence: srednia
+    when:
+      all:
+        - {fact: off_season, eq: true}
+        - {fact: water_pct, lt: 50}
+        - {fact: month, in: [8, 9, 10, 11, 12]}
+    title: "Pomóż glebie odbudować zapas wody"
+    description: "W profilu jest tylko {water_pct}% wody dostępnej ({water_mm} mm). Okrywa roślinna przez zimę i rezygnacja z głębokiej jesiennej orki pozwolą zatrzymać więcej opadów."
+    why:
+      - "Zapas wody po sezonie jest mniejszy niż połowa pojemności gleby."
+
+  - id: retencja.zadrzewienia_srodpolne
+    category: retencja
+    priority: 40
+    confidence: ograniczona
+    when:
+      all:
+        - {fact: soil_category, lte: 2}
+        - {fact: balance_percentile, lt: 30}
+    title: "Zadrzewienia i pasy wiatrochronne"
+    description: "Pasy drzew i krzewów przy polu ograniczają wiatr i parowanie oraz zatrzymują śnieg. Bilans wody od {season_start_txt} ({balance_mm} mm) jest niższy niż w większości ostatnich lat."
+    why:
+      - "Lekka gleba i suchy sezon – działanie długoterminowe."
+
+  # ── wymagają danych o terenie / wodach w okolicy (A6/A7) – wyłączone do tego czasu ──
+  - id: retencja.oczko_w_zaglebieniu
+    category: retencja
+    priority: 95
+    confidence: srednia
+    requires: [terrain]
+    when:
+      all:
+        - {fact: depression_area_m2, gt: 0}
+        - {fact: depression_catchment_ha, gt: 0.3}
+    title: "Oczko wodne w zagłębieniu"
+    description: "W zagłębieniu ({depression_area_m2} m²) zbiera się woda z ok. {depression_catchment_ha} ha – małe oczko lub mokradło zatrzyma ją na działce."
+
+  - id: retencja.zastawka_na_rowie
+    category: retencja
+    priority: 92
+    confidence: srednia
+    requires: [water_nearby, terrain]
+    when:
+      all:
+        - {fact: ditch_distance_m, lt: 200}
+        - {fact: outflow_to_ditch, eq: true}
+    title: "Zastawka na rowie"
+    description: "Woda odpływa z działki do rowu {ditch_distance_m} m dalej – zastawka (w porozumieniu ze spółką wodną) zatrzyma ją w okolicy."
+
+  - id: retencja.pas_buforowy_na_stoku
+    category: retencja
+    priority: 88
+    confidence: srednia
+    requires: [terrain]
+    when:
+      all:
+        - {fact: slope_max_pct, gt: 5}
+    title: "Pas trwałej zieleni w poprzek stoku"
+    description: "Spadek do {slope_max_pct}% – pas zieleni w poprzek stoku zatrzyma spływ i glebę."
+
+  - id: retencja.mokradlo_srodpolne
+    category: retencja
+    priority: 60
+    confidence: ograniczona
+    requires: [terrain, water_nearby]
+    when:
+      all:
+        - {fact: wet_spot_area_m2, gt: 500}
+    title: "Zachowaj mokre miejsce jako mokradło"
+    description: "Okresowo podmokły fragment ({wet_spot_area_m2} m²) lepiej pozostawić jako mokradło – magazynuje wodę dla okolicy."

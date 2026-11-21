@@ -291,6 +291,8 @@ class Recommendation(Contract):
     confidence: Confidence
     location: dict[str, Any] | None = Field(None, description="GeoJSON geometria miejsca (EPSG:4326) – „Pokaż na mapie”")
     rule_id: str | None = Field(None, description="Id reguły z analysis/rules/*.yaml")
+    priority: int = Field(0, description="Ważność w obrębie kategorii (większa = ważniejsza)")
+    in_panel: bool = Field(False, description="Pokazać w panelu działki (maks. 3: po jednej z kategorii); reszta – paszport")
 
 
 # ── E. Wiarygodność ─────────────────────────────────────────────────────────────────────────

@@ -5,6 +5,7 @@ pydantic-settings>=2.4
 shapely>=2.1
 pyproj>=3.6
 numpy>=2.0
+pyyaml>=6.0  # reguły rekomendacji (analysis/rules/*.yaml), licencja MIT
 # testy
 pytest>=8.0
 respx>=0.21
