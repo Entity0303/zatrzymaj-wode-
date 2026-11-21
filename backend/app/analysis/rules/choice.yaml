@@ -1,0 +1,47 @@
+# „Twój wybór + lepsze możliwości” (A5e, D77): szablony zdań i progi. Deterministycznie, bez AI.
+# Liczby (plony, ryzyko, tony) są w polach ChoiceItem – zdanie `why` mówi coś NOWEGO (gleba / susza / przedplon).
+choice:
+  max_planned: 3
+  max_alternatives: 3
+  better_margin: 3        # ocena rankingu wyższa o ≥ 3 pkt od najlepszej wybranej = „lepsza”
+  similar_margin: 8       # w granicach 8 pkt poniżej najlepszej wybranej = „podobna”
+  top_n: 5
+  not_recommended_max: 6
+
+  # jedno zdanie „dlaczego” dla wybranej uprawy – pierwsza pasująca reguła (kolejność = priorytet)
+  why:
+    perennial: "To uprawa wieloletnia – inwestycja na lata, więc liczby traktuj tylko orientacyjnie i policz opłacalność osobno."
+    rotation_violation: "Ta sama uprawa rosła tu za niedawno – choroby i szkodniki zostają w glebie, potrzeba dłuższej przerwy."
+    soil_bad_light: "Lekka ziemia trzyma mało wody, a ta uprawa ma duże wymagania wodne."
+    soil_bad: "Ta gleba nie jest odpowiednia dla tej uprawy – plon wyraźnie spada."
+    drought_bad_sensitive: "Jest wrażliwa na suszę, a na tej działce zbyt często brakuje wody w kluczowym okresie wzrostu."
+    drought_bad: "Na tej działce zbyt często zabraknie wody w okresie, w którym uprawa jej najbardziej potrzebuje."
+    rotation_plus: "Po {prev_gen} ta uprawa rośnie dobrze – to korzystny przedplon."
+    rotation_warn: "Przedplon ({prev_nom}) nie jest dobry dla tej uprawy – więcej chorób i szkodników."
+    ok_tolerant: "Dobrze znosi suszę i pasuje do tej gleby – bezpieczny wybór na tej działce."
+    ok_soil: "Gleba jest odpowiednia dla tej uprawy, a wody zwykle wystarcza."
+    possible_soil: "Pasuje do gleby, ale w suche lata plon wyraźnie spada."
+    neutral: "Da się tu uprawiać, ale ta działka nie daje tej uprawie szczególnych zalet."
+
+  # zdanie przy alternatywie (kolejność = priorytet)
+  alternative_why:
+    rotation_plus: "Po {prev_gen} {crop_nom} – dobry przedplon."
+    less_drought: "Rzadziej traci plon przez suszę: {risk} z {n} lat wobec {ref_risk} dla {ref_gen}."
+    more_yield: "Daje więcej z hektara: typowo {yield_t} t/ha wobec {ref_yield} t/ha dla {ref_gen}."
+    soil_good: "Dobrze pasuje do tej gleby i podobnie dobrze znosi suszę."
+
+  # powód w „nie siej: …” – jeden, krótki
+  not_recommended:
+    rotation: "ta uprawa rosła {ago}, potrzeba {years} przerwy"
+    soil_light: "za mało wody na tej glebie"
+    soil: "gleba nie pasuje do tej uprawy"
+    drought: "susza zabiera ponad 20% plonu w {risk} z {n} lat"
+
+  summary:
+    perennial_only: "Uprawy wieloletnie to inwestycja na lata – wymagają osobnej analizy opłacalności."
+    all_bad: "Tej uprawy na tej działce nie polecamy – poniżej lepsze możliwości."
+    some_bad: "Nie wszystkie wybrane uprawy pasują do tej działki – tutaj nie polecamy: {bad}."
+    good: "Twój wybór pasuje do tej działki."
+    good_but_better: "Twój wybór jest dobry, ale poniżej są uprawy, które wypadają tu jeszcze lepiej."
+    possible_but_better: "Twój wybór jest możliwy, ale na tej działce są lepsze opcje – zobacz poniżej."
+    possible: "Twój wybór jest możliwy – w suche lata plon wyraźnie spada."

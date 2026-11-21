@@ -228,7 +228,7 @@ def _match(cond: dict, lv: dict[str, str], wet: float, dry: float) -> bool:
 
 def build(prof: SoilProfile, wod_mm: float | None, w: DailyWeather, last: date, terrain: Terrain | None,
           sug: CropSuggestions | None, recs: list[Recommendation], field_status: OverallStatus | None,
-          chosen: tuple[str, str, OverallStatus] | None = None) -> Verdict:
+          chosen: tuple[str, str, OverallStatus, bool] | None = None) -> Verdict:
     sts = [soil_statement(prof, wod_mm)]
     p = precip_statement(precip_stats(w, last))
     if p:
@@ -239,10 +239,11 @@ def build(prof: SoilProfile, wod_mm: float | None, w: DailyWeather, last: date, 
         sts.append(crops)
     sts.append(water_statement(recs))
     if chosen:
-        label, phase, status = chosen
+        label, phase, status, off = (*chosen, False)[:4]
+        tpl = cfg()["chosen_crop_off"] if off else cfg()["chosen_crop"]
         sts.append(VerdictStatement(kind="uprawa_wybrana", level=STATUS_LEVEL.get(status.level, "warn"),
-                                    text=cfg()["chosen_crop"].format(crop=label, phase=phase, headline=status.headline),
-                                    numbers={"wynik": status.score}))
+                                    text=tpl.format(crop=label, phase=phase, headline=status.headline),
+                                    numbers={"wynik": status.score, "poza_sezonem": 1 if off else 0}))
     lv = {s.kind: s.level for s in sts if s.kind in ("gleba", "opady", "teren", "uprawy")}
     wet = terrain.zone_share_pct.get("mokry_dolek", 0.0) if terrain else 0.0
     dry = terrain.zone_share_pct.get("sucha_gorka", 0.0) if terrain else 0.0

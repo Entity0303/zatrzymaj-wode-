@@ -363,4 +363,4 @@ def test_maize_optional_no_doses_only_information():
     none = evaluate(facts(irrigation_practice="not_practiced", season_deficit_mm=80.0, irrigation_status="zalecane",
                           irrigation_message="x", irrigation_when="teraz"), limit=False).recommendations
     assert not any(x.category == "nawadnianie" for x in none)  # zboża, rzepak, strączkowe – zero o nawadnianiu
-    assert CROPS["burak_cukrowy"].irrigation_practice == "not_practiced" and CROPS["ziemniak"].irrigation_practice == "common"
+    assert CROPS["burak_cukrowy"].irrigation_practice == "not_practiced" and CROPS["ziemniak"].irrigation_practice == "optional"

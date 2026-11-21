@@ -8,7 +8,7 @@
   @bottom-right { content: "str. " counter(page) " / " counter(pages); font: 7.5pt Inter, sans-serif; color: #5F6B64; }
 }
 * { box-sizing: border-box; }
-body { font-family: Inter, sans-serif; color: #1E2A23; font-size: 9.5pt; line-height: 1.38; margin: 0;
+body { font-family: Inter, sans-serif; color: #1E2A23; font-size: 10pt; line-height: 1.45; margin: 0;
        font-variant-numeric: tabular-nums; }
 h1 { font-size: 17pt; margin: 0; color: #2F6B47; font-weight: 700; }
 h2 { font-size: 12.5pt; margin: 11pt 0 5pt; color: #2F6B47; font-weight: 650; border-bottom: 1.2pt solid #E3DED4;
@@ -148,3 +148,39 @@ h1.sub { font-size: 14pt; }
 .brand { flex-wrap: wrap; }
 .tagline-brand { font-size: 8pt; color: #5F6B64; margin-left: 2pt; }
 .stmt .ico svg { display: block; margin-left: 4.5pt; }
+
+/* ── A5e: raport krótszy i czytelniejszy – jedna strona = jedna myśl ── */
+p.lead { font-size: 10pt; margin: 0 0 9pt; }
+.choice-head { font-size: 13pt; font-weight: 750; color: #2F6B47; margin: 4pt 0 4pt; }
+p.choice-summary { font-size: 12pt; font-weight: 600; margin: 0 0 8pt; }
+.ccard { border: 1pt solid #E3DED4; border-left: 6pt solid #5BB37F; border-radius: 7pt; padding: 8pt 11pt; margin-bottom: 8pt;
+         break-inside: avoid; }
+.ccard-top { display: flex; align-items: center; gap: 8pt; }
+.ctitle { font-size: 14pt; font-weight: 750; }
+.cchip { display: inline-block; color: #fff; border-radius: 99pt; padding: 1.5pt 8pt; font-size: 9pt; font-weight: 700; }
+.cnums { display: flex; gap: 10pt; margin: 7pt 0 5pt; }
+.cnums > div { flex: 1; background: #F6F4EF; border-radius: 6pt; padding: 5pt 8pt; }
+.cnums .k { display: block; font-size: 8.5pt; color: #5F6B64; }
+.cnums .v { display: block; font-size: 13pt; font-weight: 750; }
+.cnums .s { display: block; font-size: 8.5pt; color: #5F6B64; }
+p.cwhy { font-size: 11pt; margin: 2pt 0; }
+p.crot { font-size: 9.5pt; margin: 2pt 0 0; color: #3B4A41; }
+table.alt { border-collapse: collapse; width: 100%; font-size: 10pt; }
+table.alt td { border-bottom: .6pt solid #EFEBE3; padding: 5pt 4pt; vertical-align: top; }
+table.alt td.num { white-space: nowrap; }
+table.alt td.awhy { font-size: 9.5pt; color: #3B4A41; }
+td.arel { width: 58pt; }
+.nosow { margin-top: 10pt; padding: 7pt 10pt; background: #FBEFEE; border-radius: 6pt; font-size: 10pt; }
+p.big2 { font-size: 12pt; font-weight: 600; margin: 0 0 4pt; }
+.rcard { border: 1pt solid #E3DED4; border-left: 5pt solid #2F6B47; border-radius: 7pt; padding: 8pt 11pt; margin-bottom: 9pt;
+         break-inside: avoid; }
+.rtop { display: flex; justify-content: space-between; gap: 8pt; align-items: flex-start; }
+.rtitle { font-size: 12pt; font-weight: 700; margin-top: 1pt; }
+.rwhen { font-size: 9.5pt; white-space: nowrap; color: #3B4A41; }
+p.rdesc { margin: 4pt 0; }
+.rmeta { font-size: 9.5pt; margin-top: 2pt; }
+.rwhy { font-size: 9.5pt; color: #3B4A41; margin-top: 3pt; }
+.cat { font-size: 8pt; font-weight: 700; text-transform: uppercase; letter-spacing: .4pt; }
+section .cards .card .value { font-size: 15pt; }
+section .cards .card .note { font-size: 8.8pt; }
+.box .zbar svg { width: 100%; height: auto; }

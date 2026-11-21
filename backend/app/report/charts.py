@@ -200,3 +200,54 @@ def bar(value: float | None, color: str, width: int = 140, height: int = 8) -> s
     return (f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">'
             f'<rect width="{width}" height="{height}" rx="{height / 2}" fill="{C["border"]}"/>'
             f'<rect width="{width * v / 100:.1f}" height="{height}" rx="{height / 2}" fill="{escape(color)}"/></svg>')
+
+
+def season_bars(years, mean_mm: float | None, width: int = 680, height: int = 190) -> str | None:
+    """„Na tle 10 lat” (A5e): słupek na każdy rok – ile wody zostało od początku sezonu do tego samego dnia
+    (spadło minus wyparowało, mm); bieżący rok wyróżniony, linia przerywana = średnia z lat porównawczych.
+    `years` – lista SeasonalBalanceYear (rok, bilans_mm, biezacy) – te same liczby co w API."""
+    ys = [y for y in years if y.bilans_mm is not None]
+    if len(ys) < 2:
+        return None
+    vals = [y.bilans_mm for y in ys] + ([mean_mm] if mean_mm is not None else []) + [0.0]
+    lo, hi = min(vals), max(vals)
+    pad = max(10.0, 0.08 * (hi - lo))
+    lo, hi = lo - pad, hi + pad
+    pad_l, pad_r, pad_t, pad_b = 40, 8, 16, 22
+    hh = height - pad_t - pad_b
+
+    def y_of(v: float) -> float:
+        return pad_t + hh * (hi - v) / (hi - lo)
+
+    parts = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}" '
+             f'{FONT} font-size="10">']
+    for t in _ticks(lo, hi, 4):
+        yy = y_of(t)
+        parts.append(f'<line x1="{pad_l}" x2="{width - pad_r}" y1="{yy:.1f}" y2="{yy:.1f}" stroke="{C["border"]}" '
+                     f'stroke-width="0.6"/>')
+        parts.append(f'<text x="{pad_l - 5}" y="{yy + 3:.1f}" text-anchor="end" fill="{C["muted"]}">{_num(t)}</text>')
+    y0 = y_of(0.0)
+    parts.append(f'<line x1="{pad_l}" x2="{width - pad_r}" y1="{y0:.1f}" y2="{y0:.1f}" stroke="{C["muted"]}" stroke-width="0.9"/>')
+    bw = (width - pad_l - pad_r) / len(ys)
+    below_mean = mean_mm is not None and ys[-1].bilans_mm < mean_mm
+    for i, y in enumerate(ys):
+        x = pad_l + i * bw + bw * 0.18
+        top, bot = sorted((y_of(y.bilans_mm), y0))
+        color = (C["danger"] if below_mean else C["brand"]) if y.biezacy else C["nodata"]
+        parts.append(f'<rect x="{x:.1f}" y="{top:.1f}" width="{bw * 0.64:.1f}" height="{max(bot - top, 0.8):.1f}" '
+                     f'fill="{color}" rx="1.5"/>')
+        lab_y = top - 3 if y.bilans_mm >= 0 else bot + 10
+        weight = ' font-weight="700"' if y.biezacy else ""
+        parts.append(f'<text x="{x + bw * 0.32:.1f}" y="{lab_y:.1f}" text-anchor="middle" font-size="8.5" '
+                     f'fill="{C["text"] if y.biezacy else C["muted"]}"{weight}>{_num(y.bilans_mm)}</text>')
+        parts.append(f'<text x="{x + bw * 0.32:.1f}" y="{height - 6}" text-anchor="middle" '
+                     f'fill="{C["text"] if y.biezacy else C["muted"]}"{weight}>{y.rok}</text>')
+    if mean_mm is not None:
+        ym = y_of(mean_mm)
+        parts.append(f'<line x1="{pad_l}" x2="{width - pad_r}" y1="{ym:.1f}" y2="{ym:.1f}" stroke="{C["water"]}" '
+                     f'stroke-width="1.4" stroke-dasharray="5 3"/>')
+        parts.append(f'<rect x="{pad_l + 3}" y="{ym - 14:.1f}" width="96" height="12" fill="#FFFFFF" opacity="0.85"/>')
+        parts.append(f'<text x="{pad_l + 6}" y="{ym - 4:.1f}" text-anchor="start" fill="{C["water"]}" '
+                     f'font-weight="600">średnia {_num(mean_mm)} mm</text>')
+    parts.append("</svg>")
+    return "".join(parts)

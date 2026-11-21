@@ -58,6 +58,8 @@ verdict:
   terrain_missing: "Brak danych o ukształtowaniu terenu – nie wiemy, gdzie na działce jest sucho, a gdzie mokro."
 
   chosen_crop: "{crop} ({phase}): {headline}."
+  # A5e (D79): przed siewem / po zbiorze uprawy nie ma w polu – zdanie mówi o stanie działki, nie o uprawie
+  chosen_crop_off: "{crop} – teraz {phase}, uprawy nie ma w polu. Stan wody na działce: {headline}."
 
   # Nagłówek – pierwsza pasująca reguła (warunki: poziomy pozycji, liczba „źle”, udziały stref terenu)
   headlines:
@@ -86,6 +88,14 @@ verdict:
     burak_cukrowy: "buraków cukrowych"
     straczkowe: "roślin strączkowych"
     warzywa: "warzyw"
+    zboza_ozime: "zbóż ozimych"
+    zboza_jare: "zbóż jarych"
+    rzepak_jesien: "rzepaku"
+    chmiel: "chmielu"
+    tyton: "tytoniu"
+    drzewa_owocowe: "drzew owocowych"
+    krzewy_owocowe: "krzewów owocowych"
+    truskawki: "truskawek"
   accusative:
     pszenica_ozima: "pszenicę ozimą"
     zyto: "żyto"
@@ -101,6 +111,14 @@ verdict:
     burak_cukrowy: "buraki cukrowe"
     straczkowe: "rośliny strączkowe"
     warzywa: "warzywa"
+    zboza_ozime: "zboża ozime"
+    zboza_jare: "zboża jare"
+    rzepak_jesien: "rzepak"
+    chmiel: "chmiel"
+    tyton: "tytoń"
+    drzewa_owocowe: "drzewa owocowe"
+    krzewy_owocowe: "krzewy owocowe"
+    truskawki: "truskawki"
   # najczęściej siane uprawy polowe – pierwszeństwo na liście ❌ (żeby rolnik od razu zobaczył swoje)
   popular: [pszenica_ozima, rzepak, kukurydza_ziarno, jeczmien_jary, jeczmien_ozimy, pszenzyto_ozime, zyto, ziemniak,
             burak_cukrowy, owies, kukurydza_kiszonka, lubin, straczkowe, warzywa]
