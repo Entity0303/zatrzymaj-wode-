@@ -1,0 +1,427 @@
+{
+ "wszystkie_kategorie": {
+  "nasa": {
+   "n": 6744,
+   "zgodne": 6505,
+   "pct": 96.5,
+   "susza_iung": 243,
+   "susza_obie": 14,
+   "susza_tylko_iung": 229,
+   "susza_tylko_nasza": 10
+  },
+  "imgw": {
+   "n": 6744,
+   "zgodne": 6532,
+   "pct": 96.9,
+   "susza_iung": 243,
+   "susza_obie": 71,
+   "susza_tylko_iung": 172,
+   "susza_tylko_nasza": 40
+  }
+ },
+ "kategoria_I": {
+  "nasa": {
+   "n": 1560,
+   "zgodne": 1393,
+   "pct": 89.3,
+   "susza_iung": 171,
+   "susza_obie": 12,
+   "susza_tylko_iung": 159,
+   "susza_tylko_nasza": 8
+  },
+  "imgw": {
+   "n": 1560,
+   "zgodne": 1422,
+   "pct": 91.2,
+   "susza_iung": 171,
+   "susza_obie": 61,
+   "susza_tylko_iung": 110,
+   "susza_tylko_nasza": 28
+  }
+ },
+ "kategoria_II": {
+  "nasa": {
+   "n": 1728,
+   "zgodne": 1661,
+   "pct": 96.1,
+   "susza_iung": 67,
+   "susza_obie": 2,
+   "susza_tylko_iung": 65,
+   "susza_tylko_nasza": 2
+  },
+  "imgw": {
+   "n": 1728,
+   "zgodne": 1659,
+   "pct": 96.0,
+   "susza_iung": 67,
+   "susza_obie": 10,
+   "susza_tylko_iung": 57,
+   "susza_tylko_nasza": 12
+  }
+ },
+ "kategoria_III": {
+  "nasa": {
+   "n": 1728,
+   "zgodne": 1723,
+   "pct": 99.7,
+   "susza_iung": 5,
+   "susza_obie": 0,
+   "susza_tylko_iung": 5,
+   "susza_tylko_nasza": 0
+  },
+  "imgw": {
+   "n": 1728,
+   "zgodne": 1723,
+   "pct": 99.7,
+   "susza_iung": 5,
+   "susza_obie": 0,
+   "susza_tylko_iung": 5,
+   "susza_tylko_nasza": 0
+  }
+ },
+ "kategoria_IV": {
+  "nasa": {
+   "n": 1728,
+   "zgodne": 1728,
+   "pct": 100.0,
+   "susza_iung": 0,
+   "susza_obie": 0,
+   "susza_tylko_iung": 0,
+   "susza_tylko_nasza": 0
+  },
+  "imgw": {
+   "n": 1728,
+   "zgodne": 1728,
+   "pct": 100.0,
+   "susza_iung": 0,
+   "susza_obie": 0,
+   "susza_tylko_iung": 0,
+   "susza_tylko_nasza": 0
+  }
+ },
+ "wszystko": {
+  "nasa": {
+   "n": 1728,
+   "zgodne": 1725,
+   "pct": 99.8,
+   "susza_iung": 3,
+   "susza_obie": 0,
+   "susza_tylko_iung": 3,
+   "susza_tylko_nasza": 0
+  },
+  "imgw": {
+   "n": 1728,
+   "zgodne": 1725,
+   "pct": 99.8,
+   "susza_iung": 3,
+   "susza_obie": 0,
+   "susza_tylko_iung": 3,
+   "susza_tylko_nasza": 0
+  }
+ },
+ "201305_2.0038.6/1": {
+  "nasa": {
+   "n": 864,
+   "zgodne": 861,
+   "pct": 99.7,
+   "susza_iung": 3,
+   "susza_obie": 0,
+   "susza_tylko_iung": 3,
+   "susza_tylko_nasza": 0
+  },
+  "imgw": {
+   "n": 864,
+   "zgodne": 861,
+   "pct": 99.7,
+   "susza_iung": 3,
+   "susza_obie": 0,
+   "susza_tylko_iung": 3,
+   "susza_tylko_nasza": 0
+  }
+ },
+ "061704_2.0011.383/2": {
+  "nasa": {
+   "n": 864,
+   "zgodne": 864,
+   "pct": 100.0,
+   "susza_iung": 0,
+   "susza_obie": 0,
+   "susza_tylko_iung": 0,
+   "susza_tylko_nasza": 0
+  },
+  "imgw": {
+   "n": 864,
+   "zgodne": 864,
+   "pct": 100.0,
+   "susza_iung": 0,
+   "susza_obie": 0,
+   "susza_tylko_iung": 0,
+   "susza_tylko_nasza": 0
+  }
+ },
+ "040703_5.0020.76": {
+  "nasa": {
+   "n": 0,
+   "zgodne": 0,
+   "pct": null,
+   "susza_iung": 0,
+   "susza_obie": 0,
+   "susza_tylko_iung": 0,
+   "susza_tylko_nasza": 0
+  },
+  "imgw": {
+   "n": 0,
+   "zgodne": 0,
+   "pct": null,
+   "susza_iung": 0,
+   "susza_obie": 0,
+   "susza_tylko_iung": 0,
+   "susza_tylko_nasza": 0
+  }
+ },
+ "121601_5.0002.770": {
+  "nasa": {
+   "n": 0,
+   "zgodne": 0,
+   "pct": null,
+   "susza_iung": 0,
+   "susza_obie": 0,
+   "susza_tylko_iung": 0,
+   "susza_tylko_nasza": 0
+  },
+  "imgw": {
+   "n": 0,
+   "zgodne": 0,
+   "pct": null,
+   "susza_iung": 0,
+   "susza_obie": 0,
+   "susza_tylko_iung": 0,
+   "susza_tylko_nasza": 0
+  }
+ },
+ "2020": {
+  "nasa": {
+   "n": 288,
+   "zgodne": 288,
+   "pct": 100.0,
+   "susza_iung": 0,
+   "susza_obie": 0,
+   "susza_tylko_iung": 0,
+   "susza_tylko_nasza": 0
+  },
+  "imgw": {
+   "n": 288,
+   "zgodne": 288,
+   "pct": 100.0,
+   "susza_iung": 0,
+   "susza_obie": 0,
+   "susza_tylko_iung": 0,
+   "susza_tylko_nasza": 0
+  }
+ },
+ "2021": {
+  "nasa": {
+   "n": 288,
+   "zgodne": 288,
+   "pct": 100.0,
+   "susza_iung": 0,
+   "susza_obie": 0,
+   "susza_tylko_iung": 0,
+   "susza_tylko_nasza": 0
+  },
+  "imgw": {
+   "n": 288,
+   "zgodne": 288,
+   "pct": 100.0,
+   "susza_iung": 0,
+   "susza_obie": 0,
+   "susza_tylko_iung": 0,
+   "susza_tylko_nasza": 0
+  }
+ },
+ "2022": {
+  "nasa": {
+   "n": 288,
+   "zgodne": 288,
+   "pct": 100.0,
+   "susza_iung": 0,
+   "susza_obie": 0,
+   "susza_tylko_iung": 0,
+   "susza_tylko_nasza": 0
+  },
+  "imgw": {
+   "n": 288,
+   "zgodne": 288,
+   "pct": 100.0,
+   "susza_iung": 0,
+   "susza_obie": 0,
+   "susza_tylko_iung": 0,
+   "susza_tylko_nasza": 0
+  }
+ },
+ "2023": {
+  "nasa": {
+   "n": 288,
+   "zgodne": 287,
+   "pct": 99.7,
+   "susza_iung": 1,
+   "susza_obie": 0,
+   "susza_tylko_iung": 1,
+   "susza_tylko_nasza": 0
+  },
+  "imgw": {
+   "n": 288,
+   "zgodne": 287,
+   "pct": 99.7,
+   "susza_iung": 1,
+   "susza_obie": 0,
+   "susza_tylko_iung": 1,
+   "susza_tylko_nasza": 0
+  }
+ },
+ "2024": {
+  "nasa": {
+   "n": 288,
+   "zgodne": 286,
+   "pct": 99.3,
+   "susza_iung": 2,
+   "susza_obie": 0,
+   "susza_tylko_iung": 2,
+   "susza_tylko_nasza": 0
+  },
+  "imgw": {
+   "n": 288,
+   "zgodne": 286,
+   "pct": 99.3,
+   "susza_iung": 2,
+   "susza_obie": 0,
+   "susza_tylko_iung": 2,
+   "susza_tylko_nasza": 0
+  }
+ },
+ "2025": {
+  "nasa": {
+   "n": 288,
+   "zgodne": 288,
+   "pct": 100.0,
+   "susza_iung": 0,
+   "susza_obie": 0,
+   "susza_tylko_iung": 0,
+   "susza_tylko_nasza": 0
+  },
+  "imgw": {
+   "n": 288,
+   "zgodne": 288,
+   "pct": 100.0,
+   "susza_iung": 0,
+   "susza_obie": 0,
+   "susza_tylko_iung": 0,
+   "susza_tylko_nasza": 0
+  }
+ },
+ "zboza_ozime": {
+  "nasa": {
+   "n": 108,
+   "zgodne": 108,
+   "pct": 100.0,
+   "susza_iung": 0,
+   "susza_obie": 0,
+   "susza_tylko_iung": 0,
+   "susza_tylko_nasza": 0
+  },
+  "imgw": {
+   "n": 108,
+   "zgodne": 108,
+   "pct": 100.0,
+   "susza_iung": 0,
+   "susza_obie": 0,
+   "susza_tylko_iung": 0,
+   "susza_tylko_nasza": 0
+  }
+ },
+ "zboza_jare": {
+  "nasa": {
+   "n": 108,
+   "zgodne": 107,
+   "pct": 99.1,
+   "susza_iung": 1,
+   "susza_obie": 0,
+   "susza_tylko_iung": 1,
+   "susza_tylko_nasza": 0
+  },
+  "imgw": {
+   "n": 108,
+   "zgodne": 107,
+   "pct": 99.1,
+   "susza_iung": 1,
+   "susza_obie": 0,
+   "susza_tylko_iung": 1,
+   "susza_tylko_nasza": 0
+  }
+ },
+ "kukurydza_ziarno": {
+  "nasa": {
+   "n": 132,
+   "zgodne": 132,
+   "pct": 100.0,
+   "susza_iung": 0,
+   "susza_obie": 0,
+   "susza_tylko_iung": 0,
+   "susza_tylko_nasza": 0
+  },
+  "imgw": {
+   "n": 132,
+   "zgodne": 132,
+   "pct": 100.0,
+   "susza_iung": 0,
+   "susza_obie": 0,
+   "susza_tylko_iung": 0,
+   "susza_tylko_nasza": 0
+  }
+ },
+ "rzepak": {
+  "nasa": {
+   "n": 96,
+   "zgodne": 96,
+   "pct": 100.0,
+   "susza_iung": 0,
+   "susza_obie": 0,
+   "susza_tylko_iung": 0,
+   "susza_tylko_nasza": 0
+  },
+  "imgw": {
+   "n": 96,
+   "zgodne": 96,
+   "pct": 100.0,
+   "susza_iung": 0,
+   "susza_obie": 0,
+   "susza_tylko_iung": 0,
+   "susza_tylko_nasza": 0
+  }
+ },
+ "ziemniak": {
+  "nasa": {
+   "n": 132,
+   "zgodne": 132,
+   "pct": 100.0,
+   "susza_iung": 0,
+   "susza_obie": 0,
+   "susza_tylko_iung": 0,
+   "susza_tylko_nasza": 0
+  },
+  "imgw": {
+   "n": 132,
+   "zgodne": 132,
+   "pct": 100.0,
+   "susza_iung": 0,
+   "susza_obie": 0,
+   "susza_tylko_iung": 0,
+   "susza_tylko_nasza": 0
+  }
+ },
+ "kbw_nasa_minus_imgw_mm": {
+  "srednio": 9.5,
+  "mediana": 11.3,
+  "n": 448
+ }
+}

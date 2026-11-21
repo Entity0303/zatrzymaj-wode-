@@ -1,0 +1,10 @@
+{
+ "nasa": {
+  "przesuniecie_mm": 50,
+  "f1": 0.41
+ },
+ "imgw": {
+  "przesuniecie_mm": 30,
+  "f1": 0.6
+ }
+}
