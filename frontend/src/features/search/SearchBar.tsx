@@ -14,6 +14,7 @@ export function SearchBar({
   onSearch,
   onPick,
   onDismiss,
+  selected,
   className,
 }: {
   loading: boolean
@@ -23,6 +24,8 @@ export function SearchBar({
   onSearch: (q: string) => void
   onPick: (p: Parcel) => void
   onDismiss: () => void
+  /** wybrana działka jako tekst wyszukiwania („Szczytno 112/11”) – wpisywany przy każdej zmianie działki */
+  selected?: string | null
   className?: string
 }) {
   const { t } = useLang()
@@ -32,6 +35,12 @@ export function SearchBar({
   const active = hl.list === candidates ? hl.i : -1
   const setActive = (f: (a: number) => number) => setHl({ list: candidates, i: f(active) })
   const inputRef = useRef<HTMLInputElement>(null)
+  // nowa działka (z linku, przykładu, kliknięcia na mapie) = jej nazwa w polu; dalej można wpisać inną
+  const [shown, setShown] = useState<string | null>(null)
+  if (selected && selected !== shown) {
+    setShown(selected)
+    setQ(selected)
+  }
   const open = candidates.length > 0
 
   // Start: kursor w wyszukiwarce (SPEC 13) – tylko na komputerze, na telefonie klawiatura zasłoniłaby mapę

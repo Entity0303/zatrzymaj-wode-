@@ -458,6 +458,7 @@ export default function Start() {
       total={search.phase === 'candidates' ? search.total : candidates.length}
       onSearch={searchByNumber}
       onPick={pickCandidate}
+      selected={parcel ? `${parcel.obreb} ${parcel.numer}` : null}
       onDismiss={() => {
         if (candidates.length) {
           setCandidates([])

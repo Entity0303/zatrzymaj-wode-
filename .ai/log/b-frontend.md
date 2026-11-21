@@ -4,6 +4,11 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-21 · `b/frontend` · B11: wybrana działka w polu wyszukiwania
+**Co:** po wybraniu działki (link, „Zobacz przykład”, klik na mapie, lista kandydatów) pole wyszukiwania pokazuje „obręb numer”, np. „Szczytno 112/11” – ten sam tekst wyszukuje tę działkę ponownie (sprawdzone: 200). Wpisywanie innej działki działa jak wcześniej.
+**Pliki:** `frontend/src/features/search/SearchBar.tsx`, `frontend/src/pages/Start.tsx`.
+**Kontrakt API:** nie.
+
 ## 2026-11-21 · `b/frontend` · B10: „Zobacz przykład” – 4 analizy jednym klikiem
 **Co:** pusty stan panelu (komputer, tablet, szuflada telefonu – na telefonie bez linku szuflada startuje do połowy): 4 karty – Susza 2018 (6/1 Wnory-Wandy, zboża ozime, 15.07.2018), Wilgotniejszy 2021 (ta sama działka, 15.07.2021 – bilans +40 mm vs średnia), Kukurydza dziś (ta sama działka, dziś), To nie jest pole (Szczytno 112/11 – las 51%). Klik = działka + uprawa + data → pełna analiza; adres w pasku od razu jest linkiem. Karty opisują scenariusz, wyniki liczy serwer. Wszystkie 4 sprawdzone na prawdziwym `/api/analysis` 21.11.2026. Lista w `features/parcel-panel/examples.ts` – do podmiany na `GET /api/demo/examples` z kontraktu. Tablet (1024×768) sprawdzony zrzutem – bez przewijania w poziomie.
 **Uwaga dla A:** `/api/parcel` zwraca dziś 404 („nie znaleziono działki”, ULDK) dla 4 działek z `.ai/test-parcels.md`: `040703_5.0020.76`, `160703_5.0011.945`, `302114_5.0018.445`, `061704_2.0011.383/2` (powtarzalnie); `201305_2.0038.6/1` i `143203_2.0027.112/11` działają.
