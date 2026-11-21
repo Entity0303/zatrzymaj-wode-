@@ -1,0 +1,52 @@
+{
+ "201305_2.0038.6/1": {
+  "parcel_id": "201305_2.0038.6/1",
+  "opis": "podlaskie – działka demo (obrys ULDK z C1)",
+  "stac_seconds": 1.99,
+  "scenes_matched": 109,
+  "scenes_unique_dates": 66,
+  "date": "2026-11-16",
+  "scene": "S2A_34UFD_20261116_2_L2A",
+  "ndvi": 0.898,
+  "ndmi": -0.255,
+  "cloud_pct": 0.0,
+  "snow_pct": 0.0,
+  "valid_pct": 100.0,
+  "warning": null,
+  "last_year": {
+   "date": "2025-11-04",
+   "ndvi": 0.925,
+   "ndmi": -0.247,
+   "cloud_pct": 0.0
+  },
+  "sentence": "Poza sezonem wegetacji – niska zieleń o tej porze jest normalna. Zieleń podobna jak rok temu o tej porze. (NDVI 0.90 vs 0.93 rok temu)",
+  "layer": {
+   "png": "201305_2.0038.6-1_ndvi_layer.png",
+   "px": [
+    18,
+    14
+   ],
+   "bytes": 296,
+   "bounds_4326": [
+    [
+     53.049345,
+     22.59955
+    ],
+    [
+     53.050639,
+     22.60228
+    ]
+   ],
+   "uwaga": "obraz w siatce UTM rozciągnięty na bbox EPSG:4326 (dla działek < 1 km błąd < 1 piksela)",
+   "geojson_grid_bytes_szac": 15860
+  },
+  "series_points": {
+   "now": 15,
+   "prev": 15,
+   "masks_only": 66
+  },
+  "seconds": 879.3,
+  "mb": 127.3,
+  "requests": 588
+ }
+}
