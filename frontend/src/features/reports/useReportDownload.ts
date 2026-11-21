@@ -19,16 +19,16 @@ export function useReportDownload(params: (AnalysisQuery & { numer: string }) | 
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<ErrorInfo | null>(null)
 
-  async function download() {
+  async function download(reportType: 'short' | 'full' = 'short') {
     if (!params || busy) return
     setBusy(true)
     setError(null)
     try {
-      const blob = await api.reportPdf(params)
+      const blob = await api.reportPdf({ ...params, reportType })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `paszport-wodny-${params.numer.replace(/[^\w-]+/g, '_')}-${params.date}.pdf`
+      a.download = `raport-${reportType === 'full' ? 'szczegolowy' : 'skrocony'}-${params.numer.replace(/[^\w-]+/g, '_')}-${params.date}.pdf`
       document.body.appendChild(a)
       a.click()
       a.remove()

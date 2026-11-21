@@ -1,4 +1,4 @@
-import { ChevronDown, SlidersHorizontal } from 'lucide-react'
+import { ChevronDown, Plus, SlidersHorizontal, X } from 'lucide-react'
 import { useState } from 'react'
 import type { CropId, CultivatedArea } from '@/api/types'
 import { Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -54,7 +54,15 @@ export function RefineCard({
   area,
   onAreaChange,
   rotationHint,
+  planned = [],
+  onPlannedChange,
+  planOptions = [],
 }: {
+  /** A5e: „Co planujesz posiać?” – do 3 upraw lub grup */
+  planned?: string[]
+  onPlannedChange?: (p: string[]) => void
+  /** uprawy z rankingu + grupy („Zboża ozime”) */
+  planOptions?: { id: string; label: string }[]
   crop: CropId | null
   onCropChange: (c: CropId | null) => void
   /** indeks 0 = rok temu; 'nie_wiem' albo crop_id */
@@ -70,6 +78,7 @@ export function RefineCard({
   const [open, setOpen] = useState(false)
   const summary = [
     crop ? cropLabel(crop) : null,
+    planned.length ? t('plan: {n}', { n: planned.map((id) => planOptions.find((o) => o.id === id)?.label ?? id).map((l) => t(l)).join(', ') }) : null,
     known.length ? t('historia: {n} z 3 lat', { n: known.length }) : null,
     area ? `${formatHa(area.value_ha)} ha` : null,
   ].filter(Boolean)
@@ -88,13 +97,55 @@ export function RefineCard({
         <SlidersHorizontal className="size-5 shrink-0 text-brand" aria-hidden />
         <span className="min-w-0 flex-1">
           <span className="block text-base leading-6 font-semibold">{t('Doprecyzuj')}</span>
-          <span className="block truncate text-sm leading-5 text-text-muted">{summary.length ? summary.join(' · ') : t('uprawa, co rosło wcześniej, powierzchnia')}</span>
+          <span className="block truncate text-sm leading-5 text-text-muted">{summary.length ? summary.join(' · ') : t('plan upraw, co rosło wcześniej, powierzchnia')}</span>
         </span>
         <ChevronDown className={cn('size-5 shrink-0 text-text-muted transition-transform', open && 'rotate-180')} aria-hidden />
       </button>
 
       {open && (
         <div className="space-y-4 border-t px-4 py-3.5">
+          {onPlannedChange && planOptions.length > 0 && (
+            <div className="space-y-1.5">
+              <p className="text-sm font-semibold">{t('Co planujesz posiać?')}</p>
+              <div className="flex flex-wrap gap-1.5">
+                {planned.map((id) => (
+                  <span key={id} className="inline-flex h-9 items-center gap-1 rounded-full bg-sage-soft pr-1 pl-3 text-sm font-medium text-brand-dark">
+                    {t(planOptions.find((o) => o.id === id)?.label ?? id)}
+                    <button
+                      type="button"
+                      onClick={() => onPlannedChange(planned.filter((x) => x !== id))}
+                      aria-label={t('Usuń {name}', { name: t(planOptions.find((o) => o.id === id)?.label ?? id) })}
+                      className="flex size-7 items-center justify-center rounded-full hover:bg-white/70"
+                    >
+                      <X className="size-4" />
+                    </button>
+                  </span>
+                ))}
+                {planned.length < 3 && (
+                  <Select value="" onValueChange={(v) => v && onPlannedChange([...planned, v])}>
+                    <SelectTrigger
+                      aria-label={t('Dodaj uprawę do planu')}
+                      className="h-9 w-auto rounded-full border-dashed bg-surface px-3 text-sm data-[size=default]:h-9"
+                    >
+                      <Plus className="size-4 text-brand" aria-hidden />
+                      <span>{t(planned.length ? 'Dodaj' : 'Wybierz do 3 upraw')}</span>
+                    </SelectTrigger>
+                    <SelectContent className="z-[1500] max-h-80 rounded-xl" position="popper">
+                      {planOptions
+                        .filter((o) => !planned.includes(o.id))
+                        .map((o) => (
+                          <SelectItem key={o.id} value={o.id} className="min-h-11 text-base">
+                            {t(o.label)}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+              <p className="text-xs leading-4 text-text-muted">{t('Ocenimy Twój wybór i podpowiemy lepsze możliwości.')}</p>
+            </div>
+          )}
+
           <div className="space-y-1.5">
             <p className="text-sm font-semibold">{t('Co uprawiasz w tym roku?')}</p>
             <CropField crop={crop} onChange={onCropChange} optional />

@@ -38,11 +38,12 @@ import { MobileSheet, snapHeights, type Snap } from '@/layout/MobileSheet'
 import { Sidebar } from '@/layout/Sidebar'
 import { TopBar } from '@/layout/TopBar'
 import { todayIso } from '@/lib/dates'
-import { formatDatePl, formatNum } from '@/lib/format'
+import { formatDatePl, formatHa, formatNum } from '@/lib/format'
 import { BRAND_NAME, BRAND_TAGLINE } from '@/lib/brand'
 import { readLink, shareLink, writeLink } from '@/lib/deepLink'
 import { rememberAnalysis, useSettings, useUiPrefs } from '@/lib/storage'
 import { useReportDownload } from '@/features/reports/useReportDownload'
+import { ReportForm } from '@/features/reports/ReportForm'
 import { useMediaQuery, useOnline, usePrefersReducedMotion, useSavedParcels } from '@/lib/hooks'
 import { mockRequested } from '@/mocks/useMockAnalysis'
 import { locale, useLang } from '@/lib/i18n'
@@ -84,6 +85,9 @@ export default function Start() {
   // B3 „Doprecyzuj”: historia pola (indeks 0 = rok temu) i powierzchnia uprawy – na działkę
   const [histories, setHistories] = useState<Record<string, string[]>>({})
   const [areas, setAreas] = useState<Record<string, number | null>>({})
+  // A5e: „Co planujesz posiać?” – do 3 upraw / grup, na działkę
+  const [plans, setPlans] = useState<Record<string, string[]>>({})
+  const [reportFormOpen, setReportFormOpen] = useState(false)
   // obszar przybliżony (brak działki w ULDK): punkt kliknięcia – analiza liczona po lon/lat
   const [approxPoints, setApproxPoints] = useState<Record<string, [number, number]>>({})
   // link z adresu (?dzialka=&uprawa=&data=) – czytany raz przy wejściu
@@ -115,6 +119,7 @@ export default function Start() {
   // uprawa z linku – przypisywana do działki, gdy wyszukiwanie ją znajdzie
   const pendingCrop = useRef(link.uprawa)
   const pendingHistory = useRef(link.historia)
+  const pendingPlan = useRef(link.plan)
   // karta powitalna (B0): tylko przy wejściu bez działki w linku; znika po pierwszym działaniu
   const [hero, setHero] = useState(() => !link.dzialka)
   const demoExamples = useDemoExamples()
@@ -131,8 +136,9 @@ export default function Start() {
   const mock = mockRequested()
   const history = parcel ? (histories[parcel.id] ?? NO_HISTORY) : NO_HISTORY
   const area = parcel ? (areas[parcel.id] ?? null) : null
+  const planned = parcel ? (plans[parcel.id] ?? NO_HISTORY) : NO_HISTORY
   const approxPoint = parcel ? (approxPoints[parcel.id] ?? null) : null
-  const { run, retry: retryAnalysis } = useAnalysis(parcel?.id ?? null, crop, asOf, { point: approxPoint, cropHistory: history, area })
+  const { run, retry: retryAnalysis } = useAnalysis(parcel?.id ?? null, crop, asOf, { point: approxPoint, cropHistory: history, area, plannedCrops: planned })
   const analysis = run.phase === 'done' ? run.analysis : null
   const layerState = useLayerData(layer, parcel?.id ?? null, asOf)
   const passportOpen = !!analysis && passportFor === analysis
@@ -253,6 +259,11 @@ export default function Start() {
   }
 
   function applyPendingCrop(p: Parcel) {
+    const pl = pendingPlan.current
+    if (pl.length) {
+      pendingPlan.current = []
+      setPlans((m) => ({ ...m, [p.id]: pl }))
+    }
     const h = pendingHistory.current
     if (h.length) {
       pendingHistory.current = []
@@ -374,12 +385,12 @@ export default function Start() {
   // adres w pasku = bieżąca działka, uprawa i data (można go skopiować wprost z przeglądarki)
   useEffect(() => {
     // obszar przybliżony nie ma identyfikatora działki – link bez niego
-    if (parcel && !approxPoint) writeLink({ dzialka: parcel.id, uprawa: crop, data: asOf, historia: history })
-  }, [parcel, crop, asOf, history, approxPoint])
+    if (parcel && !approxPoint) writeLink({ dzialka: parcel.id, uprawa: crop, data: asOf, historia: history, plan: planned })
+  }, [parcel, crop, asOf, history, planned, approxPoint])
 
   function copyLink() {
     if (!parcel) return
-    const href = shareLink({ dzialka: parcel.id, uprawa: crop, data: asOf, historia: history, widok: passportOpen ? 'paszport' : null })
+    const href = shareLink({ dzialka: parcel.id, uprawa: crop, data: asOf, historia: history, plan: planned, widok: passportOpen ? 'paszport' : null })
     if (!navigator.clipboard) return showToast(t('Skopiuj adres z paska przeglądarki – to link do tej analizy'))
     navigator.clipboard.writeText(href).then(
       () => showToast(t('Skopiowano link do tej analizy')),
@@ -462,11 +473,18 @@ export default function Start() {
   // ── raport PDF: te same parametry co analiza ─────────────────────────────────────────────
   const report = useReportDownload(
     parcel && analysis
-      ? { parcelId: parcel.id, point: approxPoint, numer: approxPoint ? 'obszar' : parcel.numer, crop: analysis.crop, date: asOf, cropHistory: history, area }
+      ? { parcelId: parcel.id, point: approxPoint, numer: approxPoint ? 'obszar' : parcel.numer, crop: analysis.crop, date: asOf, cropHistory: history, area, plannedCrops: planned }
       : null,
   )
+  // „Pobierz raport” otwiera formularz „Przygotuj raport” (skrócony / szczegółowy)
+  const reportUi = { ...report, download: () => setReportFormOpen(true) }
+  const reportIncluded = [
+    planned.length ? t('plan: {n}', { n: planned.length }) : null,
+    history.some((h) => h && h !== 'nie_wiem') ? t('historia pola') : null,
+    area ? `${formatHa(area)} ha` : null,
+  ].filter(Boolean) as string[]
   const clearReportError = report.clearError
-  useEffect(() => clearReportError(), [parcel?.id, crop, asOf, history, area, clearReportError])
+  useEffect(() => clearReportError(), [parcel?.id, crop, asOf, history, area, planned, clearReportError])
   // telefon: błąd raportu ma być widoczny – szuflada do połowy
   useEffect(() => {
     if (report.error && isMobile) setSnap('half')
@@ -540,6 +558,10 @@ export default function Start() {
     onAreaChange: (ha: number | null) => {
       if (parcel) setAreas((m) => ({ ...m, [parcel.id]: ha }))
     },
+    planned,
+    onPlannedChange: (pl: string[]) => {
+      if (parcel) setPlans((m) => ({ ...m, [parcel.id]: pl.slice(0, 3) }))
+    },
   }
   const panelProps = {
     state: search,
@@ -556,7 +578,7 @@ export default function Start() {
     onRetry: retry,
     onFocusSearch: focusSearch,
     onLocate: locate,
-    report,
+    report: reportUi,
     onOpenPassport: openPassport,
     onShowOnMap: showOnMap,
     onReportInfra: openInfra,
@@ -595,7 +617,7 @@ export default function Start() {
     setInsidePopup(null)
     setPendingPoint(null)
     setView('2d')
-    writeLink({ dzialka: null, uprawa: null, data: null, historia: [], widok: null })
+    writeLink({ dzialka: null, uprawa: null, data: null, historia: [], plan: [], widok: null })
     if (isMobile) setSnap('collapsed')
   }
 
@@ -880,7 +902,7 @@ export default function Start() {
                   onCopied={panelProps.onCopied}
                   onClose={backToExplore}
                   status={analysis?.status.level ?? 'no_data'}
-                  onReport={analysis ? report.download : undefined}
+                  onReport={analysis ? reportUi.download : undefined}
                   reportBusy={report.busy}
                 />
               }
@@ -943,7 +965,7 @@ export default function Start() {
 
           {/* paszport wodny – pełny ekran nad mapą i panelem (nic nie prześwituje) */}
           {passportOpen && analysis && (
-            <Passport analysis={analysis} onClose={closePassport} report={report} onCopyLink={copyLink} onShowOnMap={showOnMap} />
+            <Passport analysis={analysis} onClose={closePassport} report={reportUi} onCopyLink={copyLink} onShowOnMap={showOnMap} />
           )}
 
           {/* wydruk paszportu: osobna kopia poza układem mapy (window.print) */}
@@ -956,6 +978,17 @@ export default function Start() {
 
           </div>
           )}
+
+          <ReportForm
+            open={reportFormOpen && !!analysis}
+            onClose={() => setReportFormOpen(false)}
+            busy={report.busy}
+            included={reportIncluded}
+            onGenerate={(type) => {
+              setReportFormOpen(false)
+              void report.download(type)
+            }}
+          />
 
           {toast && (
             <div

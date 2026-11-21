@@ -15,11 +15,13 @@ export type LinkState = {
   data: string | null
   /** historia pola: indeks 0 = rok temu, 'nie_wiem' albo crop_id */
   historia: string[]
+  /** A5e: plan upraw (do 3 crop_id lub grup) */
+  plan: string[]
   /** 'paszport' = po analizie od razu otwórz paszport wodny */
   widok: 'paszport' | null
 }
 
-const P = { dzialka: 'dzialka', uprawa: 'uprawa', data: 'data', historia: 'historia', widok: 'widok' } as const
+const P = { dzialka: 'dzialka', uprawa: 'uprawa', data: 'data', historia: 'historia', plan: 'plan', widok: 'widok' } as const
 
 const isCrop = (v: string | null): v is CropId => !!v && CROPS.some((c) => c.id === v)
 
@@ -46,6 +48,11 @@ export function readLink(search = window.location.search): LinkState {
     uprawa: isCrop(uprawa) ? uprawa : null,
     data: validDate(q.get(P.data)),
     historia: parseHistory(q.get(P.historia) ?? q.get('przedplon')),
+    plan: (q.get(P.plan) ?? '')
+      .split(',')
+      .map((x) => x.trim())
+      .filter((x) => /^[a-z_]{2,40}$/.test(x))
+      .slice(0, 3),
     widok: q.get(P.widok) === 'paszport' ? 'paszport' : null,
   }
 }

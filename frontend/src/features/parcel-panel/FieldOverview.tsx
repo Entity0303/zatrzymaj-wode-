@@ -2,6 +2,7 @@ import type { AnalysisResponse, CropId } from '@/api/types'
 import { useLang } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
 import { STATUS } from '@/theme/status'
+import { ChoiceCard } from './ChoiceCard'
 import { RankingCard } from './RankingCard'
 import { RefineCard } from './RefineCard'
 import { VerdictCard } from './VerdictCard'
@@ -12,7 +13,16 @@ export type RefineProps = {
   history: string[]
   onHistoryChange: (h: string[]) => void
   onAreaChange: (ha: number | null) => void
+  /** A5e: plan upraw (do 3) */
+  planned: string[]
+  onPlannedChange: (p: string[]) => void
 }
+
+/** Grupy upraw, które backend przyjmuje w planie (wybierze najlepszy gatunek z grupy). */
+const PLAN_GROUPS = [
+  { id: 'zboza_ozime', label: 'Zboża ozime (dowolne)' },
+  { id: 'zboza_jare', label: 'Zboża jare (dowolne)' },
+]
 
 /** „Teraz: …” – stan wody dziś jednym zdaniem (bez uprawy: dla typowego pola). */
 export function NowLine({ analysis }: { analysis: AnalysisResponse }) {
@@ -35,13 +45,17 @@ export function NowLine({ analysis }: { analysis: AnalysisResponse }) {
  */
 export function FieldOverview({ analysis, refine, showNow = true }: { analysis: AnalysisResponse; refine: RefineProps; showNow?: boolean }) {
   const s = analysis.suggestions
+  const planOptions = s
+    ? [...PLAN_GROUPS, ...s.groups.flatMap((g) => g.items.map((i) => ({ id: i.crop_id, label: i.label }))), ...(s.perennials?.items ?? []).map((i) => ({ id: i.crop_id, label: i.label }))]
+    : []
   const area = s?.area ?? (analysis.cultivated_area_ha ? { value_ha: analysis.cultivated_area_ha, estimated: false, note: '' } : null)
   return (
     <div className="space-y-3">
       {analysis.verdict && <VerdictCard verdict={analysis.verdict} bare limit={3} hideCrops={!!s} />}
       {showNow && <NowLine analysis={analysis} />}
+      {s && <ChoiceCard suggestions={s} />}
       {s && s.groups.some((g) => g.items.length) && <RankingCard suggestions={s} />}
-      <RefineCard {...refine} area={area} rotationHint={s?.rotation_hint} />
+      <RefineCard {...refine} area={area} rotationHint={s?.rotation_hint} planOptions={planOptions} />
     </div>
   )
 }

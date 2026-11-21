@@ -110,6 +110,15 @@ export function RankingCard({ suggestions, top = 3 }: { suggestions: CropSuggest
         ))}
       </ul>
 
+      {suggestions.not_recommended && (
+        <p className="border-t px-4 py-2.5 text-sm leading-5">
+          <b className="text-danger">{t('Nie siej:')}</b>{' '}
+          {suggestions.not_recommended.length
+            ? suggestions.not_recommended.map((n) => `${t(n.label).toLowerCase()} (${t(n.reason)})`).join('; ')
+            : t('żadna z popularnych upraw nie jest tu odradzana')}
+        </p>
+      )}
+
       {items.length > top && (
         <button
           type="button"

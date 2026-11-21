@@ -49,7 +49,7 @@ export function ReportCard({ report, onRemove, onCopied }: { report: AnalysisRec
         </div>
       </div>
       <p className="text-sm leading-5">{t(report.headline)}</p>
-      {pdf.error && <ErrorNotice {...pdf.error} onRetry={pdf.error.retryable ? pdf.download : undefined} />}
+      {pdf.error && <ErrorNotice {...pdf.error} onRetry={pdf.error.retryable ? () => pdf.download() : undefined} />}
       <div className="mt-auto flex flex-wrap gap-2">
         <button
           type="button"
@@ -60,7 +60,7 @@ export function ReportCard({ report, onRemove, onCopied }: { report: AnalysisRec
         </button>
         <button
           type="button"
-          onClick={pdf.download}
+          onClick={() => pdf.download()}
           disabled={pdf.busy}
           className="flex h-11 items-center gap-2 rounded-md border bg-surface px-3 text-sm font-medium hover:bg-surface-2 disabled:opacity-60"
         >

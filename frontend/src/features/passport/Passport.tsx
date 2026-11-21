@@ -82,7 +82,14 @@ export function Passport({
   const { t } = useLang()
   const p = analysis.parcel
   const crop = cropLabel(analysis.crop)
-  const title = [t('Działka {numer}', { numer: p.numer }), p.obreb, `${formatHa(p.powierzchnia_ha)} ha`, crop?.toLowerCase()].filter(Boolean).join(' · ')
+  const approx = p.source === 'approximate'
+  const title = (
+    approx
+      ? [t('Obszar przybliżony'), `${formatHa(p.powierzchnia_ha)} ha`, crop?.toLowerCase()]
+      : [t('Działka {numer}', { numer: p.numer }), p.obreb, `${formatHa(p.powierzchnia_ha)} ha`, crop?.toLowerCase()]
+  )
+    .filter(Boolean)
+    .join(' · ')
   const scroller = useRef<HTMLDivElement>(null)
   const [small, setSmall] = useState(false)
   const [active, setActive] = useState<string>('pass-a')

@@ -29,9 +29,9 @@ export function useAnalysis(
   parcelId: string | null,
   crop: CropId | null,
   date: string,
-  opts: { point?: [number, number] | null; cropHistory?: string[]; area?: number | null } = {},
+  opts: { point?: [number, number] | null; cropHistory?: string[]; area?: number | null; plannedCrops?: string[] } = {},
 ) {
-  const extra = `${opts.point?.join(',') ?? ''}|${(opts.cropHistory ?? []).join(',')}|${opts.area ?? ''}`
+  const extra = `${opts.point?.join(',') ?? ''}|${(opts.cropHistory ?? []).join(',')}|${opts.area ?? ''}|${(opts.plannedCrops ?? []).join(',')}`
   const [attempt, setAttempt] = useState(0)
   // wynik przypisany do konkretnego przebiegu; inny klucz = nowe przeliczenie (stan „ładowanie” liczony w renderze)
   const [result, setResult] = useState<{ key: string; run: AnalysisRun } | null>(null)
@@ -46,7 +46,7 @@ export function useAnalysis(
     const request =
       import.meta.env.DEV && mockRequested()
         ? runMockAnalysis((steps) => publish({ phase: 'loading', steps, key }), ctrl.signal)
-        : api.analysis({ parcelId, point: opts.point, crop, date, cropHistory: opts.cropHistory, area: opts.area }, ctrl.signal)
+        : api.analysis({ parcelId, point: opts.point, crop, date, cropHistory: opts.cropHistory, area: opts.area, plannedCrops: opts.plannedCrops }, ctrl.signal)
     request.then(
       (analysis) => publish({ phase: 'done', analysis }),
       (e) => publish({ phase: 'error', error: describeAnalysisError(e) }),

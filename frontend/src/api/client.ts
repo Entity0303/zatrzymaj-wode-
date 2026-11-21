@@ -58,6 +58,10 @@ export type AnalysisQuery = {
   /** 1–3 lata wstecz (pierwsza = rok temu), puste = „nie wiem” */
   cropHistory?: string[]
   area?: number | null
+  /** A5e: „Co planujesz posiać?” – do 3 upraw lub grup (crop_id) */
+  plannedCrops?: string[]
+  /** A5e: raport PDF – skrócony (2 strony) / szczegółowy */
+  reportType?: 'short' | 'full'
 }
 
 /** Zapytanie analizy / raportu: działka albo punkt, uprawa, historia pola, powierzchnia. */
@@ -70,6 +74,8 @@ function analysisParams(q: AnalysisQuery): Record<string, string | number> {
   if (q.crop) params.crop = q.crop
   if (q.cropHistory?.some((c) => c && c !== 'nie_wiem')) params.crop_history = q.cropHistory.map((c) => c || 'nie_wiem').join(',')
   if (q.area && q.area > 0) params.cultivated_area_ha = q.area
+  if (q.plannedCrops?.length) params.planned_crops = q.plannedCrops.slice(0, 3).join(',')
+  if (q.reportType) params.report_type = q.reportType
   return params
 }
 
