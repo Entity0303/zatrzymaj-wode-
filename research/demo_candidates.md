@@ -31,13 +31,36 @@ Każdy punkt obejrzałem na ortofotomapie i w razie potrzeby przesunąłem na po
 - `040703_5.0020.76`: kujawsko-pomorskie. Zagłębienie 662 m³, propozycja oczka, 3 stacje IMGW 18–27 km.
 - `201305_2.0038.6/1` (demo, podlaskie): przykład lokalnej burzy 15.07.2021 (IMGW 58 mm, NASA 3,5 mm).
 
+## Lista do pobrania z hotspotu (A8: ULDK GetParcelByXY)
+Plik: **`research/demo/out/candidates.json`**. Pola `lon` i `lat` to punkt **w środku pola**, wyznaczony przez `research/demo/field_center.py`:
+- **Rozrost obszaru po kolorze** na ortofotomapie. Wyznacza jednolite pole wokół punktu; obrysy obejrzałem, a progi koloru poprawiłem dla Kurpi i Pogórza.
+- **Nowy punkt** to miejsce w tym polu najdalej od krawędzi, w promieniu 150 m od punktu startowego.
+- **Gleba w nowym punkcie** sprawdzona ponownie (IUNG, mapa glebowo-rolnicza).
+- **Pozostałe pola w JSON:** stare współrzędne są w `lon_start` i `lat_start`, zapas od krawędzi w `odleglosc_od_krawedzi_m`.
+
+| id | lon, lat (środek pola) | Zapas od krawędzi | Pole (szac.) | IUNG | Kompleks · gatunek | Środek pola OK |
+|---|---|---|---|---|---|---|
+| `notecka-slaba` | 16.26185, 52.68508 | 90 m | ~28.8 ha | **1** | 6 · ps | tak |
+| `piasek-zyto` | 21.45847, 53.21966 | 52 m | ~7.1 ha | 2 | 5 · pgl | tak |
+| `czarnoziem-pszenica` | 23.86583, 50.82115 | 57 m | ~19.8 ha | **4** | 1 · li | tak |
+| `kujawy-susza` | 18.23933, 52.73062 | 150 m | ~20.8 ha | 3 | 1 · glp | tak |
+| `less-erozja` | 22.17122, 51.31662 | 82 m | ~11.1 ha | 3 | 2 · l | tak |
+| `pojezierze-oczko` | 21.38672, 53.87180 | 202 m | ~25.8 ha | 4 | 3 · gs | tak |
+| `zulawy-mady` | 19.02959, 54.16038 | 98 m | ~14.3 ha | 3 | 2 · mady | tak |
+| `pogorze-stok` | 22.29981, 49.84002 | 38 m | ~5.7 ha | 3 | 2 · płz | tak (wąskie pasy pól ~30–40 m) |
+| `kurpie-slaba` | 21.42990, 53.26979 | 23 m | ~1.4 ha | 1 | 7 · pl | **nie** |
+
+**Uwaga dla backendu.** Punkt testu słabej ziemi „Kurpie 21,43 / 53,27” (D69/D70) leży na ortofotomapie na skraju lasu przy drodze, a nie na polu. Do demo „słaba ziemia” lepiej użyć **Puszczy Noteckiej** (`notecka-slaba`): duże pole, IUNG I, kompleks 6, 90 m od krawędzi.
+
+Po przesunięciu do środka pola `piasek-zyto` ma kategorię IUNG II zamiast I (kompleks 5 bez zmian), więc jako przykład słabej ziemi jest słabszy od Noteckiej.
+
 ## Rekomendacja na demo (3 minuty)
-1. **`piasek-zyto` vs `czarnoziem-pszenica`:** ta sama data, skrajne gleby, czyli werdykt rankingu „Co tu posiać?”. IUNG I + kompleks 5 kontra IUNG IV + kompleks 1.
+1. **`notecka-slaba` vs `czarnoziem-pszenica`:** ta sama data, skrajne gleby, czyli werdykt rankingu „Co tu posiać?”. IUNG I + kompleks 6 (❌ pszenica, rzepak; ✅ żyto, łubin) kontra IUNG IV + kompleks 1.
 2. **`kujawy-susza`:** dobra gleba w najsuchszym regionie, z najbliższą stacją IMGW (6 km). Najlepiej pokazuje porównanie opadów z C4.
 3. **`less-erozja` albo `121601_5.0002.770`:** teren, czyli spływ, wyjście wody i pas buforowy. 121601 ma już policzony teren, a less trzeba dopiero przeliczyć z hotspotu.
 
 ## Do zrobienia z hotspotu
-- **ULDK `GetParcelByXY`** dla 7 punktów. Sprawdzić, czy działka ma ≥ 0,5 ha i nie jest drogą, a jeśli punkt trafi na granicę, przesunąć go o 20–50 m w głąb pola.
+- **ULDK `GetParcelByXY`** dla 8 punktów z `candidates.json` (bez `kurpie-slaba`). Sprawdzić, czy działka ma ≥ 0,5 ha i nie jest drogą, a jeśli punkt trafi na granicę, przesunąć go o 20–50 m w głąb pola.
 - **`research/terrain/run_examples.py <ID>`:** potwierdzić teren:
   - spadek dla `less-erozja` i `pogorze-stok`,
   - zagłębienie dla `pojezierze-oczko`,

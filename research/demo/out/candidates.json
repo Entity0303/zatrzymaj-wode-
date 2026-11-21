@@ -1,10 +1,67 @@
 {
+ "notecka-slaba": {
+  "id": "notecka-slaba",
+  "scenariusz": "Słaba ziemia (test backendu D69/D70): ❌ pszenica, rzepak; ✅ żyto, łubin",
+  "region": "wielkopolskie, Puszcza Notecka",
+  "lon": 16.26185,
+  "lat": 52.68508,
+  "iung": 1,
+  "iung_s": 0.38,
+  "gleba": {
+   "KOMPLEKS": "6",
+   "TYPPODTYP": "Bw",
+   "PODLOZE1": "ps",
+   "PODLOZE2": "Null",
+   "AKTUALNOSC": "Null"
+  },
+  "gleba_s": 0.16,
+  "teren": "błąd: HTTP 302: https://services.gugik.gov.pl/nmt/?request=GetHByPointList&list=538850.4+314706.3%2C538850.4+314756.3%2C538850.4+314806.",
+  "orto_s": 1.46,
+  "orto": "out/notecka-slaba_orto.jpg",
+  "imgw": [
+   [
+    "SZAMOTUŁY-BABORÓWKO",
+    "opad",
+    27.86
+   ],
+   [
+    "KRZYŻ",
+    "opad",
+    28.65
+   ],
+   [
+    "DREZDENKO",
+    "opad",
+    33.92
+   ]
+  ],
+  "lon_start": 16.26,
+  "lat_start": 52.685,
+  "przesuniecie_m": 125.0,
+  "odleglosc_od_krawedzi_m": 90.0,
+  "odleglosc_od_krawedzi_start_m": 57.0,
+  "powierzchnia_pola_ha_szac": 28.8,
+  "srodek_pola_ok": true,
+  "prog_koloru": 22.0,
+  "uldk_zapytanie": "GetParcelByXY, xy=lon,lat,4326 (z hotspotu, bez śledzenia przekierowań)",
+  "iung_srodek": 1,
+  "gleba_srodek": {
+   "KOMPLEKS": "6",
+   "TYPPODTYP": "Bw",
+   "PODLOZE1": "ps",
+   "PODLOZE2": "Null",
+   "AKTUALNOSC": "Null"
+  },
+  "why": "Słaba, sucha ziemia (piasek, kat. IUNG I, kompleks 6): werdykt „słaba działka – siej rośliny odporne na suszę”.",
+  "expected": "❌ pszenica/rzepak/jęczmień/kukurydza, ✅ żyto/łubin",
+  "expected_status": "hipoteza do sprawdzenia w A8 (analiza backendu po pobraniu działki)"
+ },
  "piasek-zyto": {
   "id": "piasek-zyto",
   "scenariusz": "Piasek – „nie siej pszenicy, siej żyto”",
   "region": "mazowieckie, Kurpie",
-  "lon": 21.459,
-  "lat": 53.2205,
+  "lon": 21.45847,
+  "lat": 53.21966,
   "iung": 1,
   "iung_s": 0.36,
   "gleba": {
@@ -34,14 +91,34 @@
     "klimat",
     43.08
    ]
-  ]
+  ],
+  "lon_start": 21.459,
+  "lat_start": 53.2205,
+  "przesuniecie_m": 100.0,
+  "odleglosc_od_krawedzi_m": 52.0,
+  "odleglosc_od_krawedzi_start_m": 15.0,
+  "powierzchnia_pola_ha_szac": 7.1,
+  "srodek_pola_ok": true,
+  "uldk_zapytanie": "GetParcelByXY, xy=lon,lat,4326 (z hotspotu, bez śledzenia przekierowań)",
+  "prog_koloru": 18.0,
+  "iung_srodek": 2,
+  "gleba_srodek": {
+   "KOMPLEKS": "5",
+   "TYPPODTYP": "Dz",
+   "PODLOZE1": "pgl",
+   "PODLOZE2": "Null",
+   "AKTUALNOSC": "01.01.1978"
+  },
+  "why": "Lekki piasek na Kurpiach (kompleks 5 żytni dobry): pszenica na granicy opłacalności, bezpieczniej żyto.",
+  "expected": "❌ pszenica/rzepak, ✅ żyto/łubin (kat. IUNG II – werdykt łagodniejszy niż Notecka)",
+  "expected_status": "hipoteza do sprawdzenia w A8 (analiza backendu po pobraniu działki)"
  },
  "czarnoziem-pszenica": {
   "id": "czarnoziem-pszenica",
   "scenariusz": "Najlepsza gleba – pszenica, susza mimo dobrej gleby",
   "region": "lubelskie, Grzęda Horodelska (czarnoziemy)",
-  "lon": 23.865,
-  "lat": 50.82,
+  "lon": 23.86583,
+  "lat": 50.82115,
   "iung": 4,
   "iung_s": 0.35,
   "gleba": {
@@ -66,14 +143,34 @@
     "synop",
     48.32
    ]
-  ]
+  ],
+  "lon_start": 23.865,
+  "lat_start": 50.82,
+  "przesuniecie_m": 139.0,
+  "odleglosc_od_krawedzi_m": 57.0,
+  "odleglosc_od_krawedzi_start_m": 17.0,
+  "powierzchnia_pola_ha_szac": 19.8,
+  "srodek_pola_ok": true,
+  "uldk_zapytanie": "GetParcelByXY, xy=lon,lat,4326 (z hotspotu, bez śledzenia przekierowań)",
+  "prog_koloru": 22.0,
+  "iung_srodek": 4,
+  "gleba_srodek": {
+   "KOMPLEKS": "1",
+   "TYPPODTYP": "Cz",
+   "PODLOZE1": "li",
+   "PODLOZE2": "Null",
+   "AKTUALNOSC": "Null"
+  },
+  "why": "Najlepsza gleba w Polsce (czarnoziem, kompleks 1, kat. IUNG IV): kontrast do słabej ziemi – tu pszenica jest bezpieczna.",
+  "expected": "✅ pszenica/rzepak/burak/kukurydza, 🟡 żyto (opłacalniejsze uprawy)",
+  "expected_status": "hipoteza do sprawdzenia w A8 (analiza backendu po pobraniu działki)"
  },
  "kujawy-susza": {
   "id": "kujawy-susza",
   "scenariusz": "Dobra gleba, mało deszczu – Kujawy (najsuchszy region PL)",
   "region": "kujawsko-pomorskie, k. Inowrocławia",
-  "lon": 18.24,
-  "lat": 52.73,
+  "lon": 18.23933,
+  "lat": 52.73062,
   "iung": 3,
   "iung_s": 0.35,
   "gleba": {
@@ -103,14 +200,34 @@
     "synop",
     42.1
    ]
-  ]
+  ],
+  "lon_start": 18.24,
+  "lat_start": 52.73,
+  "przesuniecie_m": 82.0,
+  "odleglosc_od_krawedzi_m": 150.0,
+  "odleglosc_od_krawedzi_start_m": 83.0,
+  "powierzchnia_pola_ha_szac": 20.8,
+  "srodek_pola_ok": true,
+  "uldk_zapytanie": "GetParcelByXY, xy=lon,lat,4326 (z hotspotu, bez śledzenia przekierowań)",
+  "prog_koloru": 22.0,
+  "iung_srodek": 3,
+  "gleba_srodek": {
+   "KOMPLEKS": "1",
+   "TYPPODTYP": "D",
+   "PODLOZE1": "glp",
+   "PODLOZE2": "Null",
+   "AKTUALNOSC": "22.12.1969"
+  },
+  "why": "Dobra gleba (kompleks 1) w najsuchszym regionie Polski: woda, a nie gleba, ogranicza plon; stacja IMGW 6 km – porównanie opadów.",
+  "expected": "✅ pszenica/rzepak/burak, ryzyko suszy w kilku z 10 lat; rekomendacje retencji glebowej",
+  "expected_status": "hipoteza do sprawdzenia w A8 (analiza backendu po pobraniu działki)"
  },
  "less-erozja": {
   "id": "less-erozja",
   "scenariusz": "Lessowy stok – erozja, pas buforowy w poprzek spływu",
   "region": "lubelskie, Płaskowyż Nałęczowski",
-  "lon": 22.17,
-  "lat": 51.3155,
+  "lon": 22.17122,
+  "lat": 51.31662,
   "iung": 3,
   "iung_s": 0.38,
   "gleba": {
@@ -135,14 +252,34 @@
     "synop",
     19.02
    ]
-  ]
+  ],
+  "lon_start": 22.17,
+  "lat_start": 51.3155,
+  "przesuniecie_m": 150.0,
+  "odleglosc_od_krawedzi_m": 82.0,
+  "odleglosc_od_krawedzi_start_m": 15.0,
+  "powierzchnia_pola_ha_szac": 11.1,
+  "srodek_pola_ok": true,
+  "uldk_zapytanie": "GetParcelByXY, xy=lon,lat,4326 (z hotspotu, bez śledzenia przekierowań)",
+  "prog_koloru": 22.0,
+  "iung_srodek": 3,
+  "gleba_srodek": {
+   "KOMPLEKS": "2",
+   "TYPPODTYP": "A",
+   "PODLOZE1": "l",
+   "PODLOZE2": "Null",
+   "AKTUALNOSC": "Null"
+  },
+  "why": "Lessowe pola między wąwozami: woda spływa po stoku i zabiera glebę – teren, wyjście wody, pas buforowy.",
+  "expected": "✅ pszenica/burak (dobra gleba), teren: stok > 5 %, propozycja pasa buforowego w poprzek spływu",
+  "expected_status": "hipoteza do sprawdzenia w A8 (analiza backendu po pobraniu działki)"
  },
  "pojezierze-oczko": {
   "id": "pojezierze-oczko",
   "scenariusz": "Zagłębienia bez odpływu – oczko wodne w dołku",
   "region": "warmińsko-mazurskie, Pojezierze Mrągowskie",
-  "lon": 21.387,
-  "lat": 53.8709,
+  "lon": 21.38672,
+  "lat": 53.8718,
   "iung": 4,
   "iung_s": 0.36,
   "gleba": {
@@ -172,14 +309,34 @@
     "opad",
     42.2
    ]
-  ]
+  ],
+  "lon_start": 21.387,
+  "lat_start": 53.8709,
+  "przesuniecie_m": 102.0,
+  "odleglosc_od_krawedzi_m": 202.0,
+  "odleglosc_od_krawedzi_start_m": 88.0,
+  "powierzchnia_pola_ha_szac": 25.8,
+  "srodek_pola_ok": true,
+  "uldk_zapytanie": "GetParcelByXY, xy=lon,lat,4326 (z hotspotu, bez śledzenia przekierowań)",
+  "prog_koloru": 22.0,
+  "iung_srodek": 4,
+  "gleba_srodek": {
+   "KOMPLEKS": "3",
+   "TYPPODTYP": "B",
+   "PODLOZE1": "gs",
+   "PODLOZE2": "Null",
+   "AKTUALNOSC": "23.10.2019"
+  },
+  "why": "Morena z zagłębieniami bez odpływu: tu zbiera się woda – propozycja oczka wodnego w dołku.",
+  "expected": "teren: mokry dołek / zagłębienie, propozycja oczka (formalności: zgłoszenie wodnoprawne)",
+  "expected_status": "hipoteza do sprawdzenia w A8 (analiza backendu po pobraniu działki)"
  },
  "zulawy-mady": {
   "id": "zulawy-mady",
   "scenariusz": "Żuławy – ciężkie mady, płasko, nadmiar wody / melioracja",
   "region": "pomorskie, Żuławy Wiślane",
-  "lon": 19.03,
-  "lat": 54.16,
+  "lon": 19.02959,
+  "lat": 54.16038,
   "iung": 3,
   "iung_s": 0.35,
   "gleba": {
@@ -209,14 +366,34 @@
     "synop",
     34.15
    ]
-  ]
+  ],
+  "lon_start": 19.03,
+  "lat_start": 54.16,
+  "przesuniecie_m": 49.0,
+  "odleglosc_od_krawedzi_m": 98.0,
+  "odleglosc_od_krawedzi_start_m": 80.0,
+  "powierzchnia_pola_ha_szac": 14.3,
+  "srodek_pola_ok": true,
+  "uldk_zapytanie": "GetParcelByXY, xy=lon,lat,4326 (z hotspotu, bez śledzenia przekierowań)",
+  "prog_koloru": 22.0,
+  "iung_srodek": 3,
+  "gleba_srodek": {
+   "KOMPLEKS": "2",
+   "TYPPODTYP": "F",
+   "PODLOZE1": "Null",
+   "PODLOZE2": "Null",
+   "AKTUALNOSC": "Null"
+  },
+  "why": "Ciężkie mady na płaskich Żuławach: problemem jest raczej nadmiar wody i melioracja niż susza.",
+  "expected": "✅ pszenica/burak/rzepak, teren płaski, mało dni suszy; ostrzeżenie o zastoiskach przy ulewie",
+  "expected_status": "hipoteza do sprawdzenia w A8 (analiza backendu po pobraniu działki)"
  },
  "pogorze-stok": {
   "id": "pogorze-stok",
   "scenariusz": "Stok na Pogórzu – spływ, sucha górka, retencja",
   "region": "podkarpackie, Pogórze Dynowskie",
-  "lon": 22.3,
-  "lat": 49.84,
+  "lon": 22.29981,
+  "lat": 49.84002,
   "iung": 3,
   "iung_s": 0.32,
   "gleba": {
@@ -246,6 +423,85 @@
     "synop",
     35.31
    ]
-  ]
+  ],
+  "lon_start": 22.3,
+  "lat_start": 49.84,
+  "przesuniecie_m": 13.0,
+  "odleglosc_od_krawedzi_m": 38.0,
+  "odleglosc_od_krawedzi_start_m": 25.0,
+  "powierzchnia_pola_ha_szac": 5.7,
+  "srodek_pola_ok": true,
+  "uldk_zapytanie": "GetParcelByXY, xy=lon,lat,4326 (z hotspotu, bez śledzenia przekierowań)",
+  "prog_koloru": 14.0,
+  "iung_srodek": 3,
+  "gleba_srodek": {
+   "KOMPLEKS": "2",
+   "TYPPODTYP": "Dd",
+   "PODLOZE1": "płz",
+   "PODLOZE2": "Null",
+   "AKTUALNOSC": "01.01.1974"
+  },
+  "why": "Wąskie pasy pól na stoku Pogórza: sucha górka u góry, spływ w dół – retencja na stoku.",
+  "expected": "teren: sucha górka + stok, propozycja pasa buforowego; ✅ zboża, ostrożnie z kukurydzą (erozja)",
+  "uwagi": "Pasy pól na Pogórzu mają ok. 30–40 m szerokości – 30 m od każdej granicy jest niemożliwe; punkt leży w osi pasa (ortofotomapa), zapas 38 m liczony wzdłuż pasa. Działka z ULDK będzie wąska.",
+  "expected_status": "hipoteza do sprawdzenia w A8 (analiza backendu po pobraniu działki)"
+ },
+ "kurpie-slaba": {
+  "id": "kurpie-slaba",
+  "scenariusz": "Słaba ziemia (test backendu D69/D70), piasek luźny",
+  "region": "mazowieckie, Kurpie",
+  "lon": 21.4299,
+  "lat": 53.26979,
+  "iung": 1,
+  "iung_s": 0.36,
+  "gleba": {
+   "KOMPLEKS": "7",
+   "TYPPODTYP": "Bw",
+   "PODLOZE1": "pl",
+   "PODLOZE2": "Null",
+   "AKTUALNOSC": "01.01.1979"
+  },
+  "gleba_s": 0.19,
+  "teren": "błąd: HTTP 302: https://services.gugik.gov.pl/nmt/?request=GetHByPointList&list=603139.0+661846.6%2C603139.0+661896.6%2C603139.0+661946.",
+  "orto_s": 0.68,
+  "orto": "out/kurpie-slaba_orto.jpg",
+  "imgw": [
+   [
+    "ROZOGI",
+    "opad",
+    24.84
+   ],
+   [
+    "DOBRYLAS",
+    "opad",
+    26.57
+   ],
+   [
+    "MARIANOWO II",
+    "klimat",
+    45.43
+   ]
+  ],
+  "lon_start": 21.43,
+  "lat_start": 53.27,
+  "przesuniecie_m": 24.0,
+  "odleglosc_od_krawedzi_m": 23.0,
+  "odleglosc_od_krawedzi_start_m": 5.0,
+  "powierzchnia_pola_ha_szac": 1.4,
+  "srodek_pola_ok": false,
+  "prog_koloru": 22.0,
+  "uldk_zapytanie": "GetParcelByXY, xy=lon,lat,4326 (z hotspotu, bez śledzenia przekierowań)",
+  "iung_srodek": 1,
+  "gleba_srodek": {
+   "KOMPLEKS": "7",
+   "TYPPODTYP": "Bw",
+   "PODLOZE1": "pl",
+   "PODLOZE2": "Null",
+   "AKTUALNOSC": "01.01.1978"
+  },
+  "uwagi": "NIE UŻYWAĆ: punkt testu backendu (21,43 / 53,27) leży na skraju lasu przy drodze (ortofotomapa) – rozrost obszaru wchodzi w las; słaba ziemia = notecka-slaba",
+  "why": "NIE UŻYWAĆ – punkt na skraju lasu przy drodze.",
+  "expected": "–",
+  "expected_status": "–"
  }
 }

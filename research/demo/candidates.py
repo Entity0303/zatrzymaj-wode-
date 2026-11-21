@@ -45,6 +45,10 @@ KOMPLEKSY = {"1": "pszenny bardzo dobry", "2": "pszenny dobry", "3": "pszenny wa
 CANDIDATES = [
     {"id": "piasek-zyto", "scenariusz": "Piasek – „nie siej pszenicy, siej żyto”", "region": "mazowieckie, Kurpie",
      "lon": 21.4590, "lat": 53.2205},
+    {"id": "notecka-slaba", "scenariusz": "Słaba ziemia (test backendu D69/D70): ❌ pszenica, rzepak; ✅ żyto, łubin",
+     "region": "wielkopolskie, Puszcza Notecka", "lon": 16.2600, "lat": 52.6850},
+    {"id": "kurpie-slaba", "scenariusz": "Słaba ziemia (test backendu D69/D70), piasek luźny",
+     "region": "mazowieckie, Kurpie", "lon": 21.4300, "lat": 53.2700},
     {"id": "czarnoziem-pszenica", "scenariusz": "Najlepsza gleba – pszenica, susza mimo dobrej gleby",
      "region": "lubelskie, Grzęda Horodelska (czarnoziemy)", "lon": 23.8650, "lat": 50.8200},
     {"id": "kujawy-susza", "scenariusz": "Dobra gleba, mało deszczu – Kujawy (najsuchszy region PL)",

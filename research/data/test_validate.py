@@ -110,20 +110,55 @@ def test_gus_has_new_species():
     assert "ZASTĘPNIK" in ids["lubin"]["uwagi"]
 
 
+# Backend (A5b-2a, D60) czyta konfigurację upraw z backend/app/data/crops/crops.csv – kopii naszego
+# research/data/crops.csv z dodatkowymi kolumnami backendu (np. root_depth_m, typ).
+BACKEND_CSV = REPO / "backend" / "app" / "data" / "crops" / "crops.csv"
+SHARED = ["name_pl", "backend_id", "group_id", "in_ranking", "iung_name", "kc_ini", "kc_mid", "kc_end",
+          "typowy_siew", "typowy_zbior", "ozima", "ky_total", "irrigation_practice", "min_przerwa_lat",
+          "zle_przedplony", "dobre_przedplony", "gleby_odpowiednie", "gleby_nieodpowiednie"]
+# celowe różnice kopii backendu (decyzje zespołu) – (crop_id, kolumna): uzasadnienie
+KNOWN_DIFF = {("ziemniak", "irrigation_practice"): "D60: decyzja Dominika (A5b-1) optional → common"}
+
+
+def _backend_rows():
+    if not BACKEND_CSV.exists():
+        pytest.skip("brak backend/app/data/crops/crops.csv na tej gałęzi")
+    return {r["crop_id"]: r for r in V.read_csv(BACKEND_CSV)}
+
+
 def test_backend_ids_exist_in_backend_config():
-    src = (REPO / "backend" / "app" / "analysis" / "crops.py").read_text(encoding="utf-8")
-    backend_ids = set(re.findall(r'Crop\("([a-z_]+)"', src))
+    backend = _backend_rows()
+    backend_ids = {cid for cid, r in backend.items() if r["backend_id"]}
     for r in CROPS:
         if r["backend_id"]:
             assert r["backend_id"] in backend_ids, r["backend_id"]
+    assert set(backend) == {r["crop_id"] for r in CROPS}
 
 
 def test_kc_matches_backend():
-    src = (REPO / "backend" / "app" / "analysis" / "crops.py").read_text(encoding="utf-8")
-    for cid, ini, mid, end in re.findall(r'Crop\("([a-z_]+)", "[^"]+", ([0-9.]+), ([0-9.]+), ([0-9.]+)', src):
-        row = next(r for r in CROPS if r["backend_id"] == cid)
-        assert (float(row["kc_ini"]), float(row["kc_mid"]), float(row["kc_end"])) == \
-               (float(ini), float(mid), float(end)), cid
+    backend = _backend_rows()
+    for r in CROPS:
+        b = backend[r["crop_id"]]
+        for k in ("kc_ini", "kc_mid", "kc_end"):
+            assert float(r[k]) == float(b[k]), (r["crop_id"], k)
+
+
+@pytest.mark.parametrize("col", SHARED)
+def test_shared_columns_match_backend_copy(col):
+    """Kopia w backendzie nie może się rozjechać z research/data/crops.csv we wspólnych kolumnach."""
+    backend = _backend_rows()
+    if col not in next(iter(backend.values())):
+        pytest.skip(f"backend nie ma kolumny {col}")
+    diff = [r["crop_id"] for r in CROPS if r[col].strip() != backend[r["crop_id"]][col].strip()
+            and not _num_equal(r[col], backend[r["crop_id"]][col]) and (r["crop_id"], col) not in KNOWN_DIFF]
+    assert diff == [], f"{col}: różnice w {diff}"
+
+
+def _num_equal(a, b):
+    try:
+        return float(a) == float(b)
+    except ValueError:
+        return False
 
 
 def test_gus_files_consistent():
