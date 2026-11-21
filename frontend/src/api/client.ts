@@ -36,7 +36,14 @@ export const api = {
     get<AnalysisResponse>('/api/analysis', { parcel_id: parcelId, crop, date }, signal),
 }
 
-export type ErrorInfo = { title: string; message: string; stillWorks?: string; retryable: boolean }
+/** Teksty po polsku (klucze tłumaczeń) – tłumaczy je ErrorNotice; {zmienne} w `vars`. */
+export type ErrorInfo = {
+  title: string
+  message: string
+  stillWorks?: string
+  retryable: boolean
+  vars?: Record<string, string | number>
+}
 
 /** Tłumaczy błąd API na komunikat dla rolnika (SPEC 14 ErrorNotice: co nie zadziałało, co działa dalej). */
 export function describeError(e: unknown, kind: 'number' | 'point'): ErrorInfo {
@@ -69,12 +76,13 @@ export function describeError(e: unknown, kind: 'number' | 'point'): ErrorInfo {
   }
   if (e.status === 502)
     return {
-      title: `Usługa ${detail?.source ?? 'zewnętrzna'} nie odpowiada`,
-      message: `Nie udało się pobrać danych działki (${detail?.message ?? 'błąd usługi'}).`,
+      title: 'Usługa {source} nie odpowiada',
+      message: 'Nie udało się pobrać danych działki ({detail}).',
       stillWorks,
       retryable: true,
+      vars: { source: detail?.source ?? 'zewnętrzna', detail: detail?.message ?? 'błąd usługi' },
     }
-  return { title: 'Błąd serwera', message: `Serwer zwrócił błąd ${e.status}.`, stillWorks, retryable: true }
+  return { title: 'Błąd serwera', message: 'Serwer zwrócił błąd {status}.', stillWorks, retryable: true, vars: { status: e.status } }
 }
 
 /** Błąd GET /api/analysis po polsku – mapa, dane działki i prognoza działają dalej. */
@@ -94,10 +102,11 @@ export function describeAnalysisError(e: unknown): ErrorInfo {
     }
   if (e.status === 502 || e.status === 504)
     return {
-      title: `Usługa ${detail?.source ?? 'zewnętrzna'} nie odpowiada`,
+      title: 'Usługa {source} nie odpowiada',
       message: detail?.message ?? 'Nie udało się pobrać danych do analizy.',
       stillWorks,
       retryable: true,
+      vars: { source: detail?.source ?? 'zewnętrzna' },
     }
-  return { title: 'Błąd serwera', message: `Serwer zwrócił błąd ${e.status}.`, stillWorks, retryable: true }
+  return { title: 'Błąd serwera', message: 'Serwer zwrócił błąd {status}.', stillWorks, retryable: true, vars: { status: e.status } }
 }

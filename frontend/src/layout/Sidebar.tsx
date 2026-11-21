@@ -3,20 +3,22 @@ import { LogoMark } from '@/components/LogoMark'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import { ACTIVE, SECTIONS } from './sections'
+import { useLang } from '@/lib/i18n'
 
 /** Lewy pasek: 96 px z podpisami (≥ 1280 px), 64 px same ikony (tablet). SPEC 4.1, 12. */
 export function Sidebar() {
+  const { t } = useLang()
   return (
     <nav
-      aria-label="Nawigacja główna"
+      aria-label={t('Nawigacja główna')}
       className="relative z-[1200] hidden h-full w-16 shrink-0 flex-col items-center border-r bg-surface py-4 md:flex xl:w-24"
     >
       <div className="mb-5 flex flex-col items-center gap-1.5 px-1 text-center">
         <LogoMark className="size-10 xl:size-11" />
         <span className="hidden text-xs leading-4 font-semibold text-brand xl:block">
-          Zatrzymaj
+          {t('Zatrzymaj')}
           <br />
-          wodę
+          {t('wodę')}
         </span>
       </div>
       <ul className="flex w-full flex-col gap-1 px-1.5 xl:px-2">
@@ -28,7 +30,7 @@ export function Sidebar() {
               type="button"
               aria-current={active ? 'page' : undefined}
               aria-disabled={!s.ready || undefined}
-              aria-label={s.ready ? s.label : `${s.label} – wkrótce`}
+              aria-label={s.ready ? t(s.label) : t('{label} – wkrótce', { label: t(s.label) })}
               onClick={(e) => !s.ready && e.preventDefault()}
               className={cn(
                 'relative flex min-h-14 w-full flex-col items-center justify-center gap-1 rounded-xl px-1 py-2 text-xs leading-4 font-medium transition-colors',
@@ -38,7 +40,7 @@ export function Sidebar() {
             >
               {active && <span className="absolute top-2 bottom-2 left-0 w-[3px] rounded-r-full bg-brand" aria-hidden />}
               <Icon className="size-6" aria-hidden />
-              <span className="hidden text-center xl:block">{s.label}</span>
+              <span className="hidden text-center xl:block">{t(s.label)}</span>
             </button>
           )
           return (
@@ -46,7 +48,7 @@ export function Sidebar() {
               <Tooltip>
                 <TooltipTrigger asChild>{btn}</TooltipTrigger>
                 <TooltipContent side="right">
-                  {s.ready ? s.label : `${s.label} – wkrótce`}
+                  {s.ready ? t(s.label) : t('{label} – wkrótce', { label: t(s.label) })}
                 </TooltipContent>
               </Tooltip>
             </li>
@@ -56,7 +58,7 @@ export function Sidebar() {
       <div className="mt-auto hidden w-full px-2 xl:block">
         <div className="rounded-xl bg-ok-soft p-2 text-center">
           <FieldIllustration className="w-full rounded-lg" />
-          <p className="mt-2 text-xs leading-4 font-semibold text-brand-dark">Oszczędzaj wodę. Chroń plony.</p>
+          <p className="mt-2 text-xs leading-4 font-semibold text-brand-dark">{t('Oszczędzaj wodę. Chroń plony.')}</p>
         </div>
       </div>
     </nav>

@@ -1,9 +1,11 @@
 import { LocateFixed, MousePointerClick, Search } from 'lucide-react'
 import { EmptyState } from '@/components/EmptyState'
 import { FieldIllustration } from '@/components/FieldIllustration'
+import { useLang } from '@/lib/i18n'
 
 /** Panel bez wybranej działki (SPEC 6, 15.1). */
 export function PanelEmpty({ onFocusSearch, onLocate }: { onFocusSearch: () => void; onLocate: () => void }) {
+  const { t } = useLang()
   const ways = [
     { icon: Search, title: 'Wpisz numer działki', text: 'np. Szczytno 112/11', action: onFocusSearch },
     { icon: MousePointerClick, title: 'Kliknij swoje pole na mapie', text: 'przybliż mapę i kliknij w działkę' },
@@ -23,8 +25,8 @@ export function PanelEmpty({ onFocusSearch, onLocate }: { onFocusSearch: () => v
                 <Icon className="size-5" aria-hidden />
               </span>
               <span className="min-w-0">
-                <span className="block text-base leading-6 font-medium">{title}</span>
-                <span className="block text-sm leading-5 text-text-muted">{text}</span>
+                <span className="block text-base leading-6 font-medium">{t(title)}</span>
+                <span className="block text-sm leading-5 text-text-muted">{t(text)}</span>
               </span>
             </>
           )

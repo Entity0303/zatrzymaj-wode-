@@ -3,6 +3,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import { WeatherIcon } from './WeatherIcon'
+import { useLang } from '@/lib/i18n'
 
 /** Pogoda teraz (SPEC 4.2, 14): ikona, temperatura, opis – Open-Meteo dla działki lub środka mapy. */
 export function WeatherWidget({
@@ -18,10 +19,15 @@ export function WeatherWidget({
   where: string
   compact?: boolean
 }) {
+  const { t } = useLang()
   const now = forecast?.teraz
   const label = now
-    ? `Pogoda teraz ${where}: ${now.temperatura === null ? 'brak temperatury' : `${Math.round(now.temperatura)}°C`}, ${now.opis}. Źródło: Open-Meteo.`
-    : 'Pogoda'
+    ? t('Pogoda teraz {where}: {temp}, {opis}. Źródło: Open-Meteo.', {
+        where,
+        temp: now.temperatura === null ? t('brak temperatury') : `${Math.round(now.temperatura)}°C`,
+        opis: t(now.opis),
+      })
+    : t('Pogoda')
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -39,19 +45,19 @@ export function WeatherWidget({
               <Skeleton className="h-4 w-20 bg-surface-2" />
             </>
           ) : error || !now ? (
-            <span className="text-sm text-text-muted">Pogoda niedostępna</span>
+            <span className="text-sm text-text-muted">{t('Pogoda niedostępna')}</span>
           ) : (
             <>
               <WeatherIcon icon={now.ikona} night={!now.dzien} className="size-6" />
               <span className="tabular text-base font-semibold">
                 {now.temperatura === null ? '—' : `${Math.round(now.temperatura)}°C`}
               </span>
-              {!compact && <span className="hidden max-w-36 truncate text-sm text-text-muted xl:inline">{now.opis}</span>}
+              {!compact && <span className="hidden max-w-36 truncate text-sm text-text-muted xl:inline">{t(now.opis)}</span>}
             </>
           )}
         </div>
       </TooltipTrigger>
-      <TooltipContent>{now ? `${now.opis} · ${where} · Open-Meteo` : 'Pogoda z Open-Meteo'}</TooltipContent>
+      <TooltipContent>{now ? `${t(now.opis)} · ${where} · Open-Meteo` : t('Pogoda z Open-Meteo')}</TooltipContent>
     </Tooltip>
   )
 }

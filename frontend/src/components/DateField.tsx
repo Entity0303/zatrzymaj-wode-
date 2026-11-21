@@ -1,9 +1,11 @@
 import { CalendarDays } from 'lucide-react'
 import { minAnalysisIso, todayIso } from '@/lib/dates'
 import { cn } from '@/lib/utils'
+import { useLang } from '@/lib/i18n'
 
 /** „📅 Data analizy” – zakres dziś − 10 lat … dziś (SPEC 4.2). */
 export function DateField({ value, onChange, compact }: { value: string; onChange: (v: string) => void; compact?: boolean }) {
+  const { t, lang } = useLang()
   return (
     <label
       className={cn(
@@ -13,11 +15,12 @@ export function DateField({ value, onChange, compact }: { value: string; onChang
     >
       <CalendarDays className="size-5 shrink-0 text-brand" aria-hidden />
       <span className={cn('text-sm whitespace-nowrap text-text-muted', compact ? 'max-[419px]:hidden' : 'hidden xl:inline')}>
-        Data analizy
+        {t('Data analizy')}
       </span>
       <input
         type="date"
-        aria-label="Data analizy"
+        lang={lang === 'en' ? 'en-GB' : 'pl'}
+        aria-label={t('Data analizy')}
         value={value}
         min={minAnalysisIso()}
         max={todayIso()}

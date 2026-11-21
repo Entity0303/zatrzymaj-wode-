@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react'
 import { cn } from '@/lib/utils'
 import type { LegendSpec } from './layers/types'
+import { useLang } from '@/lib/i18n'
 
 // LegendCard: ciemna karta z paskiem gradientu i opisami krańców (SPEC 5.3, 14)
 
@@ -56,21 +57,22 @@ export function LegendCard({
   className?: string
   style?: CSSProperties
 }) {
+  const { t } = useLang()
   return (
     <section
-      aria-label={`Legenda: ${title}`}
+      aria-label={t('Legenda: {title}', { title: t(title) })}
       style={style}
       className={cn('w-60 rounded-xl bg-legend/90 text-sm leading-5 text-white shadow-float', compact ? 'p-2.5' : 'p-3', className)}
     >
-      <h3 className={cn('text-sm font-semibold', compact ? 'mb-1.5' : 'mb-2')}>{title}</h3>
+      <h3 className={cn('text-sm font-semibold', compact ? 'mb-1.5' : 'mb-2')}>{t(title)}</h3>
       {legend.kind === 'gradient' && (
         <>
           <div className="h-2.5 rounded-full" style={{ background: `linear-gradient(90deg, ${legend.colors.join(',')})` }} />
           <div className="mt-1.5 flex justify-between gap-2 text-xs leading-4 text-white/85">
-            <span>{legend.left}</span>
-            <span className="text-right">{legend.right}</span>
+            <span>{t(legend.left)}</span>
+            <span className="text-right">{t(legend.right)}</span>
           </div>
-          {legend.note && !compact && <p className="mt-1 text-xs leading-4 text-white/70">{legend.note}</p>}
+          {legend.note && !compact && <p className="mt-1 text-xs leading-4 text-white/70">{t(legend.note)}</p>}
         </>
       )}
       {legend.kind === 'classes' && (
@@ -78,7 +80,7 @@ export function LegendCard({
           {legend.items.map((it) => (
             <li key={it.label} className="flex items-center gap-2 text-xs leading-4">
               <span className="size-3.5 shrink-0 rounded-[4px] ring-1 ring-white/25" style={{ background: it.color }} />
-              {it.label}
+              {t(it.label)}
             </li>
           ))}
         </ul>
@@ -88,7 +90,7 @@ export function LegendCard({
           {legend.items.map((it) => (
             <li key={it.label} className="flex items-center gap-2 text-xs leading-4">
               <Symbol symbol={it.symbol} />
-              {it.label}
+              {t(it.label)}
             </li>
           ))}
         </ul>
@@ -96,7 +98,7 @@ export function LegendCard({
       {status && (
         <p className="mt-2 flex items-start gap-1.5 border-t border-white/15 pt-2 text-xs leading-4 text-white/85">
           <span className="mt-1 size-2 shrink-0 rounded-full bg-nodata" aria-hidden />
-          {status}
+          {t(status)}
         </p>
       )}
     </section>

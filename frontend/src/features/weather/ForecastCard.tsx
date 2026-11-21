@@ -6,6 +6,7 @@ import { SourceTag } from '@/components/SourceTag'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatNum, formatSigned, weekdayShort } from '@/lib/format'
 import { WeatherIcon } from './WeatherIcon'
+import { useLang } from '@/lib/i18n'
 
 export function ForecastCard({
   forecast,
@@ -22,6 +23,7 @@ export function ForecastCard({
   historical: boolean
   className?: string
 }) {
+  const { t } = useLang()
   const days = forecast?.dni.slice(0, 7) ?? []
   return (
     <Card
@@ -31,8 +33,8 @@ export function ForecastCard({
       aside={
         forecast && !historical ? (
           <span className="text-xs text-text-muted">
-            <span className="max-sm:hidden">{where} · </span>mm: <span className="text-water">opad</span> /{' '}
-            <span className="text-earth">parowanie</span>
+            <span className="max-sm:hidden">{where} · </span>mm: <span className="text-water">{t('opad')}</span> /{' '}
+            <span className="text-earth">{t('parowanie')}</span>
           </span>
         ) : undefined
       }
@@ -51,7 +53,7 @@ export function ForecastCard({
         <>
           <ol className="grid flex-1 grid-cols-7 gap-0.5 text-center">
             {days.map((d) => (
-              <li key={d.data} className="flex min-w-0 flex-col items-center justify-between" title={`${d.opis} · opad ${d.opad_mm ?? '—'} mm · parowanie ${d.parowanie_mm ?? '—'} mm`}>
+              <li key={d.data} className="flex min-w-0 flex-col items-center justify-between" title={t('{opis} · opad {opad} mm · parowanie {par} mm', { opis: t(d.opis), opad: d.opad_mm ?? '—', par: d.parowanie_mm ?? '—' })}>
                 <span className="text-sm leading-[18px] font-medium text-text-muted capitalize">{weekdayShort(d.data)}</span>
                 <WeatherIcon icon={d.ikona} className="size-5" />
                 <span className="tabular text-sm leading-[18px] font-semibold whitespace-nowrap">
@@ -72,12 +74,12 @@ export function ForecastCard({
           </ol>
           <div className="mt-1 flex items-center justify-between gap-2 text-xs leading-4">
             <span className="text-sm leading-5 text-text-muted">
-              Bilans tygodnia:{' '}
+              {t('Bilans tygodnia:')}{' '}
               <b className="tabular text-text">
-                {forecast.bilans_okresu_mm === null ? 'brak danych' : `${formatSigned(forecast.bilans_okresu_mm)} mm`}
+                {forecast.bilans_okresu_mm === null ? t('brak danych') : `${formatSigned(forecast.bilans_okresu_mm)} mm`}
               </b>
             </span>
-            <SourceTag kind="prognoza" title="Open-Meteo, prognoza dobowa; parowanie = ET0 FAO-56" />
+            <SourceTag kind="prognoza" title={t('Open-Meteo, prognoza dobowa; parowanie = ET0 FAO-56')} />
           </div>
         </>
       )}

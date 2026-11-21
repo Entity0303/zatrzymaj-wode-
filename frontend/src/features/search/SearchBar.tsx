@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { Parcel } from '@/api/types'
 import { formatHa } from '@/lib/format'
 import { cn } from '@/lib/utils'
+import { useLang } from '@/lib/i18n'
 
 /** Wyszukiwarka działki (SPEC 4.2, 14): pigułka z lupą, podpowiedzi, ładowanie, błąd pod spodem. */
 export function SearchBar({
@@ -24,6 +25,7 @@ export function SearchBar({
   onDismiss: () => void
   className?: string
 }) {
+  const { t } = useLang()
   const [q, setQ] = useState('')
   // podświetlona podpowiedź; resetuje się sama przy nowej liście kandydatów
   const [hl, setHl] = useState<{ list: Parcel[]; i: number }>({ list: candidates, i: -1 })
@@ -65,13 +67,14 @@ export function SearchBar({
               setActive((a) => Math.max(a - 1, 0))
             }
           }}
-          aria-label="Numer działki"
+          data-parcel-search
+          aria-label={t('Numer działki')}
           aria-expanded={open}
           aria-controls="parcel-suggestions"
           aria-autocomplete="list"
           aria-invalid={!!error || undefined}
           enterKeyHint="search"
-          placeholder="Wpisz numer działki, np. 143203_2.0027.112/11 lub Szczytno 112/11"
+          placeholder={t('Wpisz numer działki, np. 143203_2.0027.112/11 lub Szczytno 112/11')}
           className={cn(
             'h-12 w-full rounded-full border bg-surface pr-12 pl-12 text-base shadow-float outline-none placeholder:text-sm placeholder:text-text-muted/80',
             'focus-visible:border-brand focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-brand',
@@ -80,11 +83,11 @@ export function SearchBar({
         />
         <span className="absolute top-1/2 right-2 flex -translate-y-1/2 items-center">
           {loading ? (
-            <Loader2 className="m-2.5 size-5 animate-spin text-brand" aria-label="Szukam" />
+            <Loader2 className="m-2.5 size-5 animate-spin text-brand" aria-label={t('Szukam')} />
           ) : q ? (
             <button
               type="button"
-              aria-label="Wyczyść"
+              aria-label={t('Wyczyść')}
               onClick={() => {
                 setQ('')
                 inputRef.current?.focus()
@@ -106,8 +109,8 @@ export function SearchBar({
       {open && (
         <div className="absolute inset-x-0 top-full z-10 mt-2 overflow-hidden rounded-xl border bg-surface shadow-float">
           <p className="border-b px-4 py-2 text-sm text-text-muted">
-            Znaleziono {total} działek – wybierz swoją
-            {total > candidates.length && ` (pokazano ${candidates.length})`}
+            {t('Znaleziono {n} działek – wybierz swoją', { n: total })}
+            {total > candidates.length && ` ${t('(pokazano {n})', { n: candidates.length })}`}
           </p>
           <ul id="parcel-suggestions" role="listbox" className="max-h-[50vh] overflow-y-auto py-1">
             {candidates.map((c, i) => (
@@ -123,10 +126,10 @@ export function SearchBar({
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block text-base leading-6 font-medium">
-                      Działka {c.numer} <span className="font-normal text-text-muted">· {formatHa(c.powierzchnia_ha)} ha</span>
+                      {t('Działka {numer}', { numer: c.numer })} <span className="font-normal text-text-muted">· {formatHa(c.powierzchnia_ha)} ha</span>
                     </span>
                     <span className="block truncate text-sm leading-5 text-text-muted">
-                      obręb {c.obreb}, gm. {c.gmina}, woj. {c.wojewodztwo}
+                      {t('obręb {obreb}, gm. {gmina}, woj. {woj}', { obreb: c.obreb, gmina: c.gmina, woj: c.wojewodztwo })}
                     </span>
                   </span>
                 </button>

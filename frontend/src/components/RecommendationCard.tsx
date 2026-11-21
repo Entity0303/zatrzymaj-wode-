@@ -4,6 +4,7 @@ import type { RecommendationCategory as RecCategory } from '@/api/types'
 import { cn } from '@/lib/utils'
 import { REC_CATEGORY } from '@/theme/recommendations'
 import { SourceTag } from '@/components/SourceTag'
+import { useLang } from '@/lib/i18n'
 
 /**
  * Karta rekomendacji (SPEC 14): ikona kategorii, tytuł, zdanie, rozwijane „Dlaczego?”,
@@ -24,6 +25,7 @@ export function RecommendationCard({
   noData?: boolean
   onShowOnMap?: () => void
 }) {
+  const { t } = useLang()
   const [open, setOpen] = useState(false)
   const id = useId()
   const c = REC_CATEGORY[category]
@@ -35,9 +37,9 @@ export function RecommendationCard({
           <Icon className="size-5" aria-hidden />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-xs leading-4 font-medium tracking-wide text-text-muted uppercase">{c.label}</p>
-          <p className="text-base leading-6 font-semibold">{title}</p>
-          <p className="text-sm leading-5 text-text-muted">{text}</p>
+          <p className="text-xs leading-4 font-medium tracking-wide text-text-muted uppercase">{t(c.label)}</p>
+          <p className="text-base leading-6 font-semibold">{t(title)}</p>
+          <p className="text-sm leading-5 text-text-muted">{t(text)}</p>
           {noData && <SourceTag kind="brak_danych" className="mt-2" />}
         </div>
       </div>
@@ -49,7 +51,7 @@ export function RecommendationCard({
           onClick={() => setOpen((o) => !o)}
           className="inline-flex min-h-11 items-center gap-1 text-sm font-medium text-brand hover:underline"
         >
-          Dlaczego?
+          {t('Dlaczego?')}
           <ChevronDown className={cn('size-4 transition-transform', open && 'rotate-180')} aria-hidden />
         </button>
         {onShowOnMap && (
@@ -58,13 +60,13 @@ export function RecommendationCard({
             onClick={onShowOnMap}
             className="inline-flex min-h-11 items-center gap-1 text-sm font-medium text-brand hover:underline"
           >
-            <MapPinned className="size-4" aria-hidden /> Pokaż na mapie
+            <MapPinned className="size-4" aria-hidden /> {t('Pokaż na mapie')}
           </button>
         )}
       </div>
       {open && (
         <div id={id} className="mt-1 ml-12 rounded-lg bg-surface-2/70 p-3 text-sm leading-5 text-text">
-          {why}
+          {typeof why === 'string' ? t(why) : why}
         </div>
       )}
     </div>

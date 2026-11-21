@@ -4,6 +4,11 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-21 · `b/frontend`
+**Co:** przełącznik języka PL | EN (D30). `lib/i18n.ts` (`t()`, `useLang`, `locale()`), `lib/i18n.en.ts` (~300 tekstów: cały UI, uprawy, warstwy, błędy, opisy pogody, teksty mocka), `components/LanguageProvider.tsx`, `components/LanguageToggle.tsx` (górny pasek; na telefonie okrągły przycisk). Tłumaczenie w miejscach wyświetlania (karty, odznaki, błędy, kroki), więc etykiety w danych zostają po polsku. `ErrorInfo.vars` dla {zmiennych} w błędach. Liczby/daty wg języka. Fokus wyszukiwarki przez `data-parcel-search` zamiast polskiego aria-label. Gałąź: od teraz jedna długa `b/frontend` (nowe zasady od A), z `mathew`.
+**Pliki:** `frontend/src/lib/{i18n,i18n.en}.ts`, `frontend/src/components/{LanguageProvider,LanguageToggle}.tsx`, `frontend/src/main.tsx` + ~50 plików komponentów/funkcji (tylko teksty → `t()`).
+**Kontrakt API:** nie.
+
 ## 2026-11-21 · `b/wybor-uprawy-ladowanie`
 **Co:** uruchamianie analizy po wyborze uprawy; zmiana uprawy lub daty analizy przelicza od nowa (poprzednie zapytanie przerywane). Ekran ładowania w panelu (SPEC 13 krok 4, 15.1): karta „Liczę ocenę wody dla działki…” z uprawą, datą, licznikiem sekund i paskiem postępu, `LoadingSteps` ✓/⏳/✕, szkielety wskaźników i rekomendacji. Na mocku (`?dane=przykladowe`) kroki z `analysis.sample.json` przechodzą kolejno w tempie `duration_ms` (maks. 2,5 s/krok), potem wynik. Bez mocka: `GET /api/analysis`; backend nie przesyła postępu, więc wszystkie kroki „w toku” do odpowiedzi (nie udajemy postępu); 501 → komunikat „Ocena sytuacji wodnej jest jeszcze w budowie”, 502/504 → „Spróbuj ponownie”.
 **Pliki:** `frontend/src/features/parcel-panel/{useAnalysis.ts,AnalysisLoading.tsx,ParcelPanel.tsx,types.ts}`, `frontend/src/mocks/useMockAnalysis.ts`, `frontend/src/api/client.ts` (`describeAnalysisError`), `frontend/src/pages/Start.tsx`.

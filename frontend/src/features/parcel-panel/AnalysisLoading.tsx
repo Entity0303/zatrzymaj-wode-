@@ -7,6 +7,7 @@ import { formatDatePl } from '@/lib/format'
 import type { CropId } from '@/api/types'
 import { KeyMetrics } from './KeyMetrics'
 import { SectionTitle } from './SectionTitle'
+import { useLang } from '@/lib/i18n'
 
 /** Ekran ładowania analizy w panelu (SPEC 13 krok 4, 15.1): kroki ✓/⏳, licznik sekund, szkielety kart. */
 export function AnalysisLoading({
@@ -18,12 +19,13 @@ export function AnalysisLoading({
   crop: CropId
   asOf: string
 }) {
+  const { t } = useLang()
   // licznik od zamontowania – panel nadaje komponentowi `key` przebiegu, więc każde przeliczenie liczy od 0
   const [startedAt] = useState(() => Date.now())
   const [now, setNow] = useState(startedAt)
   useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 500)
-    return () => clearInterval(t)
+    const timer = setInterval(() => setNow(Date.now()), 500)
+    return () => clearInterval(timer)
   }, [])
   const seconds = Math.max(0, Math.floor((now - startedAt) / 1000))
   const done = steps.filter((s) => s.state === 'done').length
@@ -37,12 +39,12 @@ export function AnalysisLoading({
             <Loader2 className="size-6 animate-spin" aria-hidden />
           </span>
           <div className="min-w-0">
-            <p className="text-base leading-6 font-semibold">Liczę ocenę wody dla działki…</p>
+            <p className="text-base leading-6 font-semibold">{t('Liczę ocenę wody dla działki…')}</p>
             <p className="text-sm leading-5 text-text-muted">
-              {cropLabel(crop)} · {formatDatePl(asOf)} · zwykle do 30 s
+              {cropLabel(crop)} · {formatDatePl(asOf)} · {t('zwykle do 30 s')}
             </p>
           </div>
-          <span className="tabular ml-auto text-sm font-semibold text-text-muted" aria-label={`${seconds} sekund`}>
+          <span className="tabular ml-auto text-sm font-semibold text-text-muted" aria-label={t('{n} sekund', { n: seconds })}>
             {seconds} s
           </span>
         </div>
@@ -52,18 +54,18 @@ export function AnalysisLoading({
           aria-valuemin={0}
           aria-valuemax={100}
           aria-valuenow={pct}
-          aria-label="Postęp analizy"
+          aria-label={t('Postęp analizy')}
         >
           <div className="h-full rounded-full bg-brand transition-[width] duration-500" style={{ width: `${pct}%` }} />
         </div>
         <LoadingSteps steps={steps} className="mt-3" />
       </div>
       <section className="space-y-3">
-        <SectionTitle>Kluczowe wskaźniki</SectionTitle>
+        <SectionTitle>{t('Kluczowe wskaźniki')}</SectionTitle>
         <KeyMetrics loading />
       </section>
       <section className="space-y-3">
-        <SectionTitle>Co zrobić?</SectionTitle>
+        <SectionTitle>{t('Co zrobić?')}</SectionTitle>
         {[0, 1, 2].map((i) => (
           <Skeleton key={i} className="h-16 w-full rounded-xl bg-surface-2" />
         ))}

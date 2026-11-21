@@ -1,5 +1,6 @@
 import { STATUS, type Status } from '@/theme/status'
 import { cn } from '@/lib/utils'
+import { useLang } from '@/lib/i18n'
 
 /** Odznaka stanu: kolor + ikona + tekst – nigdy sam kolor (SPEC 14, 16). */
 export function StatusBadge({
@@ -13,6 +14,7 @@ export function StatusBadge({
   size?: 'sm' | 'md'
   className?: string
 }) {
+  const { t } = useLang()
   const s = STATUS[status]
   const Icon = s.icon
   return (
@@ -26,7 +28,7 @@ export function StatusBadge({
       )}
     >
       <Icon className={size === 'sm' ? 'size-3.5' : 'size-4'} aria-hidden />
-      {label ?? s.label}
+      {t(label ?? s.label)}
     </span>
   )
 }

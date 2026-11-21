@@ -17,6 +17,7 @@ import { SectionTitle } from './SectionTitle'
 import { StatusCard } from './StatusCard'
 import type { AnalysisRun, ForecastState, SearchPhase } from './types'
 import { WhatToDo } from './WhatToDo'
+import { useLang } from '@/lib/i18n'
 
 /** Panel działki (SPEC 6) – prawa karta na komputerze, treść szuflady na telefonie. */
 export function ParcelPanel({
@@ -52,6 +53,7 @@ export function ParcelPanel({
   /** na telefonie nagłówek jest w zwiniętej części szuflady */
   hideHeader?: boolean
 }) {
+  const { t } = useLang()
   if (state.phase === 'idle') return <PanelEmpty onFocusSearch={onFocusSearch} onLocate={onLocate} />
 
   if (state.phase === 'loading')
@@ -59,7 +61,10 @@ export function ParcelPanel({
       <div className="space-y-4">
         <LoadingSteps
           steps={[
-            { label: state.kind === 'point' ? 'Szukam działki w tym miejscu (ULDK GUGiK)' : 'Szukam działki w ewidencji (ULDK GUGiK)', state: 'active' },
+            {
+              label: state.kind === 'point' ? 'Szukam działki w tym miejscu (ULDK GUGiK)' : 'Szukam działki w ewidencji (ULDK GUGiK)',
+              state: 'active',
+            },
           ]}
         />
         <Metrics loading />
@@ -78,7 +83,7 @@ export function ParcelPanel({
     return (
       <EmptyState
         illustration={<FieldIllustration className="w-32" />}
-        title={`Znaleziono ${state.total} działek`}
+        title={t('Znaleziono {n} działek', { n: state.total })}
         description="Ten numer jest w kilku miejscach. Wybierz swoją działkę z listy pod wyszukiwarką albo kliknij numer na mapie."
       />
     )
@@ -127,19 +132,19 @@ export function ParcelPanel({
       {crop && (
         <details className="group rounded-xl border bg-surface p-3.5">
           <summary className="flex min-h-6 cursor-pointer list-none items-center justify-between text-sm font-medium">
-            Postęp analizy
-            <span className="text-text-muted group-open:hidden">pokaż</span>
-            <span className="hidden text-text-muted group-open:inline">ukryj</span>
+            {t('Postęp analizy')}
+            <span className="text-text-muted group-open:hidden">{t('pokaż')}</span>
+            <span className="hidden text-text-muted group-open:inline">{t('ukryj')}</span>
           </summary>
           <LoadingSteps steps={steps} className="mt-3" />
         </details>
       )}
       <section className="space-y-3">
-        <SectionTitle>Kluczowe wskaźniki</SectionTitle>
+        <SectionTitle>{t('Kluczowe wskaźniki')}</SectionTitle>
         <Metrics analysis={analysis} />
       </section>
       <section className="space-y-3">
-        <SectionTitle>Co zrobić?</SectionTitle>
+        <SectionTitle>{t('Co zrobić?')}</SectionTitle>
         <WhatToDo analysis={analysis} />
       </section>
       <div className="space-y-2">
@@ -150,26 +155,26 @@ export function ParcelPanel({
                 disabled
                 className="pointer-events-none h-12 w-full rounded-md bg-brand-dark text-base font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
               >
-                <FileDown className="size-5" /> Pobierz raport
+                <FileDown className="size-5" /> {t('Pobierz raport')}
               </Button>
             </span>
           </TooltipTrigger>
-          <TooltipContent>Raport PDF – w budowie (najpierw analiza)</TooltipContent>
+          <TooltipContent>{t('Raport PDF – w budowie (najpierw analiza)')}</TooltipContent>
         </Tooltip>
         <p className="text-center">
           <span className="text-sm text-text-muted" aria-disabled>
-            Zobacz pełny paszport wodny <span className="text-xs">(wkrótce)</span>
+            {t('Zobacz pełny paszport wodny')} <span className="text-xs">({t('wkrótce')})</span>
           </span>
         </p>
       </div>
       <footer className="border-t pt-3 text-xs leading-4 text-text-muted">
-        Dane:{' '}
+        {t('Dane:')}{' '}
         {analysis
           ? analysis.reliability.sources.filter((s) => s.status !== 'brak').map((s) => s.name).join(', ')
           : `GUGiK (ULDK)${forecastState === 'ok' ? ', Open-Meteo' : ''}`}{' '}
-        · stan na {formatDatePl(asOf)}
+        · {t('stan na')} {formatDatePl(asOf)}
         <div className="mt-1.5">
-          <SourceTag kind="pomiar" title="Granice i powierzchnia z ewidencji (ULDK GUGiK)" /> granice i powierzchnia
+          <SourceTag kind="pomiar" title={t('Granice i powierzchnia z ewidencji (ULDK GUGiK)')} /> {t('granice i powierzchnia')}
         </div>
       </footer>
     </div>

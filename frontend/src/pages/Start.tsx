@@ -26,6 +26,7 @@ import { TopBar } from '@/layout/TopBar'
 import { todayIso } from '@/lib/dates'
 import { useMediaQuery, useOnline, usePrefersReducedMotion, useSavedParcels } from '@/lib/hooks'
 import { mockRequested } from '@/mocks/useMockAnalysis'
+import { locale, useLang } from '@/lib/i18n'
 
 /** Ekran Start (SPEC 4, 12): mapa + panel działki + dolny pasek kart / szuflada na telefonie. */
 
@@ -50,6 +51,7 @@ const FLOAT_BOTTOM = 16 + CARDS_H + 24 // dół panelu, kontrolek i legendy
 const round1 = (v: number) => Math.round(v * 10) / 10
 
 export default function Start() {
+  const { t } = useLang()
   const isMobile = useMediaQuery('(max-width: 767px)')
   const isDesktop = useMediaQuery('(min-width: 1280px)')
   const reducedMotion = usePrefersReducedMotion()
@@ -147,7 +149,7 @@ export default function Start() {
   function onMapClick(lon: number, lat: number) {
     if (parcel && parcelContains(parcel, lon, lat)) {
       // SPEC 5.4: klik wewnątrz działki = wartość aktywnej warstwy w punkcie (warstwy jeszcze nie liczymy)
-      setInsidePopup({ lon, lat, text: `${layerByKey(layer).label}: brak danych w tym punkcie – warstwa w budowie.` })
+      setInsidePopup({ lon, lat, text: t('{layer}: brak danych w tym punkcie – warstwa w budowie.', { layer: t(layerByKey(layer).label) }) })
       return
     }
     searchByPoint(lon, lat)
@@ -199,7 +201,7 @@ export default function Start() {
 
   const focusSearch = () => {
     if (isMobile) setSnap('collapsed')
-    document.querySelector<HTMLInputElement>('input[aria-label="Numer działki"]')?.focus()
+    document.querySelector<HTMLInputElement>('input[data-parcel-search]')?.focus()
   }
 
   // ── pogoda (Open-Meteo): środek działki albo środek mapy ─────────────────────────────────
@@ -220,10 +222,10 @@ export default function Start() {
     })
   }, [])
 
-  const where = parcel ? `dla działki ${parcel.numer}` : 'dla środka mapy'
+  const where = parcel ? t('dla działki {numer}', { numer: parcel.numer }) : t('dla środka mapy')
   const historical = asOf !== todayIso()
   const updated = forecast?.teraz.czas
-    ? new Date(forecast.teraz.czas).toLocaleString('pl-PL', { dateStyle: 'short', timeStyle: 'short' })
+    ? new Date(forecast.teraz.czas).toLocaleString(locale(), { dateStyle: 'short', timeStyle: 'short' })
     : null
 
   function showToast(t: string) {
@@ -246,7 +248,7 @@ export default function Start() {
     onToggleSave: () => {
       if (parcel) toggleSave(parcel)
     },
-    onCopied: () => showToast('Skopiowano identyfikator działki'),
+    onCopied: () => showToast(t('Skopiowano identyfikator działki')),
     onRetry: retry,
     onFocusSearch: focusSearch,
     onLocate: locate,
@@ -255,7 +257,7 @@ export default function Start() {
   const searchBar = (
     <SearchBar
       loading={search.phase === 'loading'}
-      error={search.phase === 'error' ? search.error.title : null}
+      error={search.phase === 'error' ? t(search.error.title, search.error.vars) : null}
       candidates={candidates}
       total={search.phase === 'candidates' ? search.total : candidates.length}
       onSearch={searchByNumber}
@@ -360,7 +362,7 @@ export default function Start() {
           {/* ── prawy panel działki: 380 px komputer, 340 px tablet (SPEC 4.4, 12) ── */}
           {!isMobile && (
             <aside
-              aria-label="Panel działki"
+              aria-label={t('Panel działki')}
               className="absolute top-[128px] right-4 z-[1100] flex w-[340px] flex-col overflow-hidden rounded-xl border bg-surface shadow-float xl:w-[380px]"
               style={{ bottom: FLOAT_BOTTOM }}
             >

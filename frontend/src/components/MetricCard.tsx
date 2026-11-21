@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 import { SourceTag, type SourceKind } from '@/components/SourceTag'
+import { useLang } from '@/lib/i18n'
 
 type Tone = 'water' | 'brand' | 'earth' | 'warn' | 'danger' | 'muted'
 
@@ -47,6 +48,7 @@ export function MetricCard({
   children?: ReactNode
   className?: string
 }) {
+  const { t } = useLang()
   const noData = value === null && !loading
   return (
     <div
@@ -60,7 +62,7 @@ export function MetricCard({
         <span className={cn('flex size-8 shrink-0 items-center justify-center rounded-lg', noData ? TONE.muted : TONE[tone])}>
           <Icon className="size-[18px]" aria-hidden />
         </span>
-        <span className="min-w-0 text-sm leading-5 font-medium">{title}</span>
+        <span className="min-w-0 text-sm leading-5 font-medium">{t(title)}</span>
       </div>
       {loading ? (
         <div className="space-y-2">
@@ -70,7 +72,7 @@ export function MetricCard({
       ) : noData ? (
         <div>
           <p className="text-2xl leading-8 font-semibold text-text-muted">—</p>
-          <p className="text-sm leading-5 text-text-muted">{noDataText}</p>
+          <p className="text-sm leading-5 text-text-muted">{t(noDataText)}</p>
         </div>
       ) : (
         <p className="tabular text-[32px] leading-10 font-semibold">

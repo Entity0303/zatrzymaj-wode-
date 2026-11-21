@@ -17,6 +17,7 @@ import type { Status } from '@/theme/status'
 import { parcelBounds, type MapInsets } from './geo'
 import { layerByKey, type LayerKey } from './layers'
 import { ParcelLabel } from './ParcelLabel'
+import { useLang } from '@/lib/i18n'
 
 export type BaseMap = 'orto' | 'osm'
 
@@ -126,6 +127,7 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
   },
   ref,
 ) {
+  const { t } = useLang()
   const ActiveOverlay = layerByKey(layer).Overlay
   const labelPos = useMemo(() => (parcel ? parcelBounds(parcel).getCenter() : null), [parcel])
   return (
@@ -191,11 +193,11 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
           key={c.id}
           position={parcelBounds(c).getCenter()}
           icon={numberIcon(i + 1)}
-          title={`${i + 1}. Działka ${c.numer}, obręb ${c.obreb}, gm. ${c.gmina}`}
+          title={`${i + 1}. ${t('Działka {numer}', { numer: c.numer })}, ${t('obręb {obreb}, gm. {gmina}', { obreb: c.obreb, gmina: c.gmina })}`}
           eventHandlers={{ click: () => onSelectCandidate(c) }}
         >
           <Tooltip direction="top" offset={[0, -16]}>
-            {i + 1}. Działka {c.numer} – obręb {c.obreb}, gm. {c.gmina}
+            {i + 1}. {t('Działka {numer}', { numer: c.numer })} – {t('obręb {obreb}, gm. {gmina}', { obreb: c.obreb, gmina: c.gmina })}
           </Tooltip>
         </Marker>
       ))}
@@ -216,7 +218,7 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
           pathOptions={{ color: '#FFFFFF', weight: 3, fillColor: '#2F80C9', fillOpacity: 1 }}
         >
           <Tooltip direction="top" offset={[0, -8]}>
-            Jesteś tutaj
+            {t('Jesteś tutaj')}
           </Tooltip>
         </CircleMarker>
       )}

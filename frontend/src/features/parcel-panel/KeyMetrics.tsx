@@ -3,6 +3,7 @@ import { MetricCard } from '@/components/MetricCard'
 import { ScoreRing } from '@/components/ScoreRing'
 import type { AnalysisResponse, Indicator } from '@/api/types'
 import { formatDatePl, formatNum, formatSigned } from '@/lib/format'
+import { useLang } from '@/lib/i18n'
 
 /** Wartość wskaźnika jako tekst; null = brak danych (karta pokaże kreskowanie). */
 const num = (i: Indicator, digits = 0, signed = false) =>
@@ -35,6 +36,7 @@ export function KeyMetrics({ loading, analysis }: { loading?: boolean; analysis?
 }
 
 function AnalysisMetrics({ analysis }: { analysis: AnalysisResponse }) {
+  const { t } = useLang()
   const { soil_water_pct: water, risk_7d: risk, crop_health: health, water_balance_season: balance } = analysis.indicators
   return (
     <div className="grid grid-cols-2 gap-3">
@@ -56,17 +58,17 @@ function AnalysisMetrics({ analysis }: { analysis: AnalysisResponse }) {
       <MetricCard
         icon={Gauge}
         title="Ryzyko na 7 dni"
-        value={risk.value === null && !risk.label ? null : (risk.label ?? num(risk))}
+        value={risk.value === null && !risk.label ? null : risk.label ? t(risk.label) : num(risk)}
         tone="warn"
         source={risk.source_tag.kind}
         sourceDate={tagDate(risk)}
       >
-        {risk.note && <p className="text-sm leading-5 text-text-muted">{risk.note}</p>}
+        {risk.note && <p className="text-sm leading-5 text-text-muted">{t(risk.note)}</p>}
       </MetricCard>
       <MetricCard
         icon={Leaf}
         title="Kondycja upraw"
-        value={health.value === null ? null : (health.label ?? num(health))}
+        value={health.value === null ? null : health.label ? t(health.label) : num(health)}
         tone="brand"
         source={health.source_tag.kind}
         sourceDate={tagDate(health)}
@@ -82,7 +84,7 @@ function AnalysisMetrics({ analysis }: { analysis: AnalysisResponse }) {
         source={balance.source_tag.kind}
         sourceDate={tagDate(balance)}
       >
-        {balance.note && <p className="text-sm leading-5 text-text-muted">{balance.note}</p>}
+        {balance.note && <p className="text-sm leading-5 text-text-muted">{t(balance.note)}</p>}
       </MetricCard>
     </div>
   )

@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils'
+import { useLang } from '@/lib/i18n'
 
 /**
  * Okrąg 0–100 z liczbą w środku (SPEC 14, styl ref-style).
@@ -19,6 +20,7 @@ export function ScoreRing({
   caption?: string
   className?: string
 }) {
+  const { t } = useLang()
   const r = (size - stroke) / 2
   const c = 2 * Math.PI * r
   const v = value === null ? 0 : Math.max(0, Math.min(100, value))
@@ -27,7 +29,7 @@ export function ScoreRing({
       className={cn('relative inline-flex shrink-0 items-center justify-center', className)}
       style={{ width: size, height: size }}
       role="img"
-      aria-label={value === null ? 'Brak danych' : `${Math.round(v)} na 100`}
+      aria-label={value === null ? t('Brak danych') : t('{v} na 100', { v: Math.round(v) })}
     >
       <svg width={size} height={size} className="-rotate-90">
         <circle
@@ -56,7 +58,7 @@ export function ScoreRing({
         <span className={cn('tabular font-semibold', size >= 80 ? 'text-2xl' : 'text-base', value === null && 'text-text-muted')}>
           {value === null ? '—' : Math.round(v)}
         </span>
-        {caption && <span className="mt-0.5 text-xs text-text-muted">{caption}</span>}
+        {caption && <span className="mt-0.5 text-xs text-text-muted">{t(caption)}</span>}
       </span>
     </div>
   )

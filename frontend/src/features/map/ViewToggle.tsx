@@ -1,9 +1,11 @@
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { useLang } from '@/lib/i18n'
 
 /** Przełącznik 2D | 3D – 3D nieaktywne do czasu implementacji (SPEC 4.2, 8). */
 export function ViewToggle() {
+  const { t } = useLang()
   return (
-    <div role="radiogroup" aria-label="Widok mapy" className="flex h-10 shrink-0 items-center rounded-full border bg-surface p-1 shadow-float">
+    <div role="radiogroup" aria-label={t('Widok mapy')} className="flex h-10 shrink-0 items-center rounded-full border bg-surface p-1 shadow-float">
       <button type="button" role="radio" aria-checked className="h-8 rounded-full bg-brand px-3.5 text-sm font-semibold text-white">
         2D
       </button>
@@ -20,7 +22,7 @@ export function ViewToggle() {
             3D
           </button>
         </TooltipTrigger>
-        <TooltipContent>Wkrótce</TooltipContent>
+        <TooltipContent>{t('Wkrótce')}</TooltipContent>
       </Tooltip>
     </div>
   )

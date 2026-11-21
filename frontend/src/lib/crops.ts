@@ -1,4 +1,5 @@
 import type { CropId } from '@/api/types'
+import { tr } from './i18n'
 
 export type { CropId }
 
@@ -24,4 +25,8 @@ export const CROPS = [
   { id: 'tyton', label: 'Tytoń' },
 ] as const satisfies readonly { id: CropId; label: string }[]
 
-export const cropLabel = (id: CropId | null) => CROPS.find((c) => c.id === id)?.label ?? null
+/** Nazwa uprawy w bieżącym języku (null = brak uprawy). */
+export const cropLabel = (id: CropId | null) => {
+  const label = CROPS.find((c) => c.id === id)?.label
+  return label ? tr(label) : null
+}

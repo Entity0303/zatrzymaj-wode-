@@ -4,6 +4,7 @@ import { StatusBadge } from '@/components/StatusBadge'
 import { formatHa, shortCounty } from '@/lib/format'
 import { ParcelActions } from './ParcelActions'
 import type { SearchPhase } from './types'
+import { useLang } from '@/lib/i18n'
 
 /** Zwinięta część szuflady: nazwa działki + status + „Raport” (SPEC 12). */
 export function MobileSheetHeader({
@@ -21,6 +22,7 @@ export function MobileSheetHeader({
   onToggleSave: () => void
   onCopied: () => void
 }) {
+  const { t } = useLang()
   if (parcel)
     return (
       <div className="space-y-1">
@@ -28,13 +30,13 @@ export function MobileSheetHeader({
           <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-ok-soft text-brand">
             <Leaf className="size-5" aria-hidden />
           </span>
-          <h2 className="min-w-0 flex-1 truncate text-[22px] leading-7 font-semibold">Działka {parcel.numer}</h2>
-          <span className="tabular shrink-0 text-lg font-semibold" title="Pomiar – z granic działki w ewidencji (ULDK GUGiK)">
+          <h2 className="min-w-0 flex-1 truncate text-[22px] leading-7 font-semibold">{t('Działka {numer}', { numer: parcel.numer })}</h2>
+          <span className="tabular shrink-0 text-lg font-semibold" title={t('Pomiar – z granic działki w ewidencji (ULDK GUGiK)')}>
             {formatHa(parcel.powierzchnia_ha)} ha
           </span>
         </div>
         <p className="truncate pl-[46px] text-sm leading-5 text-text-muted">
-          gm. {parcel.gmina}, obręb {parcel.obreb} · {shortCounty(parcel.powiat)}
+          {t('gm. {gmina}, obręb {obreb}', { gmina: parcel.gmina, obreb: parcel.obreb })} · {shortCounty(parcel.powiat)}
         </p>
         <div className="flex items-center gap-1 pl-[46px]">
           <StatusBadge status={status} size="sm" />
@@ -43,30 +45,30 @@ export function MobileSheetHeader({
           <button
             type="button"
             disabled
-            title="Raport PDF – w budowie"
+            title={t('Raport PDF – w budowie')}
             className="ml-1 flex h-11 items-center gap-1.5 rounded-md bg-brand-dark px-3 text-sm font-semibold text-white opacity-60"
           >
-            <FileDown className="size-4" aria-hidden /> Raport
+            <FileDown className="size-4" aria-hidden /> {t('Raport')}
           </button>
         </div>
       </div>
     )
   const title =
     search.phase === 'loading'
-      ? 'Szukam działki…'
+      ? t('Szukam działki…')
       : search.phase === 'error'
-        ? search.error.title
+        ? t(search.error.title, search.error.vars)
         : search.phase === 'candidates'
-          ? `Znaleziono ${search.total} działek`
-          : 'Znajdź swoją działkę'
+          ? t('Znaleziono {n} działek', { n: search.total })
+          : t('Znajdź swoją działkę')
   const sub =
     search.phase === 'candidates'
-      ? 'Wybierz z listy pod wyszukiwarką lub kliknij numer na mapie'
+      ? t('Wybierz z listy pod wyszukiwarką lub kliknij numer na mapie')
       : search.phase === 'idle'
-        ? 'Wpisz numer, kliknij pole albo użyj lokalizacji'
+        ? t('Wpisz numer, kliknij pole albo użyj lokalizacji')
         : search.phase === 'error'
-          ? 'Przesuń w górę, aby zobaczyć szczegóły'
-          : 'Pobieram dane z ewidencji (ULDK GUGiK)'
+          ? t('Przesuń w górę, aby zobaczyć szczegóły')
+          : t('Pobieram dane z ewidencji (ULDK GUGiK)')
   return (
     <div className="min-h-12">
       <h2 className="text-lg leading-6 font-semibold">{title}</h2>
