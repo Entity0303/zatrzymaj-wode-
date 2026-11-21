@@ -74,3 +74,19 @@ Wpis: data · decyzja · uzasadnienie · konsekwencje. Zmieniany w osobnym mały
 ### D18 · 2026-11-21 · Budżet czasu pobierania pogody
 **Uzasadnienie:** limit 30 s na całą analizę. NASA POWER zwykle ~1,6–1,9 s za 10 lat.
 **Konsekwencje:** NASA POWER: 9 s na próbę + 1 ponowna próba (sieć/timeout/5xx; 429 bez ponawiania); archiwum Open-Meteo: 10 s, bez ponawiania. Cache 6 h, klucz – współrzędne zaokrąglone do 0,1° (rozdzielczość źródła ~50 km) + zakres dat.
+
+### D19 · 2026-11-21 · Gleba IUNG: WCS GetCoverage `text/plain` jako metoda główna, GetFeatureInfo jako zapas
+**Uzasadnienie:** rozważono GetMap PNG + zliczanie pikseli wg kolorów legendy. Odrzucone: wymaga dekodowania PNG (nowa zależność – Pillow), legenda jest typu „ramp” (przy przeskalowaniu możliwe kolory pośrednie), kody 19 i 99 mają ten sam kolor. GeoServer IUNG udostępnia WCS 2.0.1 z formatem `text/plain` – **surowe kody** wszystkich komórek 5 m w bbox działki w ~0,3 s, bez kolorów i bez nowych bibliotek. GetFeatureInfo (≤ 16 punktów) to tylko próbkowanie, więc zostaje zapasem.
+**Konsekwencje:** osie WCS w konwencji PL-1992: `SUBSET=x(północ)`, `SUBSET=y(wschód)`, wiersz 0 = północ (sprawdzone 6/6 z GetFeatureInfo). Liczymy komórki ze środkiem w obrysie; powyżej 250 tys. komórek – `SCALEFACTOR`. Metoda zapasowa obniża pewność i jest opisana w ograniczeniach.
+
+### D20 · 2026-11-21 · Reprezentatywna WOD kategorii IUNG
+**Uzasadnienie:** IUNG podaje przedziały WOD; do średniej ważonej potrzebna jedna wartość na kategorię. II i III – środek przedziału (148,7 i 186,2 mm); I i IV mają przedział otwarty – granica ∓ połowa szerokości sąsiedniej kategorii (I: 127,5 − 21,2 = 106,3 mm; IV: 202,5 + 16,25 = 218,8 mm).
+**Konsekwencje:** ograniczenie „WOD to wartość typowa dla kategorii gleby, nie pomiar na tej działce”. Kategoria → status karty: I = ryzyko, II = uwaga, III–IV = dobrze.
+
+### D21 · 2026-11-21 · „To nie jest grunt rolny”: kody 5, 11–14 łącznie > 50% działki
+**Uzasadnienie:** SPEC 15.1. Lasy, wody, zabudowa, drogi/nieużytki nie są użytkami rolnymi; gleby organiczne (5) nie mają kategorii podatności IUNG, więc WOD nie da się ocenić.
+**Konsekwencje:** `soil_capacity` = „Nie dotyczy” (value null) z komunikatem; dokładnie 50% – jeszcze grunt rolny. Przykłady: 160703 (las 100%), 143203 (las 51% + zabudowa 14%), 302114 (woda 100%).
+
+### D22 · 2026-11-21 · Klasy EGiB z KIEG: tylko nasza działka, brak = normalny stan
+**Uzasadnienie:** odpowiedź KIEG dotyczy działki w punkcie – punkt przy granicy może trafić w sąsiada. Wiele powiatów nie publikuje klas.
+**Konsekwencje:** zapytanie w środku działki + 3 punktach, bierzemy tylko wiersze z „Identyfikator działki” = nasza działka; klasy z „Oznaczenie konturu”. Brak klas → notka „Powiat nie udostępnia klas…”, bez obniżania pewności (D4). Nie odczytujemy „Grupy rejestrowej” ani pól o właścicielach.
