@@ -40,6 +40,8 @@ export function SoilSusceptibilityLayer() {
       }}
       opacity={0.55}
       zIndex={5}
+      // tylko przy oddaleniu (regiony) – z bliska piksele 5 m wyglądają topornie i zasłaniają pola
+      maxZoom={11}
       attribution='Podatność gleb na suszę: <a href="https://susza.iung.pulawy.pl">IUNG-PIB</a>'
     />
   )

@@ -7,6 +7,7 @@ import { formatHa } from '@/lib/format'
 import { useLang } from '@/lib/i18n'
 import { STATUS } from '@/theme/status'
 import { CropField } from './CropField'
+import { VerdictCard } from './VerdictCard'
 import type { AnalysisRun } from './types'
 
 /**
@@ -80,7 +81,9 @@ export function ParcelSummary({
 
       {run.phase === 'error' && <ErrorNotice {...run.error} onRetry={run.error.retryable ? onRetryAnalysis : undefined} />}
 
-      {analysis && (
+      {analysis?.verdict && <VerdictCard verdict={analysis.verdict} compact />}
+
+      {analysis && !analysis.verdict && (
         <div className={`flex items-center gap-4 rounded-xl p-4 ${s.bg}`}>
           {analysis.status.score != null && (
             <ScoreRing value={analysis.status.score} size={64} stroke={7} color={s.ring.color} track={s.ring.track} />

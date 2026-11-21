@@ -734,4 +734,12 @@ export const EN: Record<string, string> = {
   'IUNG-PIB · tereny nierolnicze bez koloru': 'IUNG-PIB · non-farmland left uncoloured',
   'Mokry rok 2021': 'Wet year 2021',
   'Kukurydza – stan dziś': 'Maize – status today',
+  // werdykt i menu
+  'Werdykt działki': 'Parcel verdict',
+  'Werdykt': 'Verdict',
+  'Siej': 'Sow',
+  'Nie siej': 'Don\'t sow',
+  'co zrobić': 'what to do',
+  'Zwiń menu': 'Close menu',
+  'Moje działki, raporty, ustawienia, język': 'My parcels, reports, settings, language',
 }

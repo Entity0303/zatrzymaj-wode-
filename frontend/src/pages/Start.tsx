@@ -477,7 +477,10 @@ export default function Start() {
 
   const { forecast, state: forecastState } = useForecast(weatherTarget)
 
-  const onMoveEnd = useCallback((lon: number, lat: number) => {
+  // poziom przybliżenia – mapa gleb (i jej legenda) tylko przy oddaleniu
+  const [zoom, setZoom] = useState(6)
+  const onMoveEnd = useCallback((lon: number, lat: number, z: number) => {
+    setZoom(z)
     setMapCenter((prev) => {
       const next: [number, number] = [round1(lon), round1(lat)]
       return prev[0] === next[0] && prev[1] === next[1] ? prev : next
@@ -649,7 +652,8 @@ export default function Start() {
                   examples={demoExamples}
                 />
               )}
-              {/* legenda mapy startowej: podatność gleb na suszę (IUNG) */}
+              {/* legenda mapy startowej: podatność gleb na suszę (IUNG) – tylko gdy warstwa jest widoczna (zoom ≤ 11) */}
+              {zoom <= 11 && (
               <LegendCard
                 title="Podatność gleb na suszę"
                 legend={SOIL_SUSCEPTIBILITY_LEGEND}
@@ -657,6 +661,7 @@ export default function Start() {
                 compact={isMobile}
                 className={isMobile ? 'absolute right-3 bottom-20 z-[1100] w-52' : 'absolute right-4 bottom-4 z-[1300]'}
               />
+              )}
               <MapControls
                 className={isMobile ? 'absolute top-[76px] right-3 z-[1000]' : 'absolute bottom-4 left-4 z-[1000]'}
                 onZoomIn={() => mapRef.current?.zoomIn()}

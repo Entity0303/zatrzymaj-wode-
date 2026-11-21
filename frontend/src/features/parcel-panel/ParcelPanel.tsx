@@ -23,6 +23,7 @@ import { ParcelHeader } from './ParcelHeader'
 import { SectionTitle } from './SectionTitle'
 import { SoilCard } from './SoilCard'
 import { SoilWaterCard } from './SoilWaterCard'
+import { VerdictCard } from './VerdictCard'
 import { TerrainCard } from './TerrainCard'
 import { StatusCard } from './StatusCard'
 import type { AnalysisRun, ForecastState, SearchPhase } from './types'
@@ -164,6 +165,7 @@ export function ParcelPanel({
         <ErrorNotice {...run.error} onRetry={run.error.retryable ? onRetryAnalysis : undefined} />
       )}
       {/* SPEC 15.1: grunt nierolny – zamiast oceny suszy komunikat, bez wskaźników i zaleceń */}
+      {analysis?.verdict && <VerdictCard verdict={analysis.verdict} />}
       {nonAgri ? <NonAgriculturalCard soil={analysis!.soil} /> : <StatusCard crop={crop} analysis={analysis} onOpen={analysis ? onOpenPassport : undefined} />}
       {nonAgri && analysis && <SoilCard soil={analysis.soil} />}
       {!nonAgri && (

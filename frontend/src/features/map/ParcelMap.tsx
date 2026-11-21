@@ -85,13 +85,13 @@ function Events({
   onMoveEnd,
 }: {
   onClick: (lon: number, lat: number) => void
-  onMoveEnd: (lon: number, lat: number) => void
+  onMoveEnd: (lon: number, lat: number, zoom: number) => void
 }) {
   const map = useMapEvents({
     click: (e: LeafletMouseEvent) => onClick(e.latlng.lng, e.latlng.lat),
     moveend: () => {
       const c = map.getCenter()
-      onMoveEnd(c.lng, c.lat)
+      onMoveEnd(c.lng, c.lat, map.getZoom())
     },
   })
   return null
@@ -122,7 +122,7 @@ type Props = {
   insets: MapInsets
   reducedMotion: boolean
   onMapClick: (lon: number, lat: number) => void
-  onMoveEnd: (lon: number, lat: number) => void
+  onMoveEnd: (lon: number, lat: number, zoom: number) => void
   onSelectCandidate: (p: Parcel) => void
   onClosePopup: () => void
   /** miejsce rekomendacji („Pokaż na mapie”) */
@@ -182,6 +182,17 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
       className="absolute inset-0 z-0 h-full w-full"
       aria-label="Mapa działek. Kliknij pole, aby je wybrać."
     >
+      {/* tło całej Europy pod ortofotomapą (poza Polską zamiast białego pola) */}
+      {baseMap === 'orto' && (
+        <TileLayer
+          key="s2cloudless"
+          url="https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless_3857/default/g/{z}/{y}/{x}.jpg"
+          maxNativeZoom={15}
+          maxZoom={20}
+          zIndex={0}
+          attribution='<a href="https://s2maps.eu">Sentinel-2 cloudless 2016</a> © EOX (CC BY 4.0), dane Copernicus'
+        />
+      )}
       {baseMap === 'orto' ? (
         <TileLayer
           key="orto"

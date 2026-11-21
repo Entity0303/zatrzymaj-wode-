@@ -1,5 +1,5 @@
-import { ChevronDown, FileText, Languages, Map as MapIcon, MousePointerClick, Settings, Sparkles, type LucideIcon } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { ChevronDown, FileText, Languages, Map as MapIcon, Menu as MenuIcon, MousePointerClick, Settings, Sparkles, X, type LucideIcon } from 'lucide-react'
+import { useState, type ReactNode } from 'react'
 import { LogoMark } from '@/components/LogoMark'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -47,6 +47,7 @@ export function ExploreBar({
   examples?: Example[]
 }) {
   const { t, lang, setLang } = useLang()
+  const [menu, setMenu] = useState(false)
 
   const pages: { key: PageKey; icon: LucideIcon; label: string; hint: string }[] = [
     { key: 'parcels', icon: MapIcon, label: 'Moje działki', hint: 'Działki zapisane gwiazdką' },
@@ -98,19 +99,34 @@ export function ExploreBar({
       </div>
 
       {/* lewa kolumna (zamiast ☰): strony i język – zawsze widoczne, z podpisami */}
-      <nav
-        aria-label={t('Nawigacja główna')}
-        className="pointer-events-auto absolute top-[76px] left-3 z-[1100] flex flex-col gap-2 animate-in fade-in duration-500 md:top-[84px] md:left-4"
-      >
-        {pages.map((p) => (
-          <RailButton key={p.key} icon={p.icon} label={t(p.label)} hint={t(p.hint)} onClick={() => goTo(p.key)} />
-        ))}
-        <RailButton
-          icon={Languages}
-          label={lang === 'pl' ? 'English' : 'Polski'}
-          hint={lang === 'pl' ? 'Switch to English' : 'Przełącz na polski'}
-          onClick={() => setLang(lang === 'pl' ? 'en' : 'pl')}
-        />
+      <nav aria-label={t('Nawigacja główna')} className="pointer-events-auto absolute top-[72px] left-3 z-[1100] flex flex-col items-start gap-2 md:top-[76px] md:left-4">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              onClick={() => setMenu((o) => !o)}
+              aria-expanded={menu}
+              aria-label={t(menu ? 'Zwiń menu' : 'Menu')}
+              className="flex size-10 items-center justify-center rounded-full bg-surface/95 text-text shadow-float hover:bg-sage-soft"
+            >
+              {menu ? <X className="size-4" aria-hidden /> : <MenuIcon className="size-4" aria-hidden />}
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="right">{t('Moje działki, raporty, ustawienia, język')}</TooltipContent>
+        </Tooltip>
+        {menu && (
+          <div className="flex flex-col gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
+            {pages.map((p) => (
+              <RailButton key={p.key} icon={p.icon} label={t(p.label)} hint={t(p.hint)} onClick={() => goTo(p.key)} />
+            ))}
+            <RailButton
+              icon={Languages}
+              label={lang === 'pl' ? 'English' : 'Polski'}
+              hint={lang === 'pl' ? 'Switch to English' : 'Przełącz na polski'}
+              onClick={() => setLang(lang === 'pl' ? 'en' : 'pl')}
+            />
+          </div>
+        )}
       </nav>
 
       {/* podpowiedź: co zrobić na mapie */}
