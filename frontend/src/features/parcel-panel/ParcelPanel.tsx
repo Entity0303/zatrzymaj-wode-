@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { WaveDivider } from '@/components/WaveDivider'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { formatDatePl } from '@/lib/format'
+import { irrigationPracticed } from '@/lib/crops'
 import { AnalysisLoading } from './AnalysisLoading'
 import { CropField } from './CropField'
 import { CropSeasonCard } from './CropSeasonCard'
@@ -233,7 +234,13 @@ export function ParcelPanel({
             <span className="min-w-0 flex-1">
               <span className="block text-base leading-6 font-semibold">{t(showDetails ? 'Ukryj szczegóły' : 'Pokaż szczegóły')}</span>
               <span className="block text-sm leading-5 text-text-muted">
-                {t(nonAgri ? 'Postęp analizy' : 'Faza uprawy, woda w glebie, nawadnianie, gleba, postęp analizy')}
+                {t(
+                  nonAgri
+                    ? 'Postęp analizy'
+                    : irrigationPracticed(crop)
+                      ? 'Faza uprawy, woda w glebie, nawadnianie, gleba, postęp analizy'
+                      : 'Faza uprawy, woda w glebie, gleba, postęp analizy',
+                )}
               </span>
             </span>
             <ChevronDown className={cn('size-5 shrink-0 text-text-muted transition-transform', showDetails && 'rotate-180')} aria-hidden />
@@ -242,7 +249,7 @@ export function ParcelPanel({
             <div className="space-y-3 border-t p-3">
               {analysis && !nonAgri && <CropSeasonCard season={analysis.crop_season} analysisDate={analysis.analysis_date} />}
               {analysis && !nonAgri && <SoilWaterCard state={analysis.soil_water} />}
-              {analysis && !nonAgri && <IrrigationCard plan={analysis.irrigation} />}
+              {analysis && !nonAgri && irrigationPracticed(analysis.crop) && <IrrigationCard plan={analysis.irrigation} />}
               {analysis && !nonAgri && <SoilCard soil={analysis.soil} />}
               <div className="rounded-xl border bg-surface p-3.5">
                 <p className="text-sm font-medium">{t('Postęp analizy')}</p>

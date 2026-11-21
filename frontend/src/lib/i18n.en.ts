@@ -665,4 +665,6 @@ export const EN: Record<string, string> = {
   'albo kliknij swoje pole na mapie': 'or click your field on the map',
   // ekran powitalny
   'Numer działki, np. Szczytno 112/11': 'Parcel number, e.g. Szczytno 112/11',
+  // bez nawadniania dla zbóż i rzepaku
+  'Faza uprawy, woda w glebie, gleba, postęp analizy': 'Crop stage, soil water, soil, analysis progress',
 }

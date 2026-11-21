@@ -4,6 +4,7 @@ import { IrrigationCard } from '@/features/parcel-panel/IrrigationCard'
 import { RecommendationWhy } from '@/features/parcel-panel/RecommendationWhy'
 import { REC_CATEGORY } from '@/theme/recommendations'
 import { useLang } from '@/lib/i18n'
+import { irrigationPracticed } from '@/lib/crops'
 import { PassportSection } from './PassportSection'
 
 const ORDER: RecommendationCategory[] = ['retencja', 'agrotechnika', 'nawadnianie']
@@ -17,12 +18,16 @@ const MAX = 5
  */
 export function SectionD({ analysis, onShowOnMap }: { analysis: AnalysisResponse; onShowOnMap?: (g: GeoJSON.Geometry) => void }) {
   const { t } = useLang()
+  // zboża i rzepak: bez grupy „Nawadnianie” (karty, dawek i zaleceń) – zostaje retencja i uprawa
+  const irrigation = irrigationPracticed(analysis.crop)
+  const groups = irrigation ? ORDER : ORDER.filter((c) => c !== 'nawadnianie')
   const sorted = [...analysis.recommendations]
+    .filter((r) => r.category !== 'nawadnianie' || irrigation)
     .sort((a, b) => ORDER.indexOf(a.category) - ORDER.indexOf(b.category) || (b.priority ?? 0) - (a.priority ?? 0))
     .slice(0, MAX)
   return (
     <PassportSection id="pass-d" letter="D" title={t('Co mogę zrobić?')}>
-      {ORDER.map((cat) => {
+      {groups.map((cat) => {
         const recs = sorted.filter((r) => r.category === cat)
         const Icon = REC_CATEGORY[cat].icon
         return (

@@ -22,6 +22,7 @@ _Stan na: 2026-11-21_
 1. Widok 3D (SPEC 8, P3) – na końcu.
 
 ## Blokery / pytania do drugiej osoby
+- A: pole `irrigation_practice` (np. `"not_practiced"` dla zbóż i rzepaku) w odpowiedzi analizy – frontend ma na razie listę lokalną (`lib/crops.ts` `IRRIGATION_NOT_PRACTICED`); gdzie będzie pole (np. `crop_season` / `irrigation`)?
 - A: `/api/parcel` 404 dla 4 działek testowych z `.ai/test-parcels.md` (szczegóły w dzienniku B10) – przykłady używają na razie tylko działających (6/1 Wnory-Wandy, 112/11 Szczytno).
 - A: zgłoszenia rowów (`/api/infra-reports`, `/confirm`, `/letter`) i raport PDF (`/api/report.pdf`) – frontend gotowy, czeka na endpointy (dziś 501/404). Pole na zdjęcie w `InfraReportIn`? (dziś zdjęcie zostaje na urządzeniu).
 - A: format obiektów warstw (`features[].properties`: `kind`, `color`, `label`) – propozycja w dzienniku B8; frontend rysuje już dane z `/api/layers`, czeka na endpoint (dziś 501).

@@ -3,6 +3,7 @@ import type { AnalysisResponse } from '@/api/types'
 import { DashboardCard as Card } from '@/components/DashboardCard'
 import { NoDataNote as NoData } from '@/components/NoDataNote'
 import { useLang } from '@/lib/i18n'
+import { irrigationPracticed } from '@/lib/crops'
 
 type Alert = { icon: LucideIcon; text: string; tone: string }
 
@@ -27,7 +28,7 @@ export function AlertsCard({ analysis }: { analysis: AnalysisResponse | null }) 
       text: t('Działka {numer} – {what}', { numer, what: t(risk.note ?? risk.label ?? '') }),
       tone: risk.status === 'warn' ? 'text-amber' : 'text-danger',
     })
-  if (analysis.irrigation.status === 'zalecane')
+  if (analysis.irrigation.status === 'zalecane' && irrigationPracticed(analysis.crop))
     alerts.push({ icon: ShowerHead, text: t('Działka {numer} – nawadnianie: {what}', { numer, what: t(analysis.irrigation.message) }), tone: 'text-water' })
 
   return (

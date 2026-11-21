@@ -4,6 +4,11 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-21 · `b/frontend` · B16: bez nawadniania dla zbóż i rzepaku
+**Co:** dla upraw, których w Polsce się nie nawadnia (zboża ozime, zboża jare, rzepak, rzepak jesień) – całkowicie bez `IrrigationCard` (panel – szczegóły, paszport D), bez zaleceń kategorii nawadnianie (panel i paszport – bez nagłówka „Nawadnianie”), bez alertu nawadniania; zwolnione miejsce w „Co zrobić?” zajmują zalecenia retencji (potem uprawy) spoza `in_panel`. Kukurydza i pozostałe – bez zmian. Pole `irrigation_practice` nie istnieje jeszcze w kontrakcie → lista lokalna `IRRIGATION_NOT_PRACTICED` w `lib/crops.ts`, do podmiany na pole z odpowiedzi. Sprawdzone na prawdziwym `/api/analysis` (6/1, 15.07.2018: zboża ozime vs kukurydza na ziarno).
+**Pliki:** `frontend/src/lib/{crops,i18n.en}.ts`, `frontend/src/features/parcel-panel/{ParcelPanel,WhatToDo}.tsx`, `frontend/src/features/passport/SectionD.tsx`, `frontend/src/layout/cards/AlertsCard.tsx`.
+**Kontrakt API:** nie.
+
 ## 2026-11-21 · `b/frontend` · B15: ekran powitalny – tylko mapa i logo, reszta po wyborze działki
 **Co:** przed wyborem działki (komputer i telefon) widać tylko mapę pól z bliska (okolice działki z „Susza 2018”, zoom 14→15, powolny przelot 14 s – wyłączony przy `prefers-reduced-motion`) z miękką winietą i kartę powitalną (wjazd z dołu): logo, „Wodoskop”, hasło, wyszukiwarka (krótsza podpowiedź), „Moja lokalizacja”, „albo kliknij swoje pole na mapie”, pigułki „Zobacz przykład” (demo dla jury, 1 klik) i dyskretne linki Moje działki · Raporty · Ustawienia. Schowane do czasu wyboru działki: lewy pasek / dolne zakładki, górny pasek, pigułki warstw, kontrolki mapy, legenda, panel, karty. Po wyborze (wyszukanie, klik w mapę, lokalizacja, przykład) interfejs pojawia się łagodnie (`ui-appear`, sama przezroczystość). Bez poziomego przewijania (1440 / 390 px).
 **Pliki:** `frontend/src/features/intro/IntroHero.tsx`, `frontend/src/features/map/ParcelMap.tsx` (`IntroView`), `frontend/src/features/search/SearchBar.tsx` (`placeholder`), `frontend/src/pages/Start.tsx`, `frontend/src/theme/index.css`, `frontend/src/lib/i18n.en.ts`.

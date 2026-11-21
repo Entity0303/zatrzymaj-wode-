@@ -1,6 +1,7 @@
 import type { AnalysisResponse, RecommendationCategory } from '@/api/types'
 import { RecommendationCard } from '@/components/RecommendationCard'
 import { useLang } from '@/lib/i18n'
+import { irrigationPracticed } from '@/lib/crops'
 import { RecommendationWhy } from './RecommendationWhy'
 
 const ORDER: RecommendationCategory[] = ['retencja', 'agrotechnika', 'nawadnianie']
@@ -17,13 +18,16 @@ export function WhatToDo({
   const { t } = useLang()
   if (analysis?.recommendations.length) {
     // backend wskazuje, co pokazać w panelu (`in_panel`, po jednej z kategorii); bez flag – wg priorytetu
-    const all = analysis.recommendations
+    // zboża i rzepak: w Polsce się ich nie nawadnia – bez zaleceń nawadniania, zamiast nich retencja
+    const all = analysis.recommendations.filter((r) => r.category !== 'nawadnianie' || irrigationPracticed(analysis.crop))
+    const byOrder = (a: (typeof all)[number], b: (typeof all)[number]) =>
+      ORDER.indexOf(a.category) - ORDER.indexOf(b.category) || (b.priority ?? 0) - (a.priority ?? 0)
     const flagged = all.filter((r) => r.in_panel)
-    const recs = [...(flagged.length ? flagged : all)]
-      .sort(
-        (a, b) => ORDER.indexOf(a.category) - ORDER.indexOf(b.category) || (b.priority ?? 0) - (a.priority ?? 0),
-      )
+    // wolne miejsce po nawadnianiu: najpierw retencja, potem uprawa (spoza wyboru `in_panel`)
+    const fill = all.filter((r) => !r.in_panel).sort(byOrder)
+    const recs = (flagged.length ? [...flagged.sort(byOrder), ...fill] : [...all].sort(byOrder))
       .slice(0, 3) // panel: maks. 3 (SPEC 6.5); pełna lista w paszporcie
+      .sort(byOrder)
     return (
       <div className="space-y-3">
         {recs.map((r) => (
