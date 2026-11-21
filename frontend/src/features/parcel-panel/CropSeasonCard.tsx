@@ -7,6 +7,15 @@ import { useLang } from '@/lib/i18n'
 
 const DAY = 86_400_000
 
+/** Prosta odznaka dla faz poza okresem wrażliwym. */
+const PHASE_BADGE: Partial<Record<CropSeason['phase'], string>> = {
+  przed_siewem: 'przed siewem',
+  wschody_jesienne: 'jesienne wschody',
+  spoczynek_zimowy: 'zimowy odpoczynek',
+  dojrzewanie: 'zbliża się zbiór',
+  po_zbiorze: 'po zbiorze',
+}
+
 /**
  * Faza uprawy w dacie analizy (kontrakt `crop_season`): faza, dzień sezonu, pasek siew → zbiór,
  * głębokość korzeni, czy faza jest wrażliwa na brak wody. Terminy to typowy kalendarz w Polsce (D31).
@@ -30,15 +39,15 @@ export function CropSeasonCard({ season, analysisDate }: { season: CropSeason; a
         <div className="min-w-0 flex-1">
           <p className="text-sm leading-5 text-text-muted">{t('Faza uprawy')}</p>
           <p className="text-base leading-6 font-semibold first-letter:uppercase">{t(season.phase_label)}</p>
+          <span
+            className={cn(
+              'mt-1 inline-block rounded-full px-2 py-0.5 text-xs leading-4 font-medium',
+              season.sensitive ? 'bg-warn-soft text-[#875a12]' : 'bg-surface-2 text-text-muted',
+            )}
+          >
+            {t(season.sensitive ? 'teraz najbardziej potrzebuje wody' : (PHASE_BADGE[season.phase] ?? 'brak wody mniej szkodzi'))}
+          </span>
         </div>
-        <span
-          className={cn(
-            'shrink-0 rounded-full px-2 py-0.5 text-xs leading-4 font-medium',
-            season.sensitive ? 'bg-warn-soft text-[#8a6a00]' : 'bg-surface-2 text-text-muted',
-          )}
-        >
-          {t(season.sensitive ? 'wrażliwa na brak wody' : 'mało wrażliwa')}
-        </span>
       </div>
 
       <div className="mt-3">

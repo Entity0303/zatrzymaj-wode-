@@ -37,7 +37,7 @@ export function MobileSheetHeader({
           <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-ok-soft text-brand">
             <Leaf className="size-5" aria-hidden />
           </span>
-          <h2 className="min-w-0 flex-1 truncate text-[22px] leading-7 font-semibold">{t('Działka {numer}', { numer: parcel.numer })}</h2>
+          <h2 className="font-display min-w-0 flex-1 truncate text-2xl leading-8 font-semibold">{t('Działka {numer}', { numer: parcel.numer })}</h2>
           <span className="tabular shrink-0 text-lg font-semibold" title={t('Pomiar – z granic działki w ewidencji (ULDK GUGiK)')}>
             {formatHa(parcel.powierzchnia_ha)} ha
           </span>
@@ -84,12 +84,12 @@ export function MobileSheetHeader({
         <p className="mb-2.5 flex items-center gap-2.5">
           <LogoMark className="size-9 shrink-0" />
           <span className="min-w-0">
-            <span className="block text-base leading-5 font-bold tracking-tight text-brand">{BRAND_NAME}</span>
+            <span className="font-display block text-lg leading-5 font-bold text-brand">{BRAND_NAME}</span>
             <span className="block text-sm leading-5 text-text-muted">{t(BRAND_TAGLINE)}</span>
           </span>
         </p>
       )}
-      <h2 className="text-lg leading-6 font-semibold">{title}</h2>
+      <h2 className="font-display text-xl leading-7 font-semibold">{title}</h2>
       <p className="text-sm leading-5 text-text-muted">{sub}</p>
     </div>
   )

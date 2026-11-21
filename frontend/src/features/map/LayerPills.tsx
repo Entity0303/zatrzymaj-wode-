@@ -19,7 +19,7 @@ export function LayerPills({ value, onChange, className }: { value: LayerKey; on
             onClick={() => onChange(l.key)}
             className={cn(
               'flex h-10 shrink-0 items-center gap-2 rounded-full border px-4 text-sm font-medium whitespace-nowrap shadow-float transition-colors',
-              active ? 'border-brand bg-ok-soft text-brand' : 'border-transparent bg-surface text-text hover:bg-surface-2',
+              active ? 'border-brand bg-sage-soft text-brand-dark' : 'border-transparent bg-surface text-text hover:bg-surface-2',
             )}
           >
             <Icon className="size-[18px]" aria-hidden />

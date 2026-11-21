@@ -19,7 +19,7 @@ export function SoilCard({ soil }: { soil: Soil }) {
           <Layers className="size-[18px]" aria-hidden />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-sm leading-5 text-text-muted">{t('Kategoria gleby (IUNG)')}</p>
+          <p className="text-sm leading-5 text-text-muted">{t('Rodzaj gleby')}</p>
           <p className="text-base leading-6 font-semibold">{soil.dominant_label ? t(soil.dominant_label) : t('Brak danych')}</p>
         </div>
       </div>
@@ -36,6 +36,14 @@ export function SoilCard({ soil }: { soil: Soil }) {
           )}
         </span>
       </div>
+
+      {soil.wod_mm != null && (
+        <p className="mt-1 text-sm leading-5 text-text-muted">
+          {t('To {n} litrów wody na każdy metr kwadratowy – gleba działa jak gąbka, którą napełnia deszcz.', {
+            n: formatNum(soil.wod_mm, 0),
+          })}
+        </p>
+      )}
 
       {shares.length > 0 && (
         <div className="mt-3">
@@ -58,10 +66,10 @@ export function SoilCard({ soil }: { soil: Soil }) {
 
       <p className="mt-2 text-sm leading-5 text-text-muted">
         {soil.classes?.length
-          ? t('Klasy bonitacyjne: {list}', { list: soil.classes.join(', ') })
+          ? t('Klasy gleby w ewidencji: {list}', { list: soil.classes.join(', ') })
           : soil.classes_note
             ? t(soil.classes_note)
-            : t('Klasy bonitacyjne: brak danych')}
+            : t('Klasy gleby w ewidencji: brak danych')}
       </p>
 
       <div className="mt-2.5">

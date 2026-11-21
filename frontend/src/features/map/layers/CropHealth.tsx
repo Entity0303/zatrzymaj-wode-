@@ -13,7 +13,7 @@ const CropHealth: MapLayer = {
   icon: Leaf,
   legend: {
     kind: 'gradient',
-    colors: ['#C8453B', '#E8B931', '#5BB37F', '#1F4D33'],
+    colors: ['#C0473C', '#E2A23B', '#5F9F63', '#1F4230'],
     left: 'Słaba roślinność',
     right: 'Bujna',
     extra: { color: '#FFFFFF', label: 'Chmury' },

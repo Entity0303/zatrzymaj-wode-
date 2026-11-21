@@ -18,7 +18,7 @@ export function StatusCard({ crop, analysis }: { crop: CropId | null; analysis?:
       </span>
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
-          <p className="text-lg leading-6 font-semibold">{t('Brak danych – analiza w budowie')}</p>
+          <p className="font-display text-xl leading-7 font-semibold">{t('Brak danych – analiza w budowie')}</p>
         </div>
         <p className="mt-0.5 text-sm leading-5 text-text-muted">
           {t(
@@ -45,7 +45,7 @@ function AnalysisStatusCard({ analysis }: { analysis: AnalysisResponse }) {
         <Icon className="size-6" aria-hidden />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-lg leading-6 font-semibold">{t(headline)}</p>
+        <p className="font-display text-xl leading-7 font-semibold">{t(headline)}</p>
         <p className="mt-0.5 text-sm leading-5 text-text">{t(summary)}</p>
         <StatusBadge status={level} size="sm" className="mt-2" />
       </div>

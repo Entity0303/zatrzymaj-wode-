@@ -7,6 +7,7 @@ import { FieldIllustration } from '@/components/FieldIllustration'
 import { LoadingSteps, type Step } from '@/components/LoadingSteps'
 import { SourceTag } from '@/components/SourceTag'
 import { Button } from '@/components/ui/button'
+import { WaveDivider } from '@/components/WaveDivider'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { formatDatePl } from '@/lib/format'
 import { AnalysisLoading } from './AnalysisLoading'
@@ -156,11 +157,13 @@ export function ParcelPanel({
       )}
       {!nonAgri && (
         <>
+          <WaveDivider />
           <section className="space-y-3">
             <SectionTitle>{t('Kluczowe wskaźniki')}</SectionTitle>
             <Metrics analysis={analysis} />
             {analysis && <SoilWaterCard state={analysis.soil_water} />}
           </section>
+          <WaveDivider />
           <section className="space-y-3">
             <SectionTitle>{t('Co zrobić?')}</SectionTitle>
             <WhatToDo analysis={analysis} />
@@ -168,6 +171,7 @@ export function ParcelPanel({
           </section>
         </>
       )}
+      {analysis && <WaveDivider />}
       {analysis && (
         <section className="space-y-3">
           <SectionTitle>{t('Gleba')}</SectionTitle>

@@ -11,7 +11,7 @@ const TONE: Record<Tone, string> = {
   water: 'bg-water-soft text-water',
   brand: 'bg-ok-soft text-brand',
   earth: 'bg-surface-2 text-earth',
-  warn: 'bg-warn-soft text-[#8a6a00]',
+  warn: 'bg-warn-soft text-[#875a12]',
   danger: 'bg-danger-soft text-danger',
   muted: 'bg-surface-2 text-text-muted',
 }

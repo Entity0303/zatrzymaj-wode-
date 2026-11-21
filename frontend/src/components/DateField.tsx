@@ -25,7 +25,7 @@ export function DateField({
         bare && 'rounded-none bg-transparent shadow-none',
       )}
     >
-      <CalendarDays className="size-5 shrink-0 text-brand" aria-hidden />
+      <CalendarDays className="size-5 shrink-0 text-amber" aria-hidden />
       <span className={cn('text-sm whitespace-nowrap text-text-muted', compact ? 'max-[419px]:hidden' : 'hidden xl:inline')}>
         {t('Data analizy')}
       </span>

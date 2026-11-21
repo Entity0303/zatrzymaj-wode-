@@ -4,6 +4,11 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-21 · `b/frontend` · B4: wygląd „otwarte pole”, prosty język, poprawki telefonu
+**Co:** paleta: szałwia, leśna zieleń, kremowe tło, bursztyn (akcenty), grafit zamiast czerni – przez tokeny `theme/index.css` (nazwy tokenów bez zmian, nowe: `sage`, `amber`, `font-display`). Nagłówki szeryfem Fraunces (osobny commit z `package.json`), dane i liczby dalej Inter. `WaveDivider` – falista linia między sekcjami panelu. Nowa ilustracja pola w słońcu (bez zdjęć – brak licencjonowanych). Prosty język: „Rodzaj gleby”, „1 mm wody = 1 litr na m²”, gleba „jak gąbka”, woda w glebie „jak bak”, klasy „w ewidencji”, odznaki faz („teraz najbardziej potrzebuje wody”, „zbliża się zbiór”…). Poprawki: legenda na telefonie tylko przy zwiniętej szufladzie (zasłaniała działkę), etykiety pochodzenia zawijają się zamiast „Szacunek model...”, lewy pasek 104 px, napis DANE PRZYKŁADOWE pod pigułkami. Sprawdzone zrzutami (telefon 390 px, komputer 1440 px).
+**Pliki:** `frontend/src/theme/{index.css,status.ts}`, `frontend/src/components/{WaveDivider,FieldIllustration,LogoMark,SourceTag,DateField,MetricCard}.tsx`, `frontend/src/features/parcel-panel/*`, `frontend/src/features/map/{LayerPills,ParcelMap,layers/CropHealth}.tsx`, `frontend/src/layout/Sidebar.tsx`, `frontend/src/pages/Start.tsx`, `frontend/src/lib/i18n.en.ts`.
+**Kontrakt API:** nie.
+
 ## 2026-11-21 · `b/frontend` · merge `origin/a/backend` (A4: pełne /api/analysis)
 **Co:** scalone A4 (ocena, pewność, przyczyny, silnik reguł, pełne `/api/analysis`; mock = prawdziwa odpowiedź). Konflikt w `.ai/decisions.md` – A zajęła D35–D39, przełącznik języka przenumerowany na **D40** (wcześniej D30 → D35). Kontrakt: `Recommendation.priority`, `in_panel` – panel pokazuje rekomendacje z `in_panel` (po jednej z kategorii), w kolejności retencja → agrotechnika → nawadnianie, w kategorii wg `priority`. Weryfikacja: `npm run build`, `pytest` 150 passed.
 **Pliki:** `.ai/decisions.md`, `frontend/src/features/parcel-panel/WhatToDo.tsx`, odwołania D40 (`i18n.ts`, `i18n.en.ts`, `LanguageProvider`, `LanguageToggle`, status B) + pliki A z merge.

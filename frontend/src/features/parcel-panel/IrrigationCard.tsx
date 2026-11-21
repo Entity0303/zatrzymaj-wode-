@@ -44,13 +44,13 @@ export function IrrigationCard({ plan }: { plan: IrrigationPlan }) {
       {showPlan && (
         <dl className="mt-3 grid grid-cols-3 gap-2 text-center">
           <div className="rounded-lg bg-water-soft/60 px-1 py-2">
-            <dt className="text-xs leading-4 text-text-muted">{t('Dawka')}</dt>
+            <dt className="text-xs leading-4 text-text-muted">{t('Ile wody')}</dt>
             <dd className="tabular text-lg leading-6 font-semibold">
               {formatNum(plan.dose_mm!, plan.dose_mm! % 1 ? 1 : 0)} <span className="text-sm font-medium text-text-muted">mm</span>
             </dd>
           </div>
           <div className="rounded-lg bg-water-soft/60 px-1 py-2">
-            <dt className="text-xs leading-4 text-text-muted">{t('Pierwsza')}</dt>
+            <dt className="text-xs leading-4 text-text-muted">{t('Kiedy')}</dt>
             <dd className="tabular text-lg leading-6 font-semibold" title={plan.first_date ? formatDatePl(plan.first_date) : undefined}>
               {plan.first_date ? formatDayMonth(plan.first_date) : '—'}
             </dd>

@@ -27,7 +27,7 @@ export function NonAgriculturalCard({ soil }: { soil: Soil }) {
         <Icon className="size-6" aria-hidden />
       </span>
       <div className="min-w-0">
-        <p className="text-lg leading-6 font-semibold">{t('To nie jest grunt rolny')}</p>
+        <p className="font-display text-xl leading-7 font-semibold">{t('To nie jest grunt rolny')}</p>
         <p className="mt-0.5 text-sm leading-5">{soil.non_agricultural_note ? t(soil.non_agricultural_note) : fallback}</p>
         <p className="mt-2 text-sm leading-5 text-text-muted">
           {t('Możesz wyszukać inną działkę albo kliknąć pole uprawne na mapie.')}

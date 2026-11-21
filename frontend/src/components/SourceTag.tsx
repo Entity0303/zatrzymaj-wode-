@@ -35,13 +35,13 @@ export function SourceTag({
     <span
       title={title}
       className={cn(
-        'inline-flex max-w-full items-center gap-1 rounded-full px-2 py-0.5 text-xs leading-4 font-medium',
+        'inline-flex max-w-full items-start gap-1 rounded-[10px] px-2 py-0.5 text-xs leading-4 font-medium',
         k.cls,
         className,
       )}
     >
-      <Icon className="size-3 shrink-0" aria-hidden />
-      <span className="truncate">
+      <Icon className="mt-0.5 size-3 shrink-0" aria-hidden />
+      <span className="min-w-0 [overflow-wrap:anywhere]">
         {t(k.label)}
         {date ? ` · ${date}` : ''}
       </span>

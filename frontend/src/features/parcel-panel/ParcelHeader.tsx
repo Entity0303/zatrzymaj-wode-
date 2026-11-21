@@ -24,7 +24,7 @@ export function ParcelHeader({
         <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-ok-soft text-brand">
           <Leaf className="size-5" aria-hidden />
         </span>
-        <h2 className="min-w-0 flex-1 text-[22px] leading-7 font-semibold break-words">{t('Działka {numer}', { numer: parcel.numer })}</h2>
+        <h2 className="font-display min-w-0 flex-1 text-2xl leading-8 font-semibold break-words">{t('Działka {numer}', { numer: parcel.numer })}</h2>
         <Tooltip>
           <TooltipTrigger asChild>
             <span tabIndex={0} className="tabular shrink-0 text-base leading-6 font-medium text-text-muted">

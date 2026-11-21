@@ -384,7 +384,7 @@ export default function Start() {
 
           {/* telefon: przy pełnej szufladzie napis zasłaniałby nagłówek działki */}
           {mock && !(isMobile && snap === 'full') && (
-            <div className="pointer-events-none absolute top-[116px] right-16 left-3 z-[1450] flex justify-start md:inset-x-0 md:top-[76px] md:justify-center md:px-3">
+            <div className="pointer-events-none absolute top-[116px] right-16 left-3 z-[1450] flex justify-start md:inset-x-0 md:top-[132px] md:justify-center md:px-3">
               <SampleDataBanner />
             </div>
           )}
@@ -409,7 +409,8 @@ export default function Start() {
           />
 
           {/* ── legenda aktywnej warstwy (SPEC 5.3) ── */}
-          {(!isMobile || snap !== 'full') && (
+          {/* telefon: tylko przy zwiniętej szufladzie – wyżej zasłaniałaby działkę na małym kawałku mapy */}
+          {(!isMobile || snap === 'collapsed') && (
             <LegendCard
               title={legend.label}
               legend={legend.legend}

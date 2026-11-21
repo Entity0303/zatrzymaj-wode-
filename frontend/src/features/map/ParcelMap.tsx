@@ -84,7 +84,7 @@ const numberIcon = (n: number) =>
     className: '',
     iconSize: [32, 32],
     iconAnchor: [16, 16],
-    html: `<div style="width:32px;height:32px;border-radius:9999px;background:#2F6B47;border:2px solid #fff;color:#fff;font:600 14px/28px 'Inter Variable',system-ui,sans-serif;text-align:center;box-shadow:0 2px 8px rgb(30 42 35/.35)">${n}</div>`,
+    html: `<div style="width:32px;height:32px;border-radius:9999px;background:#2E5B3F;border:2px solid #fff;color:#fff;font:600 14px/28px 'Inter Variable',system-ui,sans-serif;text-align:center;box-shadow:0 2px 8px rgb(30 42 35/.35)">${n}</div>`,
   })
 
 const anchorIcon = L.divIcon({ className: '', iconSize: [0, 0] })
@@ -207,7 +207,7 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
           center={[pendingPoint[1], pendingPoint[0]]}
           radius={8}
           interactive={false}
-          pathOptions={{ color: '#FFFFFF', weight: 3, fillColor: '#2F6B47', fillOpacity: 1 }}
+          pathOptions={{ color: '#FFFFFF', weight: 3, fillColor: '#2E5B3F', fillOpacity: 1 }}
         />
       )}
       {userPoint && (

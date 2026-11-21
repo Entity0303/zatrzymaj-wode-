@@ -39,7 +39,8 @@ function AnalysisMetrics({ analysis }: { analysis: AnalysisResponse }) {
   const { t } = useLang()
   const { soil_water_pct: water, risk_7d: risk, crop_health: health, water_balance_season: balance } = analysis.indicators
   return (
-    <div className="grid grid-cols-2 gap-3">
+    <div className="space-y-2">
+      <div className="grid grid-cols-2 gap-3">
       <MetricCard
         icon={Droplets}
         title="Woda w glebie"
@@ -50,9 +51,12 @@ function AnalysisMetrics({ analysis }: { analysis: AnalysisResponse }) {
         sourceDate={tagDate(water)}
       >
         {water.value !== null && (
-          <div className="h-1.5 overflow-hidden rounded-full bg-surface-2" aria-hidden>
-            <div className="h-full rounded-full bg-water" style={{ width: `${Math.max(0, Math.min(100, water.value))}%` }} />
-          </div>
+          <>
+            <div className="h-1.5 overflow-hidden rounded-full bg-surface-2" aria-hidden>
+              <div className="h-full rounded-full bg-water" style={{ width: `${Math.max(0, Math.min(100, water.value))}%` }} />
+            </div>
+            <p className="text-sm leading-5 text-text-muted">{t('jak bak: tyle zapasu wody mają rośliny')}</p>
+          </>
         )}
       </MetricCard>
       <MetricCard
@@ -93,6 +97,8 @@ function AnalysisMetrics({ analysis }: { analysis: AnalysisResponse }) {
       >
         {balance.note && <p className="text-sm leading-5 text-text-muted">{t(balance.note)}</p>}
       </MetricCard>
+      </div>
+      <p className="text-xs leading-4 text-text-muted">{t('1 mm wody = 1 litr na każdy metr kwadratowy pola.')}</p>
     </div>
   )
 }

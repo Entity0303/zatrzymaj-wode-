@@ -32,7 +32,7 @@ export function CropField({ crop, onChange }: { crop: CropId | null; onChange: (
           ))}
         </SelectContent>
       </Select>
-      {!crop && <p className="mt-1.5 text-sm text-[#7a5d00]">{t('Wybierz, co rośnie na tej działce')}</p>}
+      {!crop && <p className="mt-1.5 text-sm text-[#875a12]">{t('Wybierz, co rośnie na tej działce')}</p>}
     </div>
   )
 }
