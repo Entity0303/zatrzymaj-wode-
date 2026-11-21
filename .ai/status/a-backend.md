@@ -1,6 +1,6 @@
 # Status – osoba A (Dominik), backend
 
-_Stan na: 2026-11-22 00:30_
+_Stan na: 2026-11-22 01:10_
 
 ## Zrobione
 - Wyszukiwanie działki ULDK: pełny identyfikator, „obręb numer”, punkt; `GET /api/parcel` (409 lista kandydatów, 404, 502 z nazwą źródła), timeout 10 s + jedna ponowna próba, cache 24 h.
@@ -48,10 +48,11 @@ _Stan na: 2026-11-22 00:30_
   - ranking: uprawy wieloletnie osobno (`suggestions.perennials`), kukurydza – status `informacyjne` (D67); kompleks przydatności rozstrzyga przydatność gleby (D70);
   - analiza po punkcie `lon`/`lat` – obszar przybliżony 1 ha, gdy ULDK nie odpowiada (`analysis/approx_area.py`, D69); test słabej ziemi: Puszcza Notecka i Kurpie – ❌ pszenica, rzepak; ✅ żyto, łubin (owies ❌ – D70);
   - PDF: str. 1 „Werdykt”, str. 2 „Co tu posiać?”, maks. 6 stron (D71); przykłady i PNG pierwszych stron: `reports/examples/{dobra,slaba}-*-p1.png`.
-- Testy: **340 bez sieci** (`docker run --network none`) + 5 live. Analiza z cache: 0,04–0,2 s; PDF 1–2 s (punkt przy blokadzie ULDK ~5 s – ponowienia ULDK).
+- **A5b-2c:** nazwa „Wodoskop” w PDF i API, bez QR (włącza `PUBLIC_URL`), „woda” w werdykcie = `info`, PDF obszaru przybliżonego bez komunikatów technicznych (D72).
+- Testy: **343 bez sieci** (`docker run --network none`) + 5 live. Analiza z cache: 0,04–0,2 s; PDF 1–2 s (punkt przy blokadzie ULDK ~5 s – ponowienia ULDK).
 
 ## W trakcie (gałąź)
-- `a/backend` – A5b-2b gotowe (commit + push); **do `main` nie mergowane**.
+- `a/backend` – A5b-2b i A5b-2c gotowe (commit + push); **do `main` nie mergowane**.
 
 ## Przed prezentacją (na dobrej sieci; w Git Bash poprzedź komendy `MSYS_NO_PATHCONV=1`)
 1. `docker compose up -d --build` – backend z wolumenem cache (`/data/cache.sqlite`).
@@ -80,6 +81,7 @@ _Stan na: 2026-11-22 00:30_
 - B: obraz kontenera frontendu nie ma `@fontsource-variable/fraunces` – `docker compose build frontend`.
 - **B (A5b-2a): ranking „Co tu posiać?”, pola historii 1–3 lat i powierzchni** – `contract-changes.md`, wpis A5b-2a „Dla Mefju”.
 - **B (A5b-2b): karta „Werdykt” na samej górze panelu, pasek stref, oznaczenie obszaru przybliżonego, klik na mapie → `?lon=&lat=`, sekcja wieloletnich, status `informacyjne`** – `contract-changes.md`, wpis A5b-2b „Dla Mefju”.
+- **B (A5b-2c): pozycja `woda` w werdykcie ma `level = info` (kropla #2F80C9); nie pokazywać `approximate_area.reason`** – `contract-changes.md`.
 - **B (A6): pasek stref terenu, warstwy Teren i Spływ wody** – `contract-changes.md`, wpis A6 „Dla Mefju” (kolory, `kind`, dymki); w Terrain.tsx zmienić kolory stoku i płasko na #E8B931 i #5BB37F.
 - **B: przykłady na ekranie startowym brać z `GET /api/demo/examples`** – w trybie offline i przy blokadzie ULDK backend zwraca tylko przykłady, które działają (dziś: Susza 2018, Mokry rok 2021); lista lokalna pokaże jury przykłady, które skończą się błędem.
 - Wcześniejsze prośby A5 (pola rekomendacji, gleba, `previous_crop`, `/api/demo/examples`, raport PDF) – bez zmian.

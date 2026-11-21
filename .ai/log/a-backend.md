@@ -4,6 +4,11 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-22 01:10 · `a/backend` · A5b-2c: drobne poprawki PDF – nazwa Wodoskop, bez QR, „woda” = info
+**Co:** nazwa produktu „Wodoskop” (nagłówek + podtytuł, stopka, `<title>`, metadane author/generator, tytuł API); QR tylko przy ustawionym `PUBLIC_URL` (domyślnie puste, `.env.example` zakomentowane); werdykt – pozycja `woda` ma `level = info` (ikona kropli #2F80C9 w PDF), poziom całości liczony bez niej; PDF obszaru przybliżonego – tylko nota „brak dokładnych granic działki” (usunięte „ULDK” z noty i ograniczeń, powód techniczny nie trafia do PDF); nowe PNG pierwszych stron. Testy: +3 (343).
+**Pliki:** `core/config.py`, `.env.example`, `main.py`, `analysis/{verdict,approx_area,confidence}.py`, `schemas/analysis.py`, `report/{builder.py,report.css,templates/report.html}`, `tests/test_a5b2b.py`; frontend: `api/types.ts`, mocki.
+**Kontrakt:** TAK (addytywnie) – `VerdictStatement.level` + `info`; wpis w `contract-changes.md`.
+
 ## 2026-11-22 00:30 · `a/backend` · A5b-2b: werdykt działki, spójność gleba × teren, analiza po punkcie, PDF z werdyktem
 **Co:**
 - **1. Werdykt** (`analysis/verdict.py`, `rules/verdict.yaml`, D68): nagłówek + 4–6 zdań, poziomy ok/warn/bad, ✅/❌ uprawy, deterministycznie. 201305 (bez uprawy): „Dobra działka z wilgotnym obniżeniem”; Puszcza Notecka (punkt): „Słaba, sucha działka – siej rośliny odporne na suszę”.
