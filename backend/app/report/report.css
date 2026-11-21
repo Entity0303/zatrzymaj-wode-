@@ -2,7 +2,7 @@
   size: A4 portrait;
   margin: 14mm 13mm 18mm 13mm;
   @bottom-left {
-    content: "Raport ma charakter pomocniczy. Wyniki oparte na danych publicznych – patrz ograniczenia.";
+    content: "Wodoskop · Raport ma charakter pomocniczy. Wyniki oparte na danych publicznych – patrz ograniczenia.";
     font: 7.5pt Inter, sans-serif; color: #5F6B64;
   }
   @bottom-right { content: "str. " counter(page) " / " counter(pages); font: 7.5pt Inter, sans-serif; color: #5F6B64; }
@@ -145,3 +145,6 @@ table.rank.per { font-size: 7.6pt; }
 h1.sub { font-size: 14pt; }
 .charts-small .chart svg { max-height: 120pt; }
 .clabel.ok-l { color: #2F6B47; } .clabel.bad-l { color: #C8453B; }
+.brand { flex-wrap: wrap; }
+.tagline-brand { font-size: 8pt; color: #5F6B64; margin-left: 2pt; }
+.stmt .ico svg { display: block; margin-left: 4.5pt; }

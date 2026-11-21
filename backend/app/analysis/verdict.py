@@ -191,15 +191,13 @@ def crops_statement(sug: CropSuggestions | None, light: bool):
 # ── woda (działania) ────────────────────────────────────────────────────────────────────────
 
 
-def water_statement(recs: list[Recommendation], field_status: OverallStatus | None,
-                    need: str = "ok") -> VerdictStatement:
-    """Poziom = jak pilnie trzeba zatrzymywać wodę: gorszy z (stan wody teraz, opady w 10 latach, gleba)."""
+def water_statement(recs: list[Recommendation]) -> VerdictStatement:
+    """Lista działań – bez oceny: poziom zawsze „info” (A5b-2c)."""
     c, t = cfg()["water"], cfg()["thresholds"]
     # retencja przed agrotechniką; pewne (bez ostrzeżenia) przed tymi „do sprawdzenia na miejscu”
     ret = sorted((r for r in recs if r.category in ("retencja", "agrotechnika")),
                  key=lambda r: (r.category != "retencja", bool(r.warning), not r.in_panel))[: t["water_actions_max"]]
-    now = STATUS_LEVEL.get(field_status.level if field_status else "ok", "warn")
-    level = max(now, need, key=LEVEL_ORDER.get)
+    level = "info"
     if not ret:
         return VerdictStatement(kind="woda", level=level, text=c["none"], numbers={})
     acts = [r.title[:1].lower() + r.title[1:] for r in ret]
@@ -239,8 +237,7 @@ def build(prof: SoilProfile, wod_mm: float | None, w: DailyWeather, last: date, 
     crops, good, bad = crops_statement(sug, prof.group == "lekka")
     if crops:
         sts.append(crops)
-    need = max((s.level for s in sts if s.kind in ("gleba", "opady")), key=LEVEL_ORDER.get, default="ok")
-    sts.append(water_statement(recs, field_status, need))
+    sts.append(water_statement(recs))
     if chosen:
         label, phase, status = chosen
         sts.append(VerdictStatement(kind="uprawa_wybrana", level=STATUS_LEVEL.get(status.level, "warn"),

@@ -16,7 +16,7 @@ from app.sources.uldk import Parcel
 
 SIDE_M = 100.0
 APPROX_PREFIX = "obszar_przyblizony"
-NOTE = "Obszar przybliżony – brak granic działki z ULDK. Analiza dla kwadratu 1 ha wokół wskazanego punktu."
+NOTE = "Obszar przybliżony – brak dokładnych granic działki. Analiza dla kwadratu 1 ha wokół wskazanego punktu."
 # przybliżone środki geometryczne województw (lon, lat)
 VOIVODESHIP_CENTERS = {
     "dolnośląskie": (16.41, 51.09), "kujawsko-pomorskie": (18.49, 53.07), "lubelskie": (22.90, 51.22),

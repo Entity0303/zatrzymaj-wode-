@@ -2,7 +2,10 @@
 <html lang="pl">
 <head>
 <meta charset="utf-8">
-<title>{{ title }} {{ a.parcel.id }}</title>
+<title>Wodoskop – {{ title }} {{ a.parcel.id }}</title>
+<meta name="author" content="Wodoskop">
+<meta name="generator" content="Wodoskop">
+<meta name="description" content="Wodoskop – prześwietl swoją działkę pod kątem suszy">
 <style>{{ css }}</style>
 </head>
 <body>
@@ -13,21 +16,21 @@
     <div>
       <div class="brand">
         <svg width="22" height="26" viewBox="0 0 22 26"><path d="M11 1 C11 1 2 11.5 2 17 a9 9 0 0 0 18 0 C20 11.5 11 1 11 1z" fill="#2F80C9"/><path d="M6 17 q5 4 10 0" stroke="#fff" stroke-width="1.6" fill="none"/></svg>
-        <span class="name">ZATRZYMAJ WODĘ</span>
+        <span class="name">WODOSKOP</span><span class="tagline-brand">prześwietl swoją działkę pod kątem suszy</span>
       </div>
       <div class="p1-title">Werdykt działki</div>
       <div class="p1-parcel">{{ parcel_name }}</div>
       <div class="muted small">{{ parcel_place }} · data analizy {{ a.analysis_date|date_pl }}{% if a.crop %} · uprawa: {{ crop_label }}{% else %} · bez wybranej uprawy{% endif %}</div>
     </div>
-    <div class="qr">{{ qr }}<div class="tiny muted">Zeskanuj – analiza online</div></div>
+    {% if qr %}<div class="qr">{{ qr }}<div class="tiny muted">Zeskanuj – analiza online</div></div>{% endif %}
   </div>
-  {% if a.approximate_area %}<div class="approx">⚠ {{ a.approximate_area.note }} <span class="small">({{ a.approximate_area.reason }})</span></div>{% endif %}
+  {% if a.approximate_area %}<div class="approx">⚠ {{ a.approximate_area.note }}</div>{% endif %}
   {% if v %}
   <div class="headline" style="border-left-color: {{ LV[v.level][1] }}">{{ v.headline }}</div>
   <div class="p1-grid">
     <div class="stmts">
       {% for st in v.statements %}
-      <div class="stmt"><span class="ico" style="background: {{ LV[st.level][1] }}">{{ LV[st.level][0] }}</span>
+      <div class="stmt"><span class="ico" style="background: {{ LV[st.level][1] }}">{% if st.level == 'info' %}<svg width="11" height="13" viewBox="0 0 22 26" style="margin-top:3.5pt"><path d="M11 1 C11 1 2 11.5 2 17 a9 9 0 0 0 18 0 C20 11.5 11 1 11 1z" fill="#fff"/></svg>{% else %}{{ LV[st.level][0] }}{% endif %}</span>
         <div><div class="kind">{{ KIND[st.kind] }}</div><div class="txt">{{ st.text }}</div></div></div>
       {% endfor %}
     </div>

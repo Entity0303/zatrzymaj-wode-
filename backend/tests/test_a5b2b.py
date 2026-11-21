@@ -236,9 +236,10 @@ def test_point_analysis_falls_back_to_approximate_area(client):
     assert r.status_code == 200, r.text
     a = AnalysisResponse.model_validate(r.json())
     assert a.approximate_area is not None and a.approximate_area.area_ha == 1.0
-    assert "brak granic działki z ULDK" in a.approximate_area.note
+    assert "brak dokładnych granic działki" in a.approximate_area.note
     assert a.parcel.id.startswith("obszar_przyblizony")
     assert any("Obszar przybliżony" in x for x in a.reliability.limitations)
+    assert a.verdict is not None and a.verdict.statements[-1].kind == "woda" and a.verdict.statements[-1].level == "info"
     step = next(s for s in a.steps if s.id == "parcel")
     assert "obszar przybliżony" in (step.note or "")
 
@@ -278,3 +279,50 @@ def test_report_pdf_verdict_page_both_variants(client, long_weather, crop):
         assert "WYBRANA UPRAWA" in up
     text = "\n".join(p.extract_text() for p in pages)
     assert "Co tu posiać?" in text and "Uprawy wieloletnie – inwestycja na lata" in text
+
+
+# ── A5b-2c: drobne poprawki PDF ─────────────────────────────────────────────────────────────
+
+
+def test_verdict_water_statement_is_info_not_rated():
+    v, _ = verdict(WEAK, 106.3, **WEAK_CTX)
+    water = next(s for s in v.statements if s.kind == "woda")
+    assert water.level == "info"
+    assert v.level == "bad"  # poziom całości liczy się bez pozycji „woda”
+
+
+def _pdf_text(client, params):
+    r = client.get("/api/report.pdf", params=params)
+    assert r.status_code == 200
+    reader = PdfReader(io.BytesIO(r.content))
+    return reader, " ".join(p.extract_text() for p in reader.pages), r.content
+
+
+@respx.mock
+def test_pdf_brand_no_qr_by_default_and_qr_with_public_url(client, long_weather, monkeypatch):
+    settings.terrain_saved_results = True
+    mock_all()
+    respx.get(settings.ortho_wms_url).mock(return_value=httpx.Response(503))
+    q = {"parcel_id": PID, "date": "2018-11-21"}
+    monkeypatch.setattr(settings, "public_url", "")
+    reader, text, _ = _pdf_text(client, q)
+    assert "WODOSKOP" in text.upper() and "prześwietl swoją działkę pod kątem suszy" in text
+    assert "ZATRZYMAJ WODĘ" not in text and "Zeskanuj" not in text  # nazwa produktu (nie zdanie „zatrzymaj wodę z opadów”)
+    assert "Wodoskop · Raport ma charakter pomocniczy" in " ".join(text.split())
+    meta = reader.metadata
+    assert "Wodoskop" in (meta.title or "") and meta.author == "Wodoskop"
+    monkeypatch.setattr(settings, "public_url", "https://wodoskop.example")
+    _, text2, _ = _pdf_text(client, q)
+    assert "Zeskanuj – analiza online" in " ".join(text2.split())
+
+
+@respx.mock
+def test_pdf_approximate_area_has_no_technical_messages(client, long_weather):
+    mock_all()
+    respx.get(settings.uldk_url).mock(return_value=httpx.Response(302, headers={"location": "https://x/resp"}))
+    respx.get(settings.ortho_wms_url).mock(return_value=httpx.Response(503))
+    _, text, _ = _pdf_text(client, {"lon": 22.6021, "lat": 53.0500, "date": "2018-11-21"})
+    flat = " ".join(text.split())
+    assert "Obszar przybliżony – brak dokładnych granic działki. Analiza dla kwadratu 1 ha wokół wskazanego punktu." in flat
+    for bad in ("ponowna próba", "przekierowanie", "ogranicza ruch", "ULDK GUGiK: usługa"):
+        assert bad not in flat, bad

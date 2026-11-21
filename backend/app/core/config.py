@@ -63,7 +63,7 @@ class Settings(BaseSettings):
     demo_warmup: bool = True
     demo_warmup_interval_h: float = 6.0
     # adres aplikacji w kodzie QR raportu PDF
-    public_url: str = "http://localhost:5173"
+    public_url: str = ""  # PUBLIC_URL – publiczny adres aplikacji; puste = bez kodu QR w raporcie PDF (A5b-2c)
 
 
 settings = Settings()

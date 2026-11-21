@@ -2,7 +2,7 @@
 raport „Stan wodny działki”: gleba, zapas wody pod pokryciem referencyjnym FAO-56, bilans, retencja.
 
 Treść = wynik normalnej analizy (run_analysis) + mapa działki (ortofotomapa Geoportalu, WMS GetMap przycięta do
-obrysu z marginesem) + wykresy SVG (charts.py) + kod QR do analizy online (PUBLIC_URL z .env). Raport nie liczy
+obrysu z marginesem) + wykresy SVG (charts.py) + kod QR do analizy online (tylko gdy ustawiony PUBLIC_URL). Raport nie liczy
 niczego sam – tylko przedstawia wynik analizy.
 """
 
@@ -144,7 +144,7 @@ def zones_overlay(a: AnalysisResponse, bbox: tuple[float, float, float, float], 
     return charts.zones_svg(shapes, px, px)
 
 
-LEVEL = {"ok": ("✓", "#5BB37F"), "warn": ("!", "#E8B931"), "bad": ("✕", "#C8453B")}
+LEVEL = {"ok": ("✓", "#5BB37F"), "warn": ("!", "#E8B931"), "bad": ("✕", "#C8453B"), "info": ("", "#2F80C9")}
 CAT_ICON = {"polecane": ("✓", "#5BB37F"), "mozliwe": ("~", "#E8B931"), "odradzane": ("✕", "#C8453B")}
 KIND_LABEL = {"gleba": "Gleba", "opady": "Opady", "teren": "Teren", "uprawy": "Co siać", "woda": "Woda",
               "uprawa_wybrana": "Wybrana uprawa"}
@@ -221,7 +221,7 @@ def render_html(a: AnalysisResponse, ortho: str | None, generated: dt.datetime |
         "STATUS": STATUS, "CATEGORY": CATEGORY, "PERMIT_ICON": PERMIT_ICON, "SOURCE_ICON": SOURCE_ICON,
         "CONFIDENCE": CONFIDENCE, "RAIN": RAIN,
         "ortho": ortho, "outline": Markup(outline), "map_side_m": round(bbox[2] - bbox[0]),
-        "qr": Markup(qr_svg(url)), "url": url, "url_host": url.split("//", 1)[-1].split("/?")[0],
+        "qr": Markup(qr_svg(url)) if settings.public_url else "", "url": url, "url_host": url.split("//", 1)[-1].split("/?")[0],
         "chart_balance": Markup(charts.balance_chart(h) or ""),
         "chart_stress": Markup(charts.stress_chart(h.stress_days_by_year) or ""),
         "chart_precip": Markup(charts.precip_chart(h.monthly_precip) or ""),

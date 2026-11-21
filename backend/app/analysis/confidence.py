@@ -108,7 +108,7 @@ def premises(i: ConfidenceInputs) -> list[Premise]:
     if i.forecast_ok is None and i.model and i.model.horizon_kind == "scenariusz":
         add("data_historyczna", "data historyczna – ryzyko na 7 dni ze scenariusza typowej pogody")
     if i.approximate:
-        add("obszar_przyblizony", "obszar przybliżony – brak granic działki z ULDK")
+        add("obszar_przyblizony", "obszar przybliżony – brak dokładnych granic działki")
     if i.soil_conflict:
         add("gleba_konflikt", "źródła gleby różnią się – sprawdź glebę na polu")
     if i.soilgrids == "brak":
@@ -213,7 +213,7 @@ def reliability(i: ConfidenceInputs) -> tuple[Reliability, list[Premise], int]:
 
     lim = [stale_text(h) + "." for h in i.stale] + list(i.weather_notes)
     if i.approximate:
-        lim.insert(0, "Obszar przybliżony – brak granic działki z ULDK: gleba i teren dla kwadratu 1 ha wokół punktu, "
+        lim.insert(0, "Obszar przybliżony – brak dokładnych granic działki: gleba i teren dla kwadratu 1 ha wokół punktu, "
                       "województwo (plony GUS) przybliżone.")
     if i.weather_name and not i.weather_fallback:
         lim.insert(0, f"Pogoda uśredniona dla obszaru {i.weather_resolution} ({i.weather_name}).")

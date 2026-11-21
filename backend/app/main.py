@@ -33,7 +33,7 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(
-    title="Zatrzymaj wodę – API",
+    title="Wodoskop – API",
     description="Ocena sytuacji wodnej działki rolnej na podstawie danych publicznych.",
     version="0.2.0",
     lifespan=lifespan,
