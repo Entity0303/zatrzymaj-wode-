@@ -17,7 +17,7 @@ from datetime import datetime, timezone
 import httpx
 from shapely.geometry.base import BaseGeometry
 
-from app.core.cache import TTLCache
+from app.core.cache import TTLCache, cached_fetch
 from app.core.config import settings
 from app.core.geo import parse_wkt, to_wgs84
 from app.core.http import NotFoundError, SourceError, get_client
@@ -28,7 +28,7 @@ _RESULT_FIELDS = ["geom_wkt", "id", "voivodeship", "county", "commune", "region"
 # pełny identyfikator: TERYT gminy (6 cyfr) _ typ (1 cyfra) . obręb (4 cyfry) . numer
 _FULL_ID = re.compile(r"^\d{6}_\d\.\d{4}\.\S+$")
 
-_cache: TTLCache[list["Parcel"]] = TTLCache(ttl_s=24 * 3600, max_items=512)
+_cache: TTLCache[list["Parcel"]] = TTLCache(ttl_s=7 * 24 * 3600, max_items=512, name="ULDK GUGiK")
 
 
 @dataclass
@@ -132,12 +132,11 @@ async def _get(params: dict) -> str:
 async def _query(params: dict) -> list[Parcel]:
     params = {**params, "result": ",".join(_RESULT_FIELDS), "srid": "2180"}
     key = tuple(sorted(params.items()))
-    hit = _cache.get(key)
-    if hit is not None:
-        return hit
-    parcels = parse_response(await _get(params))
-    _cache.set(key, parcels)
-    return parcels
+
+    async def download() -> list[Parcel]:
+        return parse_response(await _get(params))
+
+    return await cached_fetch(_cache, key, SOURCE, download)
 
 
 def clear_cache() -> None:

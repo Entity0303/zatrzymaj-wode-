@@ -8,12 +8,16 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Any
 
-from app.analysis.crops import Crop
+from app.analysis.crops import CROPS, Crop
 from app.analysis.soil import SoilAssessment
 from app.analysis.water_balance import SeasonSums, SoilWaterResult, WaterBalanceResult, format_date_pl
+from app.schemas.analysis import Soil
+from app.sources.soil_map import SANDY
 
 ROMAN = {1: "I", 2: "II", 3: "III", 4: "IV"}
 OFF_SEASON_PHASES = {"przed_siewem", "po_zbiorze", "spoczynek_zimowy", "wschody_jesienne"}
+IN_SEASON_PHASES = {"poczatkowa", "rozwoj", "pelnia", "dojrzewanie"}
+CEREALS = {"zboza_ozime", "zboza_jare"}  # „zboże po zbożu” (D42)
 
 # fakt -> (opis do „Dlaczego?”, jednostka, źródło)
 FACT_META: dict[str, tuple[str, str | None, str]] = {
@@ -40,7 +44,17 @@ FACT_META: dict[str, tuple[str, str | None, str]] = {
     "irrigation_dose_mm": ("Dawka nawadniania", "mm", "Model wody w glebie FAO-56"),
     "irrigation_total_mm": ("Niedobór wody w 7 dniach", "mm", "Model wody w glebie FAO-56"),
     "etc_mm_day": ("Zużycie wody przez uprawę teraz", "mm/dzień", "FAO-56 (Kc × ET0)"),
+    "risk": ("Ryzyko niedoboru wody w 7 dni", None, "Model wody w glebie FAO-56"),
+    "previous_crop_label": ("Uprawa w poprzednim roku", None, "wybór rolnika"),
+    "texture_label": ("Uziarnienie gleby", None, "Mapa glebowo-rolnicza / SoilGrids"),
+    "sand_pct": ("Piasek w glebie (0–30 cm)", "%", "SoilGrids (ISRIC)"),
+    "ksat_mm_h": ("Przepuszczalność gleby (Ksat)", "mm/h", "SoilGrids + Saxton i Rawls (2006)"),
+    "rain_retention_label": ("Woda z ulewy", None, "SoilGrids + Saxton i Rawls (2006)"),
+    "soil_complex_label": ("Kompleks przydatności rolniczej", None, "Mapa glebowo-rolnicza (GUGiK)"),
+    "soil_txt": ("Gleba", None, "IUNG-PIB, mapa glebowo-rolnicza, SoilGrids"),
 }
+RAIN_LABEL = {"ucieka": "szybko wsiąka i ucieka w głąb", "zatrzymuje": "dobrze ją zatrzymuje",
+              "splywa": "ryzyko spływu i zastoisk"}
 
 
 @dataclass
@@ -65,6 +79,8 @@ def build_facts(
     model: SoilWaterResult | None,
     wb: WaterBalanceResult | None,
     sums: SeasonSums | None,
+    soil_c: Soil | None = None,
+    previous_crop: str | None = None,
 ) -> Facts:
     phase = model.phase if model else crop.day_info(analysis_date).phase
     v: dict[str, Any] = {
@@ -130,6 +146,45 @@ def build_facts(
     sd, sm = v["stress_days_season"], v["stress_days_mean"]
     v["stress_ratio"] = round(sd / sm, 2) if sd is not None and sm else None
     v["horizon_kind"] = model.horizon_kind if model else None
+    v["in_season"] = phase in IN_SEASON_PHASES
+    # silny stres wodny (D42): Dr > RAW w fazie wrażliwej (stres już jest) albo wysokie ryzyko w 7 dni
+    v["strong_stress"] = bool(v["sensitive"] and (v["days_to_stress"] == 0 or v["risk"] == "wysokie"))
+    dev = v["balance_deviation_mm"]
+    v["balance_vs_mean_txt"] = (
+        None if v["balance_mm"] is None else "brak porównania z ostatnimi latami" if dev is None else
+        "tyle co zwykle" if abs(dev) < 5 else f"o {abs(dev):.0f} mm {'mniej' if dev < 0 else 'więcej'} niż zwykle"
+    )
+    # płodozmian
+    prev = previous_crop if previous_crop in CROPS else None
+    v["previous_crop"] = prev
+    v["crop_label_lower"] = crop.label.lower()
+    v["previous_crop_label"] = CROPS[prev].label.lower() if prev else None
+    v["same_crop"] = None if prev is None else (prev == crop.id or (prev.startswith("rzepak") and crop.id.startswith("rzepak")))
+    v["cereal_after_cereal"] = None if prev is None else (prev in CEREALS and crop.id in CEREALS)
+    v["rotation_issue"] = (
+        None if prev is None else
+        "ta sama uprawa drugi rok z rzędu" if v["same_crop"] else
+        "zboże po zbożu" if v["cereal_after_cereal"] else None
+    )
+    # gleba dla rolnika (SoilGrids, mapa glebowo-rolnicza)
+    tex = soil_c.texture if soil_c else None
+    perm = soil_c.permeability if soil_c else None
+    smap = soil_c.soil_map if soil_c else None
+    v["sand_pct"] = tex.sand_pct if tex else None
+    v["ksat_mm_h"] = perm.ksat_mm_h if perm else None
+    v["rain_retention"] = perm.rain_retention if perm else None
+    v["rain_retention_label"] = RAIN_LABEL.get(perm.rain_retention) if perm else None
+    v["soil_species"] = smap.species_code if smap else None
+    v["soil_complex_label"] = smap.complex_label if smap else None
+    v["texture_label"] = (smap.species_label if smap and smap.species_label else tex.texture_class if tex else None)
+    sandy_map = bool(smap and smap.species_code in SANDY)
+    sandy_sg = bool(tex and tex.texture_code in ("sand", "loamy_sand"))
+    parts = ([f"kat. {v['soil_category_roman']}"] if v["soil_category_roman"] else []) + (
+        [v["texture_label"]] if v["texture_label"] else [])
+    v["soil_txt"] = ", ".join(parts) or None
+    v["light_soil"] = None if (tex is None and smap is None and v["soil_category"] is None) else bool(
+        sandy_map or sandy_sg or (v["soil_category"] is not None and v["soil_category"] <= 2)
+    )
     v["irrigation_confidence"] = "srednia" if v["horizon_kind"] == "prognoza" else "ograniczona"
     if model and model.irrigation and model.irrigation.first_date:
         fd = model.irrigation.first_date

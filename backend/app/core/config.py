@@ -33,5 +33,21 @@ class Settings(BaseSettings):
     # ile lat wstecz pobieramy dane pogodowe
     history_years: int = 10
 
+    # cache (D44): dane bieżące 6 h, historyczne i stałe (działki, mapy gleb) 7 dni
+    cache_ttl_current_s: float = 6 * 3600
+    cache_ttl_history_s: float = 7 * 24 * 3600
+
+    soilgrids_url: str = "https://rest.isric.org/soilgrids/v2.0/properties/query"
+    soilgrids_timeout_s: float = 12.0
+    soil_map_url: str = "https://mapy.geoportal.gov.pl/wss/service/pub/guest/MapaGlebowoRolnicza/MapServer/WMSServer"
+    soil_map_timeout_s: float = 8.0
+    ortho_wms_url: str = "https://mapy.geoportal.gov.pl/wss/service/PZGIK/ORTO/WMS/StandardResolution"
+
+    # przykłady demo: rozgrzewka cache przy starcie (w tle) i co tyle godzin
+    demo_warmup: bool = True
+    demo_warmup_interval_h: float = 6.0
+    # adres aplikacji w kodzie QR raportu PDF
+    public_url: str = "http://localhost:5173"
+
 
 settings = Settings()

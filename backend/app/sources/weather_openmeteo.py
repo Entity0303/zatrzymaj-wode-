@@ -16,14 +16,14 @@ import numpy as np
 
 from app.analysis.et0 import DailyWeather, apply_et0, densify
 
-from app.core.cache import TTLCache
+from app.core.cache import TTLCache, cached_fetch
 from app.core.config import settings
 from app.core.http import SourceError, get_client, get_with_retry
 
 SOURCE = "Open-Meteo (prognoza)"
 SOURCE_URL = "https://open-meteo.com/"
 
-_cache: TTLCache["Forecast"] = TTLCache(ttl_s=30 * 60, max_items=1024)
+_cache: TTLCache["Forecast"] = TTLCache(ttl_s=30 * 60, max_items=1024, name="Open-Meteo")
 
 # Kody pogody WMO -> (opis po polsku, ikona). Ikony to klucze rozumiane przez frontend.
 WMO: dict[int, tuple[str, str]] = {
@@ -128,9 +128,10 @@ async def fetch(lon: float, lat: float, days: int = 16, past_days: int = 0) -> F
     opóźnienia NASA POWER w modelu wody w glebie)."""
     # zaokrąglenie do ~1 km: lepsze trafienia w cache, a rozdzielczość modelu i tak jest większa
     key = (round(lon, 2), round(lat, 2), days, past_days)
-    hit = _cache.get(key)
-    if hit is not None:
-        return hit
+    return await cached_fetch(_cache, key, SOURCE, lambda: _download(key, days, past_days))
+
+
+async def _download(key: tuple, days: int, past_days: int) -> Forecast:
     params = {
         "latitude": f"{key[1]:.2f}",
         "longitude": f"{key[0]:.2f}",
@@ -154,9 +155,7 @@ async def fetch(lon: float, lat: float, days: int = 16, past_days: int = 0) -> F
         raise SourceError(SOURCE, "przekroczony limit zapytań – spróbuj za chwilę")
     if resp.status_code >= 400:
         raise SourceError(SOURCE, f"usługa zwróciła błąd HTTP {resp.status_code}")
-    fc = parse_response(resp.json())
-    _cache.set(key, fc)
-    return fc
+    return parse_response(resp.json())
 
 
 def clear_cache() -> None:
@@ -172,7 +171,7 @@ ARCHIVE_URL = "https://open-meteo.com/en/docs/historical-weather-api"
 ARCHIVE_RESOLUTION = "ok. 10–25 km"
 ARCHIVE_DAILY = "precipitation_sum,et0_fao_evapotranspiration,temperature_2m_max,temperature_2m_min"
 
-_archive_cache: TTLCache[DailyWeather] = TTLCache(ttl_s=6 * 3600, max_items=256)
+_archive_cache: TTLCache[DailyWeather] = TTLCache(ttl_s=6 * 3600, max_items=256, name="Open-Meteo archiwum")
 
 
 def parse_archive(payload: dict) -> DailyWeather:
@@ -210,9 +209,12 @@ def parse_archive(payload: dict) -> DailyWeather:
 
 async def fetch_archive(lon: float, lat: float, start: date, end: date) -> DailyWeather:
     key = (round(lon, 1), round(lat, 1), start.isoformat(), end.isoformat())
-    hit = _archive_cache.get(key)
-    if hit is not None:
-        return hit
+    recent = (date.today() - end).days <= 7
+    ttl = settings.cache_ttl_current_s if recent else settings.cache_ttl_history_s
+    return await cached_fetch(_archive_cache, key, ARCHIVE_SOURCE_SHORT, lambda: _download_archive(key, start, end), ttl)
+
+
+async def _download_archive(key: tuple, start: date, end: date) -> DailyWeather:
     params = {
         "latitude": f"{key[1]:.1f}",
         "longitude": f"{key[0]:.1f}",
@@ -232,7 +234,6 @@ async def fetch_archive(lon: float, lat: float, start: date, end: date) -> Daily
         w = parse_archive(resp.json())
     except ValueError as exc:
         raise SourceError(ARCHIVE_SOURCE, "odpowiedź nie jest poprawnym JSON") from exc
-    _archive_cache.set(key, w)
     return w
 
 

@@ -16,7 +16,7 @@ from datetime import date
 
 from shapely.geometry.base import BaseGeometry
 
-from app.core.cache import TTLCache
+from app.core.cache import TTLCache, cached_fetch
 from app.core.config import settings
 from app.core.geo import sample_points
 from app.core.http import SourceError, get_with_retry
@@ -26,7 +26,7 @@ SOURCE_URL = "https://integracja.gugik.gov.pl/"
 NO_CLASSES_NOTE = "Powiat nie udostępnia klas bonitacyjnych w usłudze KIEG."
 
 _ROW = re.compile(r"<tr>\s*<td>(.*?)</td>\s*<td>(.*?)</td>\s*</tr>", re.S | re.I)
-_cache: TTLCache["KiegResult"] = TTLCache(ttl_s=24 * 3600, max_items=512)
+_cache: TTLCache["KiegResult"] = TTLCache(ttl_s=7 * 24 * 3600, max_items=512, name="KIEG / EGiB")
 
 
 @dataclass
@@ -120,18 +120,17 @@ def merge(parcel_id: str, infos: list[dict[str, str]]) -> KiegResult:
 
 async def classes_for_parcel(parcel_id: str, geom_2180: BaseGeometry, extra_points: int = 3) -> KiegResult:
     """Środek działki + do `extra_points` punktów w obrysie, równolegle. SourceError, gdy usługa nie odpowie."""
-    hit = _cache.get(parcel_id)
-    if hit is not None:
-        return hit
+    return await cached_fetch(_cache, parcel_id, "EGiB (KIEG)", lambda: _download(parcel_id, geom_2180, extra_points))
+
+
+async def _download(parcel_id: str, geom_2180: BaseGeometry, extra_points: int) -> KiegResult:
     pts = [geom_2180.representative_point()] + sample_points(geom_2180, extra_points)
     results = await asyncio.gather(*(_info_at(p.x, p.y) for p in pts), return_exceptions=True)
     infos = [r for r in results if isinstance(r, dict)]
     if not infos:
         err = next(r for r in results if isinstance(r, BaseException))
         raise err if isinstance(err, SourceError) else SourceError(SOURCE, f"błąd usługi ({err.__class__.__name__})")
-    res = merge(parcel_id, infos)
-    _cache.set(parcel_id, res)
-    return res
+    return merge(parcel_id, infos)
 
 
 def clear_cache() -> None:
