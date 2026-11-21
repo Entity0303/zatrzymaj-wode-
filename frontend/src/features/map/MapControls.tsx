@@ -21,7 +21,7 @@ function CtrlButton({ icon: Icon, label, onClick, tip }: { icon: LucideIcon; lab
           <Icon className="size-5" aria-hidden />
         </button>
       </TooltipTrigger>
-      <TooltipContent side="left">{tip ?? label}</TooltipContent>
+      <TooltipContent side="top">{tip ?? label}</TooltipContent>
     </Tooltip>
   )
 }
@@ -35,7 +35,10 @@ export function MapControls({
   onBaseMapChange,
   className,
   style,
+  horizontal,
 }: {
+  /** komputer: jeden rząd w prawym dolnym rogu */
+  horizontal?: boolean
   onZoomIn: () => void
   onZoomOut: () => void
   onBackToParcel: () => void
@@ -51,7 +54,10 @@ export function MapControls({
   // ikona pokazuje, NA CO się przełączy
   const next: BaseMap = baseMap === 'orto' ? 'osm' : 'orto'
   return (
-    <div className={cn('glass flex flex-col divide-y divide-line overflow-hidden rounded-xl shadow-float', className)} style={style}>
+    <div
+      className={cn('glass flex overflow-hidden rounded-xl shadow-float', horizontal ? 'flex-row divide-x divide-line' : 'flex-col divide-y divide-line', className)}
+      style={style}
+    >
       <CtrlButton
         icon={next === 'osm' ? MapIcon : Satellite}
         label={t('Zmień rodzaj mapy na: {name}', { name: t(next === 'osm' ? 'Mapa' : 'Satelita') })}

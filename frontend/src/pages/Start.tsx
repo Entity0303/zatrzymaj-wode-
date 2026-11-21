@@ -16,6 +16,7 @@ import { POLAND_CENTER, ParcelMap, type BaseMap } from '@/features/map/ParcelMap
 import { MobileSheetHeader } from '@/features/parcel-panel/MobileSheetHeader'
 import { ParcelPanel } from '@/features/parcel-panel/ParcelPanel'
 import { ParcelSummary } from '@/features/parcel-panel/ParcelSummary'
+import { PanelCollapsed } from '@/features/parcel-panel/PanelCollapsed'
 import { ExploreBar } from '@/features/intro/ExploreBar'
 import { IntroHero } from '@/features/intro/IntroHero'
 import { useDemoExamples } from '@/features/intro/useDemoExamples'
@@ -148,8 +149,18 @@ export default function Start() {
 
   // komputer: przy wybranej działce domyślnie mała karta podsumowania, pełny panel na życzenie
   const summaryOnly = !isMobile && !ui.panel && search.phase === 'parcel' && !passportOpen && !infra
+  // komputer: panel zwinięty do samej belki (mapa odsłonięta); nowa działka – znów rozwinięty
+  const [panelMin, setPanelMin] = useState(false)
+  const [minFor, setMinFor] = useState<string | null>(null)
+  if ((parcel?.id ?? null) !== minFor) {
+    setMinFor(parcel?.id ?? null)
+    setPanelMin(false)
+  }
+  const collapsed = panelMin && !!parcel && !infra
   // „Moje gospodarstwo” pływa nad mapą (nie zajmuje pasa na dole) – panel sięga do dołu z marginesem 16 px
   const FLOAT_BOTTOM = 16
+  // komputer: dół panelu działki – nad rzędem kontrolek mapy (44 px) i atrybucją
+  const PANEL_BOTTOM = 32 + 44 + 12
   const MAP_BOTTOM_DESKTOP = 0 // atrybucja w prawym dolnym rogu, pod kontrolkami
   const sheetVisible = snapHeights(areaH, SHEET_COLLAPSED, SHEET_TOP)[snap]
   const insets: MapInsets = isMobile
@@ -735,7 +746,8 @@ export default function Start() {
           {/* ── kontrolki mapy: komputer – lewy dolny róg; telefon – po prawej (SPEC 5.2, 12) ── */}
           {view === '2d' && (
           <MapControls
-            className={isMobile ? 'absolute top-[120px] right-3 z-[1000]' : 'absolute right-[372px] bottom-8 z-[1000] xl:right-[412px]'}
+            className={isMobile ? 'absolute top-[120px] right-3 z-[1000]' : 'absolute right-4 bottom-8 z-[1000]'}
+            horizontal={!isMobile}
             onZoomIn={() => mapRef.current?.zoomIn()}
             onZoomOut={() => mapRef.current?.zoomOut()}
             onBackToParcel={backToParcel}
@@ -796,10 +808,18 @@ export default function Start() {
               aria-label={t('Panel działki')}
               className="absolute top-[128px] right-4 z-[1100] flex w-[340px] flex-col overflow-hidden rounded-xl bg-surface shadow-float xl:w-[380px]"
               style={{
-                bottom: summaryOnly ? undefined : FLOAT_BOTTOM,
-                maxHeight: summaryOnly ? `calc(100% - 128px - ${FLOAT_BOTTOM}px)` : undefined,
+                bottom: summaryOnly || collapsed ? undefined : PANEL_BOTTOM,
+                maxHeight: summaryOnly ? `calc(100% - 128px - ${PANEL_BOTTOM}px)` : undefined,
               }}
             >
+              {collapsed && parcel ? (
+                <PanelCollapsed
+                  parcel={parcel}
+                  status={analysis && !analysis.soil.non_agricultural ? analysis.status.level : null}
+                  onExpand={() => setPanelMin(false)}
+                  onClose={backToExplore}
+                />
+              ) : (
               <div className="min-h-0 flex-1 overflow-y-auto p-5">
                 {infraOpen ? (
                   <div className="-m-5 h-[calc(100%+40px)]">
@@ -820,6 +840,7 @@ export default function Start() {
                       onRetryAnalysis={retryAnalysis}
                       onExpand={() => setUi({ panel: true })}
                       onClose={backToExplore}
+                      onCollapse={() => setPanelMin(true)}
                       onOpenPassport={openPassport}
                     />
                   </div>
@@ -838,6 +859,7 @@ export default function Start() {
                   </>
                 )}
               </div>
+              )}
             </aside>
           )}
 

@@ -1,4 +1,4 @@
-import { BookOpenText, ChevronDown, Leaf, Loader2, X } from 'lucide-react'
+import { BookOpenText, ChevronDown, ChevronUp, Leaf, Loader2, X } from 'lucide-react'
 import type { Parcel } from '@/api/types'
 import { ErrorNotice } from '@/components/ErrorNotice'
 import { useLang } from '@/lib/i18n'
@@ -19,8 +19,11 @@ export function ParcelSummary({
   onRetryAnalysis,
   onExpand,
   onClose,
+  onCollapse,
   onOpenPassport,
 }: {
+  /** zwija panel do samej belki z nazwą */
+  onCollapse?: () => void
   parcel: Parcel
   refine: RefineProps
   run: AnalysisRun
@@ -43,9 +46,20 @@ export function ParcelSummary({
           <Leaf className="size-5" aria-hidden />
         </span>
         <div className="min-w-0 flex-1">
-          <h2 className="font-display truncate text-2xl leading-8 font-semibold">{title}</h2>
-          <p className="truncate text-sm leading-5 text-text-muted">{sub}</p>
+          <h2 className="font-name line-clamp-2 text-xl leading-7 font-semibold">{title}</h2>
+          <p className="text-sm leading-5 text-text-muted">{sub}</p>
         </div>
+        {onCollapse && (
+          <button
+            type="button"
+            onClick={onCollapse}
+            aria-label={t('Zwiń panel')}
+            title={t('Zwiń panel')}
+            className="-mt-1 flex size-10 shrink-0 items-center justify-center rounded-full text-text-muted hover:bg-surface-2"
+          >
+            <ChevronUp className="size-5" />
+          </button>
+        )}
         {onClose && (
           <button
             type="button"

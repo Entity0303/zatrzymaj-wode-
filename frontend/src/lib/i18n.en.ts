@@ -852,4 +852,6 @@ export const EN: Record<string, string> = {
   '{n} mm więcej wody niż średnio w ostatnich 10 latach': '{n} mm more water than the 10-year average',
   'nawadnianie: {what}': 'irrigation: {what}',
   'Obszar przybliżony – brak dokładnych granic działki. Liczymy kwadrat wokół wskazanego punktu.': 'Approximate area – no exact parcel boundaries. We analyse a square around the selected point.',
+  // Zwijany panel działki
+  'Rozwiń panel': 'Expand panel',
 }
