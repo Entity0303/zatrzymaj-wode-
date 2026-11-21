@@ -80,10 +80,8 @@ def test_power_parse_and_et0():
 
 
 def test_soil_shares_and_wod():
-    res = iung.SoilResult([
-        iung.SoilSample(0, 0, 2), iung.SoilSample(0, 0, 2), iung.SoilSample(0, 0, 3),
-        iung.SoilSample(0, 0, 11), iung.SoilSample(0, 0, None),
-    ])
+    # 5 punktów: 2, 2, 3, 11 i jeden bez danych
+    res = iung.SoilResult(counts={2: 2, 3: 1, 11: 1}, method="punkty", nodata=1)
     assert res.dominant == 2
     assert res.shares[2] == 0.5
     assert res.agricultural_share == 0.75

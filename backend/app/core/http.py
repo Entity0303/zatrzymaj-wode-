@@ -61,7 +61,7 @@ def in_poland(lon: float, lat: float) -> bool:
 
 async def get_with_retry(
     url: str,
-    params: dict,
+    params: dict | list[tuple[str, str]],
     *,
     source: str,
     timeout_s: float,

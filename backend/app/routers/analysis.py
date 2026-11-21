@@ -11,6 +11,7 @@ TODO (osoba A), kolejność z CLAUDE.md (P0):
 5. awaria jednego źródła obniża pewność (reliability), nie wywraca analizy
 """
 
+import asyncio
 import datetime as dt
 from dataclasses import dataclass, field
 from time import perf_counter
@@ -19,12 +20,14 @@ from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from app.analysis.et0 import DailyWeather
+from app.analysis.soil import assess_soil
 from app.analysis.water_balance import build_history, history_range
 from app.core.config import settings
 from app.core.http import SourceError, http_error, in_poland, not_implemented
-from app.schemas.analysis import AnalysisResponse, CropId, History
+from app.routers.parcel import resolve_parcel
+from app.schemas.analysis import AnalysisResponse, CropId, History, Indicator, SourceStatus
 from app.schemas.parcel import ErrorDetail
-from app.sources import weather_openmeteo, weather_power
+from app.sources import iung, kieg, weather_openmeteo, weather_power
 
 router = APIRouter(prefix="/api", tags=["analiza"])
 
@@ -175,4 +178,88 @@ async def dev_weather_history(
             missing_days_season=res.missing_days_season,
         ),
         limitations=limitations,
+    )
+
+
+# ── TYMCZASOWE (deweloperskie): GET /api/dev/soil?parcel_id= ────────────────────────────────
+# Podgląd gleby działki przed powstaniem pełnego /api/analysis. ZNIKNIE razem z modelami DevSoil*.
+
+
+class DevSoilShare(BaseModel):
+    code: int
+    label: str
+    share: float
+
+
+class DevSoil(BaseModel):
+    parcel_id: str
+    area_ha: float
+    soil_capacity: Indicator = Field(description="Kontrakt: indicators.soil_capacity")
+    dominant_code: int | None
+    dominant_label: str | None
+    shares: list[DevSoilShare]
+    agricultural_share: float | None
+    wod_mm: float | None
+    classes: list[str] | None = Field(description="Klasy bonitacyjne EGiB (informacyjnie)")
+    land_use: list[str] | None
+    not_agricultural: bool
+    not_agricultural_reason: str | None
+    method: str | None = Field(description="wcs | punkty")
+    cells: int | None
+    sources: list[SourceStatus] = Field(description="Kontrakt: reliability.sources")
+    limitations: list[str] = Field(description="Kontrakt: reliability.limitations")
+    degrades_confidence: bool
+    timings_ms: dict[str, int]
+
+
+@router.get(
+    "/dev/soil",
+    response_model=DevSoil,
+    tags=["deweloperskie (tymczasowe)"],
+    responses={404: {"model": ErrorDetail}, 409: {"description": "Kilka działek"}, 502: {"model": ErrorDetail}},
+)
+async def dev_soil(parcel_id: str = Query(description="Identyfikator działki ULDK")) -> DevSoil:
+    """TYMCZASOWE: gleba działki – IUNG (WCS, zapasowo punkty) + klasy EGiB, równolegle."""
+    t0 = perf_counter()
+    try:
+        p = await resolve_parcel(parcel_id, None, None)
+    except SourceError as exc:
+        raise http_error(exc) from exc
+    t1 = perf_counter()
+
+    async def timed(coro):
+        s = perf_counter()
+        try:
+            return await coro, int((perf_counter() - s) * 1000)
+        except SourceError as exc:  # awaria jednego źródła nie wywraca wyniku
+            return exc, int((perf_counter() - s) * 1000)
+
+    (iung_res, iung_ms), (kieg_res, kieg_ms) = await asyncio.gather(
+        timed(iung.soil_for_parcel(p.geom_2180)), timed(kieg.classes_for_parcel(p.id, p.geom_2180))
+    )
+    a = assess_soil(iung_res, kieg_res)
+    return DevSoil(
+        parcel_id=p.id,
+        area_ha=p.area_ha,
+        soil_capacity=a.soil_capacity,
+        dominant_code=a.dominant_code,
+        dominant_label=a.dominant_label,
+        shares=[DevSoilShare(code=s.code, label=s.label, share=s.share) for s in a.shares],
+        agricultural_share=a.agricultural_share,
+        wod_mm=a.wod_mm,
+        classes=a.classes,
+        land_use=a.land_use,
+        not_agricultural=a.not_agricultural,
+        not_agricultural_reason=a.not_agricultural_reason,
+        method=a.method,
+        cells=a.cells,
+        sources=a.sources,
+        limitations=a.limitations,
+        degrades_confidence=a.degrades_confidence,
+        timings_ms={
+            "uldk": int((t1 - t0) * 1000),
+            "iung": iung_ms,
+            "kieg": kieg_ms,
+            "razem": int((perf_counter() - t0) * 1000),
+        },
     )
