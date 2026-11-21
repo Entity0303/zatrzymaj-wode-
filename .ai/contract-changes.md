@@ -92,3 +92,26 @@ Weryfikacja: `npm run build` (tsc + vite) przechodzi – w kontenerze z aktualny
 - **Warstwa „Spływ wody”** (`/api/layers/splyw`): `kind` = `flow` (linie – ścieżki spływu, niebieskie #2F7FC1), `outflow` (punkty – „tu woda ucieka”, czerwone #E5675C, `share_pct`, `direction`), `retencja` (punkt – proponowane miejsce na oczko, #2E5B3F), `pas_buforowy` (linia), `spot` (poligon – zagłębienie bez odpływu, #2F80C9). Każdy obiekt ma `color` i `label` – LayerData.tsx już je czyta. Legenda: „Kierunek spływu”, „Tu woda ucieka”, „Tu zbiera się woda”, „Miejsce na oczko”.
 - Rekomendacja `retencja.oczko_opcja` ma `warning` i niski priorytet – nie powinna trafiać do panelu jako pierwsza (backend i tak daje `in_panel = false`).
 **Łamie zgodność:** nie (pola dodane, opcjonalne; warstwy – dotąd 501).
+
+### 2026-11-21 · gałąź `a/backend` · A5b-2a – ranking „Co tu posiać?”, historia upraw, powierzchnia
+**Zmiany (addytywne; `backend/app/schemas/analysis.py` + `frontend/src/api/types.ts`; przykłady w `frontend/src/mocks/`):**
+- `GET /api/analysis` i `GET /api/report.pdf` – nowe parametry: **`crop_history`** (1–3 uprawy po przecinku, pierwsza = rok temu; identyfikatory jak `RankingCropId` + 15 upraw `CropId` + `nie_wiem`; np. `crop_history=pszenica_ozima,rzepak`) i **`cultivated_area_ha`** (liczba > 0). Błędne → 422 z komunikatem.
+- `AnalysisResponse` + **`suggestions: CropSuggestions | null`** (było zawsze null), **`crop_history: string[]`**, **`cultivated_area_ha: number | null`**. Ranking jest w odpowiedzi z uprawą i bez uprawy; null dla gruntu nierolnego albo gdy pogody jest mniej niż 5 pełnych sezonów.
+- `CropSuggestions`: `seasons[]`, `groups[]` (`SuggestionGroup`: key `polowe` | `wieloletnie`, label, `items[]`), `area` (`CultivatedArea`: value_ha, estimated, note), `crop_history`, `rotation_hint`, `note`, `limitations`, `compute_ms`, `source_tag`.
+- `CropSuggestion`: `crop_id` (`RankingCropId` – 17 upraw), `label`, `group_id`, **`category`** (`polecane` | `mozliwe` | `odradzane`) + `category_label`, `rank`, `score`, **`reason`** (jedno zdanie), **`yield_typical_t_ha`**, **`yield_weak_t_ha`** + **`weak_year`**, `yield_potential_t_ha`, `gus_mean_t_ha`, `relative_yield_median/weak`, **`drought_risk_years`** / `years_simulated`, **`total_typical_t`**, **`total_weak_t`**, `price` (null – na później), `soil_suitability` + label, `rotation` (`RotationCheck`: status `ok|plus|ostrzezenie|naruszenie|brak_historii`, notes[]), `irrigation_practice`, `drought_sensitivity`, `confidence` + `confidence_note`, `notes[]`, `yields_by_year[]` (`YearYield`: year, relative, yield_t_ha, water_deficit_mm), `source_tags[]`.
+- `StatusScope` + **`zimowanie`** (`scope_label` „w polu – zimowanie”) – oziminy i uprawy wieloletnie zimą; `IrrigationPlan` przy `practice = optional` (kukurydza): bez dawek, `status = nie_praktykowane` albo `niepotrzebne`, treść w `message`.
+- Przykłady: `analysis.sample.json`, `analysis.no-crop.sample.json` (z rankingiem), **nowy `analysis.no-crop-history.sample.json`** (historia: rok temu pszenica ozima, 2 lata temu rzepak; powierzchnia 0,5 ha) – wszystkie walidowane w `test_contract.py`.
+
+**Dla Mefju – jak pokazać (frontendu A nie zmieniał):**
+- **Ranking „Co tu posiać?”** od razu po wybraniu działki (z `GET /api/analysis` bez `crop`): dwie listy z `suggestions.groups` – „uprawy polowe” i osobno „uprawy wieloletnie”. Kolejność pozycji jak w odpowiedzi (już posortowane). Każda pozycja:
+  - znak kategorii z `category`: ✅ polecane (zielony), 🟡 możliwe (żółty), ❌ odradzane (czerwony) + `label`,
+  - plon: „typowo **{yield_typical_t_ha} t/ha** ({total_typical_t} t z {area.value_ha} ha)”, słaby rok: „w słabym roku ({weak_year}): {yield_weak_t_ha} t/ha ({total_weak_t} t)”,
+  - ryzyko: „strata ponad 20% plonu w **{drought_risk_years} na {years_simulated} lat**”,
+  - jedno zdanie `reason` pod spodem; `rotation.notes` (jeśli są) jako dopisek z ikoną: plus = zielony, ostrzezenie = żółty, naruszenie = czerwony,
+  - `confidence = ograniczona` → mały dopisek „szacunek” z `confidence_note` w dymku; `notes` (np. „plon zielonej masy”) drobnym tekstem.
+  - Kliknięcie pozycji z `crop_id` będącym jedną z 15 upraw `CropId` może ustawić uprawę do pełnej analizy; gatunki (pszenica_ozima, zyto, pszenzyto_ozime, jeczmien_ozimy → `zboza_ozime`; jeczmien_jary, owies → `zboza_jare`; lubin → `straczkowe`) – przez `group_id`.
+  - Pod listą: `suggestions.note` („Plony bez nawadniania…”) i rozwijane `limitations`.
+- **Historia pola:** 3 pola wyboru „rok temu / 2 lata temu / 3 lata temu” (opcjonalne, z „nie wiem”), lista = 22 uprawy (17 z rankingu + zboża ozime/jare ogólnie, rzepak jesień, chmiel, tytoń) – etykiety są w `label` pozycji rankingu. Wysyłaj `crop_history=a,b,c` (puste lata jako `nie_wiem`). Gdy `suggestions.rotation_hint` nie jest null – pokaż go nad listą jako zachętę.
+- **Powierzchnia uprawy:** pole liczbowe (ha) wypełnione `suggestions.area.value_ha`; gdy `area.estimated` – dopisek z `area.note` („oszacowanie…”). Zmiana → ponowne zapytanie z `cultivated_area_ha`.
+- **Status:** `status.scope_label` może być teraz „w polu – zimowanie”. **Nawadnianie kukurydzy:** nie ma dawek – pokaż samo `irrigation.message`.
+**Łamie zgodność:** nie (pola dodane / opcjonalne, nowa wartość `StatusScope` – nigdzie niemapowana w `Record`; build przechodzi).
