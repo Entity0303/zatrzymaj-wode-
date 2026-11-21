@@ -42,20 +42,22 @@
     "zrodlo": {
       "nazwa": "ULDK GUGiK",
       "url": "https://uldk.gugik.gov.pl/",
-      "pobrano": "2026-11-21T16:47:28+00:00",
-      "uwagi": "ZAPIS ODPOWIEDZI /api/analysis dla 201305_2.0038.6/1, zboża ozime, 2018-06-10, przedplon zboża ozime (wygenerowano 2026-11-21, A5). Plik służy tylko do pracy nad UI (?dane=przykladowe) – UI zawsze pokazuje napis „DANE PRZYKŁADOWE”."
+      "pobrano": "2026-11-21T19:00:40+00:00",
+      "uwagi": "ZAPIS ODPOWIEDZI /api/analysis dla 201305_2.0038.6/1, zboża ozime, 2018-06-10, przedplon zboża ozime (wygenerowano 2026-11-21, A5b-1; obrys z zapisanej odpowiedzi ULDK, pozostałe źródła na żywo). Plik służy tylko do pracy nad UI (?dane=przykladowe) – UI zawsze pokazuje napis „DANE PRZYKŁADOWE”."
     }
   },
   "crop": "zboza_ozime",
   "previous_crop": "zboza_ozime",
   "analysis_date": "2018-06-10",
   "historical": true,
-  "generated_at": "2026-11-21T16:47:31Z",
+  "generated_at": "2026-11-21T19:00:46Z",
   "status": {
     "level": "danger",
     "score": 8,
     "headline": "Susza – rośliny cierpią z braku wody",
-    "summary": "Gleba ma 17% wody dostępnej w strefie korzeni, a od 1 marca bilans wody wynosi −111 mm – o 90 mm mniej niż zwykle. Rośliny już odczuwają brak wody."
+    "summary": "Gleba ma 17% wody dostępnej w strefie korzeni, a od 1 marca bilans wody wynosi −111 mm – o 90 mm mniej niż zwykle. Rośliny już odczuwają brak wody.",
+    "scope": "sezon",
+    "scope_label": "w sezonie"
   },
   "indicators": {
     "soil_water_pct": {
@@ -126,7 +128,7 @@
       "unit": "mm",
       "label": null,
       "status": "risk",
-      "note": "o 90 mm mniej niż zwykle (średnia 10 lat -20 mm), od 01.03",
+      "note": "o 90 mm mniej niż zwykle (średnia 10 lat −20 mm), od 01.03",
       "source_tag": {
         "kind": "obliczenia",
         "date": "2018-06-09",
@@ -138,7 +140,7 @@
       "unit": "mm",
       "label": "Kat. III – średnio podatna na suszę",
       "status": "ok",
-      "note": "woda dostępna dla roślin (WOD) – 100% działki to gleby mineralne użytków rolnych; klasy bonitacyjne EGiB: RIIIb, RIVa, RIVb",
+      "note": "woda dostępna dla roślin (WOD) – 100% działki to gleby mineralne użytków rolnych",
       "source_tag": {
         "kind": "pomiar",
         "date": null,
@@ -167,13 +169,14 @@
     "last_season": null
   },
   "irrigation": {
-    "status": "zalecane",
-    "message": "27,5 mm teraz, powtórz za ok. 2 dni (w 7 dniach 3 dawki, niedobór ok. 70 mm)",
-    "dose_mm": 27.5,
-    "first_date": "2018-06-10",
-    "interval_days": 2,
-    "total_7d_mm": 70.0,
-    "doses_7d": 3,
+    "status": "nie_praktykowane",
+    "message": "Zbóż w Polsce się nie nawadnia – liczy się zatrzymanie wody w glebie.",
+    "dose_mm": null,
+    "first_date": null,
+    "interval_days": null,
+    "total_7d_mm": null,
+    "doses_7d": null,
+    "practice": "not_practiced",
     "source_tag": {
       "kind": "szacunek_modelu",
       "date": "2018-06-10",
@@ -197,12 +200,8 @@
     ],
     "agricultural_share": 1.0,
     "wod_mm": 166.2,
-    "classes": [
-      "RIIIb",
-      "RIVa",
-      "RIVb"
-    ],
-    "classes_note": null,
+    "classes": null,
+    "classes_note": "Usługa KIEG nie odpowiada – klasy bonitacyjne niedostępne.",
     "non_agricultural": false,
     "non_agricultural_reason": null,
     "non_agricultural_note": null,
@@ -233,13 +232,12 @@
       }
     },
     "soil_map": {
-      "complex_code": "6",
-      "complex_label": "żytni słaby",
-      "species_code": "pgl",
-      "species_label": "piasek gliniasty lekki",
+      "complex_code": "2",
+      "complex_label": "pszenny dobry",
+      "species_code": "glp",
+      "species_label": "glina lekka pylasta",
       "deeper": [
-        "piasek słabogliniasty",
-        "piasek luźny"
+        "glina średnia pylasta"
       ],
       "soil_type_code": "Bw",
       "mapped_year": 1973,
@@ -250,12 +248,2320 @@
       }
     },
     "texture_note": null,
+    "consistency": {
+      "status": "ok",
+      "note": "Źródła zgodne: na działce są dwie gleby – według mapy glebowo-rolniczej lżejsza w 22% punktów, według mapy IUNG gleby lekkie (kat. I–II) to 25% działki. W obliczeniach – średnia ważona dla całej działki (IUNG). Model SoilGrids (250 m) wskazuje glebę lekką – jest najmniej dokładny, pominięty.",
+      "basis": "mapa_glebowo_rolnicza",
+      "category_used": 3,
+      "by_source": [
+        {
+          "source": "mapa_glebowo_rolnicza",
+          "source_label": "Mapa glebowo-rolnicza 1:5000 (GUGiK)",
+          "category": 3,
+          "description": "glina lekka pylasta – gleba średnia (7 z 9 punktów); piasek gliniasty lekki – gleba lekka (2 z 9 punktów)"
+        },
+        {
+          "source": "iung",
+          "source_label": "Mapa gleb IUNG-PIB",
+          "category": 3,
+          "description": "kat. III 75%, kat. I 25% działki – średnio podatna na suszę"
+        },
+        {
+          "source": "soilgrids",
+          "source_label": "SoilGrids (ISRIC), model 250 m",
+          "category": 2,
+          "description": "glina piaszczysta – gleba lekka"
+        }
+      ]
+    },
     "source_tag": {
       "kind": "pomiar",
       "date": null,
       "source": "IUNG-PIB"
     }
   },
+  "field_state": {
+    "status": {
+      "level": "danger",
+      "score": 18,
+      "headline": "Susza glebowa – bardzo mało wody w glebie",
+      "summary": "W profilu gleby (ok. 1 m) jest 23% wody dostępnej (39 mm) – najmniej tego dnia w ostatnich 10 latach. Bilans opad − parowanie z ostatnich 30 dni: −77 mm (o 54 mm mniej niż zwykle). Bez wybranej uprawy – stan dla pokrycia referencyjnego FAO-56 (trawa).",
+      "scope": "bez_uprawy",
+      "scope_label": "stan wody na działce"
+    },
+    "cover": "pokrycie referencyjne FAO-56 (trawa, Kc = 1), profil ok. 1 m",
+    "soil_water_pct": {
+      "value": 23.0,
+      "unit": "%",
+      "label": "stan działki",
+      "status": "warn",
+      "note": "bardzo mało wody w glebie – gleba nadal przesycha (profil ok. 1 m, pokrycie referencyjne)",
+      "source_tag": {
+        "kind": "szacunek_modelu",
+        "date": "2018-06-09",
+        "source": "Model wody w glebie FAO-56 – pokrycie referencyjne"
+      }
+    },
+    "soil_water_mm": {
+      "value": 38.6,
+      "unit": "mm",
+      "label": null,
+      "status": "warn",
+      "note": "woda dostępna dla roślin, profil ok. 1 m",
+      "source_tag": {
+        "kind": "szacunek_modelu",
+        "date": "2018-06-09",
+        "source": "Model wody w glebie FAO-56 – pokrycie referencyjne"
+      }
+    },
+    "soil_water": {
+      "scope": "profil",
+      "depth_m": 1.0,
+      "description": "bardzo mało wody w glebie – gleba nadal przesycha",
+      "rank": {
+        "lower_years": 0,
+        "of_years": 10
+      },
+      "last_season": null
+    },
+    "series_start": "2017-11-01",
+    "series": [
+      {
+        "date": "2017-11-01",
+        "value": 99.8
+      },
+      {
+        "date": "2017-11-02",
+        "value": 99.8
+      },
+      {
+        "date": "2017-11-03",
+        "value": 99.8
+      },
+      {
+        "date": "2017-11-04",
+        "value": 99.7
+      },
+      {
+        "date": "2017-11-05",
+        "value": 99.5
+      },
+      {
+        "date": "2017-11-06",
+        "value": 99.4
+      },
+      {
+        "date": "2017-11-07",
+        "value": 99.4
+      },
+      {
+        "date": "2017-11-08",
+        "value": 99.3
+      },
+      {
+        "date": "2017-11-09",
+        "value": 99.4
+      },
+      {
+        "date": "2017-11-10",
+        "value": 99.8
+      },
+      {
+        "date": "2017-11-11",
+        "value": 99.8
+      },
+      {
+        "date": "2017-11-12",
+        "value": 99.8
+      },
+      {
+        "date": "2017-11-13",
+        "value": 99.9
+      },
+      {
+        "date": "2017-11-14",
+        "value": 99.8
+      },
+      {
+        "date": "2017-11-15",
+        "value": 99.9
+      },
+      {
+        "date": "2017-11-16",
+        "value": 99.9
+      },
+      {
+        "date": "2017-11-17",
+        "value": 99.9
+      },
+      {
+        "date": "2017-11-18",
+        "value": 99.8
+      },
+      {
+        "date": "2017-11-19",
+        "value": 99.8
+      },
+      {
+        "date": "2017-11-20",
+        "value": 99.9
+      },
+      {
+        "date": "2017-11-21",
+        "value": 99.9
+      },
+      {
+        "date": "2017-11-22",
+        "value": 99.9
+      },
+      {
+        "date": "2017-11-23",
+        "value": 99.9
+      },
+      {
+        "date": "2017-11-24",
+        "value": 99.9
+      },
+      {
+        "date": "2017-11-25",
+        "value": 99.9
+      },
+      {
+        "date": "2017-11-26",
+        "value": 99.9
+      },
+      {
+        "date": "2017-11-27",
+        "value": 99.9
+      },
+      {
+        "date": "2017-11-28",
+        "value": 99.9
+      },
+      {
+        "date": "2017-11-29",
+        "value": 99.9
+      },
+      {
+        "date": "2017-11-30",
+        "value": 99.9
+      },
+      {
+        "date": "2017-12-01",
+        "value": 99.9
+      },
+      {
+        "date": "2017-12-02",
+        "value": 100.0
+      },
+      {
+        "date": "2017-12-03",
+        "value": 100.0
+      },
+      {
+        "date": "2017-12-04",
+        "value": 99.9
+      },
+      {
+        "date": "2017-12-05",
+        "value": 99.9
+      },
+      {
+        "date": "2017-12-06",
+        "value": 99.9
+      },
+      {
+        "date": "2017-12-07",
+        "value": 99.9
+      },
+      {
+        "date": "2017-12-08",
+        "value": 99.9
+      },
+      {
+        "date": "2017-12-09",
+        "value": 99.9
+      },
+      {
+        "date": "2017-12-10",
+        "value": 99.9
+      },
+      {
+        "date": "2017-12-11",
+        "value": 99.9
+      },
+      {
+        "date": "2017-12-12",
+        "value": 99.7
+      },
+      {
+        "date": "2017-12-13",
+        "value": 99.7
+      },
+      {
+        "date": "2017-12-14",
+        "value": 99.9
+      },
+      {
+        "date": "2017-12-15",
+        "value": 100.0
+      },
+      {
+        "date": "2017-12-16",
+        "value": 99.9
+      },
+      {
+        "date": "2017-12-17",
+        "value": 100.0
+      },
+      {
+        "date": "2017-12-18",
+        "value": 99.9
+      },
+      {
+        "date": "2017-12-19",
+        "value": 99.9
+      },
+      {
+        "date": "2017-12-20",
+        "value": 99.9
+      },
+      {
+        "date": "2017-12-21",
+        "value": 99.9
+      },
+      {
+        "date": "2017-12-22",
+        "value": 99.9
+      },
+      {
+        "date": "2017-12-23",
+        "value": 99.9
+      },
+      {
+        "date": "2017-12-24",
+        "value": 99.9
+      },
+      {
+        "date": "2017-12-25",
+        "value": 99.9
+      },
+      {
+        "date": "2017-12-26",
+        "value": 100.0
+      },
+      {
+        "date": "2017-12-27",
+        "value": 100.0
+      },
+      {
+        "date": "2017-12-28",
+        "value": 99.9
+      },
+      {
+        "date": "2017-12-29",
+        "value": 99.9
+      },
+      {
+        "date": "2017-12-30",
+        "value": 100.0
+      },
+      {
+        "date": "2017-12-31",
+        "value": 99.9
+      },
+      {
+        "date": "2018-01-01",
+        "value": 99.9
+      },
+      {
+        "date": "2018-01-02",
+        "value": 100.0
+      },
+      {
+        "date": "2018-01-03",
+        "value": 99.9
+      },
+      {
+        "date": "2018-01-04",
+        "value": 99.9
+      },
+      {
+        "date": "2018-01-05",
+        "value": 99.9
+      },
+      {
+        "date": "2018-01-06",
+        "value": 100.0
+      },
+      {
+        "date": "2018-01-07",
+        "value": 100.0
+      },
+      {
+        "date": "2018-01-08",
+        "value": 100.0
+      },
+      {
+        "date": "2018-01-09",
+        "value": 99.9
+      },
+      {
+        "date": "2018-01-10",
+        "value": 99.9
+      },
+      {
+        "date": "2018-01-11",
+        "value": 99.9
+      },
+      {
+        "date": "2018-01-12",
+        "value": 99.8
+      },
+      {
+        "date": "2018-01-13",
+        "value": 99.8
+      },
+      {
+        "date": "2018-01-14",
+        "value": 99.8
+      },
+      {
+        "date": "2018-01-15",
+        "value": 99.7
+      },
+      {
+        "date": "2018-01-16",
+        "value": 99.9
+      },
+      {
+        "date": "2018-01-17",
+        "value": 100.0
+      },
+      {
+        "date": "2018-01-18",
+        "value": 99.9
+      },
+      {
+        "date": "2018-01-19",
+        "value": 99.9
+      },
+      {
+        "date": "2018-01-20",
+        "value": 99.9
+      },
+      {
+        "date": "2018-01-21",
+        "value": 100.0
+      },
+      {
+        "date": "2018-01-22",
+        "value": 99.9
+      },
+      {
+        "date": "2018-01-23",
+        "value": 100.0
+      },
+      {
+        "date": "2018-01-24",
+        "value": 99.9
+      },
+      {
+        "date": "2018-01-25",
+        "value": 99.9
+      },
+      {
+        "date": "2018-01-26",
+        "value": 99.8
+      },
+      {
+        "date": "2018-01-27",
+        "value": 99.9
+      },
+      {
+        "date": "2018-01-28",
+        "value": 99.9
+      },
+      {
+        "date": "2018-01-29",
+        "value": 99.9
+      },
+      {
+        "date": "2018-01-30",
+        "value": 99.8
+      },
+      {
+        "date": "2018-01-31",
+        "value": 99.8
+      },
+      {
+        "date": "2018-02-01",
+        "value": 99.9
+      },
+      {
+        "date": "2018-02-02",
+        "value": 99.9
+      },
+      {
+        "date": "2018-02-03",
+        "value": 99.9
+      },
+      {
+        "date": "2018-02-04",
+        "value": 99.7
+      },
+      {
+        "date": "2018-02-05",
+        "value": 99.7
+      },
+      {
+        "date": "2018-02-06",
+        "value": 99.7
+      },
+      {
+        "date": "2018-02-07",
+        "value": 99.6
+      },
+      {
+        "date": "2018-02-08",
+        "value": 99.8
+      },
+      {
+        "date": "2018-02-09",
+        "value": 99.8
+      },
+      {
+        "date": "2018-02-10",
+        "value": 99.8
+      },
+      {
+        "date": "2018-02-11",
+        "value": 99.7
+      },
+      {
+        "date": "2018-02-12",
+        "value": 99.6
+      },
+      {
+        "date": "2018-02-13",
+        "value": 99.5
+      },
+      {
+        "date": "2018-02-14",
+        "value": 99.8
+      },
+      {
+        "date": "2018-02-15",
+        "value": 99.8
+      },
+      {
+        "date": "2018-02-16",
+        "value": 99.8
+      },
+      {
+        "date": "2018-02-17",
+        "value": 99.8
+      },
+      {
+        "date": "2018-02-18",
+        "value": 99.7
+      },
+      {
+        "date": "2018-02-19",
+        "value": 99.6
+      },
+      {
+        "date": "2018-02-20",
+        "value": 99.5
+      },
+      {
+        "date": "2018-02-21",
+        "value": 99.5
+      },
+      {
+        "date": "2018-02-22",
+        "value": 99.3
+      },
+      {
+        "date": "2018-02-23",
+        "value": 99.2
+      },
+      {
+        "date": "2018-02-24",
+        "value": 99.6
+      },
+      {
+        "date": "2018-02-25",
+        "value": 99.5
+      },
+      {
+        "date": "2018-02-26",
+        "value": 99.4
+      },
+      {
+        "date": "2018-02-27",
+        "value": 99.5
+      },
+      {
+        "date": "2018-02-28",
+        "value": 99.5
+      },
+      {
+        "date": "2018-03-01",
+        "value": 99.8
+      },
+      {
+        "date": "2018-03-02",
+        "value": 99.7
+      },
+      {
+        "date": "2018-03-03",
+        "value": 99.7
+      },
+      {
+        "date": "2018-03-04",
+        "value": 99.5
+      },
+      {
+        "date": "2018-03-05",
+        "value": 99.3
+      },
+      {
+        "date": "2018-03-06",
+        "value": 99.1
+      },
+      {
+        "date": "2018-03-07",
+        "value": 99.8
+      },
+      {
+        "date": "2018-03-08",
+        "value": 99.8
+      },
+      {
+        "date": "2018-03-09",
+        "value": 99.7
+      },
+      {
+        "date": "2018-03-10",
+        "value": 99.6
+      },
+      {
+        "date": "2018-03-11",
+        "value": 99.7
+      },
+      {
+        "date": "2018-03-12",
+        "value": 99.7
+      },
+      {
+        "date": "2018-03-13",
+        "value": 99.6
+      },
+      {
+        "date": "2018-03-14",
+        "value": 99.6
+      },
+      {
+        "date": "2018-03-15",
+        "value": 99.1
+      },
+      {
+        "date": "2018-03-16",
+        "value": 98.8
+      },
+      {
+        "date": "2018-03-17",
+        "value": 98.2
+      },
+      {
+        "date": "2018-03-18",
+        "value": 97.6
+      },
+      {
+        "date": "2018-03-19",
+        "value": 97.1
+      },
+      {
+        "date": "2018-03-20",
+        "value": 96.5
+      },
+      {
+        "date": "2018-03-21",
+        "value": 96.0
+      },
+      {
+        "date": "2018-03-22",
+        "value": 96.1
+      },
+      {
+        "date": "2018-03-23",
+        "value": 95.7
+      },
+      {
+        "date": "2018-03-24",
+        "value": 95.0
+      },
+      {
+        "date": "2018-03-25",
+        "value": 94.3
+      },
+      {
+        "date": "2018-03-26",
+        "value": 93.8
+      },
+      {
+        "date": "2018-03-27",
+        "value": 93.6
+      },
+      {
+        "date": "2018-03-28",
+        "value": 93.1
+      },
+      {
+        "date": "2018-03-29",
+        "value": 96.4
+      },
+      {
+        "date": "2018-03-30",
+        "value": 95.9
+      },
+      {
+        "date": "2018-03-31",
+        "value": 99.0
+      },
+      {
+        "date": "2018-04-01",
+        "value": 99.8
+      },
+      {
+        "date": "2018-04-02",
+        "value": 99.7
+      },
+      {
+        "date": "2018-04-03",
+        "value": 99.3
+      },
+      {
+        "date": "2018-04-04",
+        "value": 98.2
+      },
+      {
+        "date": "2018-04-05",
+        "value": 97.1
+      },
+      {
+        "date": "2018-04-06",
+        "value": 96.2
+      },
+      {
+        "date": "2018-04-07",
+        "value": 95.0
+      },
+      {
+        "date": "2018-04-08",
+        "value": 93.7
+      },
+      {
+        "date": "2018-04-09",
+        "value": 92.2
+      },
+      {
+        "date": "2018-04-10",
+        "value": 90.7
+      },
+      {
+        "date": "2018-04-11",
+        "value": 93.3
+      },
+      {
+        "date": "2018-04-12",
+        "value": 92.1
+      },
+      {
+        "date": "2018-04-13",
+        "value": 90.9
+      },
+      {
+        "date": "2018-04-14",
+        "value": 89.8
+      },
+      {
+        "date": "2018-04-15",
+        "value": 88.5
+      },
+      {
+        "date": "2018-04-16",
+        "value": 87.9
+      },
+      {
+        "date": "2018-04-17",
+        "value": 88.7
+      },
+      {
+        "date": "2018-04-18",
+        "value": 87.5
+      },
+      {
+        "date": "2018-04-19",
+        "value": 86.0
+      },
+      {
+        "date": "2018-04-20",
+        "value": 84.3
+      },
+      {
+        "date": "2018-04-21",
+        "value": 82.3
+      },
+      {
+        "date": "2018-04-22",
+        "value": 80.7
+      },
+      {
+        "date": "2018-04-23",
+        "value": 79.4
+      },
+      {
+        "date": "2018-04-24",
+        "value": 78.7
+      },
+      {
+        "date": "2018-04-25",
+        "value": 79.5
+      },
+      {
+        "date": "2018-04-26",
+        "value": 79.1
+      },
+      {
+        "date": "2018-04-27",
+        "value": 78.2
+      },
+      {
+        "date": "2018-04-28",
+        "value": 76.5
+      },
+      {
+        "date": "2018-04-29",
+        "value": 77.0
+      },
+      {
+        "date": "2018-04-30",
+        "value": 75.7
+      },
+      {
+        "date": "2018-05-01",
+        "value": 74.9
+      },
+      {
+        "date": "2018-05-02",
+        "value": 72.9
+      },
+      {
+        "date": "2018-05-03",
+        "value": 70.7
+      },
+      {
+        "date": "2018-05-04",
+        "value": 68.7
+      },
+      {
+        "date": "2018-05-05",
+        "value": 66.8
+      },
+      {
+        "date": "2018-05-06",
+        "value": 64.7
+      },
+      {
+        "date": "2018-05-07",
+        "value": 62.5
+      },
+      {
+        "date": "2018-05-08",
+        "value": 60.1
+      },
+      {
+        "date": "2018-05-09",
+        "value": 58.0
+      },
+      {
+        "date": "2018-05-10",
+        "value": 56.2
+      },
+      {
+        "date": "2018-05-11",
+        "value": 53.7
+      },
+      {
+        "date": "2018-05-12",
+        "value": 51.2
+      },
+      {
+        "date": "2018-05-13",
+        "value": 49.0
+      },
+      {
+        "date": "2018-05-14",
+        "value": 48.5
+      },
+      {
+        "date": "2018-05-15",
+        "value": 47.1
+      },
+      {
+        "date": "2018-05-16",
+        "value": 50.3
+      },
+      {
+        "date": "2018-05-17",
+        "value": 54.6
+      },
+      {
+        "date": "2018-05-18",
+        "value": 54.7
+      },
+      {
+        "date": "2018-05-19",
+        "value": 53.3
+      },
+      {
+        "date": "2018-05-20",
+        "value": 51.1
+      },
+      {
+        "date": "2018-05-21",
+        "value": 48.9
+      },
+      {
+        "date": "2018-05-22",
+        "value": 49.1
+      },
+      {
+        "date": "2018-05-23",
+        "value": 47.2
+      },
+      {
+        "date": "2018-05-24",
+        "value": 45.0
+      },
+      {
+        "date": "2018-05-25",
+        "value": 44.2
+      },
+      {
+        "date": "2018-05-26",
+        "value": 45.1
+      },
+      {
+        "date": "2018-05-27",
+        "value": 42.6
+      },
+      {
+        "date": "2018-05-28",
+        "value": 40.1
+      },
+      {
+        "date": "2018-05-29",
+        "value": 37.6
+      },
+      {
+        "date": "2018-05-30",
+        "value": 35.1
+      },
+      {
+        "date": "2018-05-31",
+        "value": 32.9
+      },
+      {
+        "date": "2018-06-01",
+        "value": 30.9
+      },
+      {
+        "date": "2018-06-02",
+        "value": 32.7
+      },
+      {
+        "date": "2018-06-03",
+        "value": 32.2
+      },
+      {
+        "date": "2018-06-04",
+        "value": 30.4
+      },
+      {
+        "date": "2018-06-05",
+        "value": 29.1
+      },
+      {
+        "date": "2018-06-06",
+        "value": 27.7
+      },
+      {
+        "date": "2018-06-07",
+        "value": 26.3
+      },
+      {
+        "date": "2018-06-08",
+        "value": 24.7
+      },
+      {
+        "date": "2018-06-09",
+        "value": 23.2
+      }
+    ],
+    "series_band": [
+      {
+        "date": "2017-11-01",
+        "min": 16.7,
+        "max": 99.8,
+        "mean": 77.3
+      },
+      {
+        "date": "2017-11-02",
+        "min": 16.7,
+        "max": 99.9,
+        "mean": 77.4
+      },
+      {
+        "date": "2017-11-03",
+        "min": 16.8,
+        "max": 99.8,
+        "mean": 77.3
+      },
+      {
+        "date": "2017-11-04",
+        "min": 16.7,
+        "max": 99.8,
+        "mean": 77.5
+      },
+      {
+        "date": "2017-11-05",
+        "min": 16.8,
+        "max": 99.8,
+        "mean": 78.5
+      },
+      {
+        "date": "2017-11-06",
+        "min": 16.9,
+        "max": 99.9,
+        "mean": 78.6
+      },
+      {
+        "date": "2017-11-07",
+        "min": 19.2,
+        "max": 99.9,
+        "mean": 79.4
+      },
+      {
+        "date": "2017-11-08",
+        "min": 22.6,
+        "max": 99.9,
+        "mean": 80.2
+      },
+      {
+        "date": "2017-11-09",
+        "min": 23.7,
+        "max": 99.9,
+        "mean": 80.5
+      },
+      {
+        "date": "2017-11-10",
+        "min": 29.7,
+        "max": 99.9,
+        "mean": 81.1
+      },
+      {
+        "date": "2017-11-11",
+        "min": 32.5,
+        "max": 99.9,
+        "mean": 81.3
+      },
+      {
+        "date": "2017-11-12",
+        "min": 33.8,
+        "max": 99.9,
+        "mean": 81.7
+      },
+      {
+        "date": "2017-11-13",
+        "min": 34.0,
+        "max": 99.9,
+        "mean": 81.9
+      },
+      {
+        "date": "2017-11-14",
+        "min": 39.3,
+        "max": 99.9,
+        "mean": 82.5
+      },
+      {
+        "date": "2017-11-15",
+        "min": 39.6,
+        "max": 99.9,
+        "mean": 82.8
+      },
+      {
+        "date": "2017-11-16",
+        "min": 39.6,
+        "max": 99.9,
+        "mean": 82.9
+      },
+      {
+        "date": "2017-11-17",
+        "min": 42.3,
+        "max": 99.9,
+        "mean": 83.4
+      },
+      {
+        "date": "2017-11-18",
+        "min": 45.7,
+        "max": 99.9,
+        "mean": 83.7
+      },
+      {
+        "date": "2017-11-19",
+        "min": 47.1,
+        "max": 99.9,
+        "mean": 84.5
+      },
+      {
+        "date": "2017-11-20",
+        "min": 47.9,
+        "max": 99.9,
+        "mean": 85.2
+      },
+      {
+        "date": "2017-11-21",
+        "min": 48.2,
+        "max": 99.9,
+        "mean": 85.6
+      },
+      {
+        "date": "2017-11-22",
+        "min": 48.9,
+        "max": 99.9,
+        "mean": 85.7
+      },
+      {
+        "date": "2017-11-23",
+        "min": 48.9,
+        "max": 99.9,
+        "mean": 85.7
+      },
+      {
+        "date": "2017-11-24",
+        "min": 48.8,
+        "max": 99.9,
+        "mean": 85.9
+      },
+      {
+        "date": "2017-11-25",
+        "min": 48.7,
+        "max": 99.9,
+        "mean": 86.0
+      },
+      {
+        "date": "2017-11-26",
+        "min": 48.7,
+        "max": 100.0,
+        "mean": 86.4
+      },
+      {
+        "date": "2017-11-27",
+        "min": 48.6,
+        "max": 99.9,
+        "mean": 86.6
+      },
+      {
+        "date": "2017-11-28",
+        "min": 49.5,
+        "max": 99.9,
+        "mean": 86.6
+      },
+      {
+        "date": "2017-11-29",
+        "min": 49.7,
+        "max": 99.9,
+        "mean": 86.6
+      },
+      {
+        "date": "2017-11-30",
+        "min": 51.5,
+        "max": 100.0,
+        "mean": 87.0
+      },
+      {
+        "date": "2017-12-01",
+        "min": 53.9,
+        "max": 100.0,
+        "mean": 87.4
+      },
+      {
+        "date": "2017-12-02",
+        "min": 54.1,
+        "max": 100.0,
+        "mean": 87.4
+      },
+      {
+        "date": "2017-12-03",
+        "min": 54.4,
+        "max": 100.0,
+        "mean": 87.9
+      },
+      {
+        "date": "2017-12-04",
+        "min": 54.6,
+        "max": 100.0,
+        "mean": 88.0
+      },
+      {
+        "date": "2017-12-05",
+        "min": 54.5,
+        "max": 100.0,
+        "mean": 88.6
+      },
+      {
+        "date": "2017-12-06",
+        "min": 54.3,
+        "max": 100.0,
+        "mean": 88.7
+      },
+      {
+        "date": "2017-12-07",
+        "min": 54.4,
+        "max": 100.0,
+        "mean": 89.0
+      },
+      {
+        "date": "2017-12-08",
+        "min": 54.5,
+        "max": 100.0,
+        "mean": 89.1
+      },
+      {
+        "date": "2017-12-09",
+        "min": 54.7,
+        "max": 99.9,
+        "mean": 89.4
+      },
+      {
+        "date": "2017-12-10",
+        "min": 54.9,
+        "max": 99.9,
+        "mean": 89.4
+      },
+      {
+        "date": "2017-12-11",
+        "min": 55.1,
+        "max": 100.0,
+        "mean": 89.4
+      },
+      {
+        "date": "2017-12-12",
+        "min": 55.9,
+        "max": 99.9,
+        "mean": 89.6
+      },
+      {
+        "date": "2017-12-13",
+        "min": 61.7,
+        "max": 100.0,
+        "mean": 90.2
+      },
+      {
+        "date": "2017-12-14",
+        "min": 61.8,
+        "max": 100.0,
+        "mean": 90.4
+      },
+      {
+        "date": "2017-12-15",
+        "min": 61.9,
+        "max": 100.0,
+        "mean": 90.4
+      },
+      {
+        "date": "2017-12-16",
+        "min": 61.9,
+        "max": 100.0,
+        "mean": 90.8
+      },
+      {
+        "date": "2017-12-17",
+        "min": 63.8,
+        "max": 100.0,
+        "mean": 91.3
+      },
+      {
+        "date": "2017-12-18",
+        "min": 64.9,
+        "max": 100.0,
+        "mean": 91.6
+      },
+      {
+        "date": "2017-12-19",
+        "min": 64.9,
+        "max": 100.0,
+        "mean": 92.1
+      },
+      {
+        "date": "2017-12-20",
+        "min": 64.9,
+        "max": 100.0,
+        "mean": 92.2
+      },
+      {
+        "date": "2017-12-21",
+        "min": 68.0,
+        "max": 100.0,
+        "mean": 92.6
+      },
+      {
+        "date": "2017-12-22",
+        "min": 69.4,
+        "max": 100.0,
+        "mean": 93.6
+      },
+      {
+        "date": "2017-12-23",
+        "min": 69.3,
+        "max": 100.0,
+        "mean": 94.0
+      },
+      {
+        "date": "2017-12-24",
+        "min": 69.4,
+        "max": 100.0,
+        "mean": 94.6
+      },
+      {
+        "date": "2017-12-25",
+        "min": 69.6,
+        "max": 99.9,
+        "mean": 94.9
+      },
+      {
+        "date": "2017-12-26",
+        "min": 76.0,
+        "max": 99.9,
+        "mean": 95.6
+      },
+      {
+        "date": "2017-12-27",
+        "min": 77.7,
+        "max": 99.9,
+        "mean": 95.8
+      },
+      {
+        "date": "2017-12-28",
+        "min": 79.4,
+        "max": 100.0,
+        "mean": 96.0
+      },
+      {
+        "date": "2017-12-29",
+        "min": 79.4,
+        "max": 100.0,
+        "mean": 96.0
+      },
+      {
+        "date": "2017-12-30",
+        "min": 79.4,
+        "max": 99.9,
+        "mean": 96.0
+      },
+      {
+        "date": "2017-12-31",
+        "min": 79.4,
+        "max": 100.0,
+        "mean": 96.2
+      },
+      {
+        "date": "2018-01-01",
+        "min": 79.3,
+        "max": 99.9,
+        "mean": 96.3
+      },
+      {
+        "date": "2018-01-02",
+        "min": 79.2,
+        "max": 100.0,
+        "mean": 96.6
+      },
+      {
+        "date": "2018-01-03",
+        "min": 79.2,
+        "max": 100.0,
+        "mean": 96.6
+      },
+      {
+        "date": "2018-01-04",
+        "min": 79.2,
+        "max": 100.0,
+        "mean": 96.6
+      },
+      {
+        "date": "2018-01-05",
+        "min": 79.2,
+        "max": 100.0,
+        "mean": 96.9
+      },
+      {
+        "date": "2018-01-06",
+        "min": 79.4,
+        "max": 100.0,
+        "mean": 97.1
+      },
+      {
+        "date": "2018-01-07",
+        "min": 79.5,
+        "max": 100.0,
+        "mean": 97.0
+      },
+      {
+        "date": "2018-01-08",
+        "min": 80.5,
+        "max": 100.0,
+        "mean": 97.3
+      },
+      {
+        "date": "2018-01-09",
+        "min": 81.1,
+        "max": 99.9,
+        "mean": 97.4
+      },
+      {
+        "date": "2018-01-10",
+        "min": 81.1,
+        "max": 100.0,
+        "mean": 97.4
+      },
+      {
+        "date": "2018-01-11",
+        "min": 83.2,
+        "max": 99.9,
+        "mean": 97.7
+      },
+      {
+        "date": "2018-01-12",
+        "min": 85.7,
+        "max": 99.9,
+        "mean": 98.2
+      },
+      {
+        "date": "2018-01-13",
+        "min": 86.5,
+        "max": 100.0,
+        "mean": 98.3
+      },
+      {
+        "date": "2018-01-14",
+        "min": 86.9,
+        "max": 100.0,
+        "mean": 98.5
+      },
+      {
+        "date": "2018-01-15",
+        "min": 87.2,
+        "max": 100.0,
+        "mean": 98.6
+      },
+      {
+        "date": "2018-01-16",
+        "min": 87.7,
+        "max": 100.0,
+        "mean": 98.6
+      },
+      {
+        "date": "2018-01-17",
+        "min": 87.7,
+        "max": 100.0,
+        "mean": 98.6
+      },
+      {
+        "date": "2018-01-18",
+        "min": 87.7,
+        "max": 100.0,
+        "mean": 98.7
+      },
+      {
+        "date": "2018-01-19",
+        "min": 87.9,
+        "max": 100.0,
+        "mean": 98.7
+      },
+      {
+        "date": "2018-01-20",
+        "min": 88.6,
+        "max": 100.0,
+        "mean": 98.8
+      },
+      {
+        "date": "2018-01-21",
+        "min": 89.0,
+        "max": 100.0,
+        "mean": 98.8
+      },
+      {
+        "date": "2018-01-22",
+        "min": 89.2,
+        "max": 100.0,
+        "mean": 98.9
+      },
+      {
+        "date": "2018-01-23",
+        "min": 89.3,
+        "max": 100.0,
+        "mean": 98.9
+      },
+      {
+        "date": "2018-01-24",
+        "min": 89.5,
+        "max": 100.0,
+        "mean": 98.9
+      },
+      {
+        "date": "2018-01-25",
+        "min": 91.0,
+        "max": 100.0,
+        "mean": 99.0
+      },
+      {
+        "date": "2018-01-26",
+        "min": 92.2,
+        "max": 100.0,
+        "mean": 99.1
+      },
+      {
+        "date": "2018-01-27",
+        "min": 93.2,
+        "max": 100.0,
+        "mean": 99.2
+      },
+      {
+        "date": "2018-01-28",
+        "min": 94.5,
+        "max": 100.0,
+        "mean": 99.4
+      },
+      {
+        "date": "2018-01-29",
+        "min": 94.8,
+        "max": 100.0,
+        "mean": 99.4
+      },
+      {
+        "date": "2018-01-30",
+        "min": 94.6,
+        "max": 100.0,
+        "mean": 99.4
+      },
+      {
+        "date": "2018-01-31",
+        "min": 96.4,
+        "max": 100.0,
+        "mean": 99.5
+      },
+      {
+        "date": "2018-02-01",
+        "min": 97.9,
+        "max": 100.0,
+        "mean": 99.7
+      },
+      {
+        "date": "2018-02-02",
+        "min": 99.3,
+        "max": 100.0,
+        "mean": 99.8
+      },
+      {
+        "date": "2018-02-03",
+        "min": 99.0,
+        "max": 100.0,
+        "mean": 99.8
+      },
+      {
+        "date": "2018-02-04",
+        "min": 99.1,
+        "max": 100.0,
+        "mean": 99.8
+      },
+      {
+        "date": "2018-02-05",
+        "min": 98.9,
+        "max": 100.0,
+        "mean": 99.8
+      },
+      {
+        "date": "2018-02-06",
+        "min": 98.8,
+        "max": 100.0,
+        "mean": 99.8
+      },
+      {
+        "date": "2018-02-07",
+        "min": 98.6,
+        "max": 99.9,
+        "mean": 99.8
+      },
+      {
+        "date": "2018-02-08",
+        "min": 98.6,
+        "max": 100.0,
+        "mean": 99.7
+      },
+      {
+        "date": "2018-02-09",
+        "min": 99.1,
+        "max": 99.9,
+        "mean": 99.8
+      },
+      {
+        "date": "2018-02-10",
+        "min": 99.4,
+        "max": 99.9,
+        "mean": 99.8
+      },
+      {
+        "date": "2018-02-11",
+        "min": 99.3,
+        "max": 99.9,
+        "mean": 99.8
+      },
+      {
+        "date": "2018-02-12",
+        "min": 99.3,
+        "max": 99.9,
+        "mean": 99.8
+      },
+      {
+        "date": "2018-02-13",
+        "min": 99.5,
+        "max": 99.9,
+        "mean": 99.8
+      },
+      {
+        "date": "2018-02-14",
+        "min": 99.2,
+        "max": 99.9,
+        "mean": 99.7
+      },
+      {
+        "date": "2018-02-15",
+        "min": 99.4,
+        "max": 99.9,
+        "mean": 99.7
+      },
+      {
+        "date": "2018-02-16",
+        "min": 99.2,
+        "max": 99.9,
+        "mean": 99.7
+      },
+      {
+        "date": "2018-02-17",
+        "min": 99.2,
+        "max": 99.9,
+        "mean": 99.7
+      },
+      {
+        "date": "2018-02-18",
+        "min": 99.2,
+        "max": 99.9,
+        "mean": 99.7
+      },
+      {
+        "date": "2018-02-19",
+        "min": 99.7,
+        "max": 99.9,
+        "mean": 99.8
+      },
+      {
+        "date": "2018-02-20",
+        "min": 99.5,
+        "max": 99.9,
+        "mean": 99.8
+      },
+      {
+        "date": "2018-02-21",
+        "min": 99.4,
+        "max": 99.9,
+        "mean": 99.7
+      },
+      {
+        "date": "2018-02-22",
+        "min": 99.4,
+        "max": 99.9,
+        "mean": 99.7
+      },
+      {
+        "date": "2018-02-23",
+        "min": 99.1,
+        "max": 99.9,
+        "mean": 99.6
+      },
+      {
+        "date": "2018-02-24",
+        "min": 98.9,
+        "max": 99.8,
+        "mean": 99.6
+      },
+      {
+        "date": "2018-02-25",
+        "min": 98.5,
+        "max": 99.8,
+        "mean": 99.5
+      },
+      {
+        "date": "2018-02-26",
+        "min": 98.3,
+        "max": 99.8,
+        "mean": 99.4
+      },
+      {
+        "date": "2018-02-27",
+        "min": 98.0,
+        "max": 99.8,
+        "mean": 99.3
+      },
+      {
+        "date": "2018-02-28",
+        "min": 97.9,
+        "max": 99.8,
+        "mean": 99.2
+      },
+      {
+        "date": "2018-03-01",
+        "min": 97.7,
+        "max": 99.8,
+        "mean": 99.1
+      },
+      {
+        "date": "2018-03-02",
+        "min": 97.6,
+        "max": 99.8,
+        "mean": 99.3
+      },
+      {
+        "date": "2018-03-03",
+        "min": 97.2,
+        "max": 99.7,
+        "mean": 99.1
+      },
+      {
+        "date": "2018-03-04",
+        "min": 96.8,
+        "max": 99.8,
+        "mean": 98.9
+      },
+      {
+        "date": "2018-03-05",
+        "min": 97.0,
+        "max": 99.7,
+        "mean": 98.7
+      },
+      {
+        "date": "2018-03-06",
+        "min": 96.8,
+        "max": 99.9,
+        "mean": 98.7
+      },
+      {
+        "date": "2018-03-07",
+        "min": 96.4,
+        "max": 99.7,
+        "mean": 98.6
+      },
+      {
+        "date": "2018-03-08",
+        "min": 96.0,
+        "max": 99.7,
+        "mean": 98.3
+      },
+      {
+        "date": "2018-03-09",
+        "min": 95.5,
+        "max": 99.8,
+        "mean": 98.1
+      },
+      {
+        "date": "2018-03-10",
+        "min": 94.8,
+        "max": 99.7,
+        "mean": 98.0
+      },
+      {
+        "date": "2018-03-11",
+        "min": 94.1,
+        "max": 99.7,
+        "mean": 98.2
+      },
+      {
+        "date": "2018-03-12",
+        "min": 93.4,
+        "max": 99.8,
+        "mean": 98.2
+      },
+      {
+        "date": "2018-03-13",
+        "min": 92.5,
+        "max": 99.8,
+        "mean": 98.1
+      },
+      {
+        "date": "2018-03-14",
+        "min": 91.8,
+        "max": 99.5,
+        "mean": 97.8
+      },
+      {
+        "date": "2018-03-15",
+        "min": 93.8,
+        "max": 99.7,
+        "mean": 97.9
+      },
+      {
+        "date": "2018-03-16",
+        "min": 94.3,
+        "max": 99.6,
+        "mean": 97.7
+      },
+      {
+        "date": "2018-03-17",
+        "min": 95.3,
+        "max": 99.7,
+        "mean": 97.8
+      },
+      {
+        "date": "2018-03-18",
+        "min": 94.4,
+        "max": 99.7,
+        "mean": 98.0
+      },
+      {
+        "date": "2018-03-19",
+        "min": 93.6,
+        "max": 99.7,
+        "mean": 98.3
+      },
+      {
+        "date": "2018-03-20",
+        "min": 92.7,
+        "max": 99.6,
+        "mean": 98.1
+      },
+      {
+        "date": "2018-03-21",
+        "min": 92.4,
+        "max": 99.6,
+        "mean": 97.7
+      },
+      {
+        "date": "2018-03-22",
+        "min": 91.9,
+        "max": 99.6,
+        "mean": 97.6
+      },
+      {
+        "date": "2018-03-23",
+        "min": 91.0,
+        "max": 99.6,
+        "mean": 97.4
+      },
+      {
+        "date": "2018-03-24",
+        "min": 89.9,
+        "max": 99.7,
+        "mean": 97.2
+      },
+      {
+        "date": "2018-03-25",
+        "min": 89.0,
+        "max": 99.6,
+        "mean": 97.3
+      },
+      {
+        "date": "2018-03-26",
+        "min": 89.3,
+        "max": 99.6,
+        "mean": 96.9
+      },
+      {
+        "date": "2018-03-27",
+        "min": 90.1,
+        "max": 99.4,
+        "mean": 96.6
+      },
+      {
+        "date": "2018-03-28",
+        "min": 91.0,
+        "max": 99.3,
+        "mean": 96.7
+      },
+      {
+        "date": "2018-03-29",
+        "min": 90.1,
+        "max": 99.3,
+        "mean": 96.6
+      },
+      {
+        "date": "2018-03-30",
+        "min": 90.4,
+        "max": 99.4,
+        "mean": 97.0
+      },
+      {
+        "date": "2018-03-31",
+        "min": 91.6,
+        "max": 99.6,
+        "mean": 97.0
+      },
+      {
+        "date": "2018-04-01",
+        "min": 94.1,
+        "max": 99.7,
+        "mean": 97.2
+      },
+      {
+        "date": "2018-04-02",
+        "min": 93.0,
+        "max": 99.5,
+        "mean": 96.8
+      },
+      {
+        "date": "2018-04-03",
+        "min": 93.4,
+        "max": 99.7,
+        "mean": 96.6
+      },
+      {
+        "date": "2018-04-04",
+        "min": 92.1,
+        "max": 99.6,
+        "mean": 96.2
+      },
+      {
+        "date": "2018-04-05",
+        "min": 91.2,
+        "max": 99.6,
+        "mean": 96.2
+      },
+      {
+        "date": "2018-04-06",
+        "min": 90.4,
+        "max": 99.6,
+        "mean": 96.2
+      },
+      {
+        "date": "2018-04-07",
+        "min": 90.1,
+        "max": 99.2,
+        "mean": 96.0
+      },
+      {
+        "date": "2018-04-08",
+        "min": 88.7,
+        "max": 98.9,
+        "mean": 95.3
+      },
+      {
+        "date": "2018-04-09",
+        "min": 89.6,
+        "max": 99.6,
+        "mean": 95.2
+      },
+      {
+        "date": "2018-04-10",
+        "min": 89.4,
+        "max": 98.9,
+        "mean": 94.5
+      },
+      {
+        "date": "2018-04-11",
+        "min": 88.4,
+        "max": 99.3,
+        "mean": 94.4
+      },
+      {
+        "date": "2018-04-12",
+        "min": 87.4,
+        "max": 99.5,
+        "mean": 94.4
+      },
+      {
+        "date": "2018-04-13",
+        "min": 87.1,
+        "max": 99.6,
+        "mean": 94.5
+      },
+      {
+        "date": "2018-04-14",
+        "min": 85.6,
+        "max": 99.4,
+        "mean": 94.8
+      },
+      {
+        "date": "2018-04-15",
+        "min": 84.5,
+        "max": 99.3,
+        "mean": 94.5
+      },
+      {
+        "date": "2018-04-16",
+        "min": 83.5,
+        "max": 99.3,
+        "mean": 94.0
+      },
+      {
+        "date": "2018-04-17",
+        "min": 82.2,
+        "max": 99.5,
+        "mean": 93.8
+      },
+      {
+        "date": "2018-04-18",
+        "min": 80.9,
+        "max": 98.2,
+        "mean": 93.1
+      },
+      {
+        "date": "2018-04-19",
+        "min": 79.4,
+        "max": 97.6,
+        "mean": 92.3
+      },
+      {
+        "date": "2018-04-20",
+        "min": 77.8,
+        "max": 99.5,
+        "mean": 92.0
+      },
+      {
+        "date": "2018-04-21",
+        "min": 76.2,
+        "max": 99.3,
+        "mean": 91.4
+      },
+      {
+        "date": "2018-04-22",
+        "min": 74.6,
+        "max": 98.0,
+        "mean": 90.5
+      },
+      {
+        "date": "2018-04-23",
+        "min": 72.8,
+        "max": 97.0,
+        "mean": 89.2
+      },
+      {
+        "date": "2018-04-24",
+        "min": 71.1,
+        "max": 97.2,
+        "mean": 88.1
+      },
+      {
+        "date": "2018-04-25",
+        "min": 69.3,
+        "max": 96.2,
+        "mean": 86.7
+      },
+      {
+        "date": "2018-04-26",
+        "min": 67.2,
+        "max": 96.7,
+        "mean": 86.5
+      },
+      {
+        "date": "2018-04-27",
+        "min": 65.1,
+        "max": 97.5,
+        "mean": 85.9
+      },
+      {
+        "date": "2018-04-28",
+        "min": 62.9,
+        "max": 99.7,
+        "mean": 85.9
+      },
+      {
+        "date": "2018-04-29",
+        "min": 60.6,
+        "max": 99.3,
+        "mean": 85.5
+      },
+      {
+        "date": "2018-04-30",
+        "min": 58.1,
+        "max": 98.2,
+        "mean": 84.3
+      },
+      {
+        "date": "2018-05-01",
+        "min": 55.9,
+        "max": 96.6,
+        "mean": 84.6
+      },
+      {
+        "date": "2018-05-02",
+        "min": 53.7,
+        "max": 95.5,
+        "mean": 83.7
+      },
+      {
+        "date": "2018-05-03",
+        "min": 51.4,
+        "max": 98.2,
+        "mean": 85.1
+      },
+      {
+        "date": "2018-05-04",
+        "min": 49.2,
+        "max": 99.3,
+        "mean": 84.7
+      },
+      {
+        "date": "2018-05-05",
+        "min": 47.7,
+        "max": 98.7,
+        "mean": 83.9
+      },
+      {
+        "date": "2018-05-06",
+        "min": 49.8,
+        "max": 97.9,
+        "mean": 84.9
+      },
+      {
+        "date": "2018-05-07",
+        "min": 50.2,
+        "max": 98.8,
+        "mean": 84.4
+      },
+      {
+        "date": "2018-05-08",
+        "min": 48.3,
+        "max": 98.8,
+        "mean": 83.8
+      },
+      {
+        "date": "2018-05-09",
+        "min": 48.2,
+        "max": 98.1,
+        "mean": 82.4
+      },
+      {
+        "date": "2018-05-10",
+        "min": 47.8,
+        "max": 98.1,
+        "mean": 81.6
+      },
+      {
+        "date": "2018-05-11",
+        "min": 48.3,
+        "max": 97.3,
+        "mean": 81.0
+      },
+      {
+        "date": "2018-05-12",
+        "min": 49.5,
+        "max": 95.5,
+        "mean": 80.4
+      },
+      {
+        "date": "2018-05-13",
+        "min": 47.7,
+        "max": 94.6,
+        "mean": 80.6
+      },
+      {
+        "date": "2018-05-14",
+        "min": 46.0,
+        "max": 98.8,
+        "mean": 79.7
+      },
+      {
+        "date": "2018-05-15",
+        "min": 44.4,
+        "max": 98.7,
+        "mean": 79.9
+      },
+      {
+        "date": "2018-05-16",
+        "min": 48.0,
+        "max": 98.7,
+        "mean": 79.8
+      },
+      {
+        "date": "2018-05-17",
+        "min": 47.8,
+        "max": 98.8,
+        "mean": 80.0
+      },
+      {
+        "date": "2018-05-18",
+        "min": 46.0,
+        "max": 99.0,
+        "mean": 79.7
+      },
+      {
+        "date": "2018-05-19",
+        "min": 45.1,
+        "max": 98.5,
+        "mean": 78.6
+      },
+      {
+        "date": "2018-05-20",
+        "min": 43.0,
+        "max": 98.7,
+        "mean": 78.9
+      },
+      {
+        "date": "2018-05-21",
+        "min": 43.5,
+        "max": 97.8,
+        "mean": 77.8
+      },
+      {
+        "date": "2018-05-22",
+        "min": 47.0,
+        "max": 95.1,
+        "mean": 77.0
+      },
+      {
+        "date": "2018-05-23",
+        "min": 47.2,
+        "max": 92.4,
+        "mean": 75.9
+      },
+      {
+        "date": "2018-05-24",
+        "min": 45.5,
+        "max": 95.8,
+        "mean": 75.5
+      },
+      {
+        "date": "2018-05-25",
+        "min": 43.4,
+        "max": 96.3,
+        "mean": 75.8
+      },
+      {
+        "date": "2018-05-26",
+        "min": 41.1,
+        "max": 95.2,
+        "mean": 75.2
+      },
+      {
+        "date": "2018-05-27",
+        "min": 41.6,
+        "max": 98.6,
+        "mean": 75.0
+      },
+      {
+        "date": "2018-05-28",
+        "min": 41.9,
+        "max": 98.4,
+        "mean": 74.6
+      },
+      {
+        "date": "2018-05-29",
+        "min": 44.0,
+        "max": 96.5,
+        "mean": 74.4
+      },
+      {
+        "date": "2018-05-30",
+        "min": 46.3,
+        "max": 96.0,
+        "mean": 73.2
+      },
+      {
+        "date": "2018-05-31",
+        "min": 47.8,
+        "max": 98.0,
+        "mean": 72.9
+      },
+      {
+        "date": "2018-06-01",
+        "min": 51.5,
+        "max": 98.2,
+        "mean": 72.5
+      },
+      {
+        "date": "2018-06-02",
+        "min": 51.8,
+        "max": 98.4,
+        "mean": 73.7
+      },
+      {
+        "date": "2018-06-03",
+        "min": 51.8,
+        "max": 97.9,
+        "mean": 72.5
+      },
+      {
+        "date": "2018-06-04",
+        "min": 50.7,
+        "max": 98.4,
+        "mean": 71.4
+      },
+      {
+        "date": "2018-06-05",
+        "min": 50.2,
+        "max": 98.1,
+        "mean": 69.7
+      },
+      {
+        "date": "2018-06-06",
+        "min": 50.0,
+        "max": 97.5,
+        "mean": 68.0
+      },
+      {
+        "date": "2018-06-07",
+        "min": 51.1,
+        "max": 96.2,
+        "mean": 67.0
+      },
+      {
+        "date": "2018-06-08",
+        "min": 48.9,
+        "max": 97.5,
+        "mean": 65.2
+      },
+      {
+        "date": "2018-06-09",
+        "min": 46.9,
+        "max": 98.4,
+        "mean": 64.9
+      }
+    ],
+    "balance_30d": {
+      "value": -77.4,
+      "unit": "mm",
+      "label": "ostatnie 30 dni",
+      "status": "risk",
+      "note": "11.05–09.06, o 54 mm mniej niż zwykle (niższy w 1 z 10 lat)",
+      "source_tag": {
+        "kind": "obliczenia",
+        "date": "2018-06-09",
+        "source": "NASA POWER"
+      }
+    },
+    "balance_30d_rank": {
+      "lower_years": 1,
+      "of_years": 10
+    },
+    "source_tag": {
+      "kind": "szacunek_modelu",
+      "date": "2018-06-09",
+      "source": "Model wody w glebie FAO-56 – pokrycie referencyjne"
+    }
+  },
+  "suggestions": null,
   "history": {
     "period_start": "2006-08-01",
     "period_end": "2018-06-09",
@@ -1440,6 +3746,26 @@
   ],
   "recommendations": [
     {
+      "id": "retencja.bez_nawadniania_zatrzymaj_wode",
+      "category": "retencja",
+      "title": "Zatrzymaj wodę w glebie – zamiast nawadniania",
+      "description": "Zbóż w Polsce się nie nawadnia – liczy się zatrzymanie wody w glebie. Nie ugniataj gleby ciężkim sprzętem i zostaw na polu resztki roślin – deszcz wsiąknie wtedy zamiast spłynąć. Po zbiorze od razu rozdrobnij słomę i wysiej międzyplon, żeby odbudować zapas wody na następny sezon.",
+      "why": "W strefie korzeni jest 17% wody dostępnej – rośliny już odczuwają brak wody. Od 1 marca bilans wody (opad − parowanie) wynosi −111 mm – o 90 mm mniej niż zwykle.",
+      "inputs": [],
+      "confidence": "srednia",
+      "location": null,
+      "rule_id": "retencja.bez_nawadniania_zatrzymaj_wode",
+      "priority": 99,
+      "in_panel": true,
+      "when": "teraz",
+      "when_label": "teraz",
+      "permit": "none",
+      "permit_note": "Bez formalności – możesz to zrobić sam.",
+      "permit_url": null,
+      "warning": null,
+      "eco_scheme": null
+    },
+    {
       "id": "retencja.po_zbiorze_miedzyplon",
       "category": "retencja",
       "title": "Po zbiorze: międzyplon i słoma na polu",
@@ -1458,7 +3784,7 @@
       "location": null,
       "rule_id": "retencja.po_zbiorze_miedzyplon",
       "priority": 80,
-      "in_panel": true,
+      "in_panel": false,
       "when": "po_zbiorze",
       "when_label": "po zbiorze",
       "permit": "none",
@@ -1469,39 +3795,6 @@
         "name": "Rolnictwo węglowe i zarządzanie składnikami odżywczymi",
         "practice": "Międzyplony ozime lub wsiewki śródplonowe",
         "code": "E_MPW",
-        "note": "Sprawdź aktualne warunki w ARiMR."
-      }
-    },
-    {
-      "id": "retencja.prochnica",
-      "category": "retencja",
-      "title": "Zwiększaj próchnicę – lekka gleba trzyma mało wody",
-      "description": "Gleba (kat. III, piasek gliniasty lekki) zatrzymuje mało wody. Każdy dodatkowy procent próchnicy zwiększa jej pojemność wodną – mieszaj słomę z glebą, wysiewaj międzyplony, stosuj obornik lub kompost.",
-      "why": "Gleby ubogie w materię organiczną szybciej przesychają; wzrost próchnicy poprawia pojemność wodną. Gleba zmieści ok. 166 mm wody dostępnej dla roślin. Woda z ulewy: szybko wsiąka i ucieka w głąb (przepuszczalność ok. 85 mm/h). Dane: woda z ulewy: szybko wsiąka i ucieka w głąb.",
-      "inputs": [
-        {
-          "name": "Woda z ulewy",
-          "value": "szybko wsiąka i ucieka w głąb",
-          "unit": null,
-          "source": "SoilGrids + Saxton i Rawls (2006)",
-          "date": null
-        }
-      ],
-      "confidence": "srednia",
-      "location": null,
-      "rule_id": "retencja.prochnica",
-      "priority": 60,
-      "in_panel": false,
-      "when": "po_zbiorze",
-      "when_label": "po zbiorze",
-      "permit": "none",
-      "permit_note": "Bez formalności – możesz to zrobić sam.",
-      "permit_url": null,
-      "warning": null,
-      "eco_scheme": {
-        "name": "Rolnictwo węglowe i zarządzanie składnikami odżywczymi",
-        "practice": "Wymieszanie słomy z glebą",
-        "code": "E_WSG",
         "note": "Sprawdź aktualne warunki w ARiMR."
       }
     },
@@ -1523,64 +3816,46 @@
       "permit_note": "Bez formalności – możesz to zrobić sam.",
       "permit_url": null,
       "warning": null,
-      "eco_scheme": {
-        "name": "Rolnictwo węglowe i zarządzanie składnikami odżywczymi",
-        "practice": "Opracowanie i przestrzeganie planu nawożenia",
-        "code": null,
-        "note": "Sprawdź aktualne warunki w ARiMR."
-      }
+      "eco_scheme": null
     },
     {
-      "id": "agrotechnika.plodozmian",
+      "id": "agrotechnika.bez_nawadniania_parowanie",
       "category": "agrotechnika",
-      "title": "Zmień uprawę – wprowadź płodozmian",
-      "description": "Rok temu zboża ozime, teraz zboża ozime – ta sama uprawa drugi rok z rzędu. W kolejnym sezonie wprowadź roślinę z innej grupy (strączkowe, rzepak, okopowe) albo międzyplon – poprawia to strukturę gleby i jej zdolność zatrzymywania wody.",
-      "why": "Monokultura i zboże po zbożu pogarszają strukturę gleby i zwiększają podatność na suszę. Dane: uprawa w poprzednim roku: zboża ozime.",
-      "inputs": [
-        {
-          "name": "Uprawa w poprzednim roku",
-          "value": "zboża ozime",
-          "unit": null,
-          "source": "wybór rolnika",
-          "date": null
-        }
-      ],
+      "title": "Ogranicz straty wody – bez uprawek i z odchwaszczaniem",
+      "description": "Zbóż w Polsce się nie nawadnia – liczy się zatrzymanie wody w glebie. W strefie korzeni jest 17% wody dostępnej – rośliny już odczuwają brak wody. Nie wykonuj teraz zabiegów mechanicznych, które przesuszają glebę, i nie dopuść do zachwaszczenia – chwasty zabierają wodę roślinom.",
+      "why": "Rośliny w fazie wrażliwej odczuwają już brak wody albo odczują go w ciągu 7 dni.",
+      "inputs": [],
       "confidence": "srednia",
       "location": null,
-      "rule_id": "agrotechnika.plodozmian",
-      "priority": 55,
+      "rule_id": "agrotechnika.bez_nawadniania_parowanie",
+      "priority": 92,
       "in_panel": false,
-      "when": "przed_sezonem",
-      "when_label": "przed następnym sezonem",
+      "when": "teraz",
+      "when_label": "teraz",
       "permit": "none",
       "permit_note": "Bez formalności – możesz to zrobić sam.",
       "permit_url": null,
       "warning": null,
-      "eco_scheme": {
-        "name": "Rolnictwo węglowe i zarządzanie składnikami odżywczymi",
-        "practice": "Zróżnicowana struktura upraw",
-        "code": "E_ZSU",
-        "note": "Sprawdź aktualne warunki w ARiMR."
-      }
+      "eco_scheme": null
     },
     {
-      "id": "nawadnianie.plan_dawek",
-      "category": "nawadnianie",
-      "title": "Nawadnianie teraz",
-      "description": "27,5 mm teraz, powtórz za ok. 2 dni (w 7 dniach 3 dawki, niedobór ok. 70 mm).",
-      "why": "Rośliny w fazie wrażliwej zaczną odczuwać brak wody w ciągu 7 dni albo już go odczuwają; dawka dobrana do gleby kat. III.",
+      "id": "agrotechnika.bez_nawadniania_termin_zabiegow",
+      "category": "agrotechnika",
+      "title": "Zabiegi rano lub wieczorem",
+      "description": "Opryski wykonuj wcześnie rano albo wieczorem, przy wyższej wilgotności powietrza – w upale rośliny w stresie wodnym gorzej znoszą zabiegi, a ciecz szybciej odparowuje. Parowanie (ET0) w ostatnich dniach: ok. 4,5 mm na dobę.",
+      "why": "Przy niedoborze wody i dużym parowaniu termin zabiegu decyduje o jego skuteczności.",
       "inputs": [],
-      "confidence": "ograniczona",
+      "confidence": "srednia",
       "location": null,
-      "rule_id": "nawadnianie.plan_dawek",
-      "priority": 100,
-      "in_panel": true,
+      "rule_id": "agrotechnika.bez_nawadniania_termin_zabiegow",
+      "priority": 88,
+      "in_panel": false,
       "when": "teraz",
       "when_label": "teraz",
-      "permit": "required",
-      "permit_note": "Wymaga pozwolenia wodnoprawnego (pobór wody) – Wody Polskie.",
-      "permit_url": "https://www.gov.pl/web/wody-polskie",
-      "warning": "Obarczone dużym ryzykiem błędu – traktuj jako wskazówkę i sprawdź na polu.",
+      "permit": "none",
+      "permit_note": "Bez formalności – możesz to zrobić sam.",
+      "permit_url": null,
+      "warning": null,
       "eco_scheme": null
     }
   ],
@@ -1615,10 +3890,10 @@
       {
         "name": "EGiB (KIEG)",
         "used_for": "klasy bonitacyjne (informacyjnie)",
-        "data_date": "2026-11-21",
+        "data_date": null,
         "resolution": null,
-        "status": "ok",
-        "note": null
+        "status": "brak",
+        "note": "brak odpowiedzi w 6 s"
       },
       {
         "name": "SoilGrids (ISRIC)",
@@ -1630,7 +3905,7 @@
       },
       {
         "name": "Mapa glebowo-rolnicza (GUGiK)",
-        "used_for": "kompleks i gatunek gleby (informacyjnie)",
+        "used_for": "kompleks i gatunek gleby, zgodność z IUNG",
         "data_date": null,
         "resolution": "1:5000",
         "status": "ok",
@@ -1668,6 +3943,7 @@
     "limitations": [
       "Pogoda uśredniona dla obszaru ok. 50 km (NASA POWER).",
       "WOD to wartość typowa dla kategorii gleby (środek przedziału IUNG), nie pomiar na tej działce.",
+      "Klasy bonitacyjne niedostępne (usługa KIEG nie odpowiada) – to tylko informacja dodatkowa.",
       "Frakcje gleby i przepuszczalność z modelu globalnego SoilGrids (250 m) – wartości orientacyjne, nie pomiar na tej działce.",
       "Mapa glebowo-rolnicza opracowana ok. 1973 r. – stan gleby mógł się zmienić.",
       "Brak zdjęć satelitarnych – kondycja i wilgotność roślin w przygotowaniu.",
@@ -1682,42 +3958,42 @@
       "label": "Szukam działki (ULDK GUGiK)",
       "state": "done",
       "note": null,
-      "duration_ms": 260
+      "duration_ms": 0
     },
     {
       "id": "weather",
       "label": "Pobieram pogodę z 10 lat (NASA POWER)",
       "state": "done",
       "note": null,
-      "duration_ms": 1817
+      "duration_ms": 1451
     },
     {
       "id": "soil",
       "label": "Sprawdzam glebę (IUNG-PIB)",
       "state": "done",
       "note": null,
-      "duration_ms": 369
+      "duration_ms": 476
     },
     {
       "id": "egib",
       "label": "Klasy bonitacyjne (EGiB)",
-      "state": "done",
-      "note": null,
-      "duration_ms": 389
+      "state": "error",
+      "note": "brak odpowiedzi w 6 s",
+      "duration_ms": 6010
     },
     {
       "id": "soilgrids",
       "label": "Frakcje i przepuszczalność gleby (SoilGrids)",
       "state": "done",
       "note": null,
-      "duration_ms": 3642
+      "duration_ms": 2863
     },
     {
       "id": "soil_map",
       "label": "Mapa glebowo-rolnicza (GUGiK)",
       "state": "done",
       "note": null,
-      "duration_ms": 171
+      "duration_ms": 1374
     },
     {
       "id": "forecast",
@@ -1745,21 +4021,21 @@
       "label": "Liczę bilans wody i wodę w glebie (FAO-56)",
       "state": "done",
       "note": null,
-      "duration_ms": 24
+      "duration_ms": 38
     },
     {
       "id": "scoring",
       "label": "Ocena, pewność, przyczyny i rekomendacje",
       "state": "done",
       "note": null,
-      "duration_ms": 57
+      "duration_ms": 60
     },
     {
       "id": "total",
       "label": "Cała analiza",
       "state": "done",
       "note": null,
-      "duration_ms": 3993
+      "duration_ms": 6139
     }
   ]
 }

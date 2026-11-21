@@ -146,11 +146,18 @@ export type Indicators = {
   soil_capacity: Indicator
 }
 
+/** Czego dotyczy ocena: sezon uprawy / poza sezonem (zapas wody + bilans 30 dni) / bez uprawy (stan działki) */
+export type StatusScope = 'sezon' | 'poza_sezonem' | 'bez_uprawy'
+
 export type OverallStatus = {
   level: StatusLevel
   score?: number | null
   headline: string
   summary: string
+  /** A5b-1: czego dotyczy ocena */
+  scope?: StatusScope | null
+  /** np. 'poza sezonem', 'stan wody na działce' */
+  scope_label?: string | null
 }
 
 /** Faza uprawy w dacie analizy. Wrażliwe na niedobór (stres, nawadnianie): poczatkowa, rozwoj, pelnia */
@@ -164,7 +171,11 @@ export type CropPhase =
   | 'dojrzewanie'
   | 'po_zbiorze'
 
-export type IrrigationStatus = 'zalecane' | 'niepotrzebne' | 'nieuzasadnione_w_fazie' | 'brak_danych'
+/** nie_praktykowane – uprawy, których w Polsce się nie nawadnia (zboża, rzepak, strączkowe): bez dawek */
+export type IrrigationStatus = 'zalecane' | 'niepotrzebne' | 'nieuzasadnione_w_fazie' | 'nie_praktykowane' | 'brak_danych'
+
+/** nawadnianie w praktyce w Polsce: nie stosuje się / rzadko / typowe */
+export type IrrigationPractice = 'not_practiced' | 'optional' | 'common'
 
 export type CropSeason = {
   phase: CropPhase
@@ -215,6 +226,8 @@ export type IrrigationPlan = {
   /** łączny niedobór do uzupełnienia w 7 dniach */
   total_7d_mm?: number | null
   doses_7d?: number | null
+  /** A5b-1: czy tę uprawę w Polsce się nawadnia */
+  practice?: IrrigationPractice | null
   source_tag: SourceTag
 }
 
@@ -254,7 +267,32 @@ export type Soil = {
   soil_map?: SoilMapInfo | null
   /** powód braku frakcji / mapy glebowo-rolniczej */
   texture_note?: string | null
+  /** A5b-1: zgodność źródeł gleby (mapa glebowo-rolnicza > IUNG > SoilGrids) */
+  consistency?: SoilConsistency | null
   source_tag: SourceTag
+}
+
+export type SoilSourceKey = 'mapa_glebowo_rolnicza' | 'iung' | 'soilgrids'
+
+/** kategoria agronomiczna gleby (I bardzo lekka … IV ciężka) według jednego źródła */
+export type SoilCategoryVote = {
+  source: SoilSourceKey
+  source_label: string
+  /** 1–4 */
+  category?: number | null
+  /** np. 'piasek gliniasty lekki – gleba lekka' */
+  description: string
+}
+
+export type SoilConsistency = {
+  status: 'ok' | 'conflict'
+  /** krótkie wyjaśnienie dla rolnika */
+  note: string
+  /** źródło kategorii gleby i WOD użytych w obliczeniach */
+  basis?: SoilSourceKey | null
+  /** kategoria gleby (1–4) użyta w modelu wody */
+  category_used?: number | null
+  by_source?: SoilCategoryVote[]
 }
 
 /** uziarnienie 0–30 cm – SoilGrids 250 m (ISRIC) */
@@ -424,9 +462,33 @@ export type LoadingStep = {
   duration_ms?: number | null
 }
 
+/**
+ * A5b-1: stan wody na działce bez względu na uprawę – profil ~1 m pod pokryciem referencyjnym FAO-56
+ * (trawa, Kc = 1), bilans opad − ET0 z 30 dni na tle 10 lat. Liczony zawsze; null dla gruntu nierolnego.
+ */
+export type FieldState = {
+  status: OverallStatus
+  /** np. 'pokrycie referencyjne FAO-56 (trawa, Kc = 1), profil ok. 1 m' */
+  cover: string
+  soil_water_pct: Indicator
+  soil_water_mm: Indicator
+  soil_water: SoilWaterState
+  /** początek przebiegu – 1 listopada (rok hydrologiczny) */
+  series_start: ISODate
+  /** woda dostępna w profilu, %, dzień po dniu */
+  series: SeriesPoint[]
+  /** ten sam okres w 10 poprzednich latach (min / max / średnia), % */
+  series_band: BandPoint[]
+  /** bilans opad − ET0 z ostatnich 30 dni, mm */
+  balance_30d: Indicator
+  balance_30d_rank?: BalanceRank | null
+  source_tag: SourceTag
+}
+
 export type AnalysisResponse = {
   parcel: Parcel
-  crop: CropId
+  /** null = analiza bez uprawy („Stan działki”) */
+  crop: CropId | null
   /** uprawa w poprzednim roku (jeśli podana) */
   previous_crop?: PreviousCropId | null
   analysis_date: ISODate
@@ -434,10 +496,16 @@ export type AnalysisResponse = {
   generated_at: ISODateTime
   status: OverallStatus
   indicators: Indicators
-  crop_season: CropSeason
+  /** null bez uprawy */
+  crop_season: CropSeason | null
   soil_water: SoilWaterState
-  irrigation: IrrigationPlan
+  /** null bez uprawy */
+  irrigation: IrrigationPlan | null
   soil: Soil
+  /** A5b-1: „Stan działki” – pokazywać od razu po wybraniu działki, bez wymagania uprawy */
+  field_state?: FieldState | null
+  /** A5b-2: ranking „Co tu posiać?” – na razie zawsze null */
+  suggestions?: null
   history: History
   causes: Cause[]
   recommendations: Recommendation[]

@@ -1,0 +1,7207 @@
+{
+  "parcel": {
+    "id": "201305_2.0038.6/1",
+    "wojewodztwo": "podlaskie",
+    "powiat": "powiat wysokomazowiecki",
+    "gmina": "Kobylin-Borzymy",
+    "obreb": "Wnory-Wandy",
+    "numer": "6/1",
+    "teryt_gminy": "2013052",
+    "powierzchnia_ha": 0.5822,
+    "geometria": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [
+            22.601865633605076,
+            53.050016629547535
+          ],
+          [
+            22.59995910187174,
+            53.05040815615558
+          ],
+          [
+            22.599914863840056,
+            53.049992247465354
+          ],
+          [
+            22.601730846600116,
+            53.049632999782865
+          ],
+          [
+            22.601807306031464,
+            53.04981427142785
+          ],
+          [
+            22.601865633605076,
+            53.050016629547535
+          ]
+        ]
+      ]
+    },
+    "zrodlo": {
+      "nazwa": "ULDK GUGiK",
+      "url": "https://uldk.gugik.gov.pl/",
+      "pobrano": "2026-11-21T19:00:40+00:00",
+      "uwagi": "ZAPIS ODPOWIEDZI /api/analysis dla 201305_2.0038.6/1, BEZ UPRAWY (stan działki), 2026-11-21 (wygenerowano 2026-11-21, A5b-1; obrys z zapisanej odpowiedzi ULDK, pozostałe źródła na żywo). Plik służy tylko do pracy nad UI (?dane=przykladowe) – UI zawsze pokazuje napis „DANE PRZYKŁADOWE”."
+    }
+  },
+  "crop": null,
+  "previous_crop": null,
+  "analysis_date": "2026-11-21",
+  "historical": false,
+  "generated_at": "2026-11-21T19:00:48Z",
+  "status": {
+    "level": "risk",
+    "score": 43,
+    "headline": "Ryzyko – mały zapas wody w glebie",
+    "summary": "W profilu gleby (ok. 1 m) jest 51% wody dostępnej (84 mm); mniej wody było tego dnia w 1 z 10 ostatnich lat. Bilans opad − parowanie z ostatnich 30 dni: +18 mm (o 27 mm mniej niż zwykle). Bez wybranej uprawy – stan dla pokrycia referencyjnego FAO-56 (trawa).",
+    "scope": "bez_uprawy",
+    "scope_label": "stan wody na działce"
+  },
+  "indicators": {
+    "soil_water_pct": {
+      "value": 51.0,
+      "unit": "%",
+      "label": "stan działki",
+      "status": "ok",
+      "note": "gleba odbudowuje zapas wody (profil ok. 1 m, pokrycie referencyjne)",
+      "source_tag": {
+        "kind": "szacunek_modelu",
+        "date": "2026-11-20",
+        "source": "Model wody w glebie FAO-56 – pokrycie referencyjne"
+      }
+    },
+    "soil_water_mm": {
+      "value": 84.5,
+      "unit": "mm",
+      "label": null,
+      "status": "ok",
+      "note": "woda dostępna dla roślin, profil ok. 1 m",
+      "source_tag": {
+        "kind": "szacunek_modelu",
+        "date": "2026-11-20",
+        "source": "Model wody w glebie FAO-56 – pokrycie referencyjne"
+      }
+    },
+    "risk_7d": {
+      "value": null,
+      "unit": "dni",
+      "label": "Nie dotyczy",
+      "status": "no_data",
+      "note": "wybierz uprawę, aby ocenić ryzyko stresu roślin na 7 dni",
+      "source_tag": {
+        "kind": "brak_danych",
+        "date": null,
+        "source": "Model wody w glebie FAO-56 – pokrycie referencyjne"
+      },
+      "days_to_stress": null
+    },
+    "crop_health": {
+      "value": null,
+      "unit": "pkt",
+      "label": null,
+      "status": "no_data",
+      "note": "zdjęcia satelitarne – w przygotowaniu",
+      "source_tag": {
+        "kind": "brak_danych",
+        "date": null,
+        "source": "Sentinel-2 L2A"
+      },
+      "index_value": null
+    },
+    "plant_moisture": {
+      "value": null,
+      "unit": "pkt",
+      "label": null,
+      "status": "no_data",
+      "note": "zdjęcia satelitarne – w przygotowaniu",
+      "source_tag": {
+        "kind": "brak_danych",
+        "date": null,
+        "source": "Sentinel-2 L2A"
+      },
+      "index_value": null
+    },
+    "water_balance_season": {
+      "value": -227.9,
+      "unit": "mm",
+      "label": null,
+      "status": "warn",
+      "note": "o 154 mm mniej niż zwykle (średnia 10 lat −74 mm), od 01.03",
+      "source_tag": {
+        "kind": "obliczenia",
+        "date": "2026-11-18",
+        "source": "NASA POWER"
+      }
+    },
+    "soil_capacity": {
+      "value": 166.0,
+      "unit": "mm",
+      "label": "Kat. III – średnio podatna na suszę",
+      "status": "ok",
+      "note": "woda dostępna dla roślin (WOD) – 100% działki to gleby mineralne użytków rolnych",
+      "source_tag": {
+        "kind": "pomiar",
+        "date": null,
+        "source": "IUNG-PIB"
+      }
+    }
+  },
+  "crop_season": null,
+  "soil_water": {
+    "scope": "profil",
+    "depth_m": 1.0,
+    "description": "gleba odbudowuje zapas wody",
+    "rank": {
+      "lower_years": 1,
+      "of_years": 10
+    },
+    "last_season": null
+  },
+  "irrigation": null,
+  "soil": {
+    "dominant_code": 3,
+    "dominant_label": "Kategoria III – średnio podatna na suszę",
+    "shares": [
+      {
+        "code": 3,
+        "label": "Kategoria III – średnio podatna na suszę",
+        "share": 0.75
+      },
+      {
+        "code": 1,
+        "label": "Kategoria I – bardzo podatna na suszę",
+        "share": 0.25
+      }
+    ],
+    "agricultural_share": 1.0,
+    "wod_mm": 166.2,
+    "classes": null,
+    "classes_note": "Usługa KIEG nie odpowiada – klasy bonitacyjne niedostępne.",
+    "non_agricultural": false,
+    "non_agricultural_reason": null,
+    "non_agricultural_note": null,
+    "texture": {
+      "sand_pct": 66.5,
+      "silt_pct": 24.4,
+      "clay_pct": 9.1,
+      "organic_carbon_pct": 3.74,
+      "texture_class": "glina piaszczysta",
+      "texture_code": "sandy_loam",
+      "depth": "0–30 cm",
+      "source_tag": {
+        "kind": "szacunek_modelu",
+        "date": null,
+        "source": "SoilGrids (ISRIC), 250 m"
+      }
+    },
+    "permeability": {
+      "ksat_mm_h": 85.0,
+      "label": "bardzo duża",
+      "rain_retention": "ucieka",
+      "description": "Woda z ulewy szybko wsiąka, ale gleba mało jej zatrzymuje – przesiąka w głąb, poza zasięg korzeni.",
+      "method": "Saxton i Rawls (2006), frakcje i węgiel organiczny z SoilGrids",
+      "source_tag": {
+        "kind": "obliczenia",
+        "date": null,
+        "source": "SoilGrids + Saxton i Rawls (2006)"
+      }
+    },
+    "soil_map": {
+      "complex_code": "2",
+      "complex_label": "pszenny dobry",
+      "species_code": "glp",
+      "species_label": "glina lekka pylasta",
+      "deeper": [
+        "glina średnia pylasta"
+      ],
+      "soil_type_code": "Bw",
+      "mapped_year": 1973,
+      "source_tag": {
+        "kind": "pomiar",
+        "date": null,
+        "source": "Mapa glebowo-rolnicza 1:5000 (GUGiK)"
+      }
+    },
+    "texture_note": null,
+    "consistency": {
+      "status": "ok",
+      "note": "Źródła zgodne: na działce są dwie gleby – według mapy glebowo-rolniczej lżejsza w 22% punktów, według mapy IUNG gleby lekkie (kat. I–II) to 25% działki. W obliczeniach – średnia ważona dla całej działki (IUNG). Model SoilGrids (250 m) wskazuje glebę lekką – jest najmniej dokładny, pominięty.",
+      "basis": "mapa_glebowo_rolnicza",
+      "category_used": 3,
+      "by_source": [
+        {
+          "source": "mapa_glebowo_rolnicza",
+          "source_label": "Mapa glebowo-rolnicza 1:5000 (GUGiK)",
+          "category": 3,
+          "description": "glina lekka pylasta – gleba średnia (7 z 9 punktów); piasek gliniasty lekki – gleba lekka (2 z 9 punktów)"
+        },
+        {
+          "source": "iung",
+          "source_label": "Mapa gleb IUNG-PIB",
+          "category": 3,
+          "description": "kat. III 75%, kat. I 25% działki – średnio podatna na suszę"
+        },
+        {
+          "source": "soilgrids",
+          "source_label": "SoilGrids (ISRIC), model 250 m",
+          "category": 2,
+          "description": "glina piaszczysta – gleba lekka"
+        }
+      ]
+    },
+    "source_tag": {
+      "kind": "pomiar",
+      "date": null,
+      "source": "IUNG-PIB"
+    }
+  },
+  "field_state": {
+    "status": {
+      "level": "risk",
+      "score": 43,
+      "headline": "Ryzyko – mały zapas wody w glebie",
+      "summary": "W profilu gleby (ok. 1 m) jest 51% wody dostępnej (84 mm); mniej wody było tego dnia w 1 z 10 ostatnich lat. Bilans opad − parowanie z ostatnich 30 dni: +18 mm (o 27 mm mniej niż zwykle). Bez wybranej uprawy – stan dla pokrycia referencyjnego FAO-56 (trawa).",
+      "scope": "bez_uprawy",
+      "scope_label": "stan wody na działce"
+    },
+    "cover": "pokrycie referencyjne FAO-56 (trawa, Kc = 1), profil ok. 1 m",
+    "soil_water_pct": {
+      "value": 51.0,
+      "unit": "%",
+      "label": "stan działki",
+      "status": "ok",
+      "note": "gleba odbudowuje zapas wody (profil ok. 1 m, pokrycie referencyjne)",
+      "source_tag": {
+        "kind": "szacunek_modelu",
+        "date": "2026-11-20",
+        "source": "Model wody w glebie FAO-56 – pokrycie referencyjne"
+      }
+    },
+    "soil_water_mm": {
+      "value": 84.5,
+      "unit": "mm",
+      "label": null,
+      "status": "ok",
+      "note": "woda dostępna dla roślin, profil ok. 1 m",
+      "source_tag": {
+        "kind": "szacunek_modelu",
+        "date": "2026-11-20",
+        "source": "Model wody w glebie FAO-56 – pokrycie referencyjne"
+      }
+    },
+    "soil_water": {
+      "scope": "profil",
+      "depth_m": 1.0,
+      "description": "gleba odbudowuje zapas wody",
+      "rank": {
+        "lower_years": 1,
+        "of_years": 10
+      },
+      "last_season": null
+    },
+    "series_start": "2025-11-01",
+    "series": [
+      {
+        "date": "2025-11-01",
+        "value": 72.1
+      },
+      {
+        "date": "2025-11-02",
+        "value": 72.5
+      },
+      {
+        "date": "2025-11-03",
+        "value": 78.2
+      },
+      {
+        "date": "2025-11-04",
+        "value": 78.2
+      },
+      {
+        "date": "2025-11-05",
+        "value": 78.0
+      },
+      {
+        "date": "2025-11-06",
+        "value": 77.8
+      },
+      {
+        "date": "2025-11-07",
+        "value": 77.8
+      },
+      {
+        "date": "2025-11-08",
+        "value": 77.9
+      },
+      {
+        "date": "2025-11-09",
+        "value": 78.7
+      },
+      {
+        "date": "2025-11-10",
+        "value": 79.0
+      },
+      {
+        "date": "2025-11-11",
+        "value": 80.0
+      },
+      {
+        "date": "2025-11-12",
+        "value": 80.1
+      },
+      {
+        "date": "2025-11-13",
+        "value": 79.8
+      },
+      {
+        "date": "2025-11-14",
+        "value": 80.8
+      },
+      {
+        "date": "2025-11-15",
+        "value": 82.4
+      },
+      {
+        "date": "2025-11-16",
+        "value": 83.9
+      },
+      {
+        "date": "2025-11-17",
+        "value": 85.5
+      },
+      {
+        "date": "2025-11-18",
+        "value": 85.5
+      },
+      {
+        "date": "2025-11-19",
+        "value": 86.0
+      },
+      {
+        "date": "2025-11-20",
+        "value": 85.9
+      },
+      {
+        "date": "2025-11-21",
+        "value": 85.9
+      },
+      {
+        "date": "2025-11-22",
+        "value": 85.9
+      },
+      {
+        "date": "2025-11-23",
+        "value": 87.2
+      },
+      {
+        "date": "2025-11-24",
+        "value": 87.6
+      },
+      {
+        "date": "2025-11-25",
+        "value": 91.2
+      },
+      {
+        "date": "2025-11-26",
+        "value": 99.9
+      },
+      {
+        "date": "2025-11-27",
+        "value": 100.0
+      },
+      {
+        "date": "2025-11-28",
+        "value": 100.0
+      },
+      {
+        "date": "2025-11-29",
+        "value": 99.9
+      },
+      {
+        "date": "2025-11-30",
+        "value": 99.9
+      },
+      {
+        "date": "2025-12-01",
+        "value": 99.9
+      },
+      {
+        "date": "2025-12-02",
+        "value": 99.9
+      },
+      {
+        "date": "2025-12-03",
+        "value": 99.9
+      },
+      {
+        "date": "2025-12-04",
+        "value": 99.9
+      },
+      {
+        "date": "2025-12-05",
+        "value": 99.9
+      },
+      {
+        "date": "2025-12-06",
+        "value": 99.9
+      },
+      {
+        "date": "2025-12-07",
+        "value": 99.9
+      },
+      {
+        "date": "2025-12-08",
+        "value": 99.9
+      },
+      {
+        "date": "2025-12-09",
+        "value": 100.0
+      },
+      {
+        "date": "2025-12-10",
+        "value": 99.9
+      },
+      {
+        "date": "2025-12-11",
+        "value": 99.9
+      },
+      {
+        "date": "2025-12-12",
+        "value": 99.9
+      },
+      {
+        "date": "2025-12-13",
+        "value": 99.8
+      },
+      {
+        "date": "2025-12-14",
+        "value": 99.8
+      },
+      {
+        "date": "2025-12-15",
+        "value": 99.8
+      },
+      {
+        "date": "2025-12-16",
+        "value": 99.7
+      },
+      {
+        "date": "2025-12-17",
+        "value": 99.7
+      },
+      {
+        "date": "2025-12-18",
+        "value": 99.8
+      },
+      {
+        "date": "2025-12-19",
+        "value": 99.9
+      },
+      {
+        "date": "2025-12-20",
+        "value": 100.0
+      },
+      {
+        "date": "2025-12-21",
+        "value": 100.0
+      },
+      {
+        "date": "2025-12-22",
+        "value": 100.0
+      },
+      {
+        "date": "2025-12-23",
+        "value": 99.9
+      },
+      {
+        "date": "2025-12-24",
+        "value": 99.8
+      },
+      {
+        "date": "2025-12-25",
+        "value": 99.7
+      },
+      {
+        "date": "2025-12-26",
+        "value": 99.9
+      },
+      {
+        "date": "2025-12-27",
+        "value": 99.9
+      },
+      {
+        "date": "2025-12-28",
+        "value": 99.6
+      },
+      {
+        "date": "2025-12-29",
+        "value": 99.7
+      },
+      {
+        "date": "2025-12-30",
+        "value": 99.7
+      },
+      {
+        "date": "2025-12-31",
+        "value": 99.8
+      },
+      {
+        "date": "2026-01-01",
+        "value": 99.9
+      },
+      {
+        "date": "2026-01-02",
+        "value": 99.8
+      },
+      {
+        "date": "2026-01-03",
+        "value": 99.9
+      },
+      {
+        "date": "2026-01-04",
+        "value": 99.9
+      },
+      {
+        "date": "2026-01-05",
+        "value": 99.9
+      },
+      {
+        "date": "2026-01-06",
+        "value": 99.9
+      },
+      {
+        "date": "2026-01-07",
+        "value": 99.9
+      },
+      {
+        "date": "2026-01-08",
+        "value": 99.9
+      },
+      {
+        "date": "2026-01-09",
+        "value": 99.9
+      },
+      {
+        "date": "2026-01-10",
+        "value": 99.9
+      },
+      {
+        "date": "2026-01-11",
+        "value": 100.0
+      },
+      {
+        "date": "2026-01-12",
+        "value": 100.0
+      },
+      {
+        "date": "2026-01-13",
+        "value": 100.0
+      },
+      {
+        "date": "2026-01-14",
+        "value": 100.0
+      },
+      {
+        "date": "2026-01-15",
+        "value": 99.9
+      },
+      {
+        "date": "2026-01-16",
+        "value": 100.0
+      },
+      {
+        "date": "2026-01-17",
+        "value": 99.9
+      },
+      {
+        "date": "2026-01-18",
+        "value": 100.0
+      },
+      {
+        "date": "2026-01-19",
+        "value": 100.0
+      },
+      {
+        "date": "2026-01-20",
+        "value": 100.0
+      },
+      {
+        "date": "2026-01-21",
+        "value": 100.0
+      },
+      {
+        "date": "2026-01-22",
+        "value": 100.0
+      },
+      {
+        "date": "2026-01-23",
+        "value": 99.9
+      },
+      {
+        "date": "2026-01-24",
+        "value": 99.9
+      },
+      {
+        "date": "2026-01-25",
+        "value": 99.9
+      },
+      {
+        "date": "2026-01-26",
+        "value": 100.0
+      },
+      {
+        "date": "2026-01-27",
+        "value": 99.9
+      },
+      {
+        "date": "2026-01-28",
+        "value": 99.9
+      },
+      {
+        "date": "2026-01-29",
+        "value": 99.9
+      },
+      {
+        "date": "2026-01-30",
+        "value": 100.0
+      },
+      {
+        "date": "2026-01-31",
+        "value": 99.9
+      },
+      {
+        "date": "2026-02-01",
+        "value": 99.9
+      },
+      {
+        "date": "2026-02-02",
+        "value": 99.9
+      },
+      {
+        "date": "2026-02-03",
+        "value": 100.0
+      },
+      {
+        "date": "2026-02-04",
+        "value": 99.9
+      },
+      {
+        "date": "2026-02-05",
+        "value": 99.9
+      },
+      {
+        "date": "2026-02-06",
+        "value": 99.9
+      },
+      {
+        "date": "2026-02-07",
+        "value": 99.9
+      },
+      {
+        "date": "2026-02-08",
+        "value": 99.9
+      },
+      {
+        "date": "2026-02-09",
+        "value": 99.9
+      },
+      {
+        "date": "2026-02-10",
+        "value": 99.9
+      },
+      {
+        "date": "2026-02-11",
+        "value": 99.9
+      },
+      {
+        "date": "2026-02-12",
+        "value": 99.9
+      },
+      {
+        "date": "2026-02-13",
+        "value": 99.9
+      },
+      {
+        "date": "2026-02-14",
+        "value": 99.9
+      },
+      {
+        "date": "2026-02-15",
+        "value": 99.8
+      },
+      {
+        "date": "2026-02-16",
+        "value": 99.8
+      },
+      {
+        "date": "2026-02-17",
+        "value": 99.9
+      },
+      {
+        "date": "2026-02-18",
+        "value": 99.9
+      },
+      {
+        "date": "2026-02-19",
+        "value": 99.9
+      },
+      {
+        "date": "2026-02-20",
+        "value": 99.8
+      },
+      {
+        "date": "2026-02-21",
+        "value": 99.9
+      },
+      {
+        "date": "2026-02-22",
+        "value": 99.8
+      },
+      {
+        "date": "2026-02-23",
+        "value": 99.8
+      },
+      {
+        "date": "2026-02-24",
+        "value": 99.8
+      },
+      {
+        "date": "2026-02-25",
+        "value": 99.8
+      },
+      {
+        "date": "2026-02-26",
+        "value": 99.6
+      },
+      {
+        "date": "2026-02-27",
+        "value": 99.4
+      },
+      {
+        "date": "2026-02-28",
+        "value": 99.1
+      },
+      {
+        "date": "2026-03-01",
+        "value": 98.8
+      },
+      {
+        "date": "2026-03-02",
+        "value": 98.7
+      },
+      {
+        "date": "2026-03-03",
+        "value": 98.5
+      },
+      {
+        "date": "2026-03-04",
+        "value": 98.0
+      },
+      {
+        "date": "2026-03-05",
+        "value": 97.6
+      },
+      {
+        "date": "2026-03-06",
+        "value": 97.0
+      },
+      {
+        "date": "2026-03-07",
+        "value": 96.4
+      },
+      {
+        "date": "2026-03-08",
+        "value": 95.6
+      },
+      {
+        "date": "2026-03-09",
+        "value": 94.9
+      },
+      {
+        "date": "2026-03-10",
+        "value": 94.2
+      },
+      {
+        "date": "2026-03-11",
+        "value": 93.6
+      },
+      {
+        "date": "2026-03-12",
+        "value": 93.0
+      },
+      {
+        "date": "2026-03-13",
+        "value": 92.2
+      },
+      {
+        "date": "2026-03-14",
+        "value": 91.1
+      },
+      {
+        "date": "2026-03-15",
+        "value": 90.1
+      },
+      {
+        "date": "2026-03-16",
+        "value": 89.5
+      },
+      {
+        "date": "2026-03-17",
+        "value": 89.3
+      },
+      {
+        "date": "2026-03-18",
+        "value": 88.6
+      },
+      {
+        "date": "2026-03-19",
+        "value": 87.8
+      },
+      {
+        "date": "2026-03-20",
+        "value": 87.3
+      },
+      {
+        "date": "2026-03-21",
+        "value": 86.8
+      },
+      {
+        "date": "2026-03-22",
+        "value": 85.9
+      },
+      {
+        "date": "2026-03-23",
+        "value": 85.1
+      },
+      {
+        "date": "2026-03-24",
+        "value": 84.1
+      },
+      {
+        "date": "2026-03-25",
+        "value": 83.3
+      },
+      {
+        "date": "2026-03-26",
+        "value": 90.6
+      },
+      {
+        "date": "2026-03-27",
+        "value": 89.9
+      },
+      {
+        "date": "2026-03-28",
+        "value": 89.0
+      },
+      {
+        "date": "2026-03-29",
+        "value": 88.0
+      },
+      {
+        "date": "2026-03-30",
+        "value": 87.1
+      },
+      {
+        "date": "2026-03-31",
+        "value": 86.7
+      },
+      {
+        "date": "2026-04-01",
+        "value": 85.9
+      },
+      {
+        "date": "2026-04-02",
+        "value": 84.8
+      },
+      {
+        "date": "2026-04-03",
+        "value": 83.7
+      },
+      {
+        "date": "2026-04-04",
+        "value": 83.2
+      },
+      {
+        "date": "2026-04-05",
+        "value": 83.1
+      },
+      {
+        "date": "2026-04-06",
+        "value": 83.3
+      },
+      {
+        "date": "2026-04-07",
+        "value": 83.2
+      },
+      {
+        "date": "2026-04-08",
+        "value": 82.7
+      },
+      {
+        "date": "2026-04-09",
+        "value": 82.1
+      },
+      {
+        "date": "2026-04-10",
+        "value": 81.2
+      },
+      {
+        "date": "2026-04-11",
+        "value": 80.1
+      },
+      {
+        "date": "2026-04-12",
+        "value": 79.1
+      },
+      {
+        "date": "2026-04-13",
+        "value": 77.9
+      },
+      {
+        "date": "2026-04-14",
+        "value": 76.6
+      },
+      {
+        "date": "2026-04-15",
+        "value": 76.4
+      },
+      {
+        "date": "2026-04-16",
+        "value": 75.3
+      },
+      {
+        "date": "2026-04-17",
+        "value": 74.7
+      },
+      {
+        "date": "2026-04-18",
+        "value": 73.1
+      },
+      {
+        "date": "2026-04-19",
+        "value": 72.5
+      },
+      {
+        "date": "2026-04-20",
+        "value": 70.8
+      },
+      {
+        "date": "2026-04-21",
+        "value": 69.2
+      },
+      {
+        "date": "2026-04-22",
+        "value": 67.4
+      },
+      {
+        "date": "2026-04-23",
+        "value": 65.5
+      },
+      {
+        "date": "2026-04-24",
+        "value": 64.2
+      },
+      {
+        "date": "2026-04-25",
+        "value": 62.7
+      },
+      {
+        "date": "2026-04-26",
+        "value": 62.5
+      },
+      {
+        "date": "2026-04-27",
+        "value": 61.1
+      },
+      {
+        "date": "2026-04-28",
+        "value": 59.8
+      },
+      {
+        "date": "2026-04-29",
+        "value": 58.8
+      },
+      {
+        "date": "2026-04-30",
+        "value": 57.6
+      },
+      {
+        "date": "2026-05-01",
+        "value": 55.8
+      },
+      {
+        "date": "2026-05-02",
+        "value": 53.3
+      },
+      {
+        "date": "2026-05-03",
+        "value": 50.6
+      },
+      {
+        "date": "2026-05-04",
+        "value": 48.2
+      },
+      {
+        "date": "2026-05-05",
+        "value": 48.8
+      },
+      {
+        "date": "2026-05-06",
+        "value": 47.0
+      },
+      {
+        "date": "2026-05-07",
+        "value": 47.1
+      },
+      {
+        "date": "2026-05-08",
+        "value": 49.1
+      },
+      {
+        "date": "2026-05-09",
+        "value": 48.4
+      },
+      {
+        "date": "2026-05-10",
+        "value": 47.0
+      },
+      {
+        "date": "2026-05-11",
+        "value": 49.4
+      },
+      {
+        "date": "2026-05-12",
+        "value": 52.6
+      },
+      {
+        "date": "2026-05-13",
+        "value": 51.1
+      },
+      {
+        "date": "2026-05-14",
+        "value": 49.4
+      },
+      {
+        "date": "2026-05-15",
+        "value": 47.2
+      },
+      {
+        "date": "2026-05-16",
+        "value": 51.5
+      },
+      {
+        "date": "2026-05-17",
+        "value": 56.4
+      },
+      {
+        "date": "2026-05-18",
+        "value": 56.4
+      },
+      {
+        "date": "2026-05-19",
+        "value": 54.8
+      },
+      {
+        "date": "2026-05-20",
+        "value": 53.1
+      },
+      {
+        "date": "2026-05-21",
+        "value": 51.3
+      },
+      {
+        "date": "2026-05-22",
+        "value": 48.9
+      },
+      {
+        "date": "2026-05-23",
+        "value": 46.6
+      },
+      {
+        "date": "2026-05-24",
+        "value": 44.3
+      },
+      {
+        "date": "2026-05-25",
+        "value": 41.9
+      },
+      {
+        "date": "2026-05-26",
+        "value": 39.7
+      },
+      {
+        "date": "2026-05-27",
+        "value": 37.7
+      },
+      {
+        "date": "2026-05-28",
+        "value": 36.2
+      },
+      {
+        "date": "2026-05-29",
+        "value": 34.9
+      },
+      {
+        "date": "2026-05-30",
+        "value": 33.0
+      },
+      {
+        "date": "2026-05-31",
+        "value": 32.3
+      },
+      {
+        "date": "2026-06-01",
+        "value": 32.8
+      },
+      {
+        "date": "2026-06-02",
+        "value": 34.4
+      },
+      {
+        "date": "2026-06-03",
+        "value": 33.0
+      },
+      {
+        "date": "2026-06-04",
+        "value": 34.3
+      },
+      {
+        "date": "2026-06-05",
+        "value": 37.4
+      },
+      {
+        "date": "2026-06-06",
+        "value": 36.0
+      },
+      {
+        "date": "2026-06-07",
+        "value": 34.9
+      },
+      {
+        "date": "2026-06-08",
+        "value": 34.0
+      },
+      {
+        "date": "2026-06-09",
+        "value": 32.4
+      },
+      {
+        "date": "2026-06-10",
+        "value": 37.5
+      },
+      {
+        "date": "2026-06-11",
+        "value": 41.7
+      },
+      {
+        "date": "2026-06-12",
+        "value": 42.4
+      },
+      {
+        "date": "2026-06-13",
+        "value": 44.6
+      },
+      {
+        "date": "2026-06-14",
+        "value": 47.6
+      },
+      {
+        "date": "2026-06-15",
+        "value": 50.7
+      },
+      {
+        "date": "2026-06-16",
+        "value": 53.5
+      },
+      {
+        "date": "2026-06-17",
+        "value": 52.2
+      },
+      {
+        "date": "2026-06-18",
+        "value": 50.3
+      },
+      {
+        "date": "2026-06-19",
+        "value": 47.9
+      },
+      {
+        "date": "2026-06-20",
+        "value": 44.9
+      },
+      {
+        "date": "2026-06-21",
+        "value": 44.7
+      },
+      {
+        "date": "2026-06-22",
+        "value": 43.4
+      },
+      {
+        "date": "2026-06-23",
+        "value": 40.6
+      },
+      {
+        "date": "2026-06-24",
+        "value": 38.3
+      },
+      {
+        "date": "2026-06-25",
+        "value": 35.9
+      },
+      {
+        "date": "2026-06-26",
+        "value": 33.5
+      },
+      {
+        "date": "2026-06-27",
+        "value": 31.2
+      },
+      {
+        "date": "2026-06-28",
+        "value": 28.7
+      },
+      {
+        "date": "2026-06-29",
+        "value": 26.4
+      },
+      {
+        "date": "2026-06-30",
+        "value": 25.7
+      },
+      {
+        "date": "2026-07-01",
+        "value": 26.9
+      },
+      {
+        "date": "2026-07-02",
+        "value": 26.6
+      },
+      {
+        "date": "2026-07-03",
+        "value": 25.6
+      },
+      {
+        "date": "2026-07-04",
+        "value": 25.2
+      },
+      {
+        "date": "2026-07-05",
+        "value": 26.7
+      },
+      {
+        "date": "2026-07-06",
+        "value": 26.4
+      },
+      {
+        "date": "2026-07-07",
+        "value": 33.1
+      },
+      {
+        "date": "2026-07-08",
+        "value": 34.8
+      },
+      {
+        "date": "2026-07-09",
+        "value": 36.9
+      },
+      {
+        "date": "2026-07-10",
+        "value": 41.7
+      },
+      {
+        "date": "2026-07-11",
+        "value": 44.0
+      },
+      {
+        "date": "2026-07-12",
+        "value": 43.5
+      },
+      {
+        "date": "2026-07-13",
+        "value": 43.5
+      },
+      {
+        "date": "2026-07-14",
+        "value": 41.7
+      },
+      {
+        "date": "2026-07-15",
+        "value": 39.7
+      },
+      {
+        "date": "2026-07-16",
+        "value": 37.3
+      },
+      {
+        "date": "2026-07-17",
+        "value": 34.8
+      },
+      {
+        "date": "2026-07-18",
+        "value": 38.2
+      },
+      {
+        "date": "2026-07-19",
+        "value": 37.8
+      },
+      {
+        "date": "2026-07-20",
+        "value": 41.4
+      },
+      {
+        "date": "2026-07-21",
+        "value": 45.0
+      },
+      {
+        "date": "2026-07-22",
+        "value": 43.4
+      },
+      {
+        "date": "2026-07-23",
+        "value": 43.6
+      },
+      {
+        "date": "2026-07-24",
+        "value": 44.1
+      },
+      {
+        "date": "2026-07-25",
+        "value": 42.0
+      },
+      {
+        "date": "2026-07-26",
+        "value": 39.2
+      },
+      {
+        "date": "2026-07-27",
+        "value": 40.0
+      },
+      {
+        "date": "2026-07-28",
+        "value": 38.4
+      },
+      {
+        "date": "2026-07-29",
+        "value": 36.8
+      },
+      {
+        "date": "2026-07-30",
+        "value": 34.7
+      },
+      {
+        "date": "2026-07-31",
+        "value": 32.4
+      },
+      {
+        "date": "2026-08-01",
+        "value": 32.9
+      },
+      {
+        "date": "2026-08-02",
+        "value": 31.9
+      },
+      {
+        "date": "2026-08-03",
+        "value": 30.3
+      },
+      {
+        "date": "2026-08-04",
+        "value": 32.9
+      },
+      {
+        "date": "2026-08-05",
+        "value": 31.0
+      },
+      {
+        "date": "2026-08-06",
+        "value": 31.4
+      },
+      {
+        "date": "2026-08-07",
+        "value": 30.5
+      },
+      {
+        "date": "2026-08-08",
+        "value": 29.2
+      },
+      {
+        "date": "2026-08-09",
+        "value": 27.8
+      },
+      {
+        "date": "2026-08-10",
+        "value": 27.0
+      },
+      {
+        "date": "2026-08-11",
+        "value": 26.5
+      },
+      {
+        "date": "2026-08-12",
+        "value": 25.5
+      },
+      {
+        "date": "2026-08-13",
+        "value": 24.2
+      },
+      {
+        "date": "2026-08-14",
+        "value": 23.0
+      },
+      {
+        "date": "2026-08-15",
+        "value": 21.5
+      },
+      {
+        "date": "2026-08-16",
+        "value": 20.6
+      },
+      {
+        "date": "2026-08-17",
+        "value": 25.9
+      },
+      {
+        "date": "2026-08-18",
+        "value": 34.1
+      },
+      {
+        "date": "2026-08-19",
+        "value": 33.2
+      },
+      {
+        "date": "2026-08-20",
+        "value": 33.5
+      },
+      {
+        "date": "2026-08-21",
+        "value": 33.4
+      },
+      {
+        "date": "2026-08-22",
+        "value": 35.2
+      },
+      {
+        "date": "2026-08-23",
+        "value": 34.4
+      },
+      {
+        "date": "2026-08-24",
+        "value": 34.8
+      },
+      {
+        "date": "2026-08-25",
+        "value": 34.0
+      },
+      {
+        "date": "2026-08-26",
+        "value": 32.8
+      },
+      {
+        "date": "2026-08-27",
+        "value": 31.5
+      },
+      {
+        "date": "2026-08-28",
+        "value": 29.8
+      },
+      {
+        "date": "2026-08-29",
+        "value": 31.6
+      },
+      {
+        "date": "2026-08-30",
+        "value": 30.3
+      },
+      {
+        "date": "2026-08-31",
+        "value": 29.8
+      },
+      {
+        "date": "2026-09-01",
+        "value": 29.6
+      },
+      {
+        "date": "2026-09-02",
+        "value": 28.9
+      },
+      {
+        "date": "2026-09-03",
+        "value": 28.5
+      },
+      {
+        "date": "2026-09-04",
+        "value": 32.0
+      },
+      {
+        "date": "2026-09-05",
+        "value": 32.1
+      },
+      {
+        "date": "2026-09-06",
+        "value": 32.9
+      },
+      {
+        "date": "2026-09-07",
+        "value": 32.0
+      },
+      {
+        "date": "2026-09-08",
+        "value": 30.6
+      },
+      {
+        "date": "2026-09-09",
+        "value": 29.1
+      },
+      {
+        "date": "2026-09-10",
+        "value": 32.2
+      },
+      {
+        "date": "2026-09-11",
+        "value": 31.6
+      },
+      {
+        "date": "2026-09-12",
+        "value": 31.3
+      },
+      {
+        "date": "2026-09-13",
+        "value": 31.0
+      },
+      {
+        "date": "2026-09-14",
+        "value": 31.1
+      },
+      {
+        "date": "2026-09-15",
+        "value": 30.8
+      },
+      {
+        "date": "2026-09-16",
+        "value": 29.7
+      },
+      {
+        "date": "2026-09-17",
+        "value": 34.1
+      },
+      {
+        "date": "2026-09-18",
+        "value": 33.2
+      },
+      {
+        "date": "2026-09-19",
+        "value": 32.3
+      },
+      {
+        "date": "2026-09-20",
+        "value": 35.9
+      },
+      {
+        "date": "2026-09-21",
+        "value": 36.8
+      },
+      {
+        "date": "2026-09-22",
+        "value": 36.7
+      },
+      {
+        "date": "2026-09-23",
+        "value": 36.0
+      },
+      {
+        "date": "2026-09-24",
+        "value": 35.5
+      },
+      {
+        "date": "2026-09-25",
+        "value": 39.8
+      },
+      {
+        "date": "2026-09-26",
+        "value": 40.3
+      },
+      {
+        "date": "2026-09-27",
+        "value": 39.6
+      },
+      {
+        "date": "2026-09-28",
+        "value": 38.8
+      },
+      {
+        "date": "2026-09-29",
+        "value": 37.9
+      },
+      {
+        "date": "2026-09-30",
+        "value": 37.1
+      },
+      {
+        "date": "2026-10-01",
+        "value": 36.0
+      },
+      {
+        "date": "2026-10-02",
+        "value": 35.0
+      },
+      {
+        "date": "2026-10-03",
+        "value": 34.3
+      },
+      {
+        "date": "2026-10-04",
+        "value": 33.8
+      },
+      {
+        "date": "2026-10-05",
+        "value": 33.2
+      },
+      {
+        "date": "2026-10-06",
+        "value": 32.6
+      },
+      {
+        "date": "2026-10-07",
+        "value": 32.1
+      },
+      {
+        "date": "2026-10-08",
+        "value": 32.6
+      },
+      {
+        "date": "2026-10-09",
+        "value": 34.5
+      },
+      {
+        "date": "2026-10-10",
+        "value": 34.8
+      },
+      {
+        "date": "2026-10-11",
+        "value": 35.6
+      },
+      {
+        "date": "2026-10-12",
+        "value": 35.6
+      },
+      {
+        "date": "2026-10-13",
+        "value": 35.4
+      },
+      {
+        "date": "2026-10-14",
+        "value": 35.1
+      },
+      {
+        "date": "2026-10-15",
+        "value": 35.9
+      },
+      {
+        "date": "2026-10-16",
+        "value": 35.6
+      },
+      {
+        "date": "2026-10-17",
+        "value": 35.3
+      },
+      {
+        "date": "2026-10-18",
+        "value": 35.1
+      },
+      {
+        "date": "2026-10-19",
+        "value": 35.5
+      },
+      {
+        "date": "2026-10-20",
+        "value": 35.9
+      },
+      {
+        "date": "2026-10-21",
+        "value": 35.3
+      },
+      {
+        "date": "2026-10-22",
+        "value": 38.5
+      },
+      {
+        "date": "2026-10-23",
+        "value": 39.6
+      },
+      {
+        "date": "2026-10-24",
+        "value": 39.1
+      },
+      {
+        "date": "2026-10-25",
+        "value": 40.2
+      },
+      {
+        "date": "2026-10-26",
+        "value": 40.9
+      },
+      {
+        "date": "2026-10-27",
+        "value": 40.7
+      },
+      {
+        "date": "2026-10-28",
+        "value": 40.6
+      },
+      {
+        "date": "2026-10-29",
+        "value": 40.4
+      },
+      {
+        "date": "2026-10-30",
+        "value": 40.3
+      },
+      {
+        "date": "2026-10-31",
+        "value": 40.3
+      },
+      {
+        "date": "2026-11-01",
+        "value": 40.3
+      },
+      {
+        "date": "2026-11-02",
+        "value": 40.1
+      },
+      {
+        "date": "2026-11-03",
+        "value": 40.0
+      },
+      {
+        "date": "2026-11-04",
+        "value": 39.9
+      },
+      {
+        "date": "2026-11-05",
+        "value": 39.8
+      },
+      {
+        "date": "2026-11-06",
+        "value": 39.7
+      },
+      {
+        "date": "2026-11-07",
+        "value": 39.5
+      },
+      {
+        "date": "2026-11-08",
+        "value": 39.3
+      },
+      {
+        "date": "2026-11-09",
+        "value": 39.2
+      },
+      {
+        "date": "2026-11-10",
+        "value": 42.1
+      },
+      {
+        "date": "2026-11-11",
+        "value": 42.3
+      },
+      {
+        "date": "2026-11-12",
+        "value": 43.5
+      },
+      {
+        "date": "2026-11-13",
+        "value": 45.2
+      },
+      {
+        "date": "2026-11-14",
+        "value": 44.9
+      },
+      {
+        "date": "2026-11-15",
+        "value": 44.7
+      },
+      {
+        "date": "2026-11-16",
+        "value": 45.5
+      },
+      {
+        "date": "2026-11-17",
+        "value": 47.5
+      },
+      {
+        "date": "2026-11-18",
+        "value": 48.5
+      },
+      {
+        "date": "2026-11-19",
+        "value": 49.3
+      },
+      {
+        "date": "2026-11-20",
+        "value": 50.8
+      }
+    ],
+    "series_band": [
+      {
+        "date": "2025-11-01",
+        "min": 16.7,
+        "max": 99.8,
+        "mean": 72.7
+      },
+      {
+        "date": "2025-11-02",
+        "min": 16.7,
+        "max": 99.8,
+        "mean": 72.6
+      },
+      {
+        "date": "2025-11-03",
+        "min": 16.8,
+        "max": 99.8,
+        "mean": 73.1
+      },
+      {
+        "date": "2025-11-04",
+        "min": 16.7,
+        "max": 99.8,
+        "mean": 73.1
+      },
+      {
+        "date": "2025-11-05",
+        "min": 16.8,
+        "max": 99.8,
+        "mean": 74.5
+      },
+      {
+        "date": "2025-11-06",
+        "min": 16.9,
+        "max": 99.8,
+        "mean": 74.6
+      },
+      {
+        "date": "2025-11-07",
+        "min": 19.2,
+        "max": 99.8,
+        "mean": 74.7
+      },
+      {
+        "date": "2025-11-08",
+        "min": 22.6,
+        "max": 99.9,
+        "mean": 75.1
+      },
+      {
+        "date": "2025-11-09",
+        "min": 23.7,
+        "max": 99.9,
+        "mean": 75.3
+      },
+      {
+        "date": "2025-11-10",
+        "min": 28.7,
+        "max": 99.8,
+        "mean": 76.4
+      },
+      {
+        "date": "2025-11-11",
+        "min": 28.7,
+        "max": 99.9,
+        "mean": 77.0
+      },
+      {
+        "date": "2025-11-12",
+        "min": 28.7,
+        "max": 99.9,
+        "mean": 77.3
+      },
+      {
+        "date": "2025-11-13",
+        "min": 28.7,
+        "max": 99.9,
+        "mean": 78.1
+      },
+      {
+        "date": "2025-11-14",
+        "min": 29.6,
+        "max": 99.9,
+        "mean": 79.7
+      },
+      {
+        "date": "2025-11-15",
+        "min": 29.6,
+        "max": 99.9,
+        "mean": 79.9
+      },
+      {
+        "date": "2025-11-16",
+        "min": 29.8,
+        "max": 99.9,
+        "mean": 79.9
+      },
+      {
+        "date": "2025-11-17",
+        "min": 31.1,
+        "max": 99.9,
+        "mean": 80.3
+      },
+      {
+        "date": "2025-11-18",
+        "min": 32.8,
+        "max": 99.9,
+        "mean": 81.0
+      },
+      {
+        "date": "2025-11-19",
+        "min": 36.1,
+        "max": 99.9,
+        "mean": 81.4
+      },
+      {
+        "date": "2025-11-20",
+        "min": 40.4,
+        "max": 99.9,
+        "mean": 81.9
+      },
+      {
+        "date": "2025-11-21",
+        "min": 40.7,
+        "max": 99.9,
+        "mean": 81.9
+      },
+      {
+        "date": "2025-11-22",
+        "min": 41.8,
+        "max": 99.9,
+        "mean": 82.0
+      },
+      {
+        "date": "2025-11-23",
+        "min": 41.8,
+        "max": 99.9,
+        "mean": 82.0
+      },
+      {
+        "date": "2025-11-24",
+        "min": 42.1,
+        "max": 99.9,
+        "mean": 82.2
+      },
+      {
+        "date": "2025-11-25",
+        "min": 42.1,
+        "max": 99.9,
+        "mean": 82.2
+      },
+      {
+        "date": "2025-11-26",
+        "min": 44.0,
+        "max": 99.9,
+        "mean": 82.4
+      },
+      {
+        "date": "2025-11-27",
+        "min": 44.2,
+        "max": 99.9,
+        "mean": 82.5
+      },
+      {
+        "date": "2025-11-28",
+        "min": 47.8,
+        "max": 100.0,
+        "mean": 83.0
+      },
+      {
+        "date": "2025-11-29",
+        "min": 47.8,
+        "max": 100.0,
+        "mean": 83.0
+      },
+      {
+        "date": "2025-11-30",
+        "min": 47.8,
+        "max": 100.0,
+        "mean": 83.1
+      },
+      {
+        "date": "2025-12-01",
+        "min": 47.9,
+        "max": 100.0,
+        "mean": 83.4
+      },
+      {
+        "date": "2025-12-02",
+        "min": 48.0,
+        "max": 100.0,
+        "mean": 83.4
+      },
+      {
+        "date": "2025-12-03",
+        "min": 48.4,
+        "max": 100.0,
+        "mean": 83.9
+      },
+      {
+        "date": "2025-12-04",
+        "min": 49.4,
+        "max": 100.0,
+        "mean": 84.3
+      },
+      {
+        "date": "2025-12-05",
+        "min": 49.7,
+        "max": 100.0,
+        "mean": 84.4
+      },
+      {
+        "date": "2025-12-06",
+        "min": 49.7,
+        "max": 100.0,
+        "mean": 84.5
+      },
+      {
+        "date": "2025-12-07",
+        "min": 49.8,
+        "max": 100.0,
+        "mean": 85.2
+      },
+      {
+        "date": "2025-12-08",
+        "min": 51.2,
+        "max": 99.9,
+        "mean": 86.0
+      },
+      {
+        "date": "2025-12-09",
+        "min": 51.5,
+        "max": 99.9,
+        "mean": 86.3
+      },
+      {
+        "date": "2025-12-10",
+        "min": 51.3,
+        "max": 99.9,
+        "mean": 86.6
+      },
+      {
+        "date": "2025-12-11",
+        "min": 51.3,
+        "max": 99.9,
+        "mean": 87.1
+      },
+      {
+        "date": "2025-12-12",
+        "min": 51.4,
+        "max": 100.0,
+        "mean": 87.2
+      },
+      {
+        "date": "2025-12-13",
+        "min": 51.4,
+        "max": 99.9,
+        "mean": 87.8
+      },
+      {
+        "date": "2025-12-14",
+        "min": 51.4,
+        "max": 100.0,
+        "mean": 88.1
+      },
+      {
+        "date": "2025-12-15",
+        "min": 52.2,
+        "max": 100.0,
+        "mean": 88.3
+      },
+      {
+        "date": "2025-12-16",
+        "min": 58.9,
+        "max": 99.9,
+        "mean": 89.5
+      },
+      {
+        "date": "2025-12-17",
+        "min": 62.9,
+        "max": 100.0,
+        "mean": 90.2
+      },
+      {
+        "date": "2025-12-18",
+        "min": 63.0,
+        "max": 99.9,
+        "mean": 90.3
+      },
+      {
+        "date": "2025-12-19",
+        "min": 63.3,
+        "max": 99.9,
+        "mean": 90.3
+      },
+      {
+        "date": "2025-12-20",
+        "min": 63.5,
+        "max": 100.0,
+        "mean": 90.7
+      },
+      {
+        "date": "2025-12-21",
+        "min": 63.5,
+        "max": 100.0,
+        "mean": 91.2
+      },
+      {
+        "date": "2025-12-22",
+        "min": 65.2,
+        "max": 100.0,
+        "mean": 92.0
+      },
+      {
+        "date": "2025-12-23",
+        "min": 65.8,
+        "max": 100.0,
+        "mean": 92.6
+      },
+      {
+        "date": "2025-12-24",
+        "min": 65.9,
+        "max": 99.9,
+        "mean": 93.3
+      },
+      {
+        "date": "2025-12-25",
+        "min": 65.9,
+        "max": 100.0,
+        "mean": 93.4
+      },
+      {
+        "date": "2025-12-26",
+        "min": 66.0,
+        "max": 100.0,
+        "mean": 94.1
+      },
+      {
+        "date": "2025-12-27",
+        "min": 66.2,
+        "max": 100.0,
+        "mean": 94.3
+      },
+      {
+        "date": "2025-12-28",
+        "min": 66.4,
+        "max": 99.9,
+        "mean": 94.5
+      },
+      {
+        "date": "2025-12-29",
+        "min": 66.4,
+        "max": 99.9,
+        "mean": 94.5
+      },
+      {
+        "date": "2025-12-30",
+        "min": 66.7,
+        "max": 100.0,
+        "mean": 94.5
+      },
+      {
+        "date": "2025-12-31",
+        "min": 66.9,
+        "max": 100.0,
+        "mean": 94.5
+      },
+      {
+        "date": "2026-01-01",
+        "min": 66.6,
+        "max": 100.0,
+        "mean": 94.5
+      },
+      {
+        "date": "2026-01-02",
+        "min": 67.7,
+        "max": 100.0,
+        "mean": 94.6
+      },
+      {
+        "date": "2026-01-03",
+        "min": 68.2,
+        "max": 99.9,
+        "mean": 94.7
+      },
+      {
+        "date": "2026-01-04",
+        "min": 68.0,
+        "max": 99.9,
+        "mean": 94.6
+      },
+      {
+        "date": "2026-01-05",
+        "min": 67.9,
+        "max": 100.0,
+        "mean": 94.6
+      },
+      {
+        "date": "2026-01-06",
+        "min": 71.0,
+        "max": 100.0,
+        "mean": 95.0
+      },
+      {
+        "date": "2026-01-07",
+        "min": 74.0,
+        "max": 100.0,
+        "mean": 95.3
+      },
+      {
+        "date": "2026-01-08",
+        "min": 74.8,
+        "max": 100.0,
+        "mean": 95.4
+      },
+      {
+        "date": "2026-01-09",
+        "min": 76.3,
+        "max": 100.0,
+        "mean": 95.6
+      },
+      {
+        "date": "2026-01-10",
+        "min": 78.6,
+        "max": 99.9,
+        "mean": 95.9
+      },
+      {
+        "date": "2026-01-11",
+        "min": 79.2,
+        "max": 100.0,
+        "mean": 96.2
+      },
+      {
+        "date": "2026-01-12",
+        "min": 79.5,
+        "max": 100.0,
+        "mean": 96.4
+      },
+      {
+        "date": "2026-01-13",
+        "min": 79.5,
+        "max": 99.9,
+        "mean": 96.5
+      },
+      {
+        "date": "2026-01-14",
+        "min": 82.9,
+        "max": 99.9,
+        "mean": 96.9
+      },
+      {
+        "date": "2026-01-15",
+        "min": 83.8,
+        "max": 100.0,
+        "mean": 96.9
+      },
+      {
+        "date": "2026-01-16",
+        "min": 83.8,
+        "max": 100.0,
+        "mean": 97.0
+      },
+      {
+        "date": "2026-01-17",
+        "min": 83.8,
+        "max": 100.0,
+        "mean": 97.0
+      },
+      {
+        "date": "2026-01-18",
+        "min": 83.8,
+        "max": 100.0,
+        "mean": 97.1
+      },
+      {
+        "date": "2026-01-19",
+        "min": 83.9,
+        "max": 100.0,
+        "mean": 97.1
+      },
+      {
+        "date": "2026-01-20",
+        "min": 83.9,
+        "max": 100.0,
+        "mean": 97.2
+      },
+      {
+        "date": "2026-01-21",
+        "min": 83.9,
+        "max": 100.0,
+        "mean": 97.2
+      },
+      {
+        "date": "2026-01-22",
+        "min": 84.0,
+        "max": 100.0,
+        "mean": 97.2
+      },
+      {
+        "date": "2026-01-23",
+        "min": 84.5,
+        "max": 100.0,
+        "mean": 97.3
+      },
+      {
+        "date": "2026-01-24",
+        "min": 84.7,
+        "max": 100.0,
+        "mean": 97.3
+      },
+      {
+        "date": "2026-01-25",
+        "min": 85.0,
+        "max": 100.0,
+        "mean": 97.5
+      },
+      {
+        "date": "2026-01-26",
+        "min": 85.0,
+        "max": 100.0,
+        "mean": 97.6
+      },
+      {
+        "date": "2026-01-27",
+        "min": 85.1,
+        "max": 100.0,
+        "mean": 97.7
+      },
+      {
+        "date": "2026-01-28",
+        "min": 85.3,
+        "max": 100.0,
+        "mean": 97.9
+      },
+      {
+        "date": "2026-01-29",
+        "min": 86.2,
+        "max": 99.9,
+        "mean": 98.0
+      },
+      {
+        "date": "2026-01-30",
+        "min": 86.1,
+        "max": 100.0,
+        "mean": 97.9
+      },
+      {
+        "date": "2026-01-31",
+        "min": 87.3,
+        "max": 100.0,
+        "mean": 98.2
+      },
+      {
+        "date": "2026-02-01",
+        "min": 88.0,
+        "max": 100.0,
+        "mean": 98.5
+      },
+      {
+        "date": "2026-02-02",
+        "min": 87.9,
+        "max": 99.9,
+        "mean": 98.6
+      },
+      {
+        "date": "2026-02-03",
+        "min": 87.7,
+        "max": 99.9,
+        "mean": 98.5
+      },
+      {
+        "date": "2026-02-04",
+        "min": 87.7,
+        "max": 100.0,
+        "mean": 98.6
+      },
+      {
+        "date": "2026-02-05",
+        "min": 87.6,
+        "max": 99.9,
+        "mean": 98.5
+      },
+      {
+        "date": "2026-02-06",
+        "min": 87.8,
+        "max": 99.9,
+        "mean": 98.5
+      },
+      {
+        "date": "2026-02-07",
+        "min": 87.5,
+        "max": 99.9,
+        "mean": 98.4
+      },
+      {
+        "date": "2026-02-08",
+        "min": 87.3,
+        "max": 100.0,
+        "mean": 98.4
+      },
+      {
+        "date": "2026-02-09",
+        "min": 87.1,
+        "max": 99.9,
+        "mean": 98.4
+      },
+      {
+        "date": "2026-02-10",
+        "min": 86.9,
+        "max": 99.9,
+        "mean": 98.5
+      },
+      {
+        "date": "2026-02-11",
+        "min": 86.8,
+        "max": 100.0,
+        "mean": 98.5
+      },
+      {
+        "date": "2026-02-12",
+        "min": 86.6,
+        "max": 100.0,
+        "mean": 98.5
+      },
+      {
+        "date": "2026-02-13",
+        "min": 86.5,
+        "max": 99.9,
+        "mean": 98.4
+      },
+      {
+        "date": "2026-02-14",
+        "min": 86.8,
+        "max": 99.9,
+        "mean": 98.5
+      },
+      {
+        "date": "2026-02-15",
+        "min": 87.1,
+        "max": 99.9,
+        "mean": 98.4
+      },
+      {
+        "date": "2026-02-16",
+        "min": 87.3,
+        "max": 99.9,
+        "mean": 98.4
+      },
+      {
+        "date": "2026-02-17",
+        "min": 87.0,
+        "max": 99.9,
+        "mean": 98.4
+      },
+      {
+        "date": "2026-02-18",
+        "min": 87.2,
+        "max": 99.9,
+        "mean": 98.3
+      },
+      {
+        "date": "2026-02-19",
+        "min": 87.2,
+        "max": 99.9,
+        "mean": 98.3
+      },
+      {
+        "date": "2026-02-20",
+        "min": 87.0,
+        "max": 99.9,
+        "mean": 98.4
+      },
+      {
+        "date": "2026-02-21",
+        "min": 86.7,
+        "max": 99.8,
+        "mean": 98.4
+      },
+      {
+        "date": "2026-02-22",
+        "min": 86.3,
+        "max": 99.8,
+        "mean": 98.2
+      },
+      {
+        "date": "2026-02-23",
+        "min": 86.0,
+        "max": 99.8,
+        "mean": 98.1
+      },
+      {
+        "date": "2026-02-24",
+        "min": 85.7,
+        "max": 99.8,
+        "mean": 98.2
+      },
+      {
+        "date": "2026-02-25",
+        "min": 85.6,
+        "max": 99.8,
+        "mean": 98.1
+      },
+      {
+        "date": "2026-02-26",
+        "min": 85.5,
+        "max": 99.8,
+        "mean": 98.0
+      },
+      {
+        "date": "2026-02-27",
+        "min": 87.8,
+        "max": 99.7,
+        "mean": 98.1
+      },
+      {
+        "date": "2026-02-28",
+        "min": 92.1,
+        "max": 99.7,
+        "mean": 98.4
+      },
+      {
+        "date": "2026-03-01",
+        "min": 92.7,
+        "max": 99.8,
+        "mean": 98.4
+      },
+      {
+        "date": "2026-03-02",
+        "min": 92.7,
+        "max": 99.8,
+        "mean": 98.3
+      },
+      {
+        "date": "2026-03-03",
+        "min": 92.4,
+        "max": 99.7,
+        "mean": 98.2
+      },
+      {
+        "date": "2026-03-04",
+        "min": 91.8,
+        "max": 99.6,
+        "mean": 98.1
+      },
+      {
+        "date": "2026-03-05",
+        "min": 90.9,
+        "max": 99.6,
+        "mean": 97.9
+      },
+      {
+        "date": "2026-03-06",
+        "min": 89.9,
+        "max": 99.9,
+        "mean": 97.9
+      },
+      {
+        "date": "2026-03-07",
+        "min": 89.3,
+        "max": 99.8,
+        "mean": 98.1
+      },
+      {
+        "date": "2026-03-08",
+        "min": 88.5,
+        "max": 99.8,
+        "mean": 97.9
+      },
+      {
+        "date": "2026-03-09",
+        "min": 87.8,
+        "max": 99.8,
+        "mean": 98.0
+      },
+      {
+        "date": "2026-03-10",
+        "min": 87.0,
+        "max": 99.8,
+        "mean": 97.7
+      },
+      {
+        "date": "2026-03-11",
+        "min": 86.3,
+        "max": 99.8,
+        "mean": 97.6
+      },
+      {
+        "date": "2026-03-12",
+        "min": 86.8,
+        "max": 99.7,
+        "mean": 97.5
+      },
+      {
+        "date": "2026-03-13",
+        "min": 94.9,
+        "max": 99.8,
+        "mean": 98.3
+      },
+      {
+        "date": "2026-03-14",
+        "min": 94.3,
+        "max": 99.6,
+        "mean": 98.3
+      },
+      {
+        "date": "2026-03-15",
+        "min": 93.7,
+        "max": 99.7,
+        "mean": 98.1
+      },
+      {
+        "date": "2026-03-16",
+        "min": 93.3,
+        "max": 99.5,
+        "mean": 97.7
+      },
+      {
+        "date": "2026-03-17",
+        "min": 92.5,
+        "max": 99.5,
+        "mean": 97.6
+      },
+      {
+        "date": "2026-03-18",
+        "min": 91.8,
+        "max": 99.6,
+        "mean": 97.3
+      },
+      {
+        "date": "2026-03-19",
+        "min": 91.0,
+        "max": 99.6,
+        "mean": 96.9
+      },
+      {
+        "date": "2026-03-20",
+        "min": 90.2,
+        "max": 99.6,
+        "mean": 96.6
+      },
+      {
+        "date": "2026-03-21",
+        "min": 89.3,
+        "max": 99.6,
+        "mean": 96.3
+      },
+      {
+        "date": "2026-03-22",
+        "min": 88.3,
+        "max": 99.5,
+        "mean": 96.1
+      },
+      {
+        "date": "2026-03-23",
+        "min": 87.3,
+        "max": 99.5,
+        "mean": 95.8
+      },
+      {
+        "date": "2026-03-24",
+        "min": 86.4,
+        "max": 99.5,
+        "mean": 95.7
+      },
+      {
+        "date": "2026-03-25",
+        "min": 85.4,
+        "max": 99.5,
+        "mean": 95.2
+      },
+      {
+        "date": "2026-03-26",
+        "min": 84.6,
+        "max": 99.5,
+        "mean": 95.0
+      },
+      {
+        "date": "2026-03-27",
+        "min": 83.7,
+        "max": 98.9,
+        "mean": 94.6
+      },
+      {
+        "date": "2026-03-28",
+        "min": 82.4,
+        "max": 98.3,
+        "mean": 93.8
+      },
+      {
+        "date": "2026-03-29",
+        "min": 81.8,
+        "max": 99.5,
+        "mean": 93.9
+      },
+      {
+        "date": "2026-03-30",
+        "min": 81.5,
+        "max": 99.3,
+        "mean": 93.7
+      },
+      {
+        "date": "2026-03-31",
+        "min": 80.7,
+        "max": 99.3,
+        "mean": 93.9
+      },
+      {
+        "date": "2026-04-01",
+        "min": 85.6,
+        "max": 99.8,
+        "mean": 94.0
+      },
+      {
+        "date": "2026-04-02",
+        "min": 85.8,
+        "max": 99.7,
+        "mean": 93.9
+      },
+      {
+        "date": "2026-04-03",
+        "min": 84.9,
+        "max": 99.5,
+        "mean": 93.6
+      },
+      {
+        "date": "2026-04-04",
+        "min": 84.1,
+        "max": 99.3,
+        "mean": 92.8
+      },
+      {
+        "date": "2026-04-05",
+        "min": 83.1,
+        "max": 99.3,
+        "mean": 92.7
+      },
+      {
+        "date": "2026-04-06",
+        "min": 81.9,
+        "max": 99.6,
+        "mean": 92.6
+      },
+      {
+        "date": "2026-04-07",
+        "min": 80.4,
+        "max": 99.3,
+        "mean": 92.0
+      },
+      {
+        "date": "2026-04-08",
+        "min": 78.7,
+        "max": 98.4,
+        "mean": 91.1
+      },
+      {
+        "date": "2026-04-09",
+        "min": 77.3,
+        "max": 99.1,
+        "mean": 90.5
+      },
+      {
+        "date": "2026-04-10",
+        "min": 75.7,
+        "max": 98.3,
+        "mean": 89.5
+      },
+      {
+        "date": "2026-04-11",
+        "min": 74.4,
+        "max": 97.4,
+        "mean": 89.4
+      },
+      {
+        "date": "2026-04-12",
+        "min": 73.0,
+        "max": 97.0,
+        "mean": 88.9
+      },
+      {
+        "date": "2026-04-13",
+        "min": 71.4,
+        "max": 98.1,
+        "mean": 89.0
+      },
+      {
+        "date": "2026-04-14",
+        "min": 70.9,
+        "max": 99.5,
+        "mean": 89.1
+      },
+      {
+        "date": "2026-04-15",
+        "min": 69.9,
+        "max": 99.6,
+        "mean": 89.0
+      },
+      {
+        "date": "2026-04-16",
+        "min": 70.7,
+        "max": 99.6,
+        "mean": 88.6
+      },
+      {
+        "date": "2026-04-17",
+        "min": 69.7,
+        "max": 99.0,
+        "mean": 88.1
+      },
+      {
+        "date": "2026-04-18",
+        "min": 68.3,
+        "max": 98.7,
+        "mean": 87.5
+      },
+      {
+        "date": "2026-04-19",
+        "min": 67.2,
+        "max": 98.9,
+        "mean": 86.9
+      },
+      {
+        "date": "2026-04-20",
+        "min": 66.0,
+        "max": 97.3,
+        "mean": 86.6
+      },
+      {
+        "date": "2026-04-21",
+        "min": 64.8,
+        "max": 96.4,
+        "mean": 86.1
+      },
+      {
+        "date": "2026-04-22",
+        "min": 63.4,
+        "max": 96.9,
+        "mean": 85.3
+      },
+      {
+        "date": "2026-04-23",
+        "min": 61.7,
+        "max": 96.4,
+        "mean": 84.2
+      },
+      {
+        "date": "2026-04-24",
+        "min": 59.9,
+        "max": 95.6,
+        "mean": 83.5
+      },
+      {
+        "date": "2026-04-25",
+        "min": 58.4,
+        "max": 96.2,
+        "mean": 84.0
+      },
+      {
+        "date": "2026-04-26",
+        "min": 57.2,
+        "max": 97.3,
+        "mean": 83.7
+      },
+      {
+        "date": "2026-04-27",
+        "min": 56.2,
+        "max": 97.5,
+        "mean": 82.7
+      },
+      {
+        "date": "2026-04-28",
+        "min": 54.6,
+        "max": 99.7,
+        "mean": 82.1
+      },
+      {
+        "date": "2026-04-29",
+        "min": 52.6,
+        "max": 99.3,
+        "mean": 81.2
+      },
+      {
+        "date": "2026-04-30",
+        "min": 52.7,
+        "max": 98.2,
+        "mean": 80.4
+      },
+      {
+        "date": "2026-05-01",
+        "min": 51.4,
+        "max": 96.6,
+        "mean": 79.4
+      },
+      {
+        "date": "2026-05-02",
+        "min": 50.7,
+        "max": 99.4,
+        "mean": 79.2
+      },
+      {
+        "date": "2026-05-03",
+        "min": 49.4,
+        "max": 99.2,
+        "mean": 78.3
+      },
+      {
+        "date": "2026-05-04",
+        "min": 48.0,
+        "max": 99.3,
+        "mean": 77.9
+      },
+      {
+        "date": "2026-05-05",
+        "min": 47.0,
+        "max": 98.9,
+        "mean": 76.7
+      },
+      {
+        "date": "2026-05-06",
+        "min": 45.4,
+        "max": 97.9,
+        "mean": 76.1
+      },
+      {
+        "date": "2026-05-07",
+        "min": 43.9,
+        "max": 99.3,
+        "mean": 75.4
+      },
+      {
+        "date": "2026-05-08",
+        "min": 42.4,
+        "max": 98.9,
+        "mean": 74.0
+      },
+      {
+        "date": "2026-05-09",
+        "min": 40.4,
+        "max": 98.1,
+        "mean": 72.4
+      },
+      {
+        "date": "2026-05-10",
+        "min": 40.0,
+        "max": 98.1,
+        "mean": 71.0
+      },
+      {
+        "date": "2026-05-11",
+        "min": 39.3,
+        "max": 97.3,
+        "mean": 69.7
+      },
+      {
+        "date": "2026-05-12",
+        "min": 38.3,
+        "max": 95.5,
+        "mean": 68.9
+      },
+      {
+        "date": "2026-05-13",
+        "min": 38.6,
+        "max": 93.7,
+        "mean": 68.1
+      },
+      {
+        "date": "2026-05-14",
+        "min": 39.8,
+        "max": 91.5,
+        "mean": 67.6
+      },
+      {
+        "date": "2026-05-15",
+        "min": 45.6,
+        "max": 90.3,
+        "mean": 68.4
+      },
+      {
+        "date": "2026-05-16",
+        "min": 50.3,
+        "max": 91.1,
+        "mean": 69.9
+      },
+      {
+        "date": "2026-05-17",
+        "min": 54.6,
+        "max": 89.5,
+        "mean": 71.4
+      },
+      {
+        "date": "2026-05-18",
+        "min": 54.7,
+        "max": 88.0,
+        "mean": 70.8
+      },
+      {
+        "date": "2026-05-19",
+        "min": 53.3,
+        "max": 87.9,
+        "mean": 69.9
+      },
+      {
+        "date": "2026-05-20",
+        "min": 51.1,
+        "max": 86.0,
+        "mean": 68.9
+      },
+      {
+        "date": "2026-05-21",
+        "min": 48.9,
+        "max": 84.7,
+        "mean": 68.2
+      },
+      {
+        "date": "2026-05-22",
+        "min": 49.1,
+        "max": 89.8,
+        "mean": 68.0
+      },
+      {
+        "date": "2026-05-23",
+        "min": 47.2,
+        "max": 89.6,
+        "mean": 66.8
+      },
+      {
+        "date": "2026-05-24",
+        "min": 45.0,
+        "max": 87.7,
+        "mean": 65.4
+      },
+      {
+        "date": "2026-05-25",
+        "min": 44.2,
+        "max": 93.1,
+        "mean": 66.0
+      },
+      {
+        "date": "2026-05-26",
+        "min": 45.1,
+        "max": 91.7,
+        "mean": 65.2
+      },
+      {
+        "date": "2026-05-27",
+        "min": 42.6,
+        "max": 90.2,
+        "mean": 63.3
+      },
+      {
+        "date": "2026-05-28",
+        "min": 40.1,
+        "max": 89.1,
+        "mean": 62.3
+      },
+      {
+        "date": "2026-05-29",
+        "min": 37.6,
+        "max": 88.6,
+        "mean": 61.0
+      },
+      {
+        "date": "2026-05-30",
+        "min": 35.1,
+        "max": 87.0,
+        "mean": 60.2
+      },
+      {
+        "date": "2026-05-31",
+        "min": 32.9,
+        "max": 84.8,
+        "mean": 60.1
+      },
+      {
+        "date": "2026-06-01",
+        "min": 30.9,
+        "max": 83.1,
+        "mean": 59.2
+      },
+      {
+        "date": "2026-06-02",
+        "min": 32.7,
+        "max": 84.5,
+        "mean": 58.8
+      },
+      {
+        "date": "2026-06-03",
+        "min": 32.2,
+        "max": 82.3,
+        "mean": 57.1
+      },
+      {
+        "date": "2026-06-04",
+        "min": 30.4,
+        "max": 80.4,
+        "mean": 55.6
+      },
+      {
+        "date": "2026-06-05",
+        "min": 29.1,
+        "max": 77.8,
+        "mean": 54.0
+      },
+      {
+        "date": "2026-06-06",
+        "min": 27.7,
+        "max": 75.2,
+        "mean": 52.6
+      },
+      {
+        "date": "2026-06-07",
+        "min": 26.3,
+        "max": 73.6,
+        "mean": 51.6
+      },
+      {
+        "date": "2026-06-08",
+        "min": 24.7,
+        "max": 73.4,
+        "mean": 50.5
+      },
+      {
+        "date": "2026-06-09",
+        "min": 23.2,
+        "max": 76.2,
+        "mean": 49.3
+      },
+      {
+        "date": "2026-06-10",
+        "min": 21.7,
+        "max": 74.2,
+        "mean": 48.4
+      },
+      {
+        "date": "2026-06-11",
+        "min": 23.0,
+        "max": 71.8,
+        "mean": 47.9
+      },
+      {
+        "date": "2026-06-12",
+        "min": 21.9,
+        "max": 71.6,
+        "mean": 47.6
+      },
+      {
+        "date": "2026-06-13",
+        "min": 21.6,
+        "max": 80.2,
+        "mean": 48.1
+      },
+      {
+        "date": "2026-06-14",
+        "min": 21.2,
+        "max": 79.2,
+        "mean": 47.3
+      },
+      {
+        "date": "2026-06-15",
+        "min": 20.2,
+        "max": 77.6,
+        "mean": 46.1
+      },
+      {
+        "date": "2026-06-16",
+        "min": 19.4,
+        "max": 76.0,
+        "mean": 45.5
+      },
+      {
+        "date": "2026-06-17",
+        "min": 18.4,
+        "max": 74.0,
+        "mean": 45.8
+      },
+      {
+        "date": "2026-06-18",
+        "min": 18.8,
+        "max": 72.2,
+        "mean": 45.3
+      },
+      {
+        "date": "2026-06-19",
+        "min": 18.0,
+        "max": 69.0,
+        "mean": 43.4
+      },
+      {
+        "date": "2026-06-20",
+        "min": 16.8,
+        "max": 71.2,
+        "mean": 43.7
+      },
+      {
+        "date": "2026-06-21",
+        "min": 18.5,
+        "max": 75.9,
+        "mean": 44.6
+      },
+      {
+        "date": "2026-06-22",
+        "min": 17.7,
+        "max": 73.3,
+        "mean": 43.2
+      },
+      {
+        "date": "2026-06-23",
+        "min": 19.0,
+        "max": 70.5,
+        "mean": 44.8
+      },
+      {
+        "date": "2026-06-24",
+        "min": 19.8,
+        "max": 67.4,
+        "mean": 44.6
+      },
+      {
+        "date": "2026-06-25",
+        "min": 24.9,
+        "max": 66.5,
+        "mean": 45.0
+      },
+      {
+        "date": "2026-06-26",
+        "min": 25.7,
+        "max": 63.5,
+        "mean": 43.5
+      },
+      {
+        "date": "2026-06-27",
+        "min": 25.7,
+        "max": 60.7,
+        "mean": 43.7
+      },
+      {
+        "date": "2026-06-28",
+        "min": 24.2,
+        "max": 63.1,
+        "mean": 43.0
+      },
+      {
+        "date": "2026-06-29",
+        "min": 23.0,
+        "max": 60.5,
+        "mean": 42.3
+      },
+      {
+        "date": "2026-06-30",
+        "min": 21.3,
+        "max": 77.2,
+        "mean": 42.4
+      },
+      {
+        "date": "2026-07-01",
+        "min": 20.9,
+        "max": 75.0,
+        "mean": 42.7
+      },
+      {
+        "date": "2026-07-02",
+        "min": 19.7,
+        "max": 72.6,
+        "mean": 43.7
+      },
+      {
+        "date": "2026-07-03",
+        "min": 18.6,
+        "max": 73.6,
+        "mean": 42.6
+      },
+      {
+        "date": "2026-07-04",
+        "min": 17.9,
+        "max": 72.3,
+        "mean": 42.8
+      },
+      {
+        "date": "2026-07-05",
+        "min": 19.6,
+        "max": 69.6,
+        "mean": 42.1
+      },
+      {
+        "date": "2026-07-06",
+        "min": 19.4,
+        "max": 67.1,
+        "mean": 42.1
+      },
+      {
+        "date": "2026-07-07",
+        "min": 20.2,
+        "max": 71.0,
+        "mean": 41.7
+      },
+      {
+        "date": "2026-07-08",
+        "min": 21.5,
+        "max": 69.5,
+        "mean": 41.9
+      },
+      {
+        "date": "2026-07-09",
+        "min": 24.2,
+        "max": 68.5,
+        "mean": 42.8
+      },
+      {
+        "date": "2026-07-10",
+        "min": 23.0,
+        "max": 67.4,
+        "mean": 42.6
+      },
+      {
+        "date": "2026-07-11",
+        "min": 22.1,
+        "max": 70.2,
+        "mean": 43.3
+      },
+      {
+        "date": "2026-07-12",
+        "min": 29.8,
+        "max": 71.4,
+        "mean": 45.2
+      },
+      {
+        "date": "2026-07-13",
+        "min": 30.7,
+        "max": 69.8,
+        "mean": 46.7
+      },
+      {
+        "date": "2026-07-14",
+        "min": 29.7,
+        "max": 68.2,
+        "mean": 48.1
+      },
+      {
+        "date": "2026-07-15",
+        "min": 28.3,
+        "max": 76.5,
+        "mean": 49.7
+      },
+      {
+        "date": "2026-07-16",
+        "min": 28.2,
+        "max": 75.9,
+        "mean": 50.7
+      },
+      {
+        "date": "2026-07-17",
+        "min": 27.3,
+        "max": 76.1,
+        "mean": 52.1
+      },
+      {
+        "date": "2026-07-18",
+        "min": 28.9,
+        "max": 81.0,
+        "mean": 52.2
+      },
+      {
+        "date": "2026-07-19",
+        "min": 27.5,
+        "max": 79.4,
+        "mean": 50.7
+      },
+      {
+        "date": "2026-07-20",
+        "min": 26.9,
+        "max": 77.3,
+        "mean": 49.2
+      },
+      {
+        "date": "2026-07-21",
+        "min": 27.1,
+        "max": 74.9,
+        "mean": 47.7
+      },
+      {
+        "date": "2026-07-22",
+        "min": 26.7,
+        "max": 73.6,
+        "mean": 47.1
+      },
+      {
+        "date": "2026-07-23",
+        "min": 25.4,
+        "max": 73.4,
+        "mean": 46.2
+      },
+      {
+        "date": "2026-07-24",
+        "min": 24.1,
+        "max": 71.9,
+        "mean": 45.3
+      },
+      {
+        "date": "2026-07-25",
+        "min": 22.7,
+        "max": 69.9,
+        "mean": 44.5
+      },
+      {
+        "date": "2026-07-26",
+        "min": 22.4,
+        "max": 68.2,
+        "mean": 45.4
+      },
+      {
+        "date": "2026-07-27",
+        "min": 22.2,
+        "max": 66.9,
+        "mean": 45.4
+      },
+      {
+        "date": "2026-07-28",
+        "min": 21.6,
+        "max": 67.4,
+        "mean": 45.5
+      },
+      {
+        "date": "2026-07-29",
+        "min": 24.3,
+        "max": 72.1,
+        "mean": 46.3
+      },
+      {
+        "date": "2026-07-30",
+        "min": 24.9,
+        "max": 75.5,
+        "mean": 45.9
+      },
+      {
+        "date": "2026-07-31",
+        "min": 23.5,
+        "max": 74.8,
+        "mean": 46.1
+      },
+      {
+        "date": "2026-08-01",
+        "min": 22.5,
+        "max": 73.5,
+        "mean": 45.5
+      },
+      {
+        "date": "2026-08-02",
+        "min": 22.1,
+        "max": 80.3,
+        "mean": 45.9
+      },
+      {
+        "date": "2026-08-03",
+        "min": 21.1,
+        "max": 79.1,
+        "mean": 44.9
+      },
+      {
+        "date": "2026-08-04",
+        "min": 20.2,
+        "max": 79.1,
+        "mean": 43.9
+      },
+      {
+        "date": "2026-08-05",
+        "min": 19.6,
+        "max": 78.8,
+        "mean": 45.2
+      },
+      {
+        "date": "2026-08-06",
+        "min": 19.5,
+        "max": 76.4,
+        "mean": 46.8
+      },
+      {
+        "date": "2026-08-07",
+        "min": 21.4,
+        "max": 77.2,
+        "mean": 46.3
+      },
+      {
+        "date": "2026-08-08",
+        "min": 26.8,
+        "max": 75.3,
+        "mean": 45.3
+      },
+      {
+        "date": "2026-08-09",
+        "min": 26.7,
+        "max": 74.4,
+        "mean": 44.0
+      },
+      {
+        "date": "2026-08-10",
+        "min": 26.0,
+        "max": 75.2,
+        "mean": 43.5
+      },
+      {
+        "date": "2026-08-11",
+        "min": 25.0,
+        "max": 83.2,
+        "mean": 44.9
+      },
+      {
+        "date": "2026-08-12",
+        "min": 23.9,
+        "max": 82.0,
+        "mean": 43.4
+      },
+      {
+        "date": "2026-08-13",
+        "min": 25.0,
+        "max": 80.1,
+        "mean": 43.0
+      },
+      {
+        "date": "2026-08-14",
+        "min": 23.9,
+        "max": 78.9,
+        "mean": 42.2
+      },
+      {
+        "date": "2026-08-15",
+        "min": 22.7,
+        "max": 78.2,
+        "mean": 40.7
+      },
+      {
+        "date": "2026-08-16",
+        "min": 21.3,
+        "max": 77.5,
+        "mean": 39.4
+      },
+      {
+        "date": "2026-08-17",
+        "min": 20.7,
+        "max": 77.0,
+        "mean": 39.4
+      },
+      {
+        "date": "2026-08-18",
+        "min": 19.7,
+        "max": 76.9,
+        "mean": 38.2
+      },
+      {
+        "date": "2026-08-19",
+        "min": 19.6,
+        "max": 75.8,
+        "mean": 38.5
+      },
+      {
+        "date": "2026-08-20",
+        "min": 19.3,
+        "max": 77.8,
+        "mean": 40.6
+      },
+      {
+        "date": "2026-08-21",
+        "min": 18.6,
+        "max": 78.4,
+        "mean": 41.7
+      },
+      {
+        "date": "2026-08-22",
+        "min": 17.8,
+        "max": 76.9,
+        "mean": 41.1
+      },
+      {
+        "date": "2026-08-23",
+        "min": 18.9,
+        "max": 80.4,
+        "mean": 41.8
+      },
+      {
+        "date": "2026-08-24",
+        "min": 21.1,
+        "max": 78.9,
+        "mean": 42.2
+      },
+      {
+        "date": "2026-08-25",
+        "min": 25.5,
+        "max": 78.0,
+        "mean": 41.9
+      },
+      {
+        "date": "2026-08-26",
+        "min": 24.5,
+        "max": 77.0,
+        "mean": 41.7
+      },
+      {
+        "date": "2026-08-27",
+        "min": 23.2,
+        "max": 78.1,
+        "mean": 41.3
+      },
+      {
+        "date": "2026-08-28",
+        "min": 22.2,
+        "max": 86.5,
+        "mean": 41.4
+      },
+      {
+        "date": "2026-08-29",
+        "min": 22.1,
+        "max": 86.0,
+        "mean": 40.8
+      },
+      {
+        "date": "2026-08-30",
+        "min": 21.5,
+        "max": 94.9,
+        "mean": 41.9
+      },
+      {
+        "date": "2026-08-31",
+        "min": 21.3,
+        "max": 95.5,
+        "mean": 42.5
+      },
+      {
+        "date": "2026-09-01",
+        "min": 20.8,
+        "max": 94.9,
+        "mean": 42.3
+      },
+      {
+        "date": "2026-09-02",
+        "min": 19.7,
+        "max": 94.1,
+        "mean": 41.8
+      },
+      {
+        "date": "2026-09-03",
+        "min": 20.1,
+        "max": 92.9,
+        "mean": 41.8
+      },
+      {
+        "date": "2026-09-04",
+        "min": 19.4,
+        "max": 91.6,
+        "mean": 42.6
+      },
+      {
+        "date": "2026-09-05",
+        "min": 18.7,
+        "max": 90.4,
+        "mean": 42.7
+      },
+      {
+        "date": "2026-09-06",
+        "min": 18.8,
+        "max": 89.1,
+        "mean": 43.4
+      },
+      {
+        "date": "2026-09-07",
+        "min": 17.7,
+        "max": 87.7,
+        "mean": 43.9
+      },
+      {
+        "date": "2026-09-08",
+        "min": 16.5,
+        "max": 86.2,
+        "mean": 43.2
+      },
+      {
+        "date": "2026-09-09",
+        "min": 15.4,
+        "max": 84.6,
+        "mean": 42.7
+      },
+      {
+        "date": "2026-09-10",
+        "min": 14.6,
+        "max": 82.9,
+        "mean": 42.0
+      },
+      {
+        "date": "2026-09-11",
+        "min": 19.5,
+        "max": 81.2,
+        "mean": 44.2
+      },
+      {
+        "date": "2026-09-12",
+        "min": 19.3,
+        "max": 81.9,
+        "mean": 44.2
+      },
+      {
+        "date": "2026-09-13",
+        "min": 18.9,
+        "max": 81.1,
+        "mean": 43.4
+      },
+      {
+        "date": "2026-09-14",
+        "min": 20.6,
+        "max": 80.7,
+        "mean": 44.8
+      },
+      {
+        "date": "2026-09-15",
+        "min": 20.7,
+        "max": 79.9,
+        "mean": 44.3
+      },
+      {
+        "date": "2026-09-16",
+        "min": 19.9,
+        "max": 83.5,
+        "mean": 44.0
+      },
+      {
+        "date": "2026-09-17",
+        "min": 20.6,
+        "max": 90.6,
+        "mean": 45.1
+      },
+      {
+        "date": "2026-09-18",
+        "min": 19.7,
+        "max": 98.5,
+        "mean": 46.8
+      },
+      {
+        "date": "2026-09-19",
+        "min": 19.3,
+        "max": 99.3,
+        "mean": 46.7
+      },
+      {
+        "date": "2026-09-20",
+        "min": 18.6,
+        "max": 99.2,
+        "mean": 46.4
+      },
+      {
+        "date": "2026-09-21",
+        "min": 18.0,
+        "max": 99.7,
+        "mean": 45.9
+      },
+      {
+        "date": "2026-09-22",
+        "min": 17.6,
+        "max": 99.5,
+        "mean": 45.6
+      },
+      {
+        "date": "2026-09-23",
+        "min": 17.1,
+        "max": 99.4,
+        "mean": 46.4
+      },
+      {
+        "date": "2026-09-24",
+        "min": 16.6,
+        "max": 98.8,
+        "mean": 46.7
+      },
+      {
+        "date": "2026-09-25",
+        "min": 15.9,
+        "max": 98.5,
+        "mean": 46.1
+      },
+      {
+        "date": "2026-09-26",
+        "min": 16.2,
+        "max": 97.6,
+        "mean": 45.7
+      },
+      {
+        "date": "2026-09-27",
+        "min": 15.8,
+        "max": 96.7,
+        "mean": 45.2
+      },
+      {
+        "date": "2026-09-28",
+        "min": 16.8,
+        "max": 95.9,
+        "mean": 46.5
+      },
+      {
+        "date": "2026-09-29",
+        "min": 17.0,
+        "max": 95.0,
+        "mean": 46.2
+      },
+      {
+        "date": "2026-09-30",
+        "min": 16.7,
+        "max": 99.6,
+        "mean": 47.4
+      },
+      {
+        "date": "2026-10-01",
+        "min": 16.3,
+        "max": 99.2,
+        "mean": 47.6
+      },
+      {
+        "date": "2026-10-02",
+        "min": 16.3,
+        "max": 98.6,
+        "mean": 47.7
+      },
+      {
+        "date": "2026-10-03",
+        "min": 20.5,
+        "max": 97.7,
+        "mean": 48.7
+      },
+      {
+        "date": "2026-10-04",
+        "min": 23.8,
+        "max": 96.9,
+        "mean": 50.0
+      },
+      {
+        "date": "2026-10-05",
+        "min": 24.5,
+        "max": 99.5,
+        "mean": 50.2
+      },
+      {
+        "date": "2026-10-06",
+        "min": 24.2,
+        "max": 99.5,
+        "mean": 51.7
+      },
+      {
+        "date": "2026-10-07",
+        "min": 26.2,
+        "max": 99.2,
+        "mean": 52.3
+      },
+      {
+        "date": "2026-10-08",
+        "min": 25.7,
+        "max": 99.7,
+        "mean": 52.3
+      },
+      {
+        "date": "2026-10-09",
+        "min": 25.4,
+        "max": 99.6,
+        "mean": 52.2
+      },
+      {
+        "date": "2026-10-10",
+        "min": 25.1,
+        "max": 99.6,
+        "mean": 52.7
+      },
+      {
+        "date": "2026-10-11",
+        "min": 24.6,
+        "max": 99.6,
+        "mean": 53.4
+      },
+      {
+        "date": "2026-10-12",
+        "min": 26.0,
+        "max": 99.5,
+        "mean": 53.6
+      },
+      {
+        "date": "2026-10-13",
+        "min": 25.8,
+        "max": 99.5,
+        "mean": 54.3
+      },
+      {
+        "date": "2026-10-14",
+        "min": 26.7,
+        "max": 99.7,
+        "mean": 56.5
+      },
+      {
+        "date": "2026-10-15",
+        "min": 26.4,
+        "max": 99.6,
+        "mean": 58.0
+      },
+      {
+        "date": "2026-10-16",
+        "min": 27.3,
+        "max": 99.3,
+        "mean": 57.9
+      },
+      {
+        "date": "2026-10-17",
+        "min": 27.0,
+        "max": 99.0,
+        "mean": 57.6
+      },
+      {
+        "date": "2026-10-18",
+        "min": 27.1,
+        "max": 98.6,
+        "mean": 58.3
+      },
+      {
+        "date": "2026-10-19",
+        "min": 27.8,
+        "max": 98.4,
+        "mean": 58.3
+      },
+      {
+        "date": "2026-10-20",
+        "min": 30.6,
+        "max": 98.3,
+        "mean": 58.9
+      },
+      {
+        "date": "2026-10-21",
+        "min": 30.4,
+        "max": 99.7,
+        "mean": 59.3
+      },
+      {
+        "date": "2026-10-22",
+        "min": 30.3,
+        "max": 99.6,
+        "mean": 62.7
+      },
+      {
+        "date": "2026-10-23",
+        "min": 35.2,
+        "max": 99.8,
+        "mean": 64.9
+      },
+      {
+        "date": "2026-10-24",
+        "min": 35.0,
+        "max": 99.5,
+        "mean": 66.2
+      },
+      {
+        "date": "2026-10-25",
+        "min": 34.9,
+        "max": 99.8,
+        "mean": 68.2
+      },
+      {
+        "date": "2026-10-26",
+        "min": 34.8,
+        "max": 99.9,
+        "mean": 69.4
+      },
+      {
+        "date": "2026-10-27",
+        "min": 34.6,
+        "max": 99.8,
+        "mean": 69.5
+      },
+      {
+        "date": "2026-10-28",
+        "min": 34.3,
+        "max": 99.8,
+        "mean": 70.1
+      },
+      {
+        "date": "2026-10-29",
+        "min": 34.1,
+        "max": 99.8,
+        "mean": 70.9
+      },
+      {
+        "date": "2026-10-30",
+        "min": 34.2,
+        "max": 99.7,
+        "mean": 70.9
+      },
+      {
+        "date": "2026-10-31",
+        "min": 34.7,
+        "max": 99.7,
+        "mean": 70.8
+      },
+      {
+        "date": "2026-11-01",
+        "min": 34.2,
+        "max": 99.8,
+        "mean": 70.6
+      },
+      {
+        "date": "2026-11-02",
+        "min": 34.7,
+        "max": 99.8,
+        "mean": 70.6
+      },
+      {
+        "date": "2026-11-03",
+        "min": 34.2,
+        "max": 99.8,
+        "mean": 71.9
+      },
+      {
+        "date": "2026-11-04",
+        "min": 33.8,
+        "max": 99.8,
+        "mean": 72.0
+      },
+      {
+        "date": "2026-11-05",
+        "min": 33.7,
+        "max": 99.8,
+        "mean": 73.3
+      },
+      {
+        "date": "2026-11-06",
+        "min": 33.5,
+        "max": 99.8,
+        "mean": 73.4
+      },
+      {
+        "date": "2026-11-07",
+        "min": 33.5,
+        "max": 99.8,
+        "mean": 73.3
+      },
+      {
+        "date": "2026-11-08",
+        "min": 33.5,
+        "max": 99.8,
+        "mean": 73.5
+      },
+      {
+        "date": "2026-11-09",
+        "min": 33.6,
+        "max": 99.9,
+        "mean": 73.6
+      },
+      {
+        "date": "2026-11-10",
+        "min": 33.6,
+        "max": 99.9,
+        "mean": 74.2
+      },
+      {
+        "date": "2026-11-11",
+        "min": 33.5,
+        "max": 99.8,
+        "mean": 74.6
+      },
+      {
+        "date": "2026-11-12",
+        "min": 33.5,
+        "max": 99.9,
+        "mean": 74.7
+      },
+      {
+        "date": "2026-11-13",
+        "min": 33.5,
+        "max": 99.9,
+        "mean": 75.5
+      },
+      {
+        "date": "2026-11-14",
+        "min": 33.5,
+        "max": 99.9,
+        "mean": 76.6
+      },
+      {
+        "date": "2026-11-15",
+        "min": 34.4,
+        "max": 99.9,
+        "mean": 77.2
+      },
+      {
+        "date": "2026-11-16",
+        "min": 34.4,
+        "max": 99.9,
+        "mean": 77.3
+      },
+      {
+        "date": "2026-11-17",
+        "min": 34.6,
+        "max": 99.9,
+        "mean": 77.5
+      },
+      {
+        "date": "2026-11-18",
+        "min": 35.8,
+        "max": 99.9,
+        "mean": 78.1
+      },
+      {
+        "date": "2026-11-19",
+        "min": 37.5,
+        "max": 99.9,
+        "mean": 78.5
+      },
+      {
+        "date": "2026-11-20",
+        "min": 40.8,
+        "max": 99.9,
+        "mean": 79.0
+      }
+    ],
+    "balance_30d": {
+      "value": 18.2,
+      "unit": "mm",
+      "label": "ostatnie 30 dni",
+      "status": "warn",
+      "note": "20.10–18.11, o 27 mm mniej niż zwykle (niższy w 3 z 10 lat)",
+      "source_tag": {
+        "kind": "obliczenia",
+        "date": "2026-11-18",
+        "source": "NASA POWER"
+      }
+    },
+    "balance_30d_rank": {
+      "lower_years": 3,
+      "of_years": 10
+    },
+    "source_tag": {
+      "kind": "szacunek_modelu",
+      "date": "2026-11-20",
+      "source": "Model wody w glebie FAO-56 – pokrycie referencyjne"
+    }
+  },
+  "suggestions": null,
+  "history": {
+    "period_start": "2014-08-01",
+    "period_end": "2026-11-18",
+    "season_start": "2026-03-01",
+    "balance_cumulative": [
+      {
+        "date": "2026-03-01",
+        "value": -0.5
+      },
+      {
+        "date": "2026-03-02",
+        "value": -0.7
+      },
+      {
+        "date": "2026-03-03",
+        "value": -1.1
+      },
+      {
+        "date": "2026-03-04",
+        "value": -1.8
+      },
+      {
+        "date": "2026-03-05",
+        "value": -2.5
+      },
+      {
+        "date": "2026-03-06",
+        "value": -3.4
+      },
+      {
+        "date": "2026-03-07",
+        "value": -4.5
+      },
+      {
+        "date": "2026-03-08",
+        "value": -5.8
+      },
+      {
+        "date": "2026-03-09",
+        "value": -6.9
+      },
+      {
+        "date": "2026-03-10",
+        "value": -8.1
+      },
+      {
+        "date": "2026-03-11",
+        "value": -9.2
+      },
+      {
+        "date": "2026-03-12",
+        "value": -10.2
+      },
+      {
+        "date": "2026-03-13",
+        "value": -11.4
+      },
+      {
+        "date": "2026-03-14",
+        "value": -13.3
+      },
+      {
+        "date": "2026-03-15",
+        "value": -15.0
+      },
+      {
+        "date": "2026-03-16",
+        "value": -16.0
+      },
+      {
+        "date": "2026-03-17",
+        "value": -16.4
+      },
+      {
+        "date": "2026-03-18",
+        "value": -17.5
+      },
+      {
+        "date": "2026-03-19",
+        "value": -18.8
+      },
+      {
+        "date": "2026-03-20",
+        "value": -19.6
+      },
+      {
+        "date": "2026-03-21",
+        "value": -20.5
+      },
+      {
+        "date": "2026-03-22",
+        "value": -21.9
+      },
+      {
+        "date": "2026-03-23",
+        "value": -23.2
+      },
+      {
+        "date": "2026-03-24",
+        "value": -24.9
+      },
+      {
+        "date": "2026-03-25",
+        "value": -26.2
+      },
+      {
+        "date": "2026-03-26",
+        "value": -14.1
+      },
+      {
+        "date": "2026-03-27",
+        "value": -15.3
+      },
+      {
+        "date": "2026-03-28",
+        "value": -16.8
+      },
+      {
+        "date": "2026-03-29",
+        "value": -18.5
+      },
+      {
+        "date": "2026-03-30",
+        "value": -20.0
+      },
+      {
+        "date": "2026-03-31",
+        "value": -20.7
+      },
+      {
+        "date": "2026-04-01",
+        "value": -21.9
+      },
+      {
+        "date": "2026-04-02",
+        "value": -23.8
+      },
+      {
+        "date": "2026-04-03",
+        "value": -25.6
+      },
+      {
+        "date": "2026-04-04",
+        "value": -26.4
+      },
+      {
+        "date": "2026-04-05",
+        "value": -26.7
+      },
+      {
+        "date": "2026-04-06",
+        "value": -26.3
+      },
+      {
+        "date": "2026-04-07",
+        "value": -26.5
+      },
+      {
+        "date": "2026-04-08",
+        "value": -27.3
+      },
+      {
+        "date": "2026-04-09",
+        "value": -28.2
+      },
+      {
+        "date": "2026-04-10",
+        "value": -29.7
+      },
+      {
+        "date": "2026-04-11",
+        "value": -31.6
+      },
+      {
+        "date": "2026-04-12",
+        "value": -33.3
+      },
+      {
+        "date": "2026-04-13",
+        "value": -35.3
+      },
+      {
+        "date": "2026-04-14",
+        "value": -37.4
+      },
+      {
+        "date": "2026-04-15",
+        "value": -37.7
+      },
+      {
+        "date": "2026-04-16",
+        "value": -39.6
+      },
+      {
+        "date": "2026-04-17",
+        "value": -40.5
+      },
+      {
+        "date": "2026-04-18",
+        "value": -43.3
+      },
+      {
+        "date": "2026-04-19",
+        "value": -44.2
+      },
+      {
+        "date": "2026-04-20",
+        "value": -47.0
+      },
+      {
+        "date": "2026-04-21",
+        "value": -49.7
+      },
+      {
+        "date": "2026-04-22",
+        "value": -52.6
+      },
+      {
+        "date": "2026-04-23",
+        "value": -55.8
+      },
+      {
+        "date": "2026-04-24",
+        "value": -58.0
+      },
+      {
+        "date": "2026-04-25",
+        "value": -60.5
+      },
+      {
+        "date": "2026-04-26",
+        "value": -60.8
+      },
+      {
+        "date": "2026-04-27",
+        "value": -63.2
+      },
+      {
+        "date": "2026-04-28",
+        "value": -65.4
+      },
+      {
+        "date": "2026-04-29",
+        "value": -67.0
+      },
+      {
+        "date": "2026-04-30",
+        "value": -69.0
+      },
+      {
+        "date": "2026-05-01",
+        "value": -72.1
+      },
+      {
+        "date": "2026-05-02",
+        "value": -76.1
+      },
+      {
+        "date": "2026-05-03",
+        "value": -80.6
+      },
+      {
+        "date": "2026-05-04",
+        "value": -84.7
+      },
+      {
+        "date": "2026-05-05",
+        "value": -83.7
+      },
+      {
+        "date": "2026-05-06",
+        "value": -86.7
+      },
+      {
+        "date": "2026-05-07",
+        "value": -86.7
+      },
+      {
+        "date": "2026-05-08",
+        "value": -83.5
+      },
+      {
+        "date": "2026-05-09",
+        "value": -84.7
+      },
+      {
+        "date": "2026-05-10",
+        "value": -87.0
+      },
+      {
+        "date": "2026-05-11",
+        "value": -83.3
+      },
+      {
+        "date": "2026-05-12",
+        "value": -77.9
+      },
+      {
+        "date": "2026-05-13",
+        "value": -80.4
+      },
+      {
+        "date": "2026-05-14",
+        "value": -83.4
+      },
+      {
+        "date": "2026-05-15",
+        "value": -87.0
+      },
+      {
+        "date": "2026-05-16",
+        "value": -80.0
+      },
+      {
+        "date": "2026-05-17",
+        "value": -71.9
+      },
+      {
+        "date": "2026-05-18",
+        "value": -71.9
+      },
+      {
+        "date": "2026-05-19",
+        "value": -74.5
+      },
+      {
+        "date": "2026-05-20",
+        "value": -77.3
+      },
+      {
+        "date": "2026-05-21",
+        "value": -80.3
+      },
+      {
+        "date": "2026-05-22",
+        "value": -84.2
+      },
+      {
+        "date": "2026-05-23",
+        "value": -88.2
+      },
+      {
+        "date": "2026-05-24",
+        "value": -92.2
+      },
+      {
+        "date": "2026-05-25",
+        "value": -96.7
+      },
+      {
+        "date": "2026-05-26",
+        "value": -101.3
+      },
+      {
+        "date": "2026-05-27",
+        "value": -105.4
+      },
+      {
+        "date": "2026-05-28",
+        "value": -108.9
+      },
+      {
+        "date": "2026-05-29",
+        "value": -111.8
+      },
+      {
+        "date": "2026-05-30",
+        "value": -116.4
+      },
+      {
+        "date": "2026-05-31",
+        "value": -118.5
+      },
+      {
+        "date": "2026-06-01",
+        "value": -118.9
+      },
+      {
+        "date": "2026-06-02",
+        "value": -117.4
+      },
+      {
+        "date": "2026-06-03",
+        "value": -120.9
+      },
+      {
+        "date": "2026-06-04",
+        "value": -119.4
+      },
+      {
+        "date": "2026-06-05",
+        "value": -114.8
+      },
+      {
+        "date": "2026-06-06",
+        "value": -118.1
+      },
+      {
+        "date": "2026-06-07",
+        "value": -121.1
+      },
+      {
+        "date": "2026-06-08",
+        "value": -123.7
+      },
+      {
+        "date": "2026-06-09",
+        "value": -127.8
+      },
+      {
+        "date": "2026-06-10",
+        "value": -120.5
+      },
+      {
+        "date": "2026-06-11",
+        "value": -114.0
+      },
+      {
+        "date": "2026-06-12",
+        "value": -113.2
+      },
+      {
+        "date": "2026-06-13",
+        "value": -109.9
+      },
+      {
+        "date": "2026-06-14",
+        "value": -105.1
+      },
+      {
+        "date": "2026-06-15",
+        "value": -100.1
+      },
+      {
+        "date": "2026-06-16",
+        "value": -95.4
+      },
+      {
+        "date": "2026-06-17",
+        "value": -97.5
+      },
+      {
+        "date": "2026-06-18",
+        "value": -100.7
+      },
+      {
+        "date": "2026-06-19",
+        "value": -104.7
+      },
+      {
+        "date": "2026-06-20",
+        "value": -110.0
+      },
+      {
+        "date": "2026-06-21",
+        "value": -110.7
+      },
+      {
+        "date": "2026-06-22",
+        "value": -113.4
+      },
+      {
+        "date": "2026-06-23",
+        "value": -118.6
+      },
+      {
+        "date": "2026-06-24",
+        "value": -123.4
+      },
+      {
+        "date": "2026-06-25",
+        "value": -128.5
+      },
+      {
+        "date": "2026-06-26",
+        "value": -134.1
+      },
+      {
+        "date": "2026-06-27",
+        "value": -140.0
+      },
+      {
+        "date": "2026-06-28",
+        "value": -146.4
+      },
+      {
+        "date": "2026-06-29",
+        "value": -153.2
+      },
+      {
+        "date": "2026-06-30",
+        "value": -156.8
+      },
+      {
+        "date": "2026-07-01",
+        "value": -156.8
+      },
+      {
+        "date": "2026-07-02",
+        "value": -159.3
+      },
+      {
+        "date": "2026-07-03",
+        "value": -163.0
+      },
+      {
+        "date": "2026-07-04",
+        "value": -165.4
+      },
+      {
+        "date": "2026-07-05",
+        "value": -164.6
+      },
+      {
+        "date": "2026-07-06",
+        "value": -167.1
+      },
+      {
+        "date": "2026-07-07",
+        "value": -157.1
+      },
+      {
+        "date": "2026-07-08",
+        "value": -155.2
+      },
+      {
+        "date": "2026-07-09",
+        "value": -152.3
+      },
+      {
+        "date": "2026-07-10",
+        "value": -145.0
+      },
+      {
+        "date": "2026-07-11",
+        "value": -141.6
+      },
+      {
+        "date": "2026-07-12",
+        "value": -142.7
+      },
+      {
+        "date": "2026-07-13",
+        "value": -143.2
+      },
+      {
+        "date": "2026-07-14",
+        "value": -146.7
+      },
+      {
+        "date": "2026-07-15",
+        "value": -150.8
+      },
+      {
+        "date": "2026-07-16",
+        "value": -155.9
+      },
+      {
+        "date": "2026-07-17",
+        "value": -161.4
+      },
+      {
+        "date": "2026-07-18",
+        "value": -156.7
+      },
+      {
+        "date": "2026-07-19",
+        "value": -158.3
+      },
+      {
+        "date": "2026-07-20",
+        "value": -153.2
+      },
+      {
+        "date": "2026-07-21",
+        "value": -147.7
+      },
+      {
+        "date": "2026-07-22",
+        "value": -150.7
+      },
+      {
+        "date": "2026-07-23",
+        "value": -150.7
+      },
+      {
+        "date": "2026-07-24",
+        "value": -150.3
+      },
+      {
+        "date": "2026-07-25",
+        "value": -154.2
+      },
+      {
+        "date": "2026-07-26",
+        "value": -159.7
+      },
+      {
+        "date": "2026-07-27",
+        "value": -159.2
+      },
+      {
+        "date": "2026-07-28",
+        "value": -162.6
+      },
+      {
+        "date": "2026-07-29",
+        "value": -165.9
+      },
+      {
+        "date": "2026-07-30",
+        "value": -170.8
+      },
+      {
+        "date": "2026-07-31",
+        "value": -176.4
+      },
+      {
+        "date": "2026-08-01",
+        "value": -176.8
+      },
+      {
+        "date": "2026-08-02",
+        "value": -179.6
+      },
+      {
+        "date": "2026-08-03",
+        "value": -184.0
+      },
+      {
+        "date": "2026-08-04",
+        "value": -181.4
+      },
+      {
+        "date": "2026-08-05",
+        "value": -186.4
+      },
+      {
+        "date": "2026-08-06",
+        "value": -187.4
+      },
+      {
+        "date": "2026-08-07",
+        "value": -190.2
+      },
+      {
+        "date": "2026-08-08",
+        "value": -193.9
+      },
+      {
+        "date": "2026-08-09",
+        "value": -198.1
+      },
+      {
+        "date": "2026-08-10",
+        "value": -201.6
+      },
+      {
+        "date": "2026-08-11",
+        "value": -204.0
+      },
+      {
+        "date": "2026-08-12",
+        "value": -207.2
+      },
+      {
+        "date": "2026-08-13",
+        "value": -211.4
+      },
+      {
+        "date": "2026-08-14",
+        "value": -215.7
+      },
+      {
+        "date": "2026-08-15",
+        "value": -221.0
+      },
+      {
+        "date": "2026-08-16",
+        "value": -224.9
+      },
+      {
+        "date": "2026-08-17",
+        "value": -218.0
+      },
+      {
+        "date": "2026-08-18",
+        "value": -205.5
+      },
+      {
+        "date": "2026-08-19",
+        "value": -208.1
+      },
+      {
+        "date": "2026-08-20",
+        "value": -208.5
+      },
+      {
+        "date": "2026-08-21",
+        "value": -209.7
+      },
+      {
+        "date": "2026-08-22",
+        "value": -207.3
+      },
+      {
+        "date": "2026-08-23",
+        "value": -209.5
+      },
+      {
+        "date": "2026-08-24",
+        "value": -209.6
+      },
+      {
+        "date": "2026-08-25",
+        "value": -211.7
+      },
+      {
+        "date": "2026-08-26",
+        "value": -214.6
+      },
+      {
+        "date": "2026-08-27",
+        "value": -217.9
+      },
+      {
+        "date": "2026-08-28",
+        "value": -222.4
+      },
+      {
+        "date": "2026-08-29",
+        "value": -220.4
+      },
+      {
+        "date": "2026-08-30",
+        "value": -223.6
+      },
+      {
+        "date": "2026-08-31",
+        "value": -225.8
+      },
+      {
+        "date": "2026-09-01",
+        "value": -227.1
+      },
+      {
+        "date": "2026-09-02",
+        "value": -229.5
+      },
+      {
+        "date": "2026-09-03",
+        "value": -231.4
+      },
+      {
+        "date": "2026-09-04",
+        "value": -226.7
+      },
+      {
+        "date": "2026-09-05",
+        "value": -227.4
+      },
+      {
+        "date": "2026-09-06",
+        "value": -226.9
+      },
+      {
+        "date": "2026-09-07",
+        "value": -229.3
+      },
+      {
+        "date": "2026-09-08",
+        "value": -233.1
+      },
+      {
+        "date": "2026-09-09",
+        "value": -237.0
+      },
+      {
+        "date": "2026-09-10",
+        "value": -233.0
+      },
+      {
+        "date": "2026-09-11",
+        "value": -234.6
+      },
+      {
+        "date": "2026-09-12",
+        "value": -235.8
+      },
+      {
+        "date": "2026-09-13",
+        "value": -237.1
+      },
+      {
+        "date": "2026-09-14",
+        "value": -237.3
+      },
+      {
+        "date": "2026-09-15",
+        "value": -238.5
+      },
+      {
+        "date": "2026-09-16",
+        "value": -241.5
+      },
+      {
+        "date": "2026-09-17",
+        "value": -234.8
+      },
+      {
+        "date": "2026-09-18",
+        "value": -237.1
+      },
+      {
+        "date": "2026-09-19",
+        "value": -239.4
+      },
+      {
+        "date": "2026-09-20",
+        "value": -234.0
+      },
+      {
+        "date": "2026-09-21",
+        "value": -233.0
+      },
+      {
+        "date": "2026-09-22",
+        "value": -233.5
+      },
+      {
+        "date": "2026-09-23",
+        "value": -235.2
+      },
+      {
+        "date": "2026-09-24",
+        "value": -236.5
+      },
+      {
+        "date": "2026-09-25",
+        "value": -229.7
+      },
+      {
+        "date": "2026-09-26",
+        "value": -228.9
+      },
+      {
+        "date": "2026-09-27",
+        "value": -230.5
+      },
+      {
+        "date": "2026-09-28",
+        "value": -232.2
+      },
+      {
+        "date": "2026-09-29",
+        "value": -234.1
+      },
+      {
+        "date": "2026-09-30",
+        "value": -235.9
+      },
+      {
+        "date": "2026-10-01",
+        "value": -238.4
+      },
+      {
+        "date": "2026-10-02",
+        "value": -240.5
+      },
+      {
+        "date": "2026-10-03",
+        "value": -242.4
+      },
+      {
+        "date": "2026-10-04",
+        "value": -243.5
+      },
+      {
+        "date": "2026-10-05",
+        "value": -245.0
+      },
+      {
+        "date": "2026-10-06",
+        "value": -246.6
+      },
+      {
+        "date": "2026-10-07",
+        "value": -247.7
+      },
+      {
+        "date": "2026-10-08",
+        "value": -247.8
+      },
+      {
+        "date": "2026-10-09",
+        "value": -245.4
+      },
+      {
+        "date": "2026-10-10",
+        "value": -245.2
+      },
+      {
+        "date": "2026-10-11",
+        "value": -244.2
+      },
+      {
+        "date": "2026-10-12",
+        "value": -244.4
+      },
+      {
+        "date": "2026-10-13",
+        "value": -244.9
+      },
+      {
+        "date": "2026-10-14",
+        "value": -245.8
+      },
+      {
+        "date": "2026-10-15",
+        "value": -244.7
+      },
+      {
+        "date": "2026-10-16",
+        "value": -245.3
+      },
+      {
+        "date": "2026-10-17",
+        "value": -246.0
+      },
+      {
+        "date": "2026-10-18",
+        "value": -246.6
+      },
+      {
+        "date": "2026-10-19",
+        "value": -246.1
+      },
+      {
+        "date": "2026-10-20",
+        "value": -245.8
+      },
+      {
+        "date": "2026-10-21",
+        "value": -247.1
+      },
+      {
+        "date": "2026-10-22",
+        "value": -242.0
+      },
+      {
+        "date": "2026-10-23",
+        "value": -240.4
+      },
+      {
+        "date": "2026-10-24",
+        "value": -241.6
+      },
+      {
+        "date": "2026-10-25",
+        "value": -239.9
+      },
+      {
+        "date": "2026-10-26",
+        "value": -238.9
+      },
+      {
+        "date": "2026-10-27",
+        "value": -239.3
+      },
+      {
+        "date": "2026-10-28",
+        "value": -239.6
+      },
+      {
+        "date": "2026-10-29",
+        "value": -240.0
+      },
+      {
+        "date": "2026-10-30",
+        "value": -240.2
+      },
+      {
+        "date": "2026-10-31",
+        "value": -240.3
+      },
+      {
+        "date": "2026-11-01",
+        "value": -240.4
+      },
+      {
+        "date": "2026-11-02",
+        "value": -240.9
+      },
+      {
+        "date": "2026-11-03",
+        "value": -241.2
+      },
+      {
+        "date": "2026-11-04",
+        "value": -241.4
+      },
+      {
+        "date": "2026-11-05",
+        "value": -241.6
+      },
+      {
+        "date": "2026-11-06",
+        "value": -242.0
+      },
+      {
+        "date": "2026-11-07",
+        "value": -242.2
+      },
+      {
+        "date": "2026-11-08",
+        "value": -242.6
+      },
+      {
+        "date": "2026-11-09",
+        "value": -243.0
+      },
+      {
+        "date": "2026-11-10",
+        "value": -238.2
+      },
+      {
+        "date": "2026-11-11",
+        "value": -237.8
+      },
+      {
+        "date": "2026-11-12",
+        "value": -235.9
+      },
+      {
+        "date": "2026-11-13",
+        "value": -233.2
+      },
+      {
+        "date": "2026-11-14",
+        "value": -233.7
+      },
+      {
+        "date": "2026-11-15",
+        "value": -234.1
+      },
+      {
+        "date": "2026-11-16",
+        "value": -232.8
+      },
+      {
+        "date": "2026-11-17",
+        "value": -229.6
+      },
+      {
+        "date": "2026-11-18",
+        "value": -227.9
+      }
+    ],
+    "balance_band": [
+      {
+        "date": "2026-03-01",
+        "min": -0.7,
+        "max": 7.4,
+        "mean": 1.2
+      },
+      {
+        "date": "2026-03-02",
+        "min": -1.3,
+        "max": 7.9,
+        "mean": 1.9
+      },
+      {
+        "date": "2026-03-03",
+        "min": -2.0,
+        "max": 8.8,
+        "mean": 1.8
+      },
+      {
+        "date": "2026-03-04",
+        "min": -2.1,
+        "max": 10.5,
+        "mean": 1.9
+      },
+      {
+        "date": "2026-03-05",
+        "min": -2.6,
+        "max": 10.3,
+        "mean": 2.2
+      },
+      {
+        "date": "2026-03-06",
+        "min": -3.6,
+        "max": 17.0,
+        "mean": 3.2
+      },
+      {
+        "date": "2026-03-07",
+        "min": -4.7,
+        "max": 17.2,
+        "mean": 3.9
+      },
+      {
+        "date": "2026-03-08",
+        "min": -6.0,
+        "max": 17.3,
+        "mean": 4.2
+      },
+      {
+        "date": "2026-03-09",
+        "min": -7.1,
+        "max": 17.6,
+        "mean": 4.4
+      },
+      {
+        "date": "2026-03-10",
+        "min": -8.4,
+        "max": 18.5,
+        "mean": 5.8
+      },
+      {
+        "date": "2026-03-11",
+        "min": -9.6,
+        "max": 21.9,
+        "mean": 7.7
+      },
+      {
+        "date": "2026-03-12",
+        "min": -8.9,
+        "max": 22.2,
+        "mean": 8.1
+      },
+      {
+        "date": "2026-03-13",
+        "min": -6.2,
+        "max": 21.3,
+        "mean": 10.0
+      },
+      {
+        "date": "2026-03-14",
+        "min": -7.2,
+        "max": 24.1,
+        "mean": 10.2
+      },
+      {
+        "date": "2026-03-15",
+        "min": -8.2,
+        "max": 23.8,
+        "mean": 10.0
+      },
+      {
+        "date": "2026-03-16",
+        "min": -9.0,
+        "max": 24.1,
+        "mean": 10.1
+      },
+      {
+        "date": "2026-03-17",
+        "min": -10.2,
+        "max": 24.3,
+        "mean": 9.9
+      },
+      {
+        "date": "2026-03-18",
+        "min": -11.4,
+        "max": 28.1,
+        "mean": 10.1
+      },
+      {
+        "date": "2026-03-19",
+        "min": -12.7,
+        "max": 27.3,
+        "mean": 9.9
+      },
+      {
+        "date": "2026-03-20",
+        "min": -14.1,
+        "max": 26.0,
+        "mean": 9.3
+      },
+      {
+        "date": "2026-03-21",
+        "min": -15.6,
+        "max": 28.6,
+        "mean": 9.6
+      },
+      {
+        "date": "2026-03-22",
+        "min": -17.3,
+        "max": 30.7,
+        "mean": 9.3
+      },
+      {
+        "date": "2026-03-23",
+        "min": -19.0,
+        "max": 31.5,
+        "mean": 9.5
+      },
+      {
+        "date": "2026-03-24",
+        "min": -20.4,
+        "max": 30.6,
+        "mean": 9.6
+      },
+      {
+        "date": "2026-03-25",
+        "min": -22.0,
+        "max": 31.3,
+        "mean": 9.0
+      },
+      {
+        "date": "2026-03-26",
+        "min": -23.4,
+        "max": 30.4,
+        "mean": 8.7
+      },
+      {
+        "date": "2026-03-27",
+        "min": -24.9,
+        "max": 28.7,
+        "mean": 7.9
+      },
+      {
+        "date": "2026-03-28",
+        "min": -27.0,
+        "max": 26.9,
+        "mean": 7.0
+      },
+      {
+        "date": "2026-03-29",
+        "min": -28.0,
+        "max": 27.4,
+        "mean": 7.3
+      },
+      {
+        "date": "2026-03-30",
+        "min": -28.5,
+        "max": 26.3,
+        "mean": 6.8
+      },
+      {
+        "date": "2026-03-31",
+        "min": -29.9,
+        "max": 27.6,
+        "mean": 7.4
+      },
+      {
+        "date": "2026-04-01",
+        "min": -21.7,
+        "max": 32.7,
+        "mean": 11.3
+      },
+      {
+        "date": "2026-04-02",
+        "min": -14.9,
+        "max": 38.9,
+        "mean": 12.4
+      },
+      {
+        "date": "2026-04-03",
+        "min": -16.1,
+        "max": 38.4,
+        "mean": 11.0
+      },
+      {
+        "date": "2026-04-04",
+        "min": -15.4,
+        "max": 36.6,
+        "mean": 9.7
+      },
+      {
+        "date": "2026-04-05",
+        "min": -12.5,
+        "max": 34.8,
+        "mean": 9.9
+      },
+      {
+        "date": "2026-04-06",
+        "min": -11.4,
+        "max": 34.7,
+        "mean": 10.4
+      },
+      {
+        "date": "2026-04-07",
+        "min": -14.1,
+        "max": 35.1,
+        "mean": 9.2
+      },
+      {
+        "date": "2026-04-08",
+        "min": -16.5,
+        "max": 33.7,
+        "mean": 7.8
+      },
+      {
+        "date": "2026-04-09",
+        "min": -19.1,
+        "max": 34.8,
+        "mean": 6.7
+      },
+      {
+        "date": "2026-04-10",
+        "min": -21.3,
+        "max": 33.5,
+        "mean": 5.3
+      },
+      {
+        "date": "2026-04-11",
+        "min": -23.6,
+        "max": 32.1,
+        "mean": 5.2
+      },
+      {
+        "date": "2026-04-12",
+        "min": -26.3,
+        "max": 31.4,
+        "mean": 4.5
+      },
+      {
+        "date": "2026-04-13",
+        "min": -27.2,
+        "max": 30.9,
+        "mean": 4.8
+      },
+      {
+        "date": "2026-04-14",
+        "min": -28.8,
+        "max": 34.4,
+        "mean": 5.2
+      },
+      {
+        "date": "2026-04-15",
+        "min": -27.6,
+        "max": 37.4,
+        "mean": 5.8
+      },
+      {
+        "date": "2026-04-16",
+        "min": -29.2,
+        "max": 38.4,
+        "mean": 6.0
+      },
+      {
+        "date": "2026-04-17",
+        "min": -31.5,
+        "max": 36.9,
+        "mean": 5.2
+      },
+      {
+        "date": "2026-04-18",
+        "min": -33.3,
+        "max": 35.2,
+        "mean": 3.9
+      },
+      {
+        "date": "2026-04-19",
+        "min": -35.2,
+        "max": 34.7,
+        "mean": 2.9
+      },
+      {
+        "date": "2026-04-20",
+        "min": -37.4,
+        "max": 32.1,
+        "mean": 2.8
+      },
+      {
+        "date": "2026-04-21",
+        "min": -39.6,
+        "max": 33.5,
+        "mean": 1.6
+      },
+      {
+        "date": "2026-04-22",
+        "min": -42.5,
+        "max": 34.3,
+        "mean": 0.1
+      },
+      {
+        "date": "2026-04-23",
+        "min": -45.5,
+        "max": 33.6,
+        "mean": -1.7
+      },
+      {
+        "date": "2026-04-24",
+        "min": -48.0,
+        "max": 32.3,
+        "mean": -2.4
+      },
+      {
+        "date": "2026-04-25",
+        "min": -50.0,
+        "max": 31.3,
+        "mean": -1.8
+      },
+      {
+        "date": "2026-04-26",
+        "min": -51.6,
+        "max": 34.1,
+        "mean": -2.7
+      },
+      {
+        "date": "2026-04-27",
+        "min": -54.3,
+        "max": 35.4,
+        "mean": -3.9
+      },
+      {
+        "date": "2026-04-28",
+        "min": -57.6,
+        "max": 53.8,
+        "mean": -3.4
+      },
+      {
+        "date": "2026-04-29",
+        "min": -55.3,
+        "max": 54.2,
+        "mean": -4.4
+      },
+      {
+        "date": "2026-04-30",
+        "min": -56.7,
+        "max": 52.3,
+        "mean": -6.2
+      },
+      {
+        "date": "2026-05-01",
+        "min": -56.0,
+        "max": 49.8,
+        "mean": -8.0
+      },
+      {
+        "date": "2026-05-02",
+        "min": -53.0,
+        "max": 47.9,
+        "mean": -7.4
+      },
+      {
+        "date": "2026-05-03",
+        "min": -54.8,
+        "max": 49.6,
+        "mean": -8.8
+      },
+      {
+        "date": "2026-05-04",
+        "min": -57.2,
+        "max": 58.7,
+        "mean": -9.3
+      },
+      {
+        "date": "2026-05-05",
+        "min": -58.9,
+        "max": 58.8,
+        "mean": -9.5
+      },
+      {
+        "date": "2026-05-06",
+        "min": -61.7,
+        "max": 57.5,
+        "mean": -10.7
+      },
+      {
+        "date": "2026-05-07",
+        "min": -64.6,
+        "max": 77.6,
+        "mean": -10.3
+      },
+      {
+        "date": "2026-05-08",
+        "min": -67.4,
+        "max": 79.7,
+        "mean": -12.4
+      },
+      {
+        "date": "2026-05-09",
+        "min": -71.4,
+        "max": 78.6,
+        "mean": -15.1
+      },
+      {
+        "date": "2026-05-10",
+        "min": -72.4,
+        "max": 78.6,
+        "mean": -17.0
+      },
+      {
+        "date": "2026-05-11",
+        "min": -73.9,
+        "max": 77.3,
+        "mean": -18.1
+      },
+      {
+        "date": "2026-05-12",
+        "min": -76.3,
+        "max": 74.3,
+        "mean": -20.1
+      },
+      {
+        "date": "2026-05-13",
+        "min": -76.1,
+        "max": 71.3,
+        "mean": -22.2
+      },
+      {
+        "date": "2026-05-14",
+        "min": -74.4,
+        "max": 67.7,
+        "mean": -22.0
+      },
+      {
+        "date": "2026-05-15",
+        "min": -65.0,
+        "max": 65.7,
+        "mean": -21.8
+      },
+      {
+        "date": "2026-05-16",
+        "min": -51.1,
+        "max": 62.4,
+        "mean": -19.3
+      },
+      {
+        "date": "2026-05-17",
+        "min": -52.9,
+        "max": 58.8,
+        "mean": -16.7
+      },
+      {
+        "date": "2026-05-18",
+        "min": -56.0,
+        "max": 55.5,
+        "mean": -17.4
+      },
+      {
+        "date": "2026-05-19",
+        "min": -60.0,
+        "max": 51.2,
+        "mean": -18.6
+      },
+      {
+        "date": "2026-05-20",
+        "min": -63.6,
+        "max": 46.9,
+        "mean": -20.7
+      },
+      {
+        "date": "2026-05-21",
+        "min": -55.6,
+        "max": 42.9,
+        "mean": -22.2
+      },
+      {
+        "date": "2026-05-22",
+        "min": -59.4,
+        "max": 39.3,
+        "mean": -22.6
+      },
+      {
+        "date": "2026-05-23",
+        "min": -57.9,
+        "max": 35.5,
+        "mean": -24.4
+      },
+      {
+        "date": "2026-05-24",
+        "min": -60.1,
+        "max": 34.7,
+        "mean": -26.2
+      },
+      {
+        "date": "2026-05-25",
+        "min": -59.1,
+        "max": 33.4,
+        "mean": -25.1
+      },
+      {
+        "date": "2026-05-26",
+        "min": -62.8,
+        "max": 30.9,
+        "mean": -27.5
+      },
+      {
+        "date": "2026-05-27",
+        "min": -67.8,
+        "max": 28.6,
+        "mean": -30.7
+      },
+      {
+        "date": "2026-05-28",
+        "min": -71.7,
+        "max": 26.7,
+        "mean": -32.3
+      },
+      {
+        "date": "2026-05-29",
+        "min": -72.7,
+        "max": 25.9,
+        "mean": -34.6
+      },
+      {
+        "date": "2026-05-30",
+        "min": -73.2,
+        "max": 23.2,
+        "mean": -33.4
+      },
+      {
+        "date": "2026-05-31",
+        "min": -78.5,
+        "max": 19.5,
+        "mean": -35.5
+      },
+      {
+        "date": "2026-06-01",
+        "min": -83.7,
+        "max": 16.8,
+        "mean": -37.2
+      },
+      {
+        "date": "2026-06-02",
+        "min": -81.6,
+        "max": 12.8,
+        "mean": -38.9
+      },
+      {
+        "date": "2026-06-03",
+        "min": -84.0,
+        "max": 8.9,
+        "mean": -41.7
+      },
+      {
+        "date": "2026-06-04",
+        "min": -88.8,
+        "max": 6.0,
+        "mean": -44.7
+      },
+      {
+        "date": "2026-06-05",
+        "min": -92.3,
+        "max": 6.2,
+        "mean": -47.1
+      },
+      {
+        "date": "2026-06-06",
+        "min": -96.3,
+        "max": 1.8,
+        "mean": -50.2
+      },
+      {
+        "date": "2026-06-07",
+        "min": -100.6,
+        "max": 0.6,
+        "mean": -51.5
+      },
+      {
+        "date": "2026-06-08",
+        "min": -105.5,
+        "max": -3.1,
+        "mean": -54.0
+      },
+      {
+        "date": "2026-06-09",
+        "min": -110.6,
+        "max": -6.5,
+        "mean": -55.2
+      },
+      {
+        "date": "2026-06-10",
+        "min": -115.9,
+        "max": -8.9,
+        "mean": -57.2
+      },
+      {
+        "date": "2026-06-11",
+        "min": -115.2,
+        "max": -11.6,
+        "mean": -59.6
+      },
+      {
+        "date": "2026-06-12",
+        "min": -118.9,
+        "max": -2.3,
+        "mean": -60.9
+      },
+      {
+        "date": "2026-06-13",
+        "min": -121.0,
+        "max": 1.7,
+        "mean": -60.3
+      },
+      {
+        "date": "2026-06-14",
+        "min": -123.5,
+        "max": -3.0,
+        "mean": -61.9
+      },
+      {
+        "date": "2026-06-15",
+        "min": -127.5,
+        "max": -6.0,
+        "mean": -64.3
+      },
+      {
+        "date": "2026-06-16",
+        "min": -131.4,
+        "max": -10.7,
+        "mean": -66.8
+      },
+      {
+        "date": "2026-06-17",
+        "min": -135.8,
+        "max": -15.7,
+        "mean": -65.2
+      },
+      {
+        "date": "2026-06-18",
+        "min": -137.3,
+        "max": -20.0,
+        "mean": -67.9
+      },
+      {
+        "date": "2026-06-19",
+        "min": -141.1,
+        "max": -24.7,
+        "mean": -70.4
+      },
+      {
+        "date": "2026-06-20",
+        "min": -146.6,
+        "max": -18.0,
+        "mean": -69.7
+      },
+      {
+        "date": "2026-06-21",
+        "min": -147.2,
+        "max": -22.2,
+        "mean": -71.0
+      },
+      {
+        "date": "2026-06-22",
+        "min": -150.9,
+        "max": -26.1,
+        "mean": -72.7
+      },
+      {
+        "date": "2026-06-23",
+        "min": -150.7,
+        "max": -17.9,
+        "mean": -71.3
+      },
+      {
+        "date": "2026-06-24",
+        "min": -151.1,
+        "max": -16.0,
+        "mean": -73.2
+      },
+      {
+        "date": "2026-06-25",
+        "min": -143.7,
+        "max": -17.0,
+        "mean": -73.8
+      },
+      {
+        "date": "2026-06-26",
+        "min": -141.8,
+        "max": -17.9,
+        "mean": -76.8
+      },
+      {
+        "date": "2026-06-27",
+        "min": -145.4,
+        "max": -22.2,
+        "mean": -77.0
+      },
+      {
+        "date": "2026-06-28",
+        "min": -149.7,
+        "max": -12.9,
+        "mean": -79.0
+      },
+      {
+        "date": "2026-06-29",
+        "min": -154.8,
+        "max": -3.8,
+        "mean": -78.3
+      },
+      {
+        "date": "2026-06-30",
+        "min": -157.3,
+        "max": -5.1,
+        "mean": -82.2
+      },
+      {
+        "date": "2026-07-01",
+        "min": -157.0,
+        "max": -6.7,
+        "mean": -81.7
+      },
+      {
+        "date": "2026-07-02",
+        "min": -145.1,
+        "max": -3.2,
+        "mean": -80.4
+      },
+      {
+        "date": "2026-07-03",
+        "min": -149.7,
+        "max": -6.5,
+        "mean": -82.4
+      },
+      {
+        "date": "2026-07-04",
+        "min": -153.7,
+        "max": -2.8,
+        "mean": -84.4
+      },
+      {
+        "date": "2026-07-05",
+        "min": -153.2,
+        "max": -4.2,
+        "mean": -86.7
+      },
+      {
+        "date": "2026-07-06",
+        "min": -156.8,
+        "max": -8.3,
+        "mean": -86.2
+      },
+      {
+        "date": "2026-07-07",
+        "min": -159.0,
+        "max": -13.0,
+        "mean": -88.1
+      },
+      {
+        "date": "2026-07-08",
+        "min": -164.0,
+        "max": -14.8,
+        "mean": -89.3
+      },
+      {
+        "date": "2026-07-09",
+        "min": -168.2,
+        "max": -15.8,
+        "mean": -88.7
+      },
+      {
+        "date": "2026-07-10",
+        "min": -172.3,
+        "max": -13.9,
+        "mean": -89.6
+      },
+      {
+        "date": "2026-07-11",
+        "min": -176.1,
+        "max": -7.9,
+        "mean": -88.3
+      },
+      {
+        "date": "2026-07-12",
+        "min": -163.2,
+        "max": -10.9,
+        "mean": -86.2
+      },
+      {
+        "date": "2026-07-13",
+        "min": -160.2,
+        "max": -4.0,
+        "mean": -82.6
+      },
+      {
+        "date": "2026-07-14",
+        "min": -150.3,
+        "max": -7.3,
+        "mean": -80.2
+      },
+      {
+        "date": "2026-07-15",
+        "min": -154.3,
+        "max": -9.8,
+        "mean": -81.6
+      },
+      {
+        "date": "2026-07-16",
+        "min": -155.5,
+        "max": -13.4,
+        "mean": -79.2
+      },
+      {
+        "date": "2026-07-17",
+        "min": -153.8,
+        "max": -14.6,
+        "mean": -76.9
+      },
+      {
+        "date": "2026-07-18",
+        "min": -156.8,
+        "max": -18.3,
+        "mean": -79.1
+      },
+      {
+        "date": "2026-07-19",
+        "min": -161.3,
+        "max": -22.3,
+        "mean": -82.2
+      },
+      {
+        "date": "2026-07-20",
+        "min": -164.3,
+        "max": -25.2,
+        "mean": -85.3
+      },
+      {
+        "date": "2026-07-21",
+        "min": -164.5,
+        "max": -23.2,
+        "mean": -87.6
+      },
+      {
+        "date": "2026-07-22",
+        "min": -168.3,
+        "max": -26.2,
+        "mean": -89.7
+      },
+      {
+        "date": "2026-07-23",
+        "min": -172.4,
+        "max": -21.1,
+        "mean": -91.6
+      },
+      {
+        "date": "2026-07-24",
+        "min": -176.7,
+        "max": -24.2,
+        "mean": -94.2
+      },
+      {
+        "date": "2026-07-25",
+        "min": -181.6,
+        "max": -15.4,
+        "mean": -95.3
+      },
+      {
+        "date": "2026-07-26",
+        "min": -184.1,
+        "max": -0.6,
+        "mean": -94.5
+      },
+      {
+        "date": "2026-07-27",
+        "min": -186.7,
+        "max": -4.3,
+        "mean": -95.5
+      },
+      {
+        "date": "2026-07-28",
+        "min": -190.5,
+        "max": -3.8,
+        "mean": -94.2
+      },
+      {
+        "date": "2026-07-29",
+        "min": -188.6,
+        "max": -7.5,
+        "mean": -94.1
+      },
+      {
+        "date": "2026-07-30",
+        "min": -189.3,
+        "max": -12.0,
+        "mean": -96.8
+      },
+      {
+        "date": "2026-07-31",
+        "min": -194.0,
+        "max": -12.1,
+        "mean": -97.0
+      },
+      {
+        "date": "2026-08-01",
+        "min": -197.3,
+        "max": -17.0,
+        "mean": -97.4
+      },
+      {
+        "date": "2026-08-02",
+        "min": -199.7,
+        "max": -20.2,
+        "mean": -98.6
+      },
+      {
+        "date": "2026-08-03",
+        "min": -203.6,
+        "max": -20.0,
+        "mean": -100.7
+      },
+      {
+        "date": "2026-08-04",
+        "min": -207.5,
+        "max": -23.1,
+        "mean": -101.1
+      },
+      {
+        "date": "2026-08-05",
+        "min": -210.7,
+        "max": -27.1,
+        "mean": -101.4
+      },
+      {
+        "date": "2026-08-06",
+        "min": -213.2,
+        "max": 1.4,
+        "mean": -99.0
+      },
+      {
+        "date": "2026-08-07",
+        "min": -211.9,
+        "max": 1.1,
+        "mean": -101.0
+      },
+      {
+        "date": "2026-08-08",
+        "min": -204.8,
+        "max": 1.0,
+        "mean": -103.3
+      },
+      {
+        "date": "2026-08-09",
+        "min": -206.8,
+        "max": 0.4,
+        "mean": -105.4
+      },
+      {
+        "date": "2026-08-10",
+        "min": -209.1,
+        "max": 1.6,
+        "mean": -105.8
+      },
+      {
+        "date": "2026-08-11",
+        "min": -212.6,
+        "max": 2.2,
+        "mean": -106.2
+      },
+      {
+        "date": "2026-08-12",
+        "min": -216.4,
+        "max": -0.4,
+        "mean": -109.6
+      },
+      {
+        "date": "2026-08-13",
+        "min": -205.5,
+        "max": -4.0,
+        "mean": -111.1
+      },
+      {
+        "date": "2026-08-14",
+        "min": -202.3,
+        "max": -6.0,
+        "mean": -113.3
+      },
+      {
+        "date": "2026-08-15",
+        "min": -205.7,
+        "max": -9.6,
+        "mean": -116.9
+      },
+      {
+        "date": "2026-08-16",
+        "min": -209.2,
+        "max": -11.2,
+        "mean": -120.0
+      },
+      {
+        "date": "2026-08-17",
+        "min": -212.7,
+        "max": 3.9,
+        "mean": -121.2
+      },
+      {
+        "date": "2026-08-18",
+        "min": -216.9,
+        "max": 1.3,
+        "mean": -123.7
+      },
+      {
+        "date": "2026-08-19",
+        "min": -219.4,
+        "max": -0.7,
+        "mean": -123.0
+      },
+      {
+        "date": "2026-08-20",
+        "min": -221.0,
+        "max": 5.9,
+        "mean": -121.9
+      },
+      {
+        "date": "2026-08-21",
+        "min": -217.2,
+        "max": 6.9,
+        "mean": -120.9
+      },
+      {
+        "date": "2026-08-22",
+        "min": -221.0,
+        "max": 4.5,
+        "mean": -121.0
+      },
+      {
+        "date": "2026-08-23",
+        "min": -220.9,
+        "max": 4.8,
+        "mean": -121.5
+      },
+      {
+        "date": "2026-08-24",
+        "min": -218.5,
+        "max": 3.4,
+        "mean": -123.7
+      },
+      {
+        "date": "2026-08-25",
+        "min": -213.9,
+        "max": 1.1,
+        "mean": -125.0
+      },
+      {
+        "date": "2026-08-26",
+        "min": -218.4,
+        "max": 4.5,
+        "mean": -125.8
+      },
+      {
+        "date": "2026-08-27",
+        "min": -223.0,
+        "max": 6.5,
+        "mean": -127.3
+      },
+      {
+        "date": "2026-08-28",
+        "min": -228.1,
+        "max": 20.4,
+        "mean": -128.6
+      },
+      {
+        "date": "2026-08-29",
+        "min": -230.1,
+        "max": 19.6,
+        "mean": -129.9
+      },
+      {
+        "date": "2026-08-30",
+        "min": -233.0,
+        "max": 34.4,
+        "mean": -127.3
+      },
+      {
+        "date": "2026-08-31",
+        "min": -236.5,
+        "max": 35.3,
+        "mean": -128.2
+      },
+      {
+        "date": "2026-09-01",
+        "min": -240.6,
+        "max": 34.3,
+        "mean": -130.1
+      },
+      {
+        "date": "2026-09-02",
+        "min": -239.7,
+        "max": 33.0,
+        "mean": -131.8
+      },
+      {
+        "date": "2026-09-03",
+        "min": -237.1,
+        "max": 31.0,
+        "mean": -133.1
+      },
+      {
+        "date": "2026-09-04",
+        "min": -239.9,
+        "max": 28.9,
+        "mean": -131.7
+      },
+      {
+        "date": "2026-09-05",
+        "min": -243.3,
+        "max": 26.8,
+        "mean": -131.9
+      },
+      {
+        "date": "2026-09-06",
+        "min": -246.1,
+        "max": 24.8,
+        "mean": -132.6
+      },
+      {
+        "date": "2026-09-07",
+        "min": -248.9,
+        "max": 22.4,
+        "mean": -133.2
+      },
+      {
+        "date": "2026-09-08",
+        "min": -248.6,
+        "max": 19.9,
+        "mean": -135.7
+      },
+      {
+        "date": "2026-09-09",
+        "min": -253.0,
+        "max": 17.3,
+        "mean": -137.5
+      },
+      {
+        "date": "2026-09-10",
+        "min": -255.3,
+        "max": 14.5,
+        "mean": -138.4
+      },
+      {
+        "date": "2026-09-11",
+        "min": -258.0,
+        "max": 11.6,
+        "mean": -136.1
+      },
+      {
+        "date": "2026-09-12",
+        "min": -261.1,
+        "max": 12.8,
+        "mean": -136.8
+      },
+      {
+        "date": "2026-09-13",
+        "min": -262.3,
+        "max": 11.5,
+        "mean": -138.4
+      },
+      {
+        "date": "2026-09-14",
+        "min": -264.8,
+        "max": 15.0,
+        "mean": -136.6
+      },
+      {
+        "date": "2026-09-15",
+        "min": -267.7,
+        "max": 15.2,
+        "mean": -138.4
+      },
+      {
+        "date": "2026-09-16",
+        "min": -270.9,
+        "max": 16.3,
+        "mean": -139.7
+      },
+      {
+        "date": "2026-09-17",
+        "min": -264.8,
+        "max": 36.8,
+        "mean": -138.4
+      },
+      {
+        "date": "2026-09-18",
+        "min": -263.1,
+        "max": 47.5,
+        "mean": -136.1
+      },
+      {
+        "date": "2026-09-19",
+        "min": -263.6,
+        "max": 46.0,
+        "mean": -136.8
+      },
+      {
+        "date": "2026-09-20",
+        "min": -265.0,
+        "max": 49.8,
+        "mean": -137.8
+      },
+      {
+        "date": "2026-09-21",
+        "min": -265.2,
+        "max": 60.3,
+        "mean": -138.4
+      },
+      {
+        "date": "2026-09-22",
+        "min": -267.1,
+        "max": 67.8,
+        "mean": -138.9
+      },
+      {
+        "date": "2026-09-23",
+        "min": -269.7,
+        "max": 66.8,
+        "mean": -137.5
+      },
+      {
+        "date": "2026-09-24",
+        "min": -273.2,
+        "max": 65.2,
+        "mean": -137.7
+      },
+      {
+        "date": "2026-09-25",
+        "min": -274.5,
+        "max": 63.9,
+        "mean": -139.1
+      },
+      {
+        "date": "2026-09-26",
+        "min": -276.8,
+        "max": 62.1,
+        "mean": -140.1
+      },
+      {
+        "date": "2026-09-27",
+        "min": -276.7,
+        "max": 60.3,
+        "mean": -141.2
+      },
+      {
+        "date": "2026-09-28",
+        "min": -277.7,
+        "max": 58.8,
+        "mean": -139.9
+      },
+      {
+        "date": "2026-09-29",
+        "min": -279.5,
+        "max": 57.2,
+        "mean": -140.9
+      },
+      {
+        "date": "2026-09-30",
+        "min": -281.2,
+        "max": 55.9,
+        "mean": -138.3
+      },
+      {
+        "date": "2026-10-01",
+        "min": -281.9,
+        "max": 54.7,
+        "mean": -138.9
+      },
+      {
+        "date": "2026-10-02",
+        "min": -275.8,
+        "max": 53.4,
+        "mean": -137.9
+      },
+      {
+        "date": "2026-10-03",
+        "min": -265.8,
+        "max": 62.4,
+        "mean": -135.3
+      },
+      {
+        "date": "2026-10-04",
+        "min": -266.5,
+        "max": 63.2,
+        "mean": -135.6
+      },
+      {
+        "date": "2026-10-05",
+        "min": -267.5,
+        "max": 78.1,
+        "mean": -131.1
+      },
+      {
+        "date": "2026-10-06",
+        "min": -264.7,
+        "max": 80.7,
+        "mean": -130.5
+      },
+      {
+        "date": "2026-10-07",
+        "min": -264.9,
+        "max": 80.2,
+        "mean": -130.9
+      },
+      {
+        "date": "2026-10-08",
+        "min": -266.3,
+        "max": 84.6,
+        "mean": -130.8
+      },
+      {
+        "date": "2026-10-09",
+        "min": -267.5,
+        "max": 89.2,
+        "mean": -130.7
+      },
+      {
+        "date": "2026-10-10",
+        "min": -268.2,
+        "max": 90.5,
+        "mean": -128.4
+      },
+      {
+        "date": "2026-10-11",
+        "min": -267.0,
+        "max": 99.2,
+        "mean": -127.7
+      },
+      {
+        "date": "2026-10-12",
+        "min": -267.9,
+        "max": 101.8,
+        "mean": -126.3
+      },
+      {
+        "date": "2026-10-13",
+        "min": -260.1,
+        "max": 102.5,
+        "mean": -122.5
+      },
+      {
+        "date": "2026-10-14",
+        "min": -251.9,
+        "max": 108.5,
+        "mean": -119.5
+      },
+      {
+        "date": "2026-10-15",
+        "min": -251.6,
+        "max": 109.0,
+        "mean": -119.9
+      },
+      {
+        "date": "2026-10-16",
+        "min": -252.4,
+        "max": 108.5,
+        "mean": -120.4
+      },
+      {
+        "date": "2026-10-17",
+        "min": -253.6,
+        "max": 108.0,
+        "mean": -120.9
+      },
+      {
+        "date": "2026-10-18",
+        "min": -255.2,
+        "max": 107.4,
+        "mean": -119.7
+      },
+      {
+        "date": "2026-10-19",
+        "min": -256.3,
+        "max": 107.0,
+        "mean": -120.0
+      },
+      {
+        "date": "2026-10-20",
+        "min": -257.4,
+        "max": 106.8,
+        "mean": -118.9
+      },
+      {
+        "date": "2026-10-21",
+        "min": -258.3,
+        "max": 110.2,
+        "mean": -116.7
+      },
+      {
+        "date": "2026-10-22",
+        "min": -259.0,
+        "max": 111.0,
+        "mean": -110.8
+      },
+      {
+        "date": "2026-10-23",
+        "min": -259.5,
+        "max": 111.4,
+        "mean": -108.8
+      },
+      {
+        "date": "2026-10-24",
+        "min": -259.9,
+        "max": 110.9,
+        "mean": -105.8
+      },
+      {
+        "date": "2026-10-25",
+        "min": -260.1,
+        "max": 118.6,
+        "mean": -100.7
+      },
+      {
+        "date": "2026-10-26",
+        "min": -260.7,
+        "max": 119.4,
+        "mean": -99.8
+      },
+      {
+        "date": "2026-10-27",
+        "min": -261.3,
+        "max": 123.3,
+        "mean": -99.3
+      },
+      {
+        "date": "2026-10-28",
+        "min": -261.8,
+        "max": 128.8,
+        "mean": -97.5
+      },
+      {
+        "date": "2026-10-29",
+        "min": -261.8,
+        "max": 147.0,
+        "mean": -94.2
+      },
+      {
+        "date": "2026-10-30",
+        "min": -261.2,
+        "max": 151.6,
+        "mean": -93.6
+      },
+      {
+        "date": "2026-10-31",
+        "min": -262.5,
+        "max": 152.2,
+        "mean": -93.7
+      },
+      {
+        "date": "2026-11-01",
+        "min": -262.2,
+        "max": 155.6,
+        "mean": -92.4
+      },
+      {
+        "date": "2026-11-02",
+        "min": -263.3,
+        "max": 160.1,
+        "mean": -91.4
+      },
+      {
+        "date": "2026-11-03",
+        "min": -264.3,
+        "max": 160.6,
+        "mean": -88.9
+      },
+      {
+        "date": "2026-11-04",
+        "min": -264.7,
+        "max": 160.5,
+        "mean": -88.3
+      },
+      {
+        "date": "2026-11-05",
+        "min": -265.1,
+        "max": 160.2,
+        "mean": -86.1
+      },
+      {
+        "date": "2026-11-06",
+        "min": -265.3,
+        "max": 159.9,
+        "mean": -85.5
+      },
+      {
+        "date": "2026-11-07",
+        "min": -265.3,
+        "max": 160.0,
+        "mean": -85.4
+      },
+      {
+        "date": "2026-11-08",
+        "min": -265.2,
+        "max": 159.8,
+        "mean": -85.2
+      },
+      {
+        "date": "2026-11-09",
+        "min": -265.3,
+        "max": 160.0,
+        "mean": -84.3
+      },
+      {
+        "date": "2026-11-10",
+        "min": -265.5,
+        "max": 163.8,
+        "mean": -83.0
+      },
+      {
+        "date": "2026-11-11",
+        "min": -265.7,
+        "max": 168.6,
+        "mean": -81.9
+      },
+      {
+        "date": "2026-11-12",
+        "min": -265.7,
+        "max": 169.1,
+        "mean": -81.6
+      },
+      {
+        "date": "2026-11-13",
+        "min": -265.8,
+        "max": 172.6,
+        "mean": -79.9
+      },
+      {
+        "date": "2026-11-14",
+        "min": -264.5,
+        "max": 172.7,
+        "mean": -78.0
+      },
+      {
+        "date": "2026-11-15",
+        "min": -264.5,
+        "max": 172.7,
+        "mean": -76.9
+      },
+      {
+        "date": "2026-11-16",
+        "min": -264.3,
+        "max": 172.8,
+        "mean": -76.2
+      },
+      {
+        "date": "2026-11-17",
+        "min": -262.3,
+        "max": 172.9,
+        "mean": -75.5
+      },
+      {
+        "date": "2026-11-18",
+        "min": -259.7,
+        "max": 172.8,
+        "mean": -74.5
+      }
+    ],
+    "stress_days_by_year": [],
+    "monthly_precip": [
+      {
+        "month": 3,
+        "current_mm": 17.6,
+        "mean_mm": 37.1
+      },
+      {
+        "month": 4,
+        "current_mm": 13.4,
+        "mean_mm": 43.8
+      },
+      {
+        "month": 5,
+        "current_mm": 48.8,
+        "mean_mm": 64.6
+      },
+      {
+        "month": 6,
+        "current_mm": 78.2,
+        "mean_mm": 72.1
+      },
+      {
+        "month": 7,
+        "current_mm": 95.0,
+        "mean_mm": 99.8
+      },
+      {
+        "month": 8,
+        "current_mm": 61.6,
+        "mean_mm": 71.9
+      },
+      {
+        "month": 9,
+        "current_mm": 54.3,
+        "mean_mm": 55.0
+      },
+      {
+        "month": 10,
+        "current_mm": 29.8,
+        "mean_mm": 71.2
+      },
+      {
+        "month": 11,
+        "current_mm": 19.7,
+        "mean_mm": 25.1
+      }
+    ],
+    "summary": "Od 1 marca do 18 listopada 2026 bilans wody (opad − parowanie) wynosi −228 mm. Średnio w tym okresie w latach 2016–2025: −74 mm – o 153 mm mniej niż zwykle. Niższy bilans był w 2 z 10 lat.",
+    "balance_deviation_mm": -153.5,
+    "balance_rank": {
+      "lower_years": 2,
+      "of_years": 10
+    },
+    "longest_dry_spell": {
+      "days": 25,
+      "end_date": "2026-03-25"
+    },
+    "band_years": [
+      2025,
+      2024,
+      2023,
+      2022,
+      2021,
+      2020,
+      2019,
+      2018,
+      2017,
+      2016
+    ],
+    "source_tag": {
+      "kind": "obliczenia",
+      "date": "2026-11-18",
+      "source": "NASA POWER"
+    }
+  },
+  "causes": [
+    {
+      "factor": "opady",
+      "title": "Mało opadów",
+      "share": 0.47,
+      "description": "od 1 marca spadło 418 mm, zwykle 541 mm",
+      "source_tag": {
+        "kind": "obliczenia",
+        "date": null,
+        "source": "NASA POWER"
+      }
+    },
+    {
+      "factor": "gleba",
+      "title": "Gleba",
+      "share": 0.42,
+      "description": "kat. III, zmieści ok. 166 mm wody – średnio dużo",
+      "source_tag": {
+        "kind": "pomiar",
+        "date": null,
+        "source": "IUNG-PIB"
+      }
+    },
+    {
+      "factor": "parowanie",
+      "title": "Duże parowanie",
+      "share": 0.11,
+      "description": "parowanie od 1 marca: 646 mm, zwykle 615 mm",
+      "source_tag": {
+        "kind": "obliczenia",
+        "date": null,
+        "source": "NASA POWER, ET0 FAO-56"
+      }
+    },
+    {
+      "factor": "teren",
+      "title": "Teren i spływ",
+      "share": 0.0,
+      "description": "brak danych (analiza terenu w przygotowaniu)",
+      "source_tag": {
+        "kind": "brak_danych",
+        "date": null,
+        "source": "NMT GUGiK"
+      }
+    }
+  ],
+  "recommendations": [
+    {
+      "id": "retencja.dzialka_jesien_zima",
+      "category": "retencja",
+      "title": "Zatrzymaj wodę z jesienno-zimowych opadów i roztopów",
+      "description": "W profilu gleby jest 51% wody dostępnej (gleba odbudowuje zapas wody). Nie orz na zimę – zostaw resztki pożniwne, szorstką powierzchnię albo międzyplon ozimy: woda z deszczu i roztopów wsiąknie zamiast spłynąć.",
+      "why": "Jesień i zima to główny okres odbudowy zapasu wody w glebie. Bilans wody z ostatnich 30 dni: 18 mm (o 27 mm mniej niż zwykle). Dane: miesiąc analizy: 11, woda w glebie: 51 %.",
+      "inputs": [
+        {
+          "name": "Miesiąc analizy",
+          "value": 11.0,
+          "unit": null,
+          "source": "data analizy",
+          "date": null
+        },
+        {
+          "name": "Woda w glebie",
+          "value": 51.0,
+          "unit": "%",
+          "source": "Model wody w glebie FAO-56",
+          "date": null
+        }
+      ],
+      "confidence": "srednia",
+      "location": null,
+      "rule_id": "retencja.dzialka_jesien_zima",
+      "priority": 85,
+      "in_panel": true,
+      "when": "teraz",
+      "when_label": "teraz",
+      "permit": "none",
+      "permit_note": "Bez formalności – możesz to zrobić sam.",
+      "permit_url": null,
+      "warning": null,
+      "eco_scheme": {
+        "name": "Rolnictwo węglowe i zarządzanie składnikami odżywczymi",
+        "practice": "Uproszczone systemy uprawy",
+        "code": "E_USU",
+        "note": "Sprawdź aktualne warunki w ARiMR."
+      }
+    },
+    {
+      "id": "retencja.prochnica",
+      "category": "retencja",
+      "title": "Zwiększaj próchnicę – lekka gleba trzyma mało wody",
+      "description": "Gleba (kat. III, glina lekka pylasta) zatrzymuje mało wody. Każdy dodatkowy procent próchnicy zwiększa jej pojemność wodną – mieszaj słomę z glebą, wysiewaj międzyplony, stosuj obornik lub kompost.",
+      "why": "Gleby ubogie w materię organiczną szybciej przesychają; wzrost próchnicy poprawia pojemność wodną. Gleba zmieści ok. 166 mm wody dostępnej dla roślin. Woda z ulewy: szybko wsiąka i ucieka w głąb (przepuszczalność ok. 85 mm/h). Dane: woda z ulewy: szybko wsiąka i ucieka w głąb.",
+      "inputs": [
+        {
+          "name": "Woda z ulewy",
+          "value": "szybko wsiąka i ucieka w głąb",
+          "unit": null,
+          "source": "SoilGrids + Saxton i Rawls (2006)",
+          "date": null
+        }
+      ],
+      "confidence": "srednia",
+      "location": null,
+      "rule_id": "retencja.prochnica",
+      "priority": 60,
+      "in_panel": false,
+      "when": "teraz",
+      "when_label": "teraz",
+      "permit": "none",
+      "permit_note": "Bez formalności – możesz to zrobić sam.",
+      "permit_url": null,
+      "warning": null,
+      "eco_scheme": {
+        "name": "Rolnictwo węglowe i zarządzanie składnikami odżywczymi",
+        "practice": "Wymieszanie słomy z glebą",
+        "code": "E_WSG",
+        "note": "Sprawdź aktualne warunki w ARiMR."
+      }
+    }
+  ],
+  "reliability": {
+    "confidence": "srednia",
+    "reason": "Ograniczenia: brak zdjęć satelitarnych (kondycja roślin – w przygotowaniu); brak analizy terenu (spadki, spływ – w przygotowaniu); pogoda uśredniona dla obszaru ok. 50 km.",
+    "sources": [
+      {
+        "name": "ULDK GUGiK",
+        "used_for": "granice i powierzchnia działki",
+        "data_date": "2026-11-21",
+        "resolution": null,
+        "status": "ok",
+        "note": null
+      },
+      {
+        "name": "NASA POWER",
+        "used_for": "pogoda z 10 lat, bilans wody, parowanie (ET0)",
+        "data_date": "2026-11-18",
+        "resolution": "ok. 50 km",
+        "status": "ok",
+        "note": null
+      },
+      {
+        "name": "Open-Meteo (prognoza)",
+        "used_for": "ryzyko na 7 dni, plan nawadniania",
+        "data_date": "2026-11-21",
+        "resolution": "kilka km",
+        "status": "ok",
+        "note": null
+      },
+      {
+        "name": "IUNG-PIB",
+        "used_for": "kategoria gleby, ile wody zmieści gleba",
+        "data_date": null,
+        "resolution": "siatka 5 m",
+        "status": "ok",
+        "note": null
+      },
+      {
+        "name": "EGiB (KIEG)",
+        "used_for": "klasy bonitacyjne (informacyjnie)",
+        "data_date": null,
+        "resolution": null,
+        "status": "brak",
+        "note": "brak odpowiedzi w 6 s (ponowna próba za ok. 5 min)"
+      },
+      {
+        "name": "SoilGrids (ISRIC)",
+        "used_for": "frakcje gleby 0–30 cm, przepuszczalność",
+        "data_date": null,
+        "resolution": "250 m",
+        "status": "ok",
+        "note": "model globalny"
+      },
+      {
+        "name": "Mapa glebowo-rolnicza (GUGiK)",
+        "used_for": "kompleks i gatunek gleby, zgodność z IUNG",
+        "data_date": null,
+        "resolution": "1:5000",
+        "status": "ok",
+        "note": "mapa z ok. 1973 r."
+      },
+      {
+        "name": "Sentinel-2 L2A",
+        "used_for": "kondycja i wilgotność roślin",
+        "data_date": null,
+        "resolution": "10 m",
+        "status": "brak",
+        "note": "w przygotowaniu"
+      },
+      {
+        "name": "NMT GUGiK",
+        "used_for": "teren i spływ wody",
+        "data_date": null,
+        "resolution": "1 m",
+        "status": "brak",
+        "note": "w przygotowaniu"
+      },
+      {
+        "name": "BDOT10k",
+        "used_for": "rowy, cieki i zbiorniki w okolicy",
+        "data_date": null,
+        "resolution": null,
+        "status": "brak",
+        "note": "w przygotowaniu"
+      }
+    ],
+    "completeness": {
+      "available": 5,
+      "total": 8
+    },
+    "limitations": [
+      "Pogoda uśredniona dla obszaru ok. 50 km (NASA POWER).",
+      "Dane pogodowe do dnia 18.11.2026 (źródło publikuje je z opóźnieniem 2 dni) – bilans liczony do tej daty.",
+      "Parowanie dla 3 dni liczone uproszczoną metodą Hargreavesa (brak promieniowania, wilgotności lub wiatru).",
+      "WOD to wartość typowa dla kategorii gleby (środek przedziału IUNG), nie pomiar na tej działce.",
+      "Klasy bonitacyjne niedostępne (usługa KIEG nie odpowiada) – to tylko informacja dodatkowa.",
+      "Frakcje gleby i przepuszczalność z modelu globalnego SoilGrids (250 m) – wartości orientacyjne, nie pomiar na tej działce.",
+      "Mapa glebowo-rolnicza opracowana ok. 1973 r. – stan gleby mógł się zmienić.",
+      "Ostatnie 2 dni przed datą analizy uzupełnione danymi modelu Open-Meteo.",
+      "Brak zdjęć satelitarnych – kondycja i wilgotność roślin w przygotowaniu.",
+      "Brak analizy terenu – spływ wody przyjęty w uproszczeniu (20% opadu powyżej 20 mm na dobę).",
+      "Model wody w glebie FAO-56 z parametrami tabelarycznymi upraw – nie uwzględnia odmiany, nawożenia ani poziomu wód gruntowych.",
+      "Kategorie podatności IUNG opisują tylko gleby mineralne użytków rolnych."
+    ]
+  },
+  "steps": [
+    {
+      "id": "parcel",
+      "label": "Szukam działki (ULDK GUGiK)",
+      "state": "done",
+      "note": null,
+      "duration_ms": 0
+    },
+    {
+      "id": "weather",
+      "label": "Pobieram pogodę z 10 lat (NASA POWER)",
+      "state": "done",
+      "note": null,
+      "duration_ms": 1665
+    },
+    {
+      "id": "soil",
+      "label": "Sprawdzam glebę (IUNG-PIB)",
+      "state": "done",
+      "note": null,
+      "duration_ms": 0
+    },
+    {
+      "id": "egib",
+      "label": "Klasy bonitacyjne (EGiB)",
+      "state": "error",
+      "note": "brak odpowiedzi w 6 s (ponowna próba za ok. 5 min)",
+      "duration_ms": 0
+    },
+    {
+      "id": "soilgrids",
+      "label": "Frakcje i przepuszczalność gleby (SoilGrids)",
+      "state": "done",
+      "note": null,
+      "duration_ms": 0
+    },
+    {
+      "id": "soil_map",
+      "label": "Mapa glebowo-rolnicza (GUGiK)",
+      "state": "done",
+      "note": null,
+      "duration_ms": 1
+    },
+    {
+      "id": "forecast",
+      "label": "Prognoza pogody (Open-Meteo)",
+      "state": "done",
+      "note": null,
+      "duration_ms": 177
+    },
+    {
+      "id": "satellite",
+      "label": "Zdjęcia satelitarne",
+      "state": "pending",
+      "note": "w przygotowaniu – brak danych",
+      "duration_ms": null
+    },
+    {
+      "id": "terrain",
+      "label": "Analizuję teren",
+      "state": "pending",
+      "note": "w przygotowaniu – brak danych",
+      "duration_ms": null
+    },
+    {
+      "id": "balance",
+      "label": "Liczę bilans wody i wodę w glebie (FAO-56)",
+      "state": "done",
+      "note": null,
+      "duration_ms": 20
+    },
+    {
+      "id": "scoring",
+      "label": "Ocena, pewność, przyczyny i rekomendacje",
+      "state": "done",
+      "note": null,
+      "duration_ms": 1
+    },
+    {
+      "id": "total",
+      "label": "Cała analiza",
+      "state": "done",
+      "note": null,
+      "duration_ms": 1687
+    }
+  ]
+}
