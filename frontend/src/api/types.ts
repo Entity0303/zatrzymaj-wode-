@@ -689,6 +689,64 @@ export type PerennialSection = {
   items: PerennialSuggestion[]
 }
 
+// ── Satelita Sentinel-2 (A11): GET/POST /api/satellite, AnalysisResponse.satellite ─────────────
+
+export type SatelliteStatus = 'ok' | 'pending' | 'brak_danych'
+export type NdviClass = 'gleba' | 'slaba' | 'umiarkowana' | 'gesta'
+export type NdmiClass = 'sucho' | 'srednio' | 'dobrze'
+export type SatelliteTrend = 'lepiej' | 'podobnie' | 'gorzej'
+
+export type SatelliteScene = {
+  date: ISODate
+  scene_id: string
+  ndvi?: number | null
+  ndmi?: number | null
+  /** udział ważnych pikseli (roślinność / gleba wg maski SCL) w obrysie, % */
+  valid_pct: number
+  cloud_pct: number
+}
+
+export type SatelliteSeriesPoint = { date: ISODate; ndvi?: number | null; ndmi?: number | null; valid_pct: number }
+
+export type Satellite = {
+  status: SatelliteStatus
+  /** data sceny – „zdjęcie satelitarne z 16.11.2026” */
+  date?: ISODate | null
+  scene_id?: string | null
+  /** NDVI – kondycja roślin (mediana w obrysie) */
+  ndvi?: number | null
+  /** NDMI – wilgotność roślin (mediana w obrysie) */
+  ndmi?: number | null
+  ndvi_class?: NdviClass | null
+  /** np. „gęsta zieleń” */
+  ndvi_label?: string | null
+  /** tylko w sezonie (IV–IX) i przy NDVI ≥ 0,5 */
+  ndmi_class?: NdmiClass | null
+  ndmi_label?: string | null
+  valid_pct?: number | null
+  cloud_pct?: number | null
+  /** ta sama pora rok wcześniej (±20 dni) */
+  last_year?: SatelliteScene | null
+  ndvi_change?: number | null
+  trend?: SatelliteTrend | null
+  /** ok / warn / bad; info – poza sezonem bez anomalii */
+  level?: VerdictStatementLevel | null
+  in_season?: boolean | null
+  /** zdanie dla rolnika z datą sceny */
+  sentence?: string | null
+  warning?: string | null
+  /** szereg 12 mies. (1 punkt / 15 dni) – tylko z cache */
+  series?: SatelliteSeriesPoint[]
+  series_note?: string | null
+  /** dostępne warstwy mapy */
+  layers?: ('kondycja' | 'wilgotnosc')[]
+  downloaded_mb?: number | null
+  compute_s?: number | null
+  cached?: boolean
+  note?: string | null
+  source_tag: SourceTag
+}
+
 // ── Źródła opadu (A7) ─────────────────────────────────────────────────────────────────────
 
 /** imgw – stacje ≤ 30 km; imgw_daleko – stacje 30–50 km (pewność niżej); nasa – brak stacji z danymi */
@@ -839,7 +897,8 @@ export type CropSuggestions = {
 
 // ── Werdykt działki (A5b-2b) ──────────────────────────────────────────────────────────────
 
-export type VerdictKind = 'gleba' | 'opady' | 'teren' | 'uprawy' | 'woda' | 'uprawa_wybrana'
+/** A11: 'rosliny' – zdanie z satelity (tylko gdy jest zdjęcie) */
+export type VerdictKind = 'gleba' | 'opady' | 'teren' | 'rosliny' | 'uprawy' | 'woda' | 'uprawa_wybrana'
 /** ok #5BB37F / warn #E8B931 / bad #C8453B */
 export type VerdictLevel = 'ok' | 'warn' | 'bad'
 /** pozycja „woda” ma level 'info' (lista działań, bez oceny; kolor #2F80C9, ikona kropli) */
@@ -1005,6 +1064,8 @@ export type AnalysisResponse = {
   weather_data_until?: string | null
   /** A7: skąd opad – stacje IMGW (źródło główne), zgodność z NASA, zdanie dla rolnika */
   precip_sources?: PrecipSources | null
+  /** A11: Sentinel-2 – z cache albo { status: 'pending' } → dociągnij GET /api/satellite */
+  satellite?: Satellite | null
   /** A6: teren i spływ wody z NMT (null = brak danych, powód w terrain_note) */
   terrain?: Terrain | null
   /** A6: dlaczego brak analizy terenu */
@@ -1037,8 +1098,20 @@ export type LayerResponse = {
   raster?: RasterOverlay | null
   features?: GeoJSON.FeatureCollection | null
   value_range?: [number, number] | null
+  /** A11: kolory skali (wartość → kolor) – te same co na PNG warstwy */
+  legend?: LegendStop[] | null
+  legend_title?: string | null
+  legend_left?: string | null
+  legend_right?: string | null
+  /** A11: mediana NDVI / NDMI w obrysie */
+  value?: number | null
+  /** A11: data zdjęcia satelitarnego */
+  scene_date?: ISODate | null
+  note?: string | null
   source_tag: SourceTag
 }
+
+export type LegendStop = { value: number; color: string; label?: string | null }
 
 export type PointValue = { layer: LayerKey; text: string; value: number | null; source_tag: SourceTag }
 

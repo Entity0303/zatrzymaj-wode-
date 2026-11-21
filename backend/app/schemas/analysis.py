@@ -552,7 +552,7 @@ class CropSuggestions(Contract):
 
 # ── Werdykt działki (A5b-2b) ────────────────────────────────────────────────────────────────
 
-VerdictKind = Literal["gleba", "opady", "teren", "uprawy", "woda", "uprawa_wybrana"]
+VerdictKind = Literal["gleba", "opady", "teren", "rosliny", "uprawy", "woda", "uprawa_wybrana"]
 VerdictLevel = Literal["ok", "warn", "bad"]
 VerdictStatementLevel = Literal["ok", "warn", "bad", "info"]
 
@@ -767,6 +767,61 @@ class LoadingStep(Contract):
 # ── Odpowiedź ───────────────────────────────────────────────────────────────────────────────
 
 
+SatelliteStatus = Literal["ok", "pending", "brak_danych"]
+NdviClass = Literal["gleba", "slaba", "umiarkowana", "gesta"]
+NdmiClass = Literal["sucho", "srednio", "dobrze"]
+SatelliteTrend = Literal["lepiej", "podobnie", "gorzej"]
+
+
+class SatelliteScene(Contract):
+    date: dt.date
+    scene_id: str
+    ndvi: float | None = None
+    ndmi: float | None = None
+    valid_pct: float = Field(description="Udział ważnych pikseli (roślinność / gleba wg maski SCL) w obrysie, %")
+    cloud_pct: float = Field(description="Chmury i cienie chmur w obrysie, %")
+
+
+class SatelliteSeriesPoint(Contract):
+    date: dt.date
+    ndvi: float | None = None
+    ndmi: float | None = None
+    valid_pct: float
+
+
+class Satellite(Contract):
+    """Sentinel-2 L2A dla działki (A11): kondycja (NDVI) i wilgotność roślin (NDMI) z ostatniej czystej sceny,
+    porównanie z tą samą porą rok temu, zdanie dla rolnika. W /api/analysis tylko z cache – inaczej status „pending”
+    i frontend dociąga GET /api/satellite."""
+
+    status: SatelliteStatus
+    date: dt.date | None = Field(None, description="Data sceny („zdjęcie satelitarne z 16.11.2026”)")
+    scene_id: str | None = None
+    ndvi: float | None = Field(None, description="NDVI – mediana w obrysie (kondycja roślin, −1…1)")
+    ndmi: float | None = Field(None, description="NDMI – mediana w obrysie (wilgotność roślin, −1…1)")
+    ndvi_class: NdviClass | None = None
+    ndvi_label: str | None = Field(None, description="Np. 'gęsta zieleń'")
+    ndmi_class: NdmiClass | None = Field(None, description="Tylko w sezonie (IV–IX) i przy NDVI ≥ 0,5")
+    ndmi_label: str | None = None
+    valid_pct: float | None = None
+    cloud_pct: float | None = None
+    last_year: SatelliteScene | None = Field(None, description="Najbliższa czysta scena z tej samej pory rok wcześniej (±20 dni)")
+    ndvi_change: float | None = Field(None, description="NDVI teraz − rok temu")
+    trend: SatelliteTrend | None = None
+    level: VerdictStatementLevel | None = Field(None, description="ok / warn / bad; info – poza sezonem bez anomalii")
+    in_season: bool | None = None
+    sentence: str | None = Field(None, description="Zdanie dla rolnika z datą sceny")
+    warning: str | None = Field(None, description="Np. scena częściowo zachmurzona albo brak czystej sceny")
+    series: list[SatelliteSeriesPoint] = Field(default_factory=list, description="Szereg 12 mies. (1 punkt / 15 dni) – tylko z cache")
+    series_note: str | None = None
+    layers: list[Literal["kondycja", "wilgotnosc"]] = Field(default_factory=list, description="Dostępne warstwy mapy")
+    downloaded_mb: float | None = Field(None, description="Ile pobrano przy liczeniu (tryb na żywo: ok. 10 MB)")
+    compute_s: float | None = None
+    cached: bool = False
+    note: str | None = None
+    source_tag: SourceTag
+
+
 PrecipMain = Literal["imgw", "imgw_daleko", "nasa"]
 PrecipAgreement = Literal["zgodne", "roznia_sie", "mocno_sie_roznia", "brak_danych"]
 
@@ -870,6 +925,7 @@ class AnalysisResponse(Contract):
     seasonal_balance_label: str | None = Field(None, description="Okres bilansu, np. 'od 1 marca do 18 listopada'")
     weather_data_until: dt.date | None = Field(None, description="Ostatni dzień z danymi pogodowymi („dane pogodowe do 18.11”)")
     precip_sources: PrecipSources | None = Field(None, description="Skąd opad: stacje IMGW, zgodność z NASA, zdanie dla rolnika (A7)")
+    satellite: Satellite | None = Field(None, description="Sentinel-2 (A11): z cache albo {status: pending} – dociągnij GET /api/satellite")
     history: History
     causes: list[Cause] = Field(description="Od największego udziału")
     recommendations: list[Recommendation] = Field(description="retencja → agrotechnika → nawadnianie")

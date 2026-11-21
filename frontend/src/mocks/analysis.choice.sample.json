@@ -43,7 +43,7 @@
       "nazwa": "ULDK GUGiK",
       "url": "https://uldk.gugik.gov.pl/",
       "pobrano": "2026-11-21T16:47:28+00:00",
-      "uwagi": "Powierzchnia policzona z geometrii (EPSG:2180), może nieznacznie różnić się od powierzchni ewidencyjnej. [A7: zapis prawdziwej odpowiedzi z 21.11.2026 (tryb demo offline – z cache; opad ze stacji IMGW Burzyn): planned_crops = pszenica ozima + grupa zboża jare, rok temu pszenica ozima]"
+      "uwagi": "Powierzchnia policzona z geometrii (EPSG:2180), może nieznacznie różnić się od powierzchni ewidencyjnej."
     },
     "source": "uldk",
     "name": null
@@ -52,7 +52,7 @@
   "previous_crop": null,
   "analysis_date": "2026-11-21",
   "historical": false,
-  "generated_at": "2026-11-21T22:09:55Z",
+  "generated_at": "2026-11-21T23:44:11Z",
   "status": {
     "level": "ok",
     "score": 70,
@@ -100,30 +100,30 @@
       "days_to_stress": null
     },
     "crop_health": {
-      "value": null,
+      "value": 86.0,
       "unit": "pkt",
-      "label": null,
-      "status": "no_data",
-      "note": "zdjęcia satelitarne – w przygotowaniu",
+      "label": "gęsta zieleń",
+      "status": "ok",
+      "note": "NDVI 0.86 · zdjęcie z 16.11.2026",
       "source_tag": {
-        "kind": "brak_danych",
-        "date": null,
+        "kind": "pomiar",
+        "date": "2026-11-16",
         "source": "Sentinel-2 L2A"
       },
-      "index_value": null
+      "index_value": 0.857
     },
     "plant_moisture": {
-      "value": null,
+      "value": 20.0,
       "unit": "pkt",
-      "label": null,
-      "status": "no_data",
-      "note": "zdjęcia satelitarne – w przygotowaniu",
+      "label": "ocena tylko w sezonie przy gęstym łanie",
+      "status": "ok",
+      "note": "NDMI -0.24 · zdjęcie z 16.11.2026",
       "source_tag": {
-        "kind": "brak_danych",
-        "date": null,
+        "kind": "pomiar",
+        "date": "2026-11-16",
         "source": "Sentinel-2 L2A"
       },
-      "index_value": null
+      "index_value": -0.242
     },
     "water_balance_season": {
       "value": -234.0,
@@ -4319,6 +4319,17 @@
         }
       },
       {
+        "kind": "rosliny",
+        "level": "info",
+        "text": "Zdjęcie satelitarne z 16.11.2026: pole zielone – prawdopodobnie wzeszło zboże ozime, rzepak lub międzyplon. Zieleń podobna jak rok temu.",
+        "numbers": {
+          "ndvi": 0.857,
+          "ndmi": -0.242,
+          "data": "2026-11-16",
+          "ndvi_rok_temu": 0.832
+        }
+      },
+      {
         "kind": "uprawy",
         "level": "ok",
         "text": "Tu nie siej pszenicy ozimej – za krótka przerwa w płodozmianie. Siej rzepak, kukurydzę na kiszonkę, buraki cukrowe i kukurydzę na ziarno.",
@@ -6272,6 +6283,115 @@
       "kind": "pomiar",
       "date": "2026-11-18",
       "source": "IMGW-PIB (stacje)"
+    }
+  },
+  "satellite": {
+    "status": "ok",
+    "date": "2026-11-16",
+    "scene_id": "S2A_34UFD_20261116_2_L2A",
+    "ndvi": 0.857,
+    "ndmi": -0.242,
+    "ndvi_class": "gesta",
+    "ndvi_label": "gęsta zieleń",
+    "ndmi_class": null,
+    "ndmi_label": null,
+    "valid_pct": 73.8,
+    "cloud_pct": 0.0,
+    "last_year": {
+      "date": "2025-11-04",
+      "scene_id": "S2B_34UED_20251104_1_L2A",
+      "ndvi": 0.832,
+      "ndmi": null,
+      "valid_pct": 45.9,
+      "cloud_pct": 0.0
+    },
+    "ndvi_change": 0.025,
+    "trend": "podobnie",
+    "level": "info",
+    "in_season": false,
+    "sentence": "Zdjęcie satelitarne z 16.11.2026: pole zielone – prawdopodobnie wzeszło zboże ozime, rzepak lub międzyplon. Zieleń podobna jak rok temu.",
+    "warning": null,
+    "series": [
+      {
+        "date": "2026-03-04",
+        "ndvi": 0.927,
+        "ndmi": -0.157,
+        "valid_pct": 100.0
+      },
+      {
+        "date": "2026-03-14",
+        "ndvi": 0.894,
+        "ndmi": -0.26,
+        "valid_pct": 100.0
+      },
+      {
+        "date": "2026-03-29",
+        "ndvi": 0.692,
+        "ndmi": -0.261,
+        "valid_pct": 100.0
+      },
+      {
+        "date": "2026-04-18",
+        "ndvi": 0.387,
+        "ndmi": -0.202,
+        "valid_pct": 100.0
+      },
+      {
+        "date": "2026-04-23",
+        "ndvi": 0.377,
+        "ndmi": -0.204,
+        "valid_pct": 100.0
+      },
+      {
+        "date": "2026-05-30",
+        "ndvi": 0.222,
+        "ndmi": -0.163,
+        "valid_pct": 100.0
+      },
+      {
+        "date": "2026-06-17",
+        "ndvi": 0.871,
+        "ndmi": 0.058,
+        "valid_pct": 100.0
+      },
+      {
+        "date": "2026-06-27",
+        "ndvi": 0.776,
+        "ndmi": 0.076,
+        "valid_pct": 100.0
+      },
+      {
+        "date": "2026-10-27",
+        "ndvi": 0.719,
+        "ndmi": -0.123,
+        "valid_pct": 100.0
+      },
+      {
+        "date": "2026-11-09",
+        "ndvi": 0.738,
+        "ndmi": -0.207,
+        "valid_pct": 100.0
+      },
+      {
+        "date": "2026-11-16",
+        "ndvi": 0.857,
+        "ndmi": -0.242,
+        "valid_pct": 100.0
+      }
+    ],
+    "series_note": "11 zdjęć bez chmur z 12 miesięcy (1 na 15 dni)",
+    "layers": [
+      "kondycja",
+      "wilgotnosc"
+    ],
+    "downloaded_mb": 8.47,
+    "compute_s": 8.4,
+    "cached": true,
+    "note": "Sentinel-2 L2A (ESA Copernicus, przez Earth Search / AWS), piksel 10 m. NDVI = kondycja roślin, NDMI = wilgotność roślin – mediany w obrysie; chmury, cienie i śnieg wycięte maską SCL. Progi orientacyjne.",
+    "source_tag": {
+      "kind": "pomiar",
+      "date": "2026-11-16",
+      "source": "Sentinel-2 L2A (Earth Search)"
     }
   },
   "history": {
@@ -9118,8 +9238,8 @@
     }
   ],
   "reliability": {
-    "confidence": "srednia",
-    "reason": "Ograniczenia: brak zdjęć satelitarnych (kondycja roślin – w przygotowaniu).",
+    "confidence": "wysoka",
+    "reason": "Wszystkie źródła danych dostępne.",
     "sources": [
       {
         "name": "ULDK GUGiK",
@@ -9187,11 +9307,11 @@
       },
       {
         "name": "Sentinel-2 L2A",
-        "used_for": "kondycja i wilgotność roślin",
-        "data_date": null,
+        "used_for": "kondycja i wilgotność roślin (NDVI, NDMI)",
+        "data_date": "2026-11-16",
         "resolution": "10 m",
-        "status": "brak",
-        "note": "w przygotowaniu"
+        "status": "ok",
+        "note": null
       },
       {
         "name": "NMT GUGiK",
@@ -9211,7 +9331,7 @@
       }
     ],
     "completeness": {
-      "available": 7,
+      "available": 8,
       "total": 9
     },
     "limitations": [
@@ -9224,7 +9344,7 @@
       "Frakcje gleby i przepuszczalność z modelu globalnego SoilGrids (250 m) – wartości orientacyjne, nie pomiar na tej działce.",
       "Mapa glebowo-rolnicza opracowana ok. 1973 r. – stan gleby mógł się zmienić.",
       "Ostatnie 2 dni przed datą analizy uzupełnione danymi modelu Open-Meteo.",
-      "Brak zdjęć satelitarnych – kondycja i wilgotność roślin w przygotowaniu.",
+      "Zdjęcie satelitarne z 16.11.2026 (Sentinel-2, piksel 10 m) – NDVI i NDMI to mediany w obrysie; progi orientacyjne; zieleń zależy też od uprawy i terminu siewu.",
       "Teren z zapisanego wyniku analizy NMT z 21.11.2026 (NMT GUGiK nie odpowiadał – ukształtowanie terenu się nie zmienia).",
       "Siatka 4.5 m – formy mniejsze niż ~9 m (bruzdy, koleiny, rowki) są niewidoczne.",
       "Wysokości podawane co 0,1 m – przy małych spadkach kierunek spływu jest niepewny; stosujemy wygładzenie σ = 6 m.",
@@ -9249,7 +9369,7 @@
       "label": "Pobieram pogodę z 10 lat (IMGW-PIB (opad) + NASA POWER (parowanie))",
       "state": "done",
       "note": null,
-      "duration_ms": 13
+      "duration_ms": 7
     },
     {
       "id": "soil",
@@ -9277,7 +9397,7 @@
       "label": "Mapa glebowo-rolnicza (GUGiK)",
       "state": "done",
       "note": null,
-      "duration_ms": 49
+      "duration_ms": 8
     },
     {
       "id": "forecast",
@@ -9288,9 +9408,9 @@
     },
     {
       "id": "satellite",
-      "label": "Zdjęcia satelitarne",
-      "state": "pending",
-      "note": "w przygotowaniu – brak danych",
+      "label": "Zdjęcie satelitarne (Sentinel-2)",
+      "state": "done",
+      "note": "scena z 16.11.2026",
       "duration_ms": null
     },
     {
@@ -9298,14 +9418,14 @@
       "label": "Analizuję teren (NMT GUGiK)",
       "state": "done",
       "note": "zapisany wynik analizy NMT",
-      "duration_ms": 49
+      "duration_ms": 7
     },
     {
       "id": "balance",
       "label": "Liczę bilans wody i wodę w glebie (FAO-56)",
       "state": "done",
       "note": null,
-      "duration_ms": 17
+      "duration_ms": 18
     },
     {
       "id": "scoring",
@@ -9319,14 +9439,14 @@
       "label": "Ranking „Co tu posiać?” (17 upraw × 10 sezonów)",
       "state": "done",
       "note": null,
-      "duration_ms": 3
+      "duration_ms": 4
     },
     {
       "id": "total",
       "label": "Cała analiza",
       "state": "done",
       "note": null,
-      "duration_ms": 86
+      "duration_ms": 42
     }
   ]
 }

@@ -1,0 +1,109 @@
+{
+  "status": "ok",
+  "date": "2026-11-16",
+  "scene_id": "S2A_34UFD_20261116_2_L2A",
+  "ndvi": 0.857,
+  "ndmi": -0.242,
+  "ndvi_class": "gesta",
+  "ndvi_label": "gęsta zieleń",
+  "ndmi_class": null,
+  "ndmi_label": null,
+  "valid_pct": 73.8,
+  "cloud_pct": 0.0,
+  "last_year": {
+    "date": "2025-11-04",
+    "scene_id": "S2B_34UED_20251104_1_L2A",
+    "ndvi": 0.832,
+    "ndmi": null,
+    "valid_pct": 45.9,
+    "cloud_pct": 0.0
+  },
+  "ndvi_change": 0.025,
+  "trend": "podobnie",
+  "level": "info",
+  "in_season": false,
+  "sentence": "Zdjęcie satelitarne z 16.11.2026: pole zielone – prawdopodobnie wzeszło zboże ozime, rzepak lub międzyplon. Zieleń podobna jak rok temu.",
+  "warning": null,
+  "series": [
+    {
+      "date": "2026-03-04",
+      "ndvi": 0.927,
+      "ndmi": -0.157,
+      "valid_pct": 100.0
+    },
+    {
+      "date": "2026-03-14",
+      "ndvi": 0.894,
+      "ndmi": -0.26,
+      "valid_pct": 100.0
+    },
+    {
+      "date": "2026-03-29",
+      "ndvi": 0.692,
+      "ndmi": -0.261,
+      "valid_pct": 100.0
+    },
+    {
+      "date": "2026-04-18",
+      "ndvi": 0.387,
+      "ndmi": -0.202,
+      "valid_pct": 100.0
+    },
+    {
+      "date": "2026-04-23",
+      "ndvi": 0.377,
+      "ndmi": -0.204,
+      "valid_pct": 100.0
+    },
+    {
+      "date": "2026-05-30",
+      "ndvi": 0.222,
+      "ndmi": -0.163,
+      "valid_pct": 100.0
+    },
+    {
+      "date": "2026-06-17",
+      "ndvi": 0.871,
+      "ndmi": 0.058,
+      "valid_pct": 100.0
+    },
+    {
+      "date": "2026-06-27",
+      "ndvi": 0.776,
+      "ndmi": 0.076,
+      "valid_pct": 100.0
+    },
+    {
+      "date": "2026-10-27",
+      "ndvi": 0.719,
+      "ndmi": -0.123,
+      "valid_pct": 100.0
+    },
+    {
+      "date": "2026-11-09",
+      "ndvi": 0.738,
+      "ndmi": -0.207,
+      "valid_pct": 100.0
+    },
+    {
+      "date": "2026-11-16",
+      "ndvi": 0.857,
+      "ndmi": -0.242,
+      "valid_pct": 100.0
+    }
+  ],
+  "series_note": "11 zdjęć bez chmur z 12 miesięcy (1 na 15 dni)",
+  "layers": [
+    "kondycja",
+    "wilgotnosc"
+  ],
+  "downloaded_mb": 8.47,
+  "compute_s": 8.4,
+  "cached": true,
+  "note": "Sentinel-2 L2A (ESA Copernicus, przez Earth Search / AWS), piksel 10 m. NDVI = kondycja roślin, NDMI = wilgotność roślin – mediany w obrysie; chmury, cienie i śnieg wycięte maską SCL. Progi orientacyjne.",
+  "source_tag": {
+    "kind": "pomiar",
+    "date": "2026-11-16",
+    "source": "Sentinel-2 L2A (Earth Search)"
+  }
+}
