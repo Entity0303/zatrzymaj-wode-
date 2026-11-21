@@ -196,6 +196,67 @@ class History(Contract):
     source_tag: SourceTag
 
 
+# ── Uprawa, stan wody, nawadnianie (A3b) ────────────────────────────────────────────────────
+
+CropPhase = Literal[
+    "przed_siewem",
+    "wschody_jesienne",
+    "spoczynek_zimowy",
+    "poczatkowa",
+    "rozwoj",
+    "pelnia",
+    "dojrzewanie",
+    "po_zbiorze",
+]
+"""Faza uprawy w dacie analizy. Wrażliwe na niedobór (stres, nawadnianie): poczatkowa, rozwoj, pelnia."""
+
+IrrigationStatus = Literal["zalecane", "niepotrzebne", "nieuzasadnione_w_fazie", "brak_danych"]
+
+
+class CropSeason(Contract):
+    phase: CropPhase
+    phase_label: str = Field(description="Np. 'pełnia rozwoju', 'po zbiorze'")
+    season_year: int = Field(description="Rok sezonu, którego dotyczą dni stresu")
+    season_start: dt.date = Field(description="Siew / wznowienie wegetacji")
+    harvest: dt.date = Field(description="Typowy termin zbioru w Polsce (koniec sezonu modelu)")
+    day_of_season: int | None = Field(None, description="Dzień sezonu w dacie analizy (1 = siew / wznowienie)")
+    sensitive: bool = Field(description="Faza wrażliwa na niedobór wody – liczymy stres, możliwe zalecenie nawadniania")
+    root_depth_m: float | None = Field(None, description="Głębokość korzeni w modelu w dacie analizy")
+
+
+class SeasonSummary(Contract):
+    """Podsumowanie zakończonego sezonu uprawy."""
+
+    year: int
+    stress_days: int | None
+    mean_prev_stress_days: float | None = Field(None, description="Średnia z 10 poprzednich sezonów")
+
+
+class SoilWaterState(Contract):
+    """Stan wody w glebie w dacie analizy – także poza sezonem (dane do rekomendacji jesienno-zimowych)."""
+
+    scope: Literal["strefa_korzeni", "profil"] = Field(
+        description="strefa_korzeni – w fazach uprawy; profil – ok. 1 m, poza sezonem (goła gleba / spoczynek)"
+    )
+    depth_m: float
+    description: str = Field(description="Np. 'poza sezonem – gleba odbudowuje zapas wody'")
+    rank: BalanceRank | None = Field(
+        None, description="Ten sam dzień w 10 poprzednich latach: w ilu latach było MNIEJ wody niż teraz, z ilu"
+    )
+    last_season: SeasonSummary | None = Field(None, description="Zakończony sezon (po zbiorze / przed siewem)")
+
+
+class IrrigationPlan(Contract):
+    status: IrrigationStatus
+    message: str = Field(description="Np. '25 mm teraz, powtórz za ok. 5 dni'")
+    dose_mm: float | None = Field(None, le=35, description="Dawka jednorazowa zależna od gleby, nigdy > 35 mm")
+    first_date: dt.date | None = None
+    interval_days: int | None = Field(None, description="Co ile dni powtarzać, by utrzymać wodę powyżej progu stresu")
+    total_7d_mm: float | None = Field(None, description="Łączny niedobór do uzupełnienia w 7 dniach")
+    doses_7d: int | None = None
+    source_tag: SourceTag
+
+
 # ── C. Dlaczego? ────────────────────────────────────────────────────────────────────────────
 
 
@@ -279,6 +340,9 @@ class AnalysisResponse(Contract):
     generated_at: dt.datetime
     status: OverallStatus
     indicators: Indicators
+    crop_season: CropSeason
+    soil_water: SoilWaterState
+    irrigation: IrrigationPlan
     soil: Soil
     history: History
     causes: list[Cause] = Field(description="Od największego udziału")

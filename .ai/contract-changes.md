@@ -28,3 +28,11 @@ Wszystkie opcjonalne (brak danych = `null` / pusta lista). Liczone w `analysis/w
 `dominant_code`, `dominant_label`, `shares[] {code, label, share}` (kody IUNG), `agricultural_share` (kody 1–4), `wod_mm`, `classes` (EGiB, informacyjnie) + `classes_note` (powód braku), `non_agricultural`, `non_agricultural_reason` (`las` | `woda` | `zabudowa` | `drogi` | `gleby_organiczne`), `non_agricultural_note` (komunikat SPEC 15.1), `source_tag`.
 WOD jako wskaźnik dalej w `indicators.soil_capacity`.
 **Łamie zgodność:** tak dla odpowiedzi – `soil` jest wymagane (endpoint `/api/analysis` dziś zwraca 501, więc nikt go jeszcze nie konsumuje; mock zaktualizowany).
+
+### 2026-11-21 · gałąź `a/backend` · A + B (uzgodnione co do zasady – zadanie A3b)
+**Nowe sekcje w `AnalysisResponse`** (`schemas/analysis.py` ↔ `types.ts`, przykład w `mocks/analysis.sample.json`):
+- `crop_season: CropSeason` – `phase` (`przed_siewem` | `wschody_jesienne` | `spoczynek_zimowy` | `poczatkowa` | `rozwoj` | `pelnia` | `dojrzewanie` | `po_zbiorze`), `phase_label`, `season_year`, `season_start`, `harvest`, `day_of_season`, `sensitive` (faza wrażliwa → stres i nawadnianie), `root_depth_m`;
+- `soil_water: SoilWaterState` – `scope` (`strefa_korzeni` w fazach uprawy / `profil` ~1 m poza sezonem), `depth_m`, `description` (np. „poza sezonem – gleba odbudowuje zapas wody”), `rank` (ten sam dzień w 10 latach: w ilu latach było mniej wody, z ilu – typ `BalanceRank`), `last_season` (`SeasonSummary`: rok, dni stresu, średnia 10 lat);
+- `irrigation: IrrigationPlan` – `status` (`zalecane` | `niepotrzebne` | `nieuzasadnione_w_fazie` | `brak_danych`), `message` („25 mm teraz, powtórz za ok. 5 dni”), `dose_mm` (≤ 35), `first_date`, `interval_days`, `total_7d_mm`, `doses_7d`, `source_tag`.
+`indicators.soil_water_pct/mm` mają teraz wartość także poza sezonem (zakres opisuje `soil_water.scope`).
+**Łamie zgodność:** tak dla odpowiedzi (3 nowe pola wymagane; `/api/analysis` dziś 501, mock zaktualizowany).
