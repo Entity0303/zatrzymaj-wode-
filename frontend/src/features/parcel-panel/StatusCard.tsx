@@ -6,9 +6,18 @@ import { cn } from '@/lib/utils'
 import { useLang } from '@/lib/i18n'
 
 /** 3. Karta stanu (SPEC 6.3). */
-export function StatusCard({ crop, analysis }: { crop: CropId | null; analysis?: AnalysisResponse | null }) {
+export function StatusCard({
+  crop,
+  analysis,
+  onOpen,
+}: {
+  crop: CropId | null
+  analysis?: AnalysisResponse | null
+  /** › przewija do paszportu wodnego (SPEC 6.3) */
+  onOpen?: () => void
+}) {
   const { t } = useLang()
-  if (analysis) return <AnalysisStatusCard analysis={analysis} />
+  if (analysis) return <AnalysisStatusCard analysis={analysis} onOpen={onOpen} />
   const s = STATUS.no_data
   const Icon = s.icon
   return (
@@ -34,7 +43,7 @@ export function StatusCard({ crop, analysis }: { crop: CropId | null; analysis?:
 }
 
 /** Karta stanu z wyniku analizy: tło w kolorze statusu „-soft”, nagłówek i jedno zdanie. */
-function AnalysisStatusCard({ analysis }: { analysis: AnalysisResponse }) {
+function AnalysisStatusCard({ analysis, onOpen }: { analysis: AnalysisResponse; onOpen?: () => void }) {
   const { t } = useLang()
   const { level, headline, summary } = analysis.status
   const s = STATUS[level]
@@ -49,8 +58,19 @@ function AnalysisStatusCard({ analysis }: { analysis: AnalysisResponse }) {
         <p className="mt-0.5 text-sm leading-5 text-text">{t(summary)}</p>
         <StatusBadge status={level} size="sm" className="mt-2" />
       </div>
-      {/* › prowadzi do paszportu wodnego (SPEC 6.3) – paszport jeszcze w budowie */}
-      <ChevronRight className="mt-2.5 size-5 shrink-0 text-text-muted" aria-hidden />
+      {/* › prowadzi do paszportu wodnego (SPEC 6.3) */}
+      {onOpen ? (
+        <button
+          type="button"
+          onClick={onOpen}
+          aria-label={t('Zobacz pełny paszport wodny')}
+          className="-mt-1 -mr-2 flex size-11 shrink-0 items-center justify-center rounded-full text-text-muted hover:bg-surface/70"
+        >
+          <ChevronRight className="size-5" aria-hidden />
+        </button>
+      ) : (
+        <ChevronRight className="mt-2.5 size-5 shrink-0 text-text-muted" aria-hidden />
+      )}
     </div>
   )
 }

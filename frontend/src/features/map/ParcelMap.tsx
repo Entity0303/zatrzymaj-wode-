@@ -105,6 +105,8 @@ type Props = {
   onMoveEnd: (lon: number, lat: number) => void
   onSelectCandidate: (p: Parcel) => void
   onClosePopup: () => void
+  /** miejsce rekomendacji („Pokaż na mapie”) */
+  highlight?: GeoJSON.Geometry | null
 }
 
 export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
@@ -124,6 +126,7 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
     onMoveEnd,
     onSelectCandidate,
     onClosePopup,
+    highlight,
   },
   ref,
 ) {
@@ -227,6 +230,18 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
         <Popup position={[insidePopup.lat, insidePopup.lon]} eventHandlers={{ remove: onClosePopup }}>
           <span className="text-sm">{insidePopup.text}</span>
         </Popup>
+      )}
+
+      {highlight && (
+        <GeoJSON
+          key={JSON.stringify(highlight).slice(0, 200)}
+          data={highlight}
+          interactive={false}
+          style={{ color: '#E2A23B', weight: 4, opacity: 1, fillColor: '#E2A23B', fillOpacity: 0.35 }}
+          pointToLayer={(_, latlng) =>
+            L.circleMarker(latlng, { radius: 12, color: '#FFFFFF', weight: 3, fillColor: '#E2A23B', fillOpacity: 1 })
+          }
+        />
       )}
 
       <FitTo parcel={parcel} candidates={candidates} insets={insets} reducedMotion={reducedMotion} />

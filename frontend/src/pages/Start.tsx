@@ -1,5 +1,7 @@
 import type { Map as LeafletMap } from 'leaflet'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
+import L from 'leaflet'
 import { ApiError, api, describeError } from '@/api/client'
 import type { CropId, Parcel, ParcelCandidates } from '@/api/types'
 import { OfflineBanner } from '@/components/OfflineBanner'
@@ -11,6 +13,7 @@ import { MapControls } from '@/features/map/MapControls'
 import { POLAND_CENTER, ParcelMap, type BaseMap } from '@/features/map/ParcelMap'
 import { MobileSheetHeader } from '@/features/parcel-panel/MobileSheetHeader'
 import { ParcelPanel } from '@/features/parcel-panel/ParcelPanel'
+import { Passport } from '@/features/passport/Passport'
 import type { SearchPhase } from '@/features/parcel-panel/types'
 import { useAnalysis } from '@/features/parcel-panel/useAnalysis'
 import { SearchBar } from '@/features/search/SearchBar'
@@ -53,6 +56,9 @@ const FLOAT_BOTTOM = 16 + CARDS_H + 24 // dół panelu, kontrolek i legendy
 
 const round1 = (v: number) => Math.round(v * 10) / 10
 
+// Komputer: paszport wodny jako szeroki panel (SPEC 7)
+const PASSPORT_W = 640
+
 export default function Start() {
   const { t } = useLang()
   const isMobile = useMediaQuery('(max-width: 767px)')
@@ -77,6 +83,9 @@ export default function Start() {
   const [toast, setToast] = useState<string | null>(null)
   const [mapCenter, setMapCenter] = useState<[number, number]>([round1(POLAND_CENTER[1]), round1(POLAND_CENTER[0])])
   const [areaH, setAreaH] = useState(600)
+  // paszport wodny: przypięty do konkretnego wyniku – nowa analiza go zamyka
+  const [passportFor, setPassportFor] = useState<object | null>(null)
+  const [highlight, setHighlight] = useState<GeoJSON.Geometry | null>(null)
 
   const mapRef = useRef<LeafletMap>(null)
   const mainRef = useRef<HTMLElement>(null)
@@ -92,6 +101,7 @@ export default function Start() {
   const mock = mockRequested()
   const { run, retry: retryAnalysis } = useAnalysis(parcel?.id ?? null, crop, asOf)
   const analysis = run.phase === 'done' ? run.analysis : null
+  const passportOpen = !!analysis && passportFor === analysis
 
   // wysokość obszaru mapy – do położeń szuflady
   useLayoutEffect(() => {
@@ -106,7 +116,7 @@ export default function Start() {
   const sheetVisible = snapHeights(areaH, SHEET_COLLAPSED, SHEET_TOP)[snap]
   const insets: MapInsets = isMobile
     ? { top: 120, right: 64, bottom: SHEET_COLLAPSED + 130, left: 8 }
-    : { top: 128, right: (isDesktop ? 380 : 340) + 16, bottom: FLOAT_BOTTOM, left: 76 }
+    : { top: 128, right: (passportOpen ? PASSPORT_W : isDesktop ? 380 : 340) + 16, bottom: FLOAT_BOTTOM, left: 76 }
 
   // ── wyszukiwanie działki ──────────────────────────────────────────────────────────────────
   async function find(fn: () => Promise<Parcel>, kind: 'number' | 'point') {
@@ -250,6 +260,37 @@ export default function Start() {
     )
   }
 
+  // ── paszport wodny i „Pokaż na mapie” ──────────────────────────────────────────────────────
+  function openPassport() {
+    if (!analysis) return
+    setPassportFor(analysis)
+    if (isMobile) setSnap('full')
+  }
+  const closePassport = useCallback(() => setPassportFor(null), [])
+  useEffect(() => {
+    if (!passportOpen) return
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && closePassport()
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [passportOpen, closePassport])
+  // nowa działka / analiza = bez podświetlenia starego miejsca
+  useEffect(() => setHighlight(null), [analysis])
+
+  function showOnMap(g: GeoJSON.Geometry) {
+    setHighlight(g)
+    if (isMobile) setSnap('collapsed')
+    const map = mapRef.current
+    if (!map) return
+    const b = L.geoJSON(g).getBounds()
+    const opts = {
+      paddingTopLeft: [insets.left + 32, insets.top + 32] as [number, number],
+      paddingBottomRight: [insets.right + 32, insets.bottom + 32] as [number, number],
+      maxZoom: 18,
+    }
+    if (reducedMotion) map.fitBounds(b, { ...opts, animate: false })
+    else map.flyToBounds(b, { ...opts, duration: 0.8 })
+  }
+
   // ── raport PDF: te same parametry co analiza ─────────────────────────────────────────────
   const report = useReportDownload(
     parcel && crop && analysis ? { parcelId: parcel.id, numer: parcel.numer, crop, date: asOf } : null,
@@ -311,6 +352,8 @@ export default function Start() {
     onLocate: locate,
     report,
     onCopyLink: parcel ? copyLink : undefined,
+    onOpenPassport: openPassport,
+    onShowOnMap: showOnMap,
   }
 
   const searchBar = (
@@ -343,7 +386,7 @@ export default function Start() {
   )
 
   return (
-    <div className="flex h-dvh w-full flex-col overflow-hidden bg-bg">
+    <div className="flex h-dvh w-full flex-col overflow-hidden bg-bg print:hidden">
       <div className="flex min-h-0 flex-1">
         <Sidebar />
         <main
@@ -362,6 +405,7 @@ export default function Start() {
             pendingPoint={pendingPoint}
             userPoint={userPoint}
             insidePopup={insidePopup}
+            highlight={highlight}
             insets={insets}
             reducedMotion={reducedMotion}
             onMapClick={onMapClick}
@@ -384,7 +428,7 @@ export default function Start() {
 
           {/* telefon: przy pełnej szufladzie napis zasłaniałby nagłówek działki */}
           {mock && !(isMobile && snap === 'full') && (
-            <div className="pointer-events-none absolute top-[116px] right-16 left-3 z-[1450] flex justify-start md:inset-x-0 md:top-[132px] md:justify-center md:px-3">
+            <div className="pointer-events-none absolute top-[116px] right-16 left-3 z-[1450] flex justify-start md:top-[132px] md:right-auto md:left-4">
               <SampleDataBanner />
             </div>
           )}
@@ -416,7 +460,13 @@ export default function Start() {
               legend={legend.legend}
               status={isMobile ? 'Brak danych – w budowie' : 'Brak danych dla działki – warstwa w budowie'}
               compact={isMobile}
-              className={isMobile ? 'absolute left-3 z-[1000] w-56' : 'absolute right-[372px] z-[1000] xl:right-[412px]'}
+              className={
+                isMobile
+                  ? 'absolute left-3 z-[1000] w-56'
+                  : passportOpen
+                    ? 'absolute right-[672px] z-[1000]'
+                    : 'absolute right-[372px] z-[1000] xl:right-[412px]'
+              }
               style={{ bottom: isMobile ? sheetVisible + 32 : FLOAT_BOTTOM }}
             />
           )}
@@ -424,12 +474,20 @@ export default function Start() {
           {/* ── prawy panel działki: 380 px komputer, 340 px tablet (SPEC 4.4, 12) ── */}
           {!isMobile && (
             <aside
-              aria-label={t('Panel działki')}
-              className="absolute top-[128px] right-4 z-[1100] flex w-[340px] flex-col overflow-hidden rounded-xl bg-surface shadow-float xl:w-[380px]"
-              style={{ bottom: FLOAT_BOTTOM }}
+              aria-label={passportOpen ? t('Paszport wodny') : t('Panel działki')}
+              className={
+                passportOpen
+                  ? 'absolute top-[128px] right-4 z-[1100] flex flex-col overflow-hidden rounded-xl bg-surface shadow-float'
+                  : 'absolute top-[128px] right-4 z-[1100] flex w-[340px] flex-col overflow-hidden rounded-xl bg-surface shadow-float xl:w-[380px]'
+              }
+              style={{ bottom: FLOAT_BOTTOM, width: passportOpen ? `min(${PASSPORT_W}px, calc(100% - 120px))` : undefined }}
             >
               <div className="min-h-0 flex-1 overflow-y-auto p-5">
-                <ParcelPanel {...panelProps} />
+                {passportOpen && analysis ? (
+                  <Passport analysis={analysis} onClose={closePassport} report={report} onCopyLink={copyLink} onShowOnMap={showOnMap} />
+                ) : (
+                  <ParcelPanel {...panelProps} />
+                )}
               </div>
             </aside>
           )}
@@ -470,6 +528,11 @@ export default function Start() {
                 />
               }
             >
+              {passportOpen && analysis ? (
+                <div className="px-1 pt-5">
+                  <Passport analysis={analysis} onClose={closePassport} report={report} onCopyLink={copyLink} onShowOnMap={showOnMap} />
+                </div>
+              ) : (
               <div className="space-y-5">
                 <div className="flex gap-2 [&>label]:min-w-0 [&>label]:flex-1">
                   <DateField value={asOf} onChange={setAsOf} compact />
@@ -486,7 +549,16 @@ export default function Start() {
                   updated={updated}
                 />
               </div>
+              )}
             </MobileSheet>
+          )}
+
+          {/* wydruk paszportu: osobna kopia poza układem mapy (window.print) */}
+          {passportOpen && analysis && createPortal(
+            <div className="hidden bg-white p-8 text-text print:block">
+              <Passport analysis={analysis} print />
+            </div>,
+            document.body,
           )}
 
           {toast && (

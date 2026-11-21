@@ -1,4 +1,4 @@
-import { FileDown, Link2, Loader2 } from 'lucide-react'
+import { BookOpenText, FileDown, Link2, Loader2 } from 'lucide-react'
 import type { ErrorInfo } from '@/api/client'
 import type { CropId } from '@/api/types'
 import { EmptyState } from '@/components/EmptyState'
@@ -44,6 +44,8 @@ export function ParcelPanel({
   hideHeader,
   report,
   onCopyLink,
+  onOpenPassport,
+  onShowOnMap,
 }: {
   state: SearchPhase
   crop: CropId | null
@@ -65,6 +67,10 @@ export function ParcelPanel({
   report?: { download: () => void; busy: boolean; error: ErrorInfo | null }
   /** kopiuje link z działką, uprawą i datą */
   onCopyLink?: () => void
+  /** otwiera paszport wodny (gdy jest wynik analizy) */
+  onOpenPassport?: () => void
+  /** podświetla miejsce rekomendacji na mapie */
+  onShowOnMap?: (g: GeoJSON.Geometry) => void
 }) {
   const { t } = useLang()
   if (state.phase === 'idle') return <PanelEmpty onFocusSearch={onFocusSearch} onLocate={onLocate} />
@@ -143,7 +149,7 @@ export function ParcelPanel({
         <ErrorNotice {...run.error} onRetry={run.error.retryable ? onRetryAnalysis : undefined} />
       )}
       {/* SPEC 15.1: grunt nierolny – zamiast oceny suszy komunikat, bez wskaźników i zaleceń */}
-      {nonAgri ? <NonAgriculturalCard soil={analysis!.soil} /> : <StatusCard crop={crop} analysis={analysis} />}
+      {nonAgri ? <NonAgriculturalCard soil={analysis!.soil} /> : <StatusCard crop={crop} analysis={analysis} onOpen={analysis ? onOpenPassport : undefined} />}
       {analysis && !nonAgri && <CropSeasonCard season={analysis.crop_season} analysisDate={analysis.analysis_date} />}
       {crop && (
         <details className="group rounded-xl border bg-surface p-3.5">
@@ -166,7 +172,7 @@ export function ParcelPanel({
           <WaveDivider />
           <section className="space-y-3">
             <SectionTitle>{t('Co zrobić?')}</SectionTitle>
-            <WhatToDo analysis={analysis} />
+            <WhatToDo analysis={analysis} onShowOnMap={onShowOnMap} />
             {analysis && <IrrigationCard plan={analysis.irrigation} />}
           </section>
         </>
@@ -209,11 +215,17 @@ export function ParcelPanel({
             <Link2 className="size-5 text-brand" /> {t('Kopiuj link do tej analizy')}
           </Button>
         )}
-        <p className="text-center">
-          <span className="text-sm text-text-muted" aria-disabled>
-            {t('Zobacz pełny paszport wodny')} <span className="text-xs">({t('wkrótce')})</span>
-          </span>
-        </p>
+        {analysis && onOpenPassport ? (
+          <Button
+            variant="outline"
+            onClick={onOpenPassport}
+            className="h-11 w-full rounded-md border-sage bg-sage-soft text-base font-semibold text-brand-dark hover:bg-ok-soft"
+          >
+            <BookOpenText className="size-5" /> {t('Zobacz pełny paszport wodny')}
+          </Button>
+        ) : (
+          <p className="text-center text-sm text-text-muted">{t('Pełny paszport wodny pojawi się po analizie')}</p>
+        )}
       </div>
       <footer className="border-t pt-3 text-xs leading-4 text-text-muted">
         {t('Dane:')}{' '}

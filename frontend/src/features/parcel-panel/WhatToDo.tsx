@@ -1,13 +1,19 @@
 import type { AnalysisResponse, RecommendationCategory } from '@/api/types'
 import { RecommendationCard } from '@/components/RecommendationCard'
-import { formatDatePl } from '@/lib/format'
 import { useLang } from '@/lib/i18n'
+import { RecommendationWhy } from './RecommendationWhy'
 
 const ORDER: RecommendationCategory[] = ['retencja', 'agrotechnika', 'nawadnianie']
-const CONFIDENCE = { wysoka: 'wysoka', srednia: 'średnia', ograniczona: 'ograniczone dane' } as const
 
 /** 5. „Co zrobić?” – kolejność retencja → agrotechnika → nawadnianie (SPEC 6.5). */
-export function WhatToDo({ analysis }: { analysis?: AnalysisResponse | null }) {
+export function WhatToDo({
+  analysis,
+  onShowOnMap,
+}: {
+  analysis?: AnalysisResponse | null
+  /** podświetla miejsce rekomendacji na mapie */
+  onShowOnMap?: (g: GeoJSON.Geometry) => void
+}) {
   const { t } = useLang()
   if (analysis?.recommendations.length) {
     // backend wskazuje, co pokazać w panelu (`in_panel`, po jednej z kategorii); bez flag – wg priorytetu
@@ -26,27 +32,8 @@ export function WhatToDo({ analysis }: { analysis?: AnalysisResponse | null }) {
             category={r.category}
             title={r.title}
             text={r.description}
-            why={
-              <>
-                <p>{t(r.why)}</p>
-                {r.inputs.length > 0 && (
-                  <ul className="mt-2 space-y-0.5">
-                    {r.inputs.map((e) => (
-                      <li key={e.name}>
-                        {t(e.name)}: <b className="tabular">{e.value ?? t('brak danych')}{e.unit ? ` ${e.unit}` : ''}</b>{' '}
-                        <span className="text-text-muted">
-                          ({e.source}
-                          {e.date ? `, ${formatDatePl(e.date)}` : ''})
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                <p className="mt-2 text-text-muted">
-                  {t('Pewność')}: {t(CONFIDENCE[r.confidence])}
-                </p>
-              </>
-            }
+            why={<RecommendationWhy rec={r} />}
+            onShowOnMap={r.location && onShowOnMap ? () => onShowOnMap(r.location!) : undefined}
           />
         ))}
       </div>
