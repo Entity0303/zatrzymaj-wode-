@@ -890,3 +890,50 @@ def to_contract(res: SoilWaterResult, crop: Crop, analysis_date: date, no_model_
             rule_id="nawadnianie.model_fao56",
         )
     return ModelOutputs(pct, mm, risk, years, crop_season, soil_water, plan, rec)
+
+
+# ── Sumy sezonu (przyczyny, reguły) ─────────────────────────────────────────────────────────
+
+
+@dataclass
+class SeasonSums:
+    season_start: date
+    until: date | None
+    days: int
+    precip_mm: float | None
+    precip_mean_mm: float | None
+    et0_mm: float | None
+    et0_mean_mm: float | None
+    et0_recent_mm_day: float | None  # średnie ET0 z ostatnich 7 dni z danymi
+
+
+def season_sums(w: DailyWeather, analysis_date: date, season_start: date | None = None, years: int = 10) -> SeasonSums:
+    """Opad i ET0 od początku sezonu bilansu (1 III) do ostatniego dnia z danymi oraz średnie z tych samych
+    okresów w `years` poprzednich latach (lata z > 10% braków pominięte)."""
+    end = last_usable_day(analysis_date)
+    s0 = season_start or default_season_start(analysis_date)
+    kbw = w.climatic_water_balance
+    i_req = min(_idx(w, end), len(w.dates) - 1)
+    valid = np.flatnonzero(~np.isnan(kbw[: i_req + 1])) if i_req >= 0 else np.array([], dtype=int)
+    until = w.dates[valid[-1]].astype(object) if valid.size else None
+    i0 = _idx(w, s0)
+    if until is None or until < s0 or i0 < 0:
+        return SeasonSums(s0, until, 0, None, None, None, None, None)
+    n = (until - s0).days + 1
+    p_cur = float(np.nansum(w.precip[i0 : i0 + n]))
+    e_cur = float(np.nansum(w.et0[i0 : i0 + n]))
+    ps, es = [], []
+    for k in range(1, years + 1):
+        ik = _idx(w, shift_years(s0, k))
+        p_k, e_k = _segment(w.precip, ik, n), _segment(w.et0, ik, n)
+        if p_k is None or e_k is None or np.isnan(p_k + e_k).mean() > MAX_MISSING_YEAR:
+            continue
+        ps.append(float(np.nansum(p_k)))
+        es.append(float(np.nansum(e_k)))
+    i_until = _idx(w, until)
+    recent = w.et0[max(0, i_until - 6) : i_until + 1]
+    return SeasonSums(
+        s0, until, n, round(p_cur, 1), round(float(np.mean(ps)), 1) if ps else None,
+        round(e_cur, 1), round(float(np.mean(es)), 1) if es else None,
+        round(float(np.nanmean(recent)), 2) if recent.size and not np.isnan(recent).all() else None,
+    )

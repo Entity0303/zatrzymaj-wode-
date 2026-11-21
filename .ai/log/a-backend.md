@@ -4,6 +4,24 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-21 17:18 · `a/backend` · A4: ocena, pewność, przyczyny, rekomendacje, pełne /api/analysis (kamień milowy 1)
+**Co:**
+- `requirements.txt` (osobny commit): PyYAML. Kontrakt (osobny commit 738415c): `Recommendation.priority`, `in_panel`. Mock (osobny commit 612509d): zapis prawdziwej odpowiedzi.
+- `analysis/facts.py` – wspólne fakty (opis, jednostka, źródło) dla oceny, przyczyn i reguł; `water_balance.season_sums()` – opad i ET0 sezonu vs średnia 10 lat.
+- `analysis/scoring.py` – wskaźnik 0–100 (woda 45/65%, ryzyko 35%, historia 20/35%), progi 70/50/30, poza fazami wrażliwymi najwyżej „risk” i nagłówki o zapasie wody w glebie; zdanie podsumowania z liczbami; grunt nierolny → no_data.
+- `analysis/confidence.py` – pewność punktowa z jawnych przesłanek (satelita, teren, źródło i opóźnienie pogody, Hargreaves, prognoza, gleba), progi 75/50, bez satelity/terenu najwyżej „średnia”; źródła z datą i statusem, kompletność, ograniczenia.
+- `analysis/causes.py` – opady, parowanie, gleba, wymagania uprawy (udziały, suma 100%), teren – brak danych bez udziału.
+- `analysis/recommendations.py` + `analysis/rules/{retencja,agrotechnika,nawadnianie}.yaml` – 19 reguł (11/6/2), 4 wyłączone (`requires: terrain / water_nearby`); fakt None → warunek fałszywy, brak liczby w tekście → reguła pominięta; „Dlaczego?” i dane wejściowe z faktów, które uruchomiły regułę; kolejność grup, `in_panel` – najważniejsza z grupy.
+- `routers/analysis.py` – pełne `GET /api/analysis` (budżet 27 s, limity na źródło, kroki z czasami, 422 bez uprawy / zła data, 502 tylko bez ULDK lub pogody); `/api/dev/*` zostają (tymczasowe).
+- Testy: `tests/test_analysis.py` (35 + live), `test_contract` – zamiast 501 test walidacji (stary test wykonywał prawdziwe zapytanie sieciowe!). Cały pakiet sprawdzony w kontenerze bez sieci.
+- Live:
+  - 201305 · zboża ozime · 2018-06-10 – **danger (8)** „Susza – rośliny cierpią z braku wody”; „Gleba ma 17% wody dostępnej w strefie korzeni, a od 1 marca bilans wody wynosi −111 mm – o 90 mm mniej niż zwykle.”; przyczyny: opady 36%, gleba 24%, uprawa 21%, parowanie 19%, teren 0%; panel: odmiany odporne, „Nawadnianie teraz: 27,5 mm…, 3 dawki”; pewność średnia (3/6 źródeł); 2,5 s (pogoda 2,2 s).
+  - 201305 · zboża ozime · dziś – **ok (71)** „zapas wody w glebie w normie” (98% profilu; bilans sezonu −228 mm, o 154 mm mniej niż zwykle); panel: odmiany odporne (27 vs 17,2 dni stresu); pewność średnia (4/7); 1,7 s.
+  - 061704 · kukurydza · 2021-07-15 – **warn (69)**; 71% wody, stres za ok. 16 dni; przyczyny: uprawa 50%, gleba 27%, opady 23%; panel: „Przygotuj nawadnianie”; 2,0 s.
+  - 143203 · las · dziś – **no_data** „Ocena suszy rolniczej nie dotyczy tej działki”, bez przyczyn i rekomendacji; 1,2 s.
+**Pliki:** `backend/app/analysis/{facts,scoring,confidence,causes,recommendations,water_balance}.py`, `backend/app/analysis/rules/*.yaml`, `backend/app/routers/analysis.py`, `backend/tests/{test_analysis,test_contract}.py`, `backend/requirements.txt`; kontrakt i mock.
+**Kontrakt API:** TAK – `Recommendation.priority`, `in_panel` (osobny commit, `contract-changes.md`).
+
 ## 2026-11-21 16:40 · `a/backend` · A3b: ciągły bilans, fazy upraw, realistyczne nawadnianie, stan wody poza sezonem
 **Co:**
 - Kontrakt (osobny commit acdf4da): `crop_season`, `soil_water` (zakres, opis, porównanie z tym samym dniem w 10 latach, podsumowanie zakończonego sezonu), `irrigation` (status, komunikat, dawka ≤ 35 mm, termin, częstotliwość, łączny niedobór 7 dni).
