@@ -1,10 +1,11 @@
 import type { CropId } from '@/api/types'
-import { CROPS } from './crops'
+import { CROPS, HISTORY_UNKNOWN, isHistoryCrop } from './crops'
 import { minAnalysisIso, todayIso } from './dates'
 
 /**
  * Stan aplikacji w adresie (link do udostępnienia, jury: wszystko 1 klik od wejścia):
- * ?dzialka=<id lub „obręb numer”>&uprawa=<CropId>&data=RRRR-MM-DD&przedplon=<CropId | nie_wiem>&widok=paszport
+ * ?dzialka=<id lub „obręb numer”>&uprawa=<CropId>&data=RRRR-MM-DD&historia=<1–3 uprawy po przecinku, pierwsza = rok temu>&widok=paszport
+ * (stary ?przedplon= czytany jako „rok temu”)
  * Otwarcie takiego linku od razu wyszukuje działkę i liczy analizę. Inne parametry (np. ?dane=przykladowe)
  * zostają nietknięte.
  */
@@ -12,12 +13,13 @@ export type LinkState = {
   dzialka: string | null
   uprawa: CropId | null
   data: string | null
-  przedplon: string | null
+  /** historia pola: indeks 0 = rok temu, 'nie_wiem' albo crop_id */
+  historia: string[]
   /** 'paszport' = po analizie od razu otwórz paszport wodny */
   widok: 'paszport' | null
 }
 
-const P = { dzialka: 'dzialka', uprawa: 'uprawa', data: 'data', przedplon: 'przedplon', widok: 'widok' } as const
+const P = { dzialka: 'dzialka', uprawa: 'uprawa', data: 'data', historia: 'historia', widok: 'widok' } as const
 
 const isCrop = (v: string | null): v is CropId => !!v && CROPS.some((c) => c.id === v)
 
@@ -25,6 +27,14 @@ const isCrop = (v: string | null): v is CropId => !!v && CROPS.some((c) => c.id 
 function validDate(v: string | null): string | null {
   if (!v || !/^\d{4}-\d{2}-\d{2}$/.test(v) || Number.isNaN(Date.parse(v))) return null
   return v >= minAnalysisIso() && v <= todayIso() ? v : null
+}
+
+/** „zyto,nie_wiem,rzepak” → lista 1–3 znanych upraw; nieznane = „nie wiem”, bez końcowych „nie wiem”. */
+function parseHistory(v: string | null): string[] {
+  if (!v) return []
+  const h = v.split(',').slice(0, 3).map((x) => (isHistoryCrop(x.trim()) ? x.trim() : HISTORY_UNKNOWN))
+  while (h.length && h[h.length - 1] === HISTORY_UNKNOWN) h.pop()
+  return h
 }
 
 export function readLink(search = window.location.search): LinkState {
@@ -35,7 +45,7 @@ export function readLink(search = window.location.search): LinkState {
     dzialka,
     uprawa: isCrop(uprawa) ? uprawa : null,
     data: validDate(q.get(P.data)),
-    przedplon: q.get(P.przedplon)?.trim() || null,
+    historia: parseHistory(q.get(P.historia) ?? q.get('przedplon')),
     widok: q.get(P.widok) === 'paszport' ? 'paszport' : null,
   }
 }
@@ -44,9 +54,11 @@ function withState(base: string, s: Partial<LinkState>): URL {
   const url = new URL(base)
   for (const k of Object.keys(P) as (keyof typeof P)[]) {
     if (!(k in s)) continue
-    const v = s[k]
+    const raw = s[k]
+    const v = Array.isArray(raw) ? raw.join(',') : raw
     if (v) url.searchParams.set(P[k], v)
     else url.searchParams.delete(P[k])
+    if (k === 'historia') url.searchParams.delete('przedplon')
   }
   return url
 }

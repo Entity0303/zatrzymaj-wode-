@@ -16,7 +16,7 @@ export function AnalysisLoading({
   asOf,
 }: {
   steps: Step[]
-  crop: CropId
+  crop: CropId | null
   asOf: string
 }) {
   const { t } = useLang()
@@ -41,7 +41,7 @@ export function AnalysisLoading({
           <div className="min-w-0">
             <p className="text-base leading-6 font-semibold">{t('Liczę ocenę wody dla działki…')}</p>
             <p className="text-sm leading-5 text-text-muted">
-              {cropLabel(crop)} · {formatDatePl(asOf)} · {t('zwykle do 30 s')}
+              {crop ? `${cropLabel(crop)} · ` : ''}{formatDatePl(asOf)} · {t('zwykle do 30 s')}
             </p>
           </div>
           <span className="tabular ml-auto text-sm font-semibold text-text-muted" aria-label={t('{n} sekund', { n: seconds })}>

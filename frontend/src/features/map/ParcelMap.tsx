@@ -233,7 +233,7 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
           {labelPos && (
             <Marker position={labelPos} icon={anchorIcon} interactive={false} keyboard={false}>
               <Tooltip permanent direction="center" className="parcel-label" opacity={1}>
-                <ParcelLabel number={parcel.numer} status={parcelStatus} />
+                <ParcelLabel number={parcel.numer} status={parcelStatus} approx={parcel.source === 'approximate'} />
               </Tooltip>
             </Marker>
           )}

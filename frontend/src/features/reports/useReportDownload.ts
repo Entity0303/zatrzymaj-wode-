@@ -1,6 +1,5 @@
 import { useCallback, useState } from 'react'
-import { ApiError, api, type ErrorInfo } from '@/api/client'
-import type { CropId } from '@/api/types'
+import { ApiError, api, type AnalysisQuery, type ErrorInfo } from '@/api/client'
 
 /** Błąd pobierania raportu po polsku – analiza na ekranie jest dalej dostępna. */
 function describeReportError(e: unknown): ErrorInfo {
@@ -16,7 +15,7 @@ function describeReportError(e: unknown): ErrorInfo {
  * „Pobierz raport PDF” – GET /api/report.pdf z tymi samymi parametrami co analiza.
  * Plik zapisywany przez przeglądarkę; błąd zwracany jako komunikat dla rolnika.
  */
-export function useReportDownload(params: { parcelId: string; numer: string; crop: CropId | null; date: string } | null) {
+export function useReportDownload(params: (AnalysisQuery & { numer: string }) | null) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<ErrorInfo | null>(null)
 
@@ -25,7 +24,7 @@ export function useReportDownload(params: { parcelId: string; numer: string; cro
     setBusy(true)
     setError(null)
     try {
-      const blob = await api.reportPdf(params.parcelId, params.crop, params.date)
+      const blob = await api.reportPdf(params)
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url

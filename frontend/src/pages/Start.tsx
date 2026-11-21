@@ -4,8 +4,7 @@ import { createPortal } from 'react-dom'
 import { ChevronDown, ChevronUp, LayoutPanelTop } from 'lucide-react'
 import L from 'leaflet'
 import { ApiError, api, describeError } from '@/api/client'
-import { isPlaceQuery, type Place } from '@/api/places.proposal'
-import type { CropId, Parcel, ParcelCandidates } from '@/api/types'
+import type { CropId, Parcel, ParcelCandidates, SearchResult } from '@/api/types'
 import { OfflineBanner } from '@/components/OfflineBanner'
 import { SampleDataBanner } from '@/components/SampleDataBanner'
 import { parcelBounds, parcelContains, type MapInsets } from '@/features/map/geo'
@@ -73,6 +72,9 @@ const round1 = (v: number) => Math.round(v * 10) / 10
 const Terrain3D = lazy(() => import('@/features/map3d/Terrain3D'))
 
 
+/** stała pusta historia pola – ta sama tablica między renderami (zależności efektów) */
+const NO_HISTORY: string[] = []
+
 export default function Start() {
   const { t } = useLang()
   const isMobile = useMediaQuery('(max-width: 767px)')
@@ -83,7 +85,12 @@ export default function Start() {
 
   const [search, setSearch] = useState<SearchPhase>({ phase: 'idle' })
   const [candidates, setCandidates] = useState<Parcel[]>([])
-  const [crops, setCrops] = useState<Record<string, CropId>>({})
+  const [crops, setCrops] = useState<Record<string, CropId | null>>({})
+  // B3 „Doprecyzuj”: historia pola (indeks 0 = rok temu) i powierzchnia uprawy – na działkę
+  const [histories, setHistories] = useState<Record<string, string[]>>({})
+  const [areas, setAreas] = useState<Record<string, number | null>>({})
+  // obszar przybliżony (brak działki w ULDK): punkt kliknięcia – analiza liczona po lon/lat
+  const [approxPoints, setApproxPoints] = useState<Record<string, [number, number]>>({})
   // link z adresu (?dzialka=&uprawa=&data=) – czytany raz przy wejściu
   const [link] = useState(readLink)
   const [asOf, setAsOf] = useState(link.data ?? todayIso())
@@ -112,6 +119,7 @@ export default function Start() {
   const reqId = useRef(0)
   // uprawa z linku – przypisywana do działki, gdy wyszukiwanie ją znajdzie
   const pendingCrop = useRef(link.uprawa)
+  const pendingHistory = useRef(link.historia)
   // karta powitalna (B0): tylko przy wejściu bez działki w linku; znika po pierwszym działaniu
   const [hero, setHero] = useState(() => !link.dzialka)
   const demoExamples = useDemoExamples()
@@ -126,7 +134,10 @@ export default function Start() {
   // analiza: startuje po wyborze uprawy, zmiana uprawy/daty przelicza; dopóki backend zwraca 501,
   // w trybie deweloperskim można podejrzeć mock z symulacją ładowania (?dane=przykladowe)
   const mock = mockRequested()
-  const { run, retry: retryAnalysis } = useAnalysis(parcel?.id ?? null, crop, asOf)
+  const history = parcel ? (histories[parcel.id] ?? NO_HISTORY) : NO_HISTORY
+  const area = parcel ? (areas[parcel.id] ?? null) : null
+  const approxPoint = parcel ? (approxPoints[parcel.id] ?? null) : null
+  const { run, retry: retryAnalysis } = useAnalysis(parcel?.id ?? null, crop, asOf, { point: approxPoint, cropHistory: history, area })
   const analysis = run.phase === 'done' ? run.analysis : null
   const layerState = useLayerData(layer, parcel?.id ?? null, asOf)
   const passportOpen = !!analysis && passportFor === analysis
@@ -188,70 +199,62 @@ export default function Start() {
   // komunikaty o błędach usług pokazujemy dopiero po działaniu użytkownika (nie przy wejściu z linku)
   const userActed = useRef(false)
 
-  // ── miejsce po nazwie („Tczów”): lista obrębów/gmin → mapa przybliża → klik w pole ──────────
-  const [places, setPlaces] = useState<Place[]>([])
-  const [placeBusy, setPlaceBusy] = useState(false)
-  const [placeError, setPlaceError] = useState<string | null>(null)
-  const placeReq = useRef(0)
-
-  async function searchPlace(q: string) {
-    const id = ++placeReq.current
-    setPlaces([])
-    setPlaceError(null)
-    setPlaceBusy(true)
-    try {
-      const r = await api.places(q)
-      if (id !== placeReq.current) return
-      if (r.places.length === 1) pickPlace(r.places[0])
-      else setPlaces(r.places)
-    } catch (e) {
-      if (id !== placeReq.current) return
-      setPlaceError(
-        e instanceof ApiError && e.status === 404 && (e.detail as { message?: string } | null)?.message === 'nie znaleziono miejsca'
-          ? t('Nie znaleziono miejsca „{q}”', { q })
-          : e instanceof ApiError && (e.status === 404 || e.status === 501)
-            ? t('Szukanie po samej nazwie jeszcze w budowie – wpisz nazwę z numerem działki, np. „{q} 123”', { q })
-            : t('Nie udało się wyszukać miejsca – spróbuj ponownie'),
-      )
-    } finally {
-      if (id === placeReq.current) setPlaceBusy(false)
+  // ── podpowiedź z /api/search: działka → wczytaj, miejscowość → mapa przybliża → klik w pole ──
+  function pickResult(r: SearchResult) {
+    userActed.current = true
+    setHero(false)
+    if (r.kind === 'parcel' && r.parcel_id) {
+      const id = r.parcel_id
+      return find(() => api.parcelById(id), 'number')
     }
-  }
-
-  function pickPlace(pl: Place) {
-    setPlaces([])
-    setPlaceError(null)
     const map = mapRef.current
     if (!map) return
-    const b = L.latLngBounds([pl.bbox[1], pl.bbox[0]], [pl.bbox[3], pl.bbox[2]])
     const opts = {
       paddingTopLeft: [insets.left + 24, insets.top + 24] as [number, number],
       paddingBottomRight: [insets.right + 24, insets.bottom + 24] as [number, number],
-      maxZoom: 15,
+      maxZoom: r.bbox_approx ? 14 : 16,
     }
-    if (reducedMotion) map.fitBounds(b, { ...opts, animate: false })
-    else map.flyToBounds(b, { ...opts, duration: 1 })
-    showToast(t('{name}: kliknij swoje pole na mapie', { name: pl.name }))
+    if (r.bbox) {
+      const bb = L.latLngBounds([r.bbox[1], r.bbox[0]], [r.bbox[3], r.bbox[2]])
+      if (reducedMotion) map.fitBounds(bb, { ...opts, animate: false })
+      else map.flyToBounds(bb, { ...opts, duration: 1 })
+    } else if (r.lon != null && r.lat != null) map.setView([r.lat, r.lon], 14, { animate: !reducedMotion })
+    showToast(t('{name}: kliknij swoje pole na mapie', { name: r.name ?? r.label }))
   }
 
-  /** jedno pole wyszukiwania, 3 rodzaje zapytań: identyfikator / „obręb numer” → działka, sama nazwa → miejsce */
+  /** Enter bez wybranej podpowiedzi: identyfikator / „obręb numer” → działka */
   const onSearch = (q: string) => {
     userActed.current = true
     setHero(false)
-    if (isPlaceQuery(q)) return searchPlace(q)
-    setPlaces([])
-    setPlaceError(null)
     searchByNumber(q)
   }
   const searchByPoint = (lon: number, lat: number) => {
     setPendingPoint([lon, lat])
-    find(() => api.parcelByPoint(lon, lat), 'point')
+    find(async () => {
+      try {
+        return await api.parcelByPoint(lon, lat)
+      } catch (e) {
+        // brak działki w tym miejscu albo ULDK chwilowo nie działa – analiza kwadratu wokół punktu
+        if (!(e instanceof ApiError) || e.status === 0 || e.status === 409 || e.status === 400) throw e
+        const a = await api.analysis({ point: [lon, lat], date: asOf }).catch(() => {
+          throw e
+        })
+        if (a.parcel.source !== 'approximate') return a.parcel
+        setApproxPoints((m) => ({ ...m, [a.parcel.id]: [lon, lat] }))
+        return a.parcel
+      }
+    }, 'point')
   }
   const retry = () => {
     if (lastRequest.current) find(lastRequest.current.fn, lastRequest.current.kind)
   }
 
   function applyPendingCrop(p: Parcel) {
+    const h = pendingHistory.current
+    if (h.length) {
+      pendingHistory.current = []
+      setHistories((m) => ({ ...m, [p.id]: h }))
+    }
     const c = pendingCrop.current
     if (!c) return
     pendingCrop.current = null
@@ -367,12 +370,13 @@ export default function Start() {
 
   // adres w pasku = bieżąca działka, uprawa i data (można go skopiować wprost z przeglądarki)
   useEffect(() => {
-    if (parcel) writeLink({ dzialka: parcel.id, uprawa: crop, data: asOf })
-  }, [parcel, crop, asOf])
+    // obszar przybliżony nie ma identyfikatora działki – link bez niego
+    if (parcel && !approxPoint) writeLink({ dzialka: parcel.id, uprawa: crop, data: asOf, historia: history })
+  }, [parcel, crop, asOf, history, approxPoint])
 
   function copyLink() {
     if (!parcel) return
-    const href = shareLink({ dzialka: parcel.id, uprawa: crop, data: asOf, widok: passportOpen ? 'paszport' : null })
+    const href = shareLink({ dzialka: parcel.id, uprawa: crop, data: asOf, historia: history, widok: passportOpen ? 'paszport' : null })
     if (!navigator.clipboard) return showToast(t('Skopiuj adres z paska przeglądarki – to link do tej analizy'))
     navigator.clipboard.writeText(href).then(
       () => showToast(t('Skopiowano link do tej analizy')),
@@ -454,10 +458,12 @@ export default function Start() {
 
   // ── raport PDF: te same parametry co analiza ─────────────────────────────────────────────
   const report = useReportDownload(
-    parcel && analysis ? { parcelId: parcel.id, numer: parcel.numer, crop: analysis.crop, date: asOf } : null,
+    parcel && analysis
+      ? { parcelId: parcel.id, point: approxPoint, numer: approxPoint ? 'obszar' : parcel.numer, crop: analysis.crop, date: asOf, cropHistory: history, area }
+      : null,
   )
   const clearReportError = report.clearError
-  useEffect(() => clearReportError(), [parcel?.id, crop, asOf, clearReportError])
+  useEffect(() => clearReportError(), [parcel?.id, crop, asOf, history, area, clearReportError])
   // telefon: błąd raportu ma być widoczny – szuflada do połowy
   useEffect(() => {
     if (report.error && isMobile) setSnap('half')
@@ -519,12 +525,22 @@ export default function Start() {
               : layerState.data.source_tag.date
               ? t('Dane z {date}', { date: formatDatePl(layerState.data.source_tag.date) })
               : (layerState.data.source_tag.source ?? '')
-  const panelProps = {
-    state: search,
+  const refine = {
     crop,
-    onCropChange: (c: CropId) => {
+    onCropChange: (c: CropId | null) => {
       if (parcel) setCrops((m) => ({ ...m, [parcel.id]: c }))
     },
+    history,
+    onHistoryChange: (h: string[]) => {
+      if (parcel) setHistories((m) => ({ ...m, [parcel.id]: h }))
+    },
+    onAreaChange: (ha: number | null) => {
+      if (parcel) setAreas((m) => ({ ...m, [parcel.id]: ha }))
+    },
+  }
+  const panelProps = {
+    state: search,
+    refine,
     asOf,
     forecastState,
     run,
@@ -538,11 +554,11 @@ export default function Start() {
     onFocusSearch: focusSearch,
     onLocate: locate,
     report,
-    onCopyLink: parcel ? copyLink : undefined,
     onOpenPassport: openPassport,
     onShowOnMap: showOnMap,
     onReportInfra: openInfra,
     onExample: openExample,
+    onClose: backToExplore,
   }
 
   // przeglądanie mapy: dopóki nie wybrano działki – sama mapa (pola uprawne podświetlone) i mały pasek
@@ -559,25 +575,22 @@ export default function Start() {
     setInsidePopup(null)
     setPendingPoint(null)
     setView('2d')
-    writeLink({ dzialka: null, uprawa: null, data: null, widok: null })
+    writeLink({ dzialka: null, uprawa: null, data: null, historia: [], widok: null })
     if (isMobile) setSnap('collapsed')
   }
 
   const searchBar = (
     <SearchBar
-      loading={search.phase === 'loading' || placeBusy}
-      error={placeError ?? (search.phase === 'error' && userActed.current ? t(search.error.title, search.error.vars) : null)}
-      places={places}
-      onPickPlace={pickPlace}
+      loading={search.phase === 'loading'}
+      error={search.phase === 'error' && userActed.current ? t(search.error.title, search.error.vars) : null}
+      onPickResult={pickResult}
       candidates={candidates}
       total={search.phase === 'candidates' ? search.total : candidates.length}
       onSearch={onSearch}
       onPick={pickCandidate}
-      selected={parcel ? `${parcel.obreb} ${parcel.numer}` : null}
+      selected={parcel ? (parcel.source === 'approximate' ? t('Obszar przybliżony') : `${parcel.obreb} ${parcel.numer}`) : null}
       placeholder={isMobile ? t('Numer działki') : undefined}
       onDismiss={() => {
-        setPlaces([])
-        setPlaceError(null)
         if (candidates.length) {
           setCandidates([])
           setSearch({ phase: 'idle' })
@@ -779,8 +792,7 @@ export default function Start() {
                   <div className="-m-5">
                     <ParcelSummary
                       parcel={parcel}
-                      crop={crop}
-                      onCropChange={panelProps.onCropChange}
+                      refine={refine}
                       run={run}
                       onRetryAnalysis={retryAnalysis}
                       onExpand={() => setUi({ panel: true })}
@@ -860,6 +872,7 @@ export default function Start() {
                   saved={parcel ? isSaved(parcel.id) : false}
                   onToggleSave={panelProps.onToggleSave}
                   onCopied={panelProps.onCopied}
+                  onClose={backToExplore}
                   status={analysis?.status.level ?? 'no_data'}
                   onReport={analysis ? report.download : undefined}
                   reportBusy={report.busy}

@@ -3,7 +3,7 @@ import { STATUS, type Status } from '@/theme/status'
 import { useLang } from '@/lib/i18n'
 
 /** Etykieta-pigułka w środku działki: numer + ikona stanu (SPEC 5.1, 14 ParcelLabel). */
-export function ParcelLabel({ number, status }: { number: string; status: Status }) {
+export function ParcelLabel({ number, status, approx }: { number: string; status: Status; approx?: boolean }) {
   const { t } = useLang()
   const s = STATUS[status]
   const Icon = s.icon
@@ -12,7 +12,7 @@ export function ParcelLabel({ number, status }: { number: string; status: Status
       <span className="flex size-6 items-center justify-center rounded-full bg-ok-soft text-brand">
         <Leaf className="size-4" aria-hidden />
       </span>
-      {t('Działka {numer}', { numer: number })}
+      {approx ? t('Obszar przybliżony') : t('Działka {numer}', { numer: number })}
       <span className={`flex items-center gap-1 text-xs font-medium ${s.fg}`}>
         <Icon className="size-4" aria-hidden />
         {t(s.label)}

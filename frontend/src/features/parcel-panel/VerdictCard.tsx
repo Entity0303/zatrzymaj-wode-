@@ -1,5 +1,6 @@
-import { Check, CircleAlert, CircleCheck, CircleX, Droplet, X, type LucideIcon } from 'lucide-react'
+import { ChevronDown, Check, CircleAlert, CircleCheck, CircleX, Droplet, X, type LucideIcon } from 'lucide-react'
 import type { Verdict, VerdictStatementLevel } from '@/api/types'
+import { useState } from 'react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useLang } from '@/lib/i18n'
 
@@ -16,8 +17,24 @@ const LEVEL: Record<VerdictStatementLevel, { icon: LucideIcon; color: string; so
  * (ok / uwaga / źle / niebieska kropla = co zrobić z wodą), chipy „Siej ✓” i „Nie siej ✕” (powód w dymku), uwaga.
  * Deterministyczny – liczy backend, bez AI.
  */
-export function VerdictCard({ verdict, compact }: { verdict: Verdict; compact?: boolean }) {
+export function VerdictCard({
+  verdict,
+  compact,
+  limit,
+  hideCrops,
+}: {
+  verdict: Verdict
+  compact?: boolean
+  /** ile zdań pokazać od razu (reszta pod „Pokaż wszystko”) */
+  limit?: number
+  /** bez chipów „Siej / Nie siej” – gdy obok jest ranking „Co tu posiać?” */
+  hideCrops?: boolean
+}) {
   const { t } = useLang()
+  const [all, setAll] = useState(false)
+  // przy rankingu obok zdanie o uprawach go powtarza – pomijamy je w skrócie
+  const statements = hideCrops ? verdict.statements.filter((s) => s.kind !== 'uprawy') : verdict.statements
+  const shown = limit && !all ? statements.slice(0, limit) : statements
   const head = LEVEL[verdict.level]
   const HeadIcon = head.icon
   const good = verdict.crops_good ?? []
@@ -33,7 +50,7 @@ export function VerdictCard({ verdict, compact }: { verdict: Verdict; compact?: 
       </header>
 
       <ul className="space-y-2.5 px-4 py-3">
-        {verdict.statements.map((s, i) => {
+        {shown.map((s, i) => {
           const l = LEVEL[s.level]
           const Icon = l.icon
           return (
@@ -47,8 +64,19 @@ export function VerdictCard({ verdict, compact }: { verdict: Verdict; compact?: 
           )
         })}
       </ul>
+      {limit != null && statements.length > limit && (
+        <button
+          type="button"
+          aria-expanded={all}
+          onClick={() => setAll((a) => !a)}
+          className="-mt-1 flex min-h-10 items-center gap-1 px-4 pb-2 text-sm font-semibold text-brand hover:underline"
+        >
+          {all ? t('Pokaż mniej') : t('Pokaż wszystko ({n})', { n: statements.length })}
+          <ChevronDown className={`size-4 transition-transform ${all ? 'rotate-180' : ''}`} aria-hidden />
+        </button>
+      )}
 
-      {(good.length > 0 || bad.length > 0) && (
+      {!hideCrops && (good.length > 0 || bad.length > 0) && (
         <div className="space-y-2 border-t px-4 py-3">
           {good.length > 0 && (
             <div className="flex flex-wrap items-center gap-1.5">
