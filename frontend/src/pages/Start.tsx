@@ -15,6 +15,7 @@ import { POLAND_CENTER, ParcelMap, type BaseMap } from '@/features/map/ParcelMap
 import { MobileSheetHeader } from '@/features/parcel-panel/MobileSheetHeader'
 import { ParcelPanel } from '@/features/parcel-panel/ParcelPanel'
 import { Passport } from '@/features/passport/Passport'
+import { InfraReportWizard } from '@/features/infra-reports/InfraReportWizard'
 import type { SearchPhase } from '@/features/parcel-panel/types'
 import { useAnalysis } from '@/features/parcel-panel/useAnalysis'
 import { SearchBar } from '@/features/search/SearchBar'
@@ -90,6 +91,9 @@ export default function Start() {
   // paszport wodny: przypięty do konkretnego wyniku – nowa analiza go zamyka
   const [passportFor, setPassportFor] = useState<object | null>(null)
   const [highlight, setHighlight] = useState<GeoJSON.Geometry | null>(null)
+  // zgłoszenie rowu/zbiornika: otwarty kreator, wskazane miejsce, tryb wskazywania na mapie
+  const [infra, setInfra] = useState<{ point: [number, number] | null; picking: boolean } | null>(null)
+  const [infraRefresh, setInfraRefresh] = useState(0)
 
   const mapRef = useRef<LeafletMap>(null)
   const mainRef = useRef<HTMLElement>(null)
@@ -180,6 +184,11 @@ export default function Start() {
   }
 
   function onMapClick(lon: number, lat: number) {
+    if (infra?.picking) {
+      setInfra({ point: [lon, lat], picking: false })
+      if (isMobile) setSnap('full')
+      return
+    }
     if (parcel && parcelContains(parcel, lon, lat)) {
       // SPEC 5.4: klik wewnątrz działki = wartość aktywnej warstwy w punkcie
       const name = t(layerByKey(layer).label)
@@ -331,6 +340,20 @@ export default function Start() {
     else map.flyToBounds(b, { ...opts, duration: 0.8 })
   }
 
+  // ── zgłoszenia rowów i zbiorników (SPEC 11) ─────────────────────────────────────────────
+  function openInfra() {
+    const c = parcel ? parcelBounds(parcel).getCenter() : null
+    setPassportFor(null)
+    setInfra({ point: c ? [c.lng, c.lat] : null, picking: false })
+    if (isMobile) setSnap('full')
+  }
+  const closeInfra = () => setInfra(null)
+  const infraOpen = !!infra && !infra.picking
+  const infraMarker = useMemo<GeoJSON.Geometry | null>(
+    () => (infra?.point ? { type: 'Point', coordinates: infra.point } : null),
+    [infra?.point],
+  )
+
   // ── raport PDF: te same parametry co analiza ─────────────────────────────────────────────
   const report = useReportDownload(
     parcel && crop && analysis ? { parcelId: parcel.id, numer: parcel.numer, crop, date: asOf } : null,
@@ -409,6 +432,7 @@ export default function Start() {
     onCopyLink: parcel ? copyLink : undefined,
     onOpenPassport: openPassport,
     onShowOnMap: showOnMap,
+    onReportInfra: openInfra,
   }
 
   const searchBar = (
@@ -461,7 +485,8 @@ export default function Start() {
             pendingPoint={pendingPoint}
             userPoint={userPoint}
             insidePopup={insidePopup}
-            highlight={highlight}
+            highlight={infra ? infraMarker : highlight}
+            infraRefresh={infraRefresh}
             insets={insets}
             reducedMotion={reducedMotion}
             onMapClick={onMapClick}
@@ -539,7 +564,17 @@ export default function Start() {
               style={{ bottom: FLOAT_BOTTOM, width: passportOpen ? `min(${PASSPORT_W}px, calc(100% - 120px))` : undefined }}
             >
               <div className="min-h-0 flex-1 overflow-y-auto p-5">
-                {passportOpen && analysis ? (
+                {infraOpen ? (
+                  <div className="-m-5 h-[calc(100%+40px)]">
+                    <InfraReportWizard
+                      parcel={parcel}
+                      point={infra.point}
+                      onPickPoint={() => setInfra({ point: infra.point, picking: true })}
+                      onClose={closeInfra}
+                      onSaved={() => setInfraRefresh((n) => n + 1)}
+                    />
+                  </div>
+                ) : passportOpen && analysis ? (
                   <Passport analysis={analysis} onClose={closePassport} report={report} onCopyLink={copyLink} onShowOnMap={showOnMap} />
                 ) : (
                   <ParcelPanel {...panelProps} />
@@ -587,7 +622,20 @@ export default function Start() {
                 />
               }
             >
-              {passportOpen && analysis ? (
+              {infraOpen ? (
+                <div className="-mx-4 -mb-6">
+                  <InfraReportWizard
+                    parcel={parcel}
+                    point={infra.point}
+                    onPickPoint={() => {
+                      setInfra({ point: infra.point, picking: true })
+                      setSnap('collapsed')
+                    }}
+                    onClose={closeInfra}
+                    onSaved={() => setInfraRefresh((n) => n + 1)}
+                  />
+                </div>
+              ) : passportOpen && analysis ? (
                 <div className="px-1 pt-5">
                   <Passport analysis={analysis} onClose={closePassport} report={report} onCopyLink={copyLink} onShowOnMap={showOnMap} />
                 </div>
@@ -613,6 +661,22 @@ export default function Start() {
               </div>
               )}
             </MobileSheet>
+          )}
+
+          {infra?.picking && (
+            <div role="status" className="absolute top-[176px] left-1/2 z-[1460] flex -translate-x-1/2 items-center gap-3 rounded-full bg-text py-2 pr-2 pl-4 text-sm text-white shadow-float md:top-[132px]">
+              {t('Kliknij na mapie miejsce rowu lub zbiornika')}
+              <button
+                type="button"
+                onClick={() => {
+                  setInfra({ point: infra.point, picking: false })
+                  if (isMobile) setSnap('full')
+                }}
+                className="h-9 rounded-full bg-white/15 px-3 font-medium hover:bg-white/25"
+              >
+                {t('Anuluj')}
+              </button>
+            </div>
           )}
 
           {/* wydruk paszportu: osobna kopia poza układem mapy (window.print) */}

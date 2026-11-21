@@ -1,5 +1,15 @@
 /** Klient API: zapytania do backendu i tłumaczenie błędów na prosty polski. Typy: ./types.ts */
-import type { AnalysisResponse, CropId, Forecast, LayerKey, LayerResponse, Parcel, PointValue } from './types'
+import type {
+  AnalysisResponse,
+  CropId,
+  Forecast,
+  InfraReport,
+  InfraReportIn,
+  LayerKey,
+  LayerResponse,
+  Parcel,
+  PointValue,
+} from './types'
 
 export class ApiError extends Error {
   status: number
@@ -25,6 +35,18 @@ async function get<T>(path: string, params: Record<string, string | number>, sig
   return body as T
 }
 
+async function post<T>(path: string, body: unknown): Promise<T> {
+  let res: Response
+  try {
+    res = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+  } catch {
+    throw new ApiError(0, null, 'Brak połączenia z serwerem aplikacji.')
+  }
+  const data = await res.json().catch(() => null)
+  if (!res.ok) throw new ApiError(res.status, data?.detail ?? data)
+  return data as T
+}
+
 export const api = {
   parcelById: (id: string) => get<Parcel>('/api/parcel', { id }),
   parcelByPoint: (lon: number, lat: number) =>
@@ -40,6 +62,13 @@ export const api = {
   /** GET /api/layers/{layer}/point – wartość warstwy w klikniętym punkcie (SPEC 5.4) */
   layerPoint: (layer: LayerKey, lon: number, lat: number, date: string) =>
     get<PointValue>(`/api/layers/${layer}/point`, { lon: lon.toFixed(7), lat: lat.toFixed(7), date }),
+  /** GET /api/infra-reports – zgłoszenia rowów/zbiorników w prostokącie [lon_min, lat_min, lon_max, lat_max] */
+  infraReports: (b: [number, number, number, number], signal?: AbortSignal) =>
+    get<InfraReport[]>('/api/infra-reports', { lon_min: b[0], lat_min: b[1], lon_max: b[2], lat_max: b[3] }, signal),
+  /** POST /api/infra-reports – nowe zgłoszenie (SPEC 11) */
+  createInfraReport: (r: InfraReportIn) => post<InfraReport>('/api/infra-reports', r),
+  /** POST /api/infra-reports/{id}/confirm – „Potwierdzam” */
+  confirmInfraReport: (id: string) => post<InfraReport>(`/api/infra-reports/${encodeURIComponent(id)}/confirm`, {}),
   /** GET /api/report.pdf – te same parametry co analiza; odpowiedź to plik PDF */
   reportPdf: async (parcelId: string, crop: CropId, date: string): Promise<Blob> => {
     const params: Record<string, string> = { parcel_id: parcelId, crop, date }

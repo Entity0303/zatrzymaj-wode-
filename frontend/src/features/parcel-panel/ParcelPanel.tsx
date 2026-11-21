@@ -1,4 +1,4 @@
-import { BookOpenText, FileDown, Link2, Loader2 } from 'lucide-react'
+import { BookOpenText, FileDown, Link2, Loader2, Waves } from 'lucide-react'
 import type { ErrorInfo } from '@/api/client'
 import type { CropId } from '@/api/types'
 import { EmptyState } from '@/components/EmptyState'
@@ -47,6 +47,7 @@ export function ParcelPanel({
   onCopyLink,
   onOpenPassport,
   onShowOnMap,
+  onReportInfra,
 }: {
   state: SearchPhase
   crop: CropId | null
@@ -72,6 +73,8 @@ export function ParcelPanel({
   onOpenPassport?: () => void
   /** podświetla miejsce rekomendacji na mapie */
   onShowOnMap?: (g: GeoJSON.Geometry) => void
+  /** zgłoszenie stanu rowu / zbiornika w okolicy (SPEC 11) */
+  onReportInfra?: () => void
 }) {
   const { t } = useLang()
   const [settings] = useSettings()
@@ -229,6 +232,15 @@ export function ParcelPanel({
           <p className="text-center text-sm text-text-muted">{t('Pełny paszport wodny pojawi się po analizie')}</p>
         )}
       </div>
+      {onReportInfra && (
+        <button
+          type="button"
+          onClick={onReportInfra}
+          className="flex min-h-11 w-full items-center justify-center gap-2 rounded-md text-sm font-medium text-brand hover:bg-sage-soft"
+        >
+          <Waves className="size-4" aria-hidden /> {t('Zgłoś stan rowu lub zbiornika w okolicy')}
+        </button>
+      )}
       <footer className="border-t pt-3 text-xs leading-4 text-text-muted">
         {t('Dane:')}{' '}
         {analysis

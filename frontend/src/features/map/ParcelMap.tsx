@@ -17,6 +17,7 @@ import type { Status } from '@/theme/status'
 import { parcelBounds, type MapInsets } from './geo'
 import { layerByKey, type LayerKey } from './layers'
 import { ParcelLabel } from './ParcelLabel'
+import { InfraPins } from '@/features/infra-reports/InfraPins'
 import { useLang } from '@/lib/i18n'
 
 export type BaseMap = 'orto' | 'osm'
@@ -109,6 +110,8 @@ type Props = {
   onClosePopup: () => void
   /** miejsce rekomendacji („Pokaż na mapie”) */
   highlight?: GeoJSON.Geometry | null
+  /** zgłoszenia rowów/zbiorników wokół działki; zmiana `infraRefresh` = ponowne pobranie */
+  infraRefresh?: number
 }
 
 export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
@@ -130,12 +133,20 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
     onSelectCandidate,
     onClosePopup,
     highlight,
+    infraRefresh = 0,
   },
   ref,
 ) {
   const { t } = useLang()
   const ActiveOverlay = layerByKey(layer).Overlay
   const labelPos = useMemo(() => (parcel ? parcelBounds(parcel).getCenter() : null), [parcel])
+  // obszar zgłoszeń: działka + ok. 1,5 km dookoła
+  const infraBox = useMemo<[number, number, number, number] | null>(() => {
+    if (!parcel) return null
+    const b = parcelBounds(parcel).pad(0)
+    const d = 0.015
+    return [b.getWest() - d, b.getSouth() - d, b.getEast() + d, b.getNorth() + d]
+  }, [parcel])
   return (
     <MapContainer
       ref={ref}
@@ -248,6 +259,8 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
           }
         />
       )}
+
+      <InfraPins bbox={infraBox} refresh={infraRefresh} />
 
       <FitTo parcel={parcel} candidates={candidates} insets={insets} reducedMotion={reducedMotion} />
       <Events onClick={onMapClick} onMoveEnd={onMoveEnd} />
