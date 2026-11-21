@@ -90,6 +90,33 @@
       "source_tag": { "kind": "pomiar", "date": null, "source": "IUNG-PIB SMSR" }
     }
   },
+  "crop_season": {
+    "phase": "pelnia",
+    "phase_label": "pełnia rozwoju",
+    "season_year": 2026,
+    "season_start": "2026-03-01",
+    "harvest": "2026-07-20",
+    "day_of_season": 107,
+    "sensitive": true,
+    "root_depth_m": 1.0
+  },
+  "soil_water": {
+    "scope": "strefa_korzeni",
+    "depth_m": 1.0,
+    "description": "pełnia rozwoju – rośliny zaczną odczuwać brak wody za ok. 6 dni",
+    "rank": { "lower_years": 2, "of_years": 10 },
+    "last_season": null
+  },
+  "irrigation": {
+    "status": "zalecane",
+    "message": "22,5 mm ok. 20.06, powtórz za ok. 5 dni (łącznie ok. 30 mm w 7 dni)",
+    "dose_mm": 22.5,
+    "first_date": "2026-06-20",
+    "interval_days": 5,
+    "total_7d_mm": 30,
+    "doses_7d": 2,
+    "source_tag": { "kind": "prognoza", "date": "2026-06-15", "source": "Open-Meteo + Model wody w glebie FAO-56" }
+  },
   "soil": {
     "dominant_code": 2,
     "dominant_label": "Kategoria II – podatna na suszę",

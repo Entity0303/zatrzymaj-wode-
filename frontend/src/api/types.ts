@@ -143,6 +143,71 @@ export type OverallStatus = {
   summary: string
 }
 
+/** Faza uprawy w dacie analizy. Wrażliwe na niedobór (stres, nawadnianie): poczatkowa, rozwoj, pelnia */
+export type CropPhase =
+  | 'przed_siewem'
+  | 'wschody_jesienne'
+  | 'spoczynek_zimowy'
+  | 'poczatkowa'
+  | 'rozwoj'
+  | 'pelnia'
+  | 'dojrzewanie'
+  | 'po_zbiorze'
+
+export type IrrigationStatus = 'zalecane' | 'niepotrzebne' | 'nieuzasadnione_w_fazie' | 'brak_danych'
+
+export type CropSeason = {
+  phase: CropPhase
+  /** np. 'pełnia rozwoju', 'po zbiorze' */
+  phase_label: string
+  season_year: number
+  /** siew / wznowienie wegetacji */
+  season_start: ISODate
+  /** typowy termin zbioru w Polsce */
+  harvest: ISODate
+  /** dzień sezonu w dacie analizy (1 = siew / wznowienie) */
+  day_of_season?: number | null
+  /** faza wrażliwa na niedobór – liczymy stres, możliwe zalecenie nawadniania */
+  sensitive: boolean
+  root_depth_m?: number | null
+}
+
+/** Podsumowanie zakończonego sezonu uprawy */
+export type SeasonSummary = {
+  year: number
+  stress_days: number | null
+  /** średnia z 10 poprzednich sezonów */
+  mean_prev_stress_days?: number | null
+}
+
+/** Stan wody w glebie w dacie analizy – także poza sezonem */
+export type SoilWaterState = {
+  /** strefa_korzeni – w fazach uprawy; profil (~1 m) – poza sezonem */
+  scope: 'strefa_korzeni' | 'profil'
+  depth_m: number
+  /** np. 'poza sezonem – gleba odbudowuje zapas wody' */
+  description: string
+  /** ten sam dzień w 10 poprzednich latach: w ilu latach było MNIEJ wody niż teraz, z ilu */
+  rank?: BalanceRank | null
+  /** zakończony sezon (po zbiorze / przed siewem) */
+  last_season?: SeasonSummary | null
+}
+
+export type IrrigationPlan = {
+  status: IrrigationStatus
+  /** np. '25 mm teraz, powtórz za ok. 5 dni' */
+  message: string
+  /** dawka jednorazowa zależna od gleby, nigdy > 35 mm */
+  dose_mm?: number | null
+  first_date?: ISODate | null
+  /** co ile dni powtarzać */
+  interval_days?: number | null
+  /** łączny niedobór do uzupełnienia w 7 dniach */
+  total_7d_mm?: number | null
+  doses_7d?: number | null
+  source_tag: SourceTag
+}
+
 /** Dlaczego ocena suszy rolniczej nie ma zastosowania (kody IUNG 11, 12, 13, 14, 5 łącznie > 50%) */
 export type NonAgriculturalReason = 'las' | 'woda' | 'zabudowa' | 'drogi' | 'gleby_organiczne'
 
@@ -276,6 +341,9 @@ export type AnalysisResponse = {
   generated_at: ISODateTime
   status: OverallStatus
   indicators: Indicators
+  crop_season: CropSeason
+  soil_water: SoilWaterState
+  irrigation: IrrigationPlan
   soil: Soil
   history: History
   causes: Cause[]

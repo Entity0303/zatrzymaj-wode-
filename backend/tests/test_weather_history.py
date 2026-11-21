@@ -156,8 +156,9 @@ def test_default_season_start(analysis, season):
 
 def test_history_range_only_before_analysis_date():
     # od 1 XI przed najstarszym sezonem porównawczym (okno zimowe modelu FAO-56, D28)
-    assert history_range(date(2018, 7, 15)) == (date(2007, 11, 1), date(2018, 7, 14))
-    assert history_range(date(2018, 2, 10)) == (date(2006, 11, 1), date(2018, 2, 9))
+    # od 1 VIII (rok − 12): ciągły bilans najstarszego sezonu porównawczego + stan początkowy (D28, D30)
+    assert history_range(date(2018, 7, 15)) == (date(2006, 8, 1), date(2018, 7, 14))
+    assert history_range(date(2018, 2, 10)) == (date(2006, 8, 1), date(2018, 2, 9))
 
 
 # ── bilans narastająco i pasmo ──────────────────────────────────────────────────────────────
@@ -288,7 +289,7 @@ def test_nasa_retry_once_then_ok_and_cache():
     _run(load_weather_history(22.62, 52.93, date(2018, 7, 15)))
     assert nasa.call_count == 2
     sent = nasa.calls.last.request.url.params
-    assert sent["start"] == "20071101" and sent["end"] == "20180714"
+    assert sent["start"] == "20060801" and sent["end"] == "20180714"
 
 
 @respx.mock

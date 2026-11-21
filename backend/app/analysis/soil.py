@@ -62,6 +62,7 @@ class SoilAssessment:
     not_agricultural: bool = False
     not_agricultural_reason: str | None = None
     not_agricultural_code: int | None = None
+    dominant_mineral: int | None = None  # kategoria I–IV z największym udziałem (dawka nawadniania)
     classes_note: str | None = None
     sources: list[SourceStatus] = field(default_factory=list)  # kontrakt: reliability.sources
     limitations: list[str] = field(default_factory=list)  # kontrakt: reliability.limitations
@@ -158,6 +159,7 @@ def _from_iung(r: SoilResult) -> SoilAssessment:
         not_agricultural=non_agri is not None,
         not_agricultural_reason=NON_AGRI_TEXT.get(non_agri) if non_agri is not None else None,
         not_agricultural_code=non_agri,
+        dominant_mineral=dom_min,
         sources=[
             SourceStatus(
                 name=iung.SOURCE_SHORT,

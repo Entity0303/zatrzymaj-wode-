@@ -4,6 +4,34 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-21 16:40 · `a/backend` · A3b: ciągły bilans, fazy upraw, realistyczne nawadnianie, stan wody poza sezonem
+**Co:**
+- Kontrakt (osobny commit acdf4da): `crop_season`, `soil_water` (zakres, opis, porównanie z tym samym dniem w 10 latach, podsumowanie zakończonego sezonu), `irrigation` (status, komunikat, dawka ≤ 35 mm, termin, częstotliwość, łączny niedobór 7 dni).
+- `analysis/crops.py`: terminy zbioru (PL), fazy FAO przeskalowane do siew–zbiór, typ uprawy (jara / ozima / jesienna / wieloletnia), siew jesienny ozimin, `day_info()` na każdy dzień roku (Kc, Zr, faza, wrażliwość, goła gleba), liniowy wzrost korzeni.
+- `analysis/water_balance.py`: ciągły bilans od 1 XI (1 VII) roku poprzedzającego sezon do dnia przed analizą; profil 1 m = strefa czynna + warstwa dolna (przenoszenie wody przy zmianie Zr); goła gleba Kc 0,35 × Kr (FAO-56 równ. 74); spoczynek Kc 0,4; nadmiar → warstwa dolna → przesiąkanie; stan początkowy z bilansu 92 dni przed oknem; dni stresu tylko w fazach wrażliwych; ryzyko i nawadnianie tylko w fazach wrażliwych; harmonogram dawek w 7 dniach (min. 2 dni odstępu); stan wody na każdą datę z opisem i rankingiem 10 lat; `history_range` od 1 VIII (rok − 12).
+- `routers/analysis.py`: `/api/dev/water` w nowym formacie (`crop_season`, `soil_water`, `irrigation`).
+- Testy: `tests/test_water_model.py` przepisany (42 przypadki + live).
+- Live (dev/water):
+
+| działka | uprawa | data | faza | woda % | mm | dni stresu | vs śr. 10 lat | ryzyko 7 dni | nawadnianie | czas |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 201305 | zboża ozime | 2018-07-15 | dojrzewanie | 42 (strefa) | 70 | 35 | 35 vs 10,4 | nie dotyczy | nieuzasadnione w tej fazie | 2,0 s |
+| 201305 | zboża ozime | 2021-07-15 | dojrzewanie | 59 (strefa) | 98 | 5 | 5 vs 13,2 | nie dotyczy | nieuzasadnione w tej fazie | 1,6 s |
+| 201305 | zboża ozime | 2026-11-21 | spoczynek zimowy | 98 (profil) | 164 | 27 | 27 vs 17,2 | nie dotyczy | nieuzasadnione w tej fazie | 1,7 s |
+| 201305 | kukurydza | 2018-07-15 | pełnia rozwoju | 69 (strefa) | 114 | 0 | 0 vs 1,3 | niskie | niepotrzebne | 0,03 s |
+| 201305 | kukurydza | 2021-07-15 | pełnia rozwoju | 82 (strefa) | 136 | 0 | 0 vs 1,6 | niskie | niepotrzebne | 0,02 s |
+| 201305 | kukurydza | 2026-11-21 | po zbiorze | 61 (profil) | 102 | 28 | 28 vs 16,0 | nie dotyczy | nieuzasadnione w tej fazie | 0,03 s |
+| 061704 | zboża ozime | 2018-07-15 | dojrzewanie | 37 (strefa) | 76 | 29 | 29 vs 3,6 | nie dotyczy | nieuzasadnione w tej fazie | 2,1 s |
+| 061704 | zboża ozime | 2021-07-15 | dojrzewanie | 50 (strefa) | 102 | 0 | 0 vs 6,4 | nie dotyczy | nieuzasadnione w tej fazie | 1,6 s |
+| 061704 | zboża ozime | 2026-11-21 | spoczynek zimowy | 73 (profil) | 149 | 31 | 31 vs 9,1 | nie dotyczy | nieuzasadnione w tej fazie | 1,7 s |
+| 061704 | kukurydza | 2018-07-15 | pełnia rozwoju | 80 (strefa) | 164 | 0 | 0 vs 0,5 | niskie | niepotrzebne | 0,02 s |
+| 061704 | kukurydza | 2021-07-15 | pełnia rozwoju | 71 (strefa) | 145 | 0 | 0 vs 0,8 | niskie | niepotrzebne | 0,02 s |
+| 061704 | kukurydza | 2026-11-21 | po zbiorze | 57 (profil) | 116 | 30 | 30 vs 19,1 | nie dotyczy | nieuzasadnione w tej fazie | 0,03 s |
+
+  Dodatkowo: pszenica 2018-06-10 (pełnia, stres) → „27,5 mm teraz, powtórz za ok. 2 dni (w 7 dniach 3 dawki, niedobór ok. 70 mm)” (201305, kat. III) / 32,5 mm (061704, kat. IV). Kukurydza 2018 cały sezon (2018-10-11): 5 vs 20,8 (201305), 1 vs 18,8 (061704) – **niezgodne z oczekiwaniem „2018 > średnia”**: wilgotna jesień 2017 (bilans VIII–X +164 mm) wypełniła profil, kukurydza ma mały popyt do VII i korzenie sięgają wilgotnej warstwy dolnej → do kalibracji z IUNG SMSR (status, „Następne” 3).
+**Pliki:** `backend/app/analysis/{crops,water_balance,soil}.py`, `backend/app/routers/analysis.py`, `backend/tests/{test_water_model,test_weather_history}.py`; kontrakt: `backend/app/schemas/analysis.py`, `frontend/src/api/types.ts`, `frontend/src/mocks/analysis.sample.json`.
+**Kontrakt API:** TAK – `crop_season`, `soil_water`, `irrigation` (osobny commit, wpis w `contract-changes.md`).
+
 ## 2026-11-21 16:21 · `a/backend` · A3: uprawy i model wody w glebie FAO-56 (+ sekcja gleby w kontrakcie)
 **Co:**
 - Kontrakt (osobny commit 0f7b511): sekcja `soil` w `AnalysisResponse` (dominująca, udziały IUNG, WOD, klasy EGiB + powód braku, `non_agricultural` + powód + komunikat); `analysis/soil.to_contract()`.

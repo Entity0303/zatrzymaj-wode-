@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { LangContext, applyLang, getLang, type Lang } from '@/lib/i18n'
 
-/** Trzyma wybrany język (D30) i przerysowuje komponenty korzystające z useLang. */
+/** Trzyma wybrany język (D35) i przerysowuje komponenty korzystające z useLang. */
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>(() => {
     const l = getLang()

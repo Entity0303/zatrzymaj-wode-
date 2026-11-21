@@ -112,14 +112,36 @@ Wpis: data · decyzja · uzasadnienie · konsekwencje. Zmieniany w osobnym mały
 **Uzasadnienie:** rolnik potrzebuje odpowiedzi „kiedy rośliny zaczną cierpieć”. Horyzont 16 dni = zasięg prognozy Open-Meteo.
 **Konsekwencje:** data analizy = dziś → prognoza Open-Meteo (opad, ET0), `source_tag = prognoza`; data historyczna (lub brak prognozy) → scenariusz typowej pogody: mediana opadu i ET0 z tych samych dni w 10 poprzednich latach, `source_tag = szacunek_modelu`. Luka opóźnienia NASA POWER (2–4 dni przed datą analizy) uzupełniana danymi Open-Meteo `past_days=7`, a gdy ich brak – scenariuszem (ograniczenie w odpowiedzi). Klasy: **wysokie** – RAW przekroczone już lub w ≤ 3 dni; **średnie** – 4–7 dni; **niskie** – później albo wcale w horyzoncie. Status „danger” (Susza), gdy stres trwa i Ks < 0,5.
 
-### D28 · 2026-11-21 · Zapas wody na start sezonu
+### D28 · 2026-11-21 · Zapas wody na start sezonu *(reset na start sezonu – zastąpiony ciągłym bilansem D30; okna 1 XI / 1 VII obowiązują)*
 **Uzasadnienie:** po suchej zimie profil nie jest pełny. Bez danych o wilgotności gleby przyjmujemy pojemność polową, zmniejszoną o deficyt bilansu P − ET0 w oknie przed sezonem: Dr0 = min(TAW, |bilans|), gdy bilans ujemny (mm za mm – proporcjonalnie do TAW).
 **Konsekwencje:** okno od 1 XI roku poprzedniego do startu (siew/wegetacja wiosenna); dla siewu letnio-jesiennego (rzepak jesień) od 1 VII – okno od listopada objęłoby całe lato poprzedniej uprawy. Zakres pobieranej pogody rozszerzony do 1 XI (rok sezonu − 11) – okno najstarszego sezonu porównawczego. Brak danych w oknie (> 20%) → start z pełnym profilem + ograniczenie.
 
-### D29 · 2026-11-21 · Nawadnianie i stan poza sezonem
+### D29 · 2026-11-21 · Nawadnianie i stan poza sezonem *(dawka i stan poza sezonem – zastąpione przez D33, D34)*
 **Uzasadnienie:** zalecenie tylko wtedy, gdy model pokazuje stres teraz lub w ciągu 7 dni; dawka liczona, nie zgadywana.
 **Konsekwencje:** dawka = ubytek do pojemności polowej w dniu przekroczenia RAW, zaokrąglona do 5 mm (min. 5 mm); powyżej 40 mm dopisek „w praktyce w N dawkach po ok. 30–35 mm”. Rekomendacja w formacie kontraktu (`category = nawadnianie`, dane wejściowe, pewność: średnia przy prognozie, ograniczona przy scenariuszu). Przed sezonem uprawy – brak wskaźników „na dziś” i brak dni stresu; po sezonie – tylko podsumowanie dni stresu zakończonego sezonu na tle 10 lat.
 
-### D30 · 2026-11-21 · Przełącznik języka PL | EN (domyślnie polski) – zmienia D9
+### D30 · 2026-11-21 · Ciągły bilans wody przez cały rok, dwie warstwy w profilu 1 m (zastępuje w D28 „reset” na start sezonu)
+**Uzasadnienie:** reset zapasu przy siewie ukrywał suche wiosny i nie pozwalał podać stanu wody poza sezonem. Siew zmienia tylko Kc i głębokość korzeni.
+**Metoda:** profil 1 m (WOD z IUNG, D25) = strefa czynna 0..Zr(t) + warstwa dolna Zr(t)..1 m. Zr(t): goła gleba Ze = 0,12 m (FAO-56 rozdz. 7: 0,10–0,15 m); uprawy – liniowo od siewu (Ze; oziminy po zimie 0,3 m) do Zr max na końcu fazy rozwoju; wieloletnie – stale Zr max. Zmiana Zr przenosi plaster wody między warstwami przy równym względnym ubytku. Opad efektywny → strefa czynna → nadmiar do warstwy dolnej → dalej przesiąkanie (zimowa odbudowa). Ewapotranspiracja z strefy czynnej: uprawa Ks·Kc·ET0; **goła gleba (przed siewem, po zbiorze): Kc 0,35 × Kr**, Kr wg FAO-56 równ. 74 z TEW = WOD·Ze i REW = min(9 mm, TEW/2) (tab. 19: REW 8–10 mm) – parowanie ustaje, gdy wierzchnia warstwa przeschnie; spoczynek zimowy (oziminy, wieloletnie): Kc 0,4 (tab. 12, pszenica ozima z zamarzniętą glebą).
+**Okno i stan początkowy:** od 1 XI roku poprzedzającego sezon (rzepak jesień: od 1 VII roku sezonu) do dnia przed analizą; dla daty przed startem sezonu – sezon poprzedni (stan liczony dalej bez przerwy). Na początku okna profil pomniejszony o deficyt bilansu P − ET0 z 92 dni przed oknem (stan po lecie), równy względny ubytek w obu warstwach. Zakres pobieranej pogody: od 1 VIII (rok − 12).
+
+### D31 · 2026-11-21 · Terminy zbioru i kalendarz upraw w Polsce
+**Terminy (zadanie A3b):** zboża ozime ok. 20 VII, jare ok. 5 VIII, rzepak ozimy ok. 15 VII, kukurydza na ziarno ok. 10 X, na kiszonkę ok. 15 IX, ziemniak ok. 15 IX, burak ok. 20 X. **Założenia:** strączkowe 10 VIII, warzywa gruntowe 31 VIII, tytoń 15 IX, rzepak jesień – koniec okresu jesiennego 30 XI, wieloletnie – 31 X; siew jesienny ozimin: pszenica 25 IX, rzepak 25 VIII (typowe terminy agrotechniczne).
+**Konsekwencje:** proporcje faz z FAO-56 tab. 11 przeskalowane do okresu start–zbiór (`Crop.phases`). Oziminy: od siewu jesiennego do 31 X „wschody jesienne” (należą do następnego sezonu), od 1 XI do końca II „spoczynek zimowy”.
+
+### D32 · 2026-11-21 · Dni stresu tylko w fazach wrażliwych; dojrzewanie nie liczone
+**Uzasadnienie:** niedobór wody najsilniej obniża plon w fazie początkowej, rozwoju i pełni (kwitnienie, nalewanie); w dojrzewaniu wrażliwość plonu jest najmniejsza (współczynniki Ky, FAO-33 Doorenbos i Kassam). Waga 0 zamiast ułamkowej – prostszy i czytelniejszy komunikat dla rolnika, bez pozornej precyzji.
+**Konsekwencje:** stres = faza wrażliwa i ubytek strefy korzeni > RAW. W dojrzewaniu, po zbiorze, przed siewem, we wschodach jesiennych i spoczynku: brak alarmu (`risk_7d` „Nie dotyczy”) i brak nawadniania – „Nawadnianie nieuzasadnione w tej fazie uprawy”.
+
+### D33 · 2026-11-21 · Realistyczne nawadnianie (zastępuje dawkę „do pojemności polowej” z D29)
+**Uzasadnienie:** jednorazowo gleba lekka przyjmie mniej wody niż ciężka; dawki 100+ mm są nierealne.
+**Konsekwencje:** dawka jednorazowa = środek przedziału dla dominującej kategorii gleby IUNG: I 17,5 mm, II 22,5 mm, III 27,5 mm, IV 32,5 mm (brak kategorii → 22,5 mm); nigdy > 35 mm. Harmonogram z symulacji 7 dni (prognoza / scenariusz): dawka, gdy ubytek strefy korzeni > RAW, nie częściej niż co 2 dni; częstotliwość = odstęp między dawkami (albo dawka / średnie (ETc − opad efektywny), 2–14 dni); łączny niedobór = największa nadwyżka ubytku nad RAW w 7 dniach bez nawadniania (Ks = 1), zaokrąglona do 5 mm. Komunikat np. „27,5 mm teraz, powtórz za ok. 2 dni (w 7 dniach 3 dawki, niedobór ok. 70 mm)”.
+
+### D34 · 2026-11-21 · Stan wody w glebie na każdą datę
+**Uzasadnienie:** dane do rekomendacji jesienno-zimowych (retencja, międzyplony) i odpowiedź „jak teraz jest z wodą” także w listopadzie.
+**Konsekwencje:** w fazach uprawy (początkowa…dojrzewanie) – strefa korzeni; poza nimi – cały profil ok. 1 m. Opis: < 50% → „niedobór wody po suchym lecie” (VIII–XII) / „po suchym okresie”; zapas rośnie (> 1 mm w 30 dni) → „gleba odbudowuje zapas wody”; ≥ 90% → „zapas wody w glebie odbudowany”; inaczej „zapas wody w normie”. Porównanie z tym samym dniem w 10 poprzednich latach (ciągły bilans każdego roku): w ilu latach było mniej wody. Podsumowanie zakończonego sezonu (dni stresu vs średnia 10 lat) jako informacja dodatkowa.
+
+### D35 · 2026-11-21 · Przełącznik języka PL | EN (domyślnie polski) – zmienia D9
 **Uzasadnienie:** prośba osoby B – interfejs ma być czytelny także dla osób nieznających polskiego (np. jury, goście). Polski zostaje językiem domyślnym, więc rolnik nic nie musi przełączać.
 **Konsekwencje:** własny mały moduł `frontend/src/lib/i18n.ts` (bez nowej zależności): kluczem tłumaczenia jest tekst polski (`t('Szukam działki')`, zmienne `{n}`), słownik `lib/i18n.en.ts`, brak wpisu = tekst polski. Wybór zapamiętany w przeglądarce (`zw.lang.v1`), przełącznik w górnym pasku. Liczby i daty w formacie języka. Teksty z backendu (komunikaty błędów, rekomendacje, opisy) zostają po polsku, dopóki backend nie obsłuży języka – wyjątek: opisy pogody Open-Meteo i teksty mocka są w słowniku. Nowy tekst w UI = nowy wpis w `i18n.en.ts`.
+*(pierwotnie zapisana jako D30 na gałęzi `b/frontend`; numer zmieniony przy scaleniu z `a/backend`, gdzie D30 to ciągły bilans wody)*

@@ -17,22 +17,27 @@ Wszystko wektorowo; pętle tylko po latach (≤ 10) i miesiącach (≤ 12).
 
 from dataclasses import dataclass, field
 from datetime import date, timedelta
+from math import ceil
 
 import numpy as np
 
-from app.analysis.crops import Crop
+from app.analysis.crops import PHASE_LABELS, Crop, DayInfo
 from app.analysis.et0 import DailyWeather
 from app.schemas.analysis import (
     BalanceRank,
     BandPoint,
+    CropSeason,
     DrySpell,
     Evidence,
     History,
     Indicator,
+    IrrigationPlan,
     MonthlyPrecip,
     Recommendation,
     RiskIndicator,
+    SeasonSummary,
     SeriesPoint,
+    SoilWaterState,
     SourceTag,
     YearStress,
 )
@@ -62,12 +67,13 @@ def default_season_start(analysis_date: date) -> date:
 
 
 def history_range(analysis_date: date, season_start: date | None = None, years: int = 10) -> tuple[date, date]:
-    """Zakres danych do pobrania: od 1 listopada (rok początku sezonu − years − 1) do dnia przed analizą.
+    """Zakres danych do pobrania: od 1 sierpnia (rok dnia przed analizą − years − 2) do dnia przed analizą.
 
-    Listopad–grudzień przed najstarszym sezonem porównawczym jest potrzebny do zapasu wody na start
-    sezonu w modelu FAO-56 (okno zimowe, D28)."""
-    s = season_start or default_season_start(analysis_date)
-    return date(s.year - years - 1, 11, 1), last_usable_day(analysis_date)
+    Pokrywa ciągły bilans modelu wody w glebie dla najstarszego sezonu porównawczego: okno od 1 XI
+    (lub 1 VII) roku poprzedzającego sezon + 3 miesiące na stan początkowy (D28, D30). `season_start`
+    zostawiony dla zgodności – zakres nie zależy już od sezonu bilansu KBW."""
+    end = last_usable_day(analysis_date)
+    return date(end.year - years - 2, 8, 1), end
 
 
 def shift_years(d: date, k: int) -> date:
@@ -322,24 +328,35 @@ def build_history(
 
 
 # ═══════════════════════════════════════════════════════════════════════════════════════════
-# Model wody w glebie FAO-56 („wiadro” strefy korzeniowej) – A3
+# Model wody w glebie FAO-56 – ciągły bilans przez cały rok (A3, poprawki A3b)
 # ═══════════════════════════════════════════════════════════════════════════════════════════
 #
-# Dr – ubytek wody w strefie korzeniowej [mm] (0 = pojemność polowa, TAW = punkt więdnięcia).
-# FAO-56 rozdz. 8: Dr,i = Dr,i−1 − (P − RO)i + Ks·Kc·ET0,i ; Dr < 0 → przesiąkanie (DP), Dr = 0.
-# Ks = 1 gdy Dr ≤ RAW, inaczej (TAW − Dr)/(TAW − RAW) (równanie 84). Stres = Dr > RAW.
+# Profil 1 m (WOD z IUNG, D25) dzielony na dwie warstwy (D30):
+#   strefa czynna 0..Zr(t) – korzenie uprawy albo warstwa parowania gołej gleby (Ze),
+#   warstwa dolna Zr(t)..1 m.
+# Stan: ubytki D1 (strefa) i D2 (dolna) [mm]; 0 = pojemność polowa. Zmiana Zr przenosi wodę
+# między warstwami przy równym względnym ubytku w przenoszonym plastrze. Opad efektywny zasila
+# strefę, nadmiar – warstwę dolną, dalszy nadmiar = przesiąkanie (zimowa odbudowa zapasu).
+# Ewapotranspiracja z strefy czynnej: uprawa – Ks·Kc·ET0 (FAO-56 równ. 84), goła gleba –
+# Kr·Kc_gleby·ET0 (dwuetapowe parowanie, FAO-56 rozdz. 7: REW, TEW = WOD·Ze).
+# Siew zmienia tylko Kc i Zr – NIE resetuje zapasu. Stres = faza wrażliwa i D1 > RAW = p·TAW strefy.
 
 PROFILE_DEPTH_M = 1.0  # WOD z IUNG odnosi się do profilu ok. 1 m (D25)
 RUNOFF_THRESHOLD_MM = 20.0  # spływ: 20% części opadu powyżej 20 mm/dzień (D26) –
 RUNOFF_FRACTION = 0.20  # parametry do nadpisania przez analizę terenu (NMT)
+REW_MAX_MM = 9.0  # łatwo odparowująca woda gołej gleby (FAO-56 tab. 19: 8–10 mm dla glin)
+INIT_DAYS = 92  # stan początkowy okna z bilansu 3 miesięcy przed oknem (D30)
 HORIZON_DAYS = 16  # „stres za X dni” – tyle dni ma prognoza Open-Meteo
 RISK_HIGH_DAYS = 3  # przekroczenie RAW w ≤ 3 dni (lub już) → wysokie (D27)
 RISK_MEDIUM_DAYS = 7  # 4–7 dni → średnie; później / wcale w 16 dniach → niskie
+CATEGORY_DOSE_MM = {1: 17.5, 2: 22.5, 3: 27.5, 4: 32.5}  # dawka jednorazowa wg kategorii gleby (D33)
+DEFAULT_DOSE_MM = 22.5
+MAX_DOSE_MM = 35.0
 MODEL_SOURCE = "Model wody w glebie FAO-56"
 
 
 def taw_from_wod(wod_mm: float, root_depth_m: float, profile_m: float = PROFILE_DEPTH_M) -> float:
-    """TAW strefy korzeniowej: WOD (profil ~1 m) × min(Zr, 1 m) / 1 m – korzenie głębsze nie zwiększają (D25)."""
+    """TAW warstwy 0..Zr: WOD (profil ~1 m) × min(Zr, 1 m) / 1 m – głębiej brak danych o glebie (D25)."""
     return wod_mm * min(root_depth_m, profile_m) / profile_m
 
 
@@ -357,90 +374,129 @@ def ks_coefficient(dr: float, taw: float, raw: float) -> float:
     return max(0.0, (taw - dr) / (taw - raw)) if taw > raw else 0.0
 
 
+def kr_coefficient(de: float, tew: float, rew: float) -> float:
+    """Redukcja parowania gołej gleby Kr (FAO-56, równanie 74)."""
+    if de <= rew:
+        return 1.0
+    return max(0.0, (tew - de) / (tew - rew)) if tew > rew else 0.0
+
+
+def window_start(crop: Crop, season_year: int) -> date:
+    """Początek ciągłego bilansu: 1 XI roku poprzedzającego sezon; uprawy siewu letnio-jesiennego – 1 VII (D28)."""
+    return date(season_year - 1, 11, 1) if crop.start[0] <= 6 else date(season_year, 7, 1)
+
+
 @dataclass
-class Run:
-    dr: np.ndarray  # ubytek na koniec dnia [mm]
-    ks: np.ndarray  # Ks użyte w danym dniu (ze stanu z początku dnia)
-    eta: np.ndarray  # ETc skorygowane Ks [mm]
-    dp: np.ndarray  # przesiąkanie poniżej strefy korzeniowej [mm]
-    missing: int  # dni bez danych (stan bez zmian)
-    raw: float
+class State:
+    d1: float  # ubytek strefy czynnej [mm]
+    d2: float  # ubytek warstwy dolnej [mm]
+    zr: float  # głębokość strefy czynnej [m]
 
-    @property
-    def stress_days(self) -> int:
-        """Dni stresu = dni, na których koniec Dr > RAW."""
-        return int((self.dr > self.raw).sum())
+    def total(self) -> float:
+        return self.d1 + self.d2
 
 
-def simulate(
+@dataclass
+class Trace:
+    dates: list[date]
+    d1: np.ndarray
+    dtot: np.ndarray
+    raw1: np.ndarray
+    zr: np.ndarray
+    phase: list[str]
+    stress: np.ndarray  # faza wrażliwa i D1 > RAW
+    season_year: np.ndarray
+    dp: np.ndarray  # przesiąkanie
+    missing: int
+
+
+def _resize(st: State, z_new: float, wod: float) -> None:
+    """Zmiana grubości strefy czynnej – przeniesienie plastra z równym względnym ubytkiem."""
+    z_new = min(z_new, PROFILE_DEPTH_M)
+    dz = z_new - st.zr
+    if abs(dz) < 1e-9:
+        return
+    if dz > 0:  # korzenie rosną – plaster z warstwy dolnej
+        lower = PROFILE_DEPTH_M - st.zr
+        move = st.d2 * dz / lower if lower > 1e-9 else 0.0
+        st.d2 -= move
+        st.d1 += move
+    else:  # strefa maleje (zbiór) – plaster wraca do warstwy dolnej
+        move = st.d1 * (-dz) / st.zr if st.zr > 1e-9 else 0.0
+        st.d1 -= move
+        st.d2 += move
+    st.zr = z_new
+
+
+def run(
+    crop: Crop,
+    wod: float,
+    dates: list[date],
     precip: np.ndarray,
     et0: np.ndarray,
-    kc: np.ndarray,
-    taw: float,
-    raw: float,
-    dr0: float,
+    st: State,
     runoff_threshold: float = RUNOFF_THRESHOLD_MM,
     runoff_fraction: float = RUNOFF_FRACTION,
-) -> Run:
-    """Dzienny bilans FAO-56 (sekwencyjny – każdy dzień zależy od poprzedniego).
-
-    Dzień z brakiem opadu lub ET0 (NaN) nie zmienia stanu i jest liczony w `missing`.
-    """
-    n = len(precip)
+) -> Trace:
+    """Dzienny bilans (sekwencyjny). Dzień bez opadu lub ET0 (NaN) nie zmienia stanu (`missing`)."""
+    n = len(dates)
     pe = effective_precip(np.asarray(precip, float), runoff_threshold, runoff_fraction)
-    etc = np.asarray(kc, float) * np.asarray(et0, float)
-    dr_out, ks_out, eta_out, dp_out = np.empty(n), np.ones(n), np.zeros(n), np.zeros(n)
-    dr, missing = min(max(dr0, 0.0), taw), 0
-    for i in range(n):
-        k = ks_coefficient(dr, taw, raw)
-        ks_out[i] = k
-        if np.isnan(pe[i]) or np.isnan(etc[i]):
+    et0 = np.asarray(et0, float)
+    out_d1, out_dt, out_raw, out_zr = np.empty(n), np.empty(n), np.empty(n), np.empty(n)
+    out_stress, out_sy, out_dp = np.zeros(n, bool), np.zeros(n, int), np.zeros(n)
+    phases: list[str] = []
+    missing = 0
+    for i, d in enumerate(dates):
+        info: DayInfo = crop.day_info(d)
+        _resize(st, info.zr, wod)
+        taw1 = wod * st.zr
+        raw1 = crop.p * taw1
+        if not (np.isnan(pe[i]) or np.isnan(et0[i])):
+            if info.bare:
+                rew = min(REW_MAX_MM, 0.5 * taw1)
+                et = kr_coefficient(st.d1, taw1, rew) * info.kc * et0[i]
+            else:
+                et = ks_coefficient(st.d1, taw1, raw1) * info.kc * et0[i]
+            st.d1 -= pe[i]
+            if st.d1 < 0:  # nadmiar do warstwy dolnej
+                st.d2 += st.d1
+                st.d1 = 0.0
+                if st.d2 < 0:  # dalej – przesiąkanie poniżej profilu
+                    out_dp[i] = -st.d2
+                    st.d2 = 0.0
+            st.d1 = min(st.d1 + et, taw1)
+        else:
             missing += 1
-            dr_out[i] = dr
-            continue
-        eta = k * etc[i]
-        dr = dr - pe[i] + eta
-        dp = 0.0
-        if dr < 0:
-            dp, dr = -dr, 0.0
-        dr = min(dr, taw)
-        dr_out[i], eta_out[i], dp_out[i] = dr, eta, dp
-    return Run(dr_out, ks_out, eta_out, dp_out, missing, raw)
+        out_d1[i], out_dt[i], out_raw[i], out_zr[i] = st.d1, st.total(), raw1, st.zr
+        out_stress[i] = info.sensitive and st.d1 > raw1
+        out_sy[i] = info.season_year
+        phases.append(info.phase)
+    return Trace(dates, out_d1, out_dt, out_raw, out_zr, phases, out_stress, out_sy, out_dp, missing)
 
 
-def kc_series(crop: Crop, first_day: int, n: int) -> np.ndarray:
-    """Kc dla kolejnych n dni sezonu od dnia `first_day` (NaN poza sezonem)."""
-    vals = [crop.kc(first_day + i) for i in range(n)]
-    return np.array([np.nan if v is None else v for v in vals], dtype=float)
-
-
-def winter_window_start(season_start: date) -> date:
-    """Okno bilansu przed sezonem: od 1 XI roku poprzedniego; dla siewu letnio-jesiennego od 1 VII (D28)."""
-    return date(season_start.year - 1, 11, 1) if season_start.month <= 6 else date(season_start.year, 7, 1)
-
-
-def initial_depletion(w: DailyWeather, season_start: date, taw: float) -> tuple[float, float | None, date]:
-    """Zapas na start sezonu: profil pełny (Dr = 0), chyba że bilans P − ET0 w oknie przed startem jest
-    ujemny – wtedy Dr0 = min(TAW, |bilans|) (D28). Zwraca (Dr0, bilans okna lub None przy brakach, okno)."""
-    ws = winter_window_start(season_start)
-    i0, i1 = _idx(w, ws), _idx(w, season_start) - 1
-    seg = _segment(w.climatic_water_balance, i0, i1 - i0 + 1)
+def initial_state(w: DailyWeather, crop: Crop, wod: float, start: date) -> tuple[State, float | None]:
+    """Stan na początek okna: profil pełny, pomniejszony o deficyt bilansu P − ET0 z 3 miesięcy
+    przed oknem (stan po lecie, D30); równy względny ubytek w obu warstwach."""
+    taw_p = wod * PROFILE_DEPTH_M
+    z = min(crop.day_info(start).zr, PROFILE_DEPTH_M)
+    i1 = _idx(w, start)
+    seg = _segment(w.climatic_water_balance, i1 - INIT_DAYS, INIT_DAYS)
     if seg is None or np.isnan(seg).mean() > MAX_MISSING_MONTH:
-        return 0.0, None, ws
+        return State(0.0, 0.0, z), None
     bal = float(np.nansum(seg))
-    return float(min(taw, max(0.0, -bal))), round(bal, 1), ws
+    f = min(1.0, max(0.0, -bal) / taw_p) if taw_p > 0 else 0.0
+    return State(f * wod * z, f * wod * (PROFILE_DEPTH_M - z), z), round(bal, 1)
 
 
-def round_dose(mm: float) -> int:
-    """Dawka nawadniania do pojemności polowej, zaokrąglona do 5 mm (min. 5 mm)."""
-    return int(max(5, 5 * round(mm / 5)))
+def _days(a: date, b: date) -> list[date]:
+    return [a + timedelta(days=k) for k in range((b - a).days + 1)]
 
 
-SINGLE_DOSE_MAX_MM = 40  # większą dawkę w praktyce dzieli się na kilka zabiegów (D29)
-
-
-def dose_hint(dose: int) -> str:
-    return f" W praktyce w {-(-dose // 35)} dawkach po ok. 30–35 mm." if dose > SINGLE_DOSE_MAX_MM else ""
+def _observed(w: DailyWeather, a: date, b: date) -> tuple[np.ndarray, np.ndarray] | None:
+    i0, i1 = _idx(w, a), _idx(w, b)
+    if i0 < 0 or i1 >= len(w.dates):
+        return None
+    return w.precip[i0 : i1 + 1], w.et0[i0 : i1 + 1]
 
 
 @dataclass
@@ -448,56 +504,6 @@ class HorizonDay:
     day: date
     precip: float
     et0: float
-
-
-@dataclass
-class Irrigation:
-    needed: bool
-    dose_mm: int | None = None
-    when: date | None = None  # termin (nazwa pola ≠ typ `date`)
-    text: str = "Nawadnianie niepotrzebne."
-
-
-@dataclass
-class SoilWaterResult:
-    crop_id: str
-    season_status: str  # "w_sezonie" | "przed_sezonem" | "po_sezonie" | "brak_danych"
-    season_start: date
-    season_end: date
-    taw_mm: float
-    raw_mm: float
-    root_depth_m: float
-    p: float
-    data_until: date | None = None
-    day_of_season: int | None = None
-    stage: str | None = None
-    kc: float | None = None
-    dr0_mm: float | None = None
-    winter_balance_mm: float | None = None
-    winter_window_start: date | None = None
-    dr_mm: float | None = None
-    water_pct: float | None = None  # 1 − Dr/TAW, %
-    water_mm: float | None = None  # TAW − Dr
-    raw_exceeded: bool | None = None
-    ks: float | None = None
-    stress_days_season: int | None = None
-    percolation_mm: float | None = None
-    stress_by_year: list[tuple[int, int | None]] = field(default_factory=list)  # bieżący + poprzednie lata
-    mean_prev_stress_days: float | None = None
-    horizon_kind: str | None = None  # "prognoza" | "scenariusz"
-    horizon_dr: list[tuple[date, float]] = field(default_factory=list)
-    days_to_stress: int | None = None  # 0 = stres trwa; None = brak w horyzoncie
-    risk: str | None = None  # "niskie" | "średnie" | "wysokie"
-    irrigation: Irrigation | None = None
-    limitations: list[str] = field(default_factory=list)
-
-
-def risk_class(days_to_stress: int | None) -> str:
-    if days_to_stress is not None and days_to_stress <= RISK_HIGH_DAYS:
-        return "wysokie"
-    if days_to_stress is not None and days_to_stress <= RISK_MEDIUM_DAYS:
-        return "średnie"
-    return "niskie"
 
 
 def climatology_horizon(w: DailyWeather, start: date, n: int, years: int = 10) -> list[HorizonDay]:
@@ -513,26 +519,80 @@ def climatology_horizon(w: DailyWeather, start: date, n: int, years: int = 10) -
     return out
 
 
-def _previous_years_stress(
-    w: DailyWeather, crop: Crop, season_year: int, n_days: int, taw: float, raw: float, years: int,
-    runoff_threshold: float, runoff_fraction: float,
-) -> tuple[list[tuple[int, int | None]], list[int]]:
-    """Dni stresu w tych samych `n_days` dniach sezonu w każdym z `years` poprzednich lat."""
-    kc = kc_series(crop, 0, n_days)
-    out: list[tuple[int, int | None]] = []
-    prev: list[int] = []
-    for k in range(1, years + 1):
-        sk = crop.season(season_year - k)[0]
-        i0 = _idx(w, sk)
-        p_k, e_k = _segment(w.precip, i0, n_days), _segment(w.et0, i0, n_days)
-        if p_k is None or e_k is None or np.isnan(p_k + e_k).mean() > MAX_MISSING_YEAR:
-            out.append((season_year - k, None))
-            continue
-        d0k, _, _ = initial_depletion(w, sk, taw)
-        sd = simulate(p_k, e_k, kc, taw, raw, d0k, runoff_threshold, runoff_fraction).stress_days
-        out.append((season_year - k, sd))
-        prev.append(sd)
-    return out, prev
+def risk_class(days_to_stress: int | None) -> str:
+    if days_to_stress is not None and days_to_stress <= RISK_HIGH_DAYS:
+        return "wysokie"
+    if days_to_stress is not None and days_to_stress <= RISK_MEDIUM_DAYS:
+        return "średnie"
+    return "niskie"
+
+
+def _fmt_mm(v: float) -> str:
+    return f"{v:.1f}".replace(".", ",").replace(",0", "")
+
+
+@dataclass
+class IrrigationResult:
+    status: str  # "zalecane" | "niepotrzebne" | "nieuzasadnione_w_fazie" | "brak_danych"
+    message: str
+    dose_mm: float | None = None
+    first_date: date | None = None
+    interval_days: int | None = None
+    total_7d_mm: float | None = None
+    doses_7d: int | None = None
+
+
+@dataclass
+class SoilWaterResult:
+    crop_id: str
+    status: str  # "ok" | "brak_danych"
+    season_year: int
+    season_start: date
+    harvest: date
+    phase: str
+    phase_label: str
+    sensitive: bool
+    day_of_season: int | None = None
+    kc: float | None = None
+    root_depth_m: float | None = None
+    taw_root_mm: float | None = None
+    raw_root_mm: float | None = None
+    taw_profile_mm: float | None = None
+    d1_mm: float | None = None
+    dtot_mm: float | None = None
+    data_until: date | None = None
+    window_start: date | None = None
+    init_balance_mm: float | None = None
+    scope: str = "profil"  # "strefa_korzeni" | "profil"
+    depth_m: float = PROFILE_DEPTH_M
+    water_pct: float | None = None
+    water_mm: float | None = None
+    description: str = ""
+    rank_lower: int | None = None  # w ilu latach tego dnia było mniej wody
+    rank_of: int | None = None
+    stress_days_season: int | None = None
+    season_complete: bool = False
+    stress_by_year: list[tuple[int, int | None]] = field(default_factory=list)
+    mean_prev_stress_days: float | None = None
+    percolation_mm: float | None = None
+    horizon_kind: str | None = None  # "prognoza" | "scenariusz"
+    horizon: list[tuple[date, float, float, str]] = field(default_factory=list)  # (dzień, D1, RAW, faza)
+    days_to_stress: int | None = None
+    risk: str | None = None
+    irrigation: IrrigationResult | None = None
+    limitations: list[str] = field(default_factory=list)
+
+
+def _metric(st: State, wod: float, scope: str) -> tuple[float, float, float]:
+    """(woda %, woda mm, głębokość) – strefa korzeni albo cały profil."""
+    if scope == "strefa_korzeni":
+        taw = wod * st.zr
+        return (100 * (1 - st.d1 / taw) if taw > 0 else 0.0), taw - st.d1, st.zr
+    taw = wod * PROFILE_DEPTH_M
+    return (100 * (1 - st.total() / taw) if taw > 0 else 0.0), taw - st.total(), PROFILE_DEPTH_M
+
+
+IN_SEASON_SCOPE = {"poczatkowa", "rozwoj", "pelnia", "dojrzewanie"}
 
 
 def soil_water_model(
@@ -541,149 +601,187 @@ def soil_water_model(
     wod_mm: float,
     analysis_date: date,
     forecast: list[HorizonDay] | None = None,
+    soil_category: int | None = None,
     years: int = 10,
     runoff_threshold: float = RUNOFF_THRESHOLD_MM,
     runoff_fraction: float = RUNOFF_FRACTION,
 ) -> SoilWaterResult:
-    """Model wody w glebie dla uprawy na datę analizy (dane do dnia przed datą).
-
-    `forecast` – dni z Open-Meteo (także ostatnie dni przed datą analizy, gdy źródło historyczne
-    ma opóźnienie); None → scenariusz klimatologiczny (data historyczna lub brak prognozy).
-    """
-    end = last_usable_day(analysis_date)
-    taw = taw_from_wod(wod_mm, crop.root_depth_m)
-    raw = crop.p * taw
-    s, e = crop.season(end.year)
-    res = SoilWaterResult(crop.id, "brak_danych", s, e, round(taw, 1), round(raw, 1), crop.root_depth_m, crop.p)
+    """Ciągły bilans od początku okna (1 XI / 1 VII) do dnia przed datą analizy, stan na datę analizy,
+    dni stresu w sezonie na tle 10 lat, ryzyko 7 dni i plan nawadniania (tylko fazy wrażliwe)."""
+    L = last_usable_day(analysis_date)
+    sy = crop.season_year_for(L)
+    s, h = crop.season(sy)
+    ws = window_start(crop, sy)
+    info = crop.day_info(analysis_date)
+    res = SoilWaterResult(
+        crop.id, "brak_danych", sy, s, h, info.phase, PHASE_LABELS[info.phase], info.sensitive,
+        day_of_season=None if info.day_of_season is None else info.day_of_season + 1,
+        kc=round(info.kc, 2), window_start=ws, taw_profile_mm=round(wod_mm * PROFILE_DEPTH_M, 1),
+    )
     lim = res.limitations
 
-    if end < s:
-        res.season_status = "przed_sezonem"
-        lim.append(f"Poza sezonem wegetacji tej uprawy (sezon w modelu: {s:%d.%m}–{e:%d.%m}).")
-        return res
-
+    # ── dane: obserwacje do ostatniego dnia z kompletem, luka (opóźnienie źródła) – prognoza/scenariusz ──
     kbw = w.climatic_water_balance
-    i_req = min(_idx(w, min(end, e)), len(w.dates) - 1)
+    i_req = min(_idx(w, L), len(w.dates) - 1)
     valid = np.flatnonzero(~np.isnan(kbw[: i_req + 1])) if i_req >= 0 else np.array([], dtype=int)
     data_until = w.dates[valid[-1]].astype(object) if valid.size else None
-    if data_until is None or data_until < s:
-        lim.append("Brak danych pogodowych od początku sezonu uprawy.")
+    obs = _observed(w, ws, data_until) if data_until and data_until >= ws else None
+    if obs is None or _idx(w, ws) - INIT_DAYS < 0:
+        lim.append("Za mało danych pogodowych do modelu wody w glebie.")
+        res.irrigation = IrrigationResult("brak_danych", "Brak danych do oceny nawadniania.")
         return res
     res.data_until = data_until
-    after = end > e
-    res.season_status = "po_sezonie" if after else "w_sezonie"
-    if after:
-        lim.append(
-            f"Poza sezonem wegetacji tej uprawy (sezon w modelu: {s:%d.%m}–{e:%d.%m}) – "
-            "pokazujemy tylko podsumowanie zakończonego sezonu."
-        )
-
-    # ── bieżący sezon: od startu do ostatniego dnia z danymi ──
-    n = (data_until - s).days + 1
-    i_s = _idx(w, s)
-    kc = kc_series(crop, 0, n)
-    dr0, wbal, wstart = initial_depletion(w, s, taw)
-    res.dr0_mm, res.winter_balance_mm, res.winter_window_start = round(dr0, 1), wbal, wstart
-    if wbal is None:
-        lim.append(f"Brak danych o bilansie przed sezonem (od {format_date_pl(wstart)}) – start z pełnym profilem.")
-    elif dr0 > 0:
-        lim.append(
-            f"Przed sezonem (od {format_date_pl(wstart, with_year=False)}) bilans wody {format_mm(wbal)} mm – "
-            f"start sezonu z niepełnym zapasem (ubytek {round(dr0)} mm)."
-        )
-    run = simulate(w.precip[i_s : i_s + n], w.et0[i_s : i_s + n], kc, taw, raw, dr0, runoff_threshold, runoff_fraction)
-    if run.missing:
-        lim.append(f"{run.missing} dni sezonu bez danych pogodowych – stan gleby w tych dniach bez zmian.")
-    dr = float(run.dr[-1])
-    res.stress_days_season = run.stress_days
-    res.percolation_mm = round(float(run.dp.sum()), 1)
-
-    def compare(n_days: int) -> None:
-        prev_list, prev = _previous_years_stress(
-            w, crop, s.year, n_days, taw, raw, years, runoff_threshold, runoff_fraction
-        )
-        res.stress_by_year = [(s.year, res.stress_days_season)] + prev_list
-        res.mean_prev_stress_days = round(float(np.mean(prev)), 1) if prev else None
-        if len(prev) < years:
-            lim.append(f"Dni stresu porównane z {len(prev)} z {years} poprzednich lat (pozostałe – niepełne dane).")
-
-    if after:
-        compare(n)
-        return res  # po sezonie: bez stanu „na dziś”, bez ryzyka i nawadniania
-
-    # ── luka między ostatnim dniem z danymi a dniem przed analizą (opóźnienie źródła) ──
-    gap_days = (end - data_until).days
-    fc = {h.day: h for h in (forecast or [])}
-    if gap_days > 0:
-        bridge = [fc.get(data_until + timedelta(days=k + 1)) for k in range(gap_days)]
-        if all(b is not None for b in bridge):
-            note = f"Ostatnie {gap_days} dni przed datą analizy uzupełnione danymi modelu Open-Meteo."
+    p_in, e_in = list(obs[0]), list(obs[1])
+    gap = (L - data_until).days
+    fc = {d.day: d for d in (forecast or [])}
+    if gap > 0:
+        bridge = [fc.get(data_until + timedelta(days=k + 1)) for k in range(gap)]
+        if all(b is not None and not np.isnan(b.precip) and not np.isnan(b.et0) for b in bridge):
+            lim.append(f"Ostatnie {gap} dni przed datą analizy uzupełnione danymi modelu Open-Meteo.")
         else:
-            bridge = climatology_horizon(w, data_until + timedelta(days=1), gap_days, years)
-            note = f"Ostatnie {gap_days} dni przed datą analizy bez danych – uzupełnione scenariuszem typowej pogody."
-        rb = simulate(
-            np.array([b.precip for b in bridge]),
-            np.array([b.et0 for b in bridge]),
-            kc_series(crop, n, gap_days),
-            taw, raw, dr, runoff_threshold, runoff_fraction,
-        )
-        dr = float(rb.dr[-1])
-        res.stress_days_season = (res.stress_days_season or 0) + rb.stress_days
-        lim.append(note)
-    compare((end - s).days + 1)  # ten sam okres co bieżący sezon, łącznie z uzupełnionymi dniami
+            bridge = climatology_horizon(w, data_until + timedelta(days=1), gap, years)
+            lim.append(f"Ostatnie {gap} dni przed datą analizy bez danych – uzupełnione scenariuszem typowej pogody.")
+        p_in += [b.precip for b in bridge]
+        e_in += [b.et0 for b in bridge]
 
-    day = (end - s).days  # indeks dnia sezonu „wczoraj”
-    today_idx = min(day + 1, crop.length - 1)
-    res.day_of_season = day + 2  # numer dnia sezonu w dacie analizy (1 = start)
-    res.stage = crop.stage(today_idx)
-    res.kc = round(crop.kc(today_idx), 2)
-    res.dr_mm = round(dr, 1)
-    res.water_mm = round(taw - dr, 1)
-    res.water_pct = round(100 * (1 - dr / taw)) if taw > 0 else None
-    res.raw_exceeded = dr > raw
-    res.ks = round(ks_coefficient(dr, taw, raw), 2)
+    st, bal = initial_state(w, crop, wod_mm, ws)
+    res.init_balance_mm = bal
+    if bal is None:
+        lim.append(f"Brak danych sprzed {format_date_pl(ws)} – bilans startuje z pełnym profilem.")
+    tr = run(crop, wod_mm, _days(ws, L), np.array(p_in), np.array(e_in), st, runoff_threshold, runoff_fraction)
+    if tr.missing:
+        lim.append(f"{tr.missing} dni bez danych pogodowych – stan gleby w tych dniach bez zmian.")
+    res.status = "ok"
+    res.percolation_mm = round(float(tr.dp.sum()), 1)
 
-    # ── horyzont 16 dni od daty analizy: prognoza (dziś) albo scenariusz (data historyczna) ──
-    remaining = crop.length - (day + 1)
-    h = max(0, min(HORIZON_DAYS, remaining))
-    future = [fc[d] for d in (analysis_date + timedelta(days=k) for k in range(h)) if d in fc]
-    if forecast and h and len(future) >= min(7, h):
-        res.horizon_kind, horizon = "prognoza", future
-    else:
-        res.horizon_kind, horizon = "scenariusz", climatology_horizon(w, analysis_date, h, years)
-    if horizon:
-        rh = simulate(
-            np.array([x.precip for x in horizon]),
-            np.array([x.et0 for x in horizon]),
-            kc_series(crop, day + 1, len(horizon)),
-            taw, raw, dr, runoff_threshold, runoff_fraction,
-        )
-        res.horizon_dr = [(x.day, round(float(v), 1)) for x, v in zip(horizon, rh.dr)]
-        over = np.flatnonzero(rh.dr > raw)
-        res.days_to_stress = 0 if dr > raw else (int(over[0]) + 1 if over.size else None)
-    else:
-        res.days_to_stress = 0 if dr > raw else None
-    res.risk = risk_class(res.days_to_stress)
-    if h < HORIZON_DAYS:
-        lim.append(f"Sezon uprawy kończy się za {h} dni – horyzont ryzyka skrócony.")
+    # ── stan na datę analizy ──
+    scope = "strefa_korzeni" if info.phase in IN_SEASON_SCOPE else "profil"
+    pct, mm, depth = _metric(st, wod_mm, scope)
+    res.scope, res.water_pct, res.water_mm, res.depth_m = scope, round(pct), round(mm, 1), round(depth, 2)
+    res.root_depth_m = round(st.zr, 2)
+    res.taw_root_mm = round(wod_mm * st.zr, 1)
+    res.raw_root_mm = round(crop.p * wod_mm * st.zr, 1)
+    res.d1_mm, res.dtot_mm = round(st.d1, 1), round(st.total(), 1)
 
-    # ── nawadnianie: RAW przekroczone teraz lub w ciągu 7 dni ──
-    if dr > raw:
-        dose = round_dose(dr)
-        res.irrigation = Irrigation(
-            True, dose, analysis_date,
-            f"Nawadnianie ma sens od razu: dawka ok. {dose} mm (do pojemności polowej)." + dose_hint(dose),
-        )
-    elif res.days_to_stress is not None and res.days_to_stress <= RISK_MEDIUM_DAYS and res.horizon_dr:
-        when_day, when_dr = res.horizon_dr[res.days_to_stress - 1]
-        dose = round_dose(when_dr)
-        res.irrigation = Irrigation(
-            True, dose, when_day,
-            f"Nawadnianie ma sens ok. {when_day:%d.%m}: dawka ok. {dose} mm, jeśli nie spadnie deszcz." + dose_hint(dose),
-        )
+    # ── dni stresu w bieżącym sezonie (fazy wrażliwe, D32) ──
+    in_season = tr.season_year == sy
+    res.stress_days_season = int((tr.stress & in_season).sum())
+    res.season_complete = L >= h
+
+    # ── te same okresy w poprzednich latach: dni stresu i stan wody tego samego dnia ──
+    by_year: list[tuple[int, int | None]] = [(sy, res.stress_days_season)]
+    prev_stress, prev_metric = [], []
+    for k in range(1, years + 1):
+        wsk, Lk = window_start(crop, sy - k), shift_years(L, k)
+        o = _observed(w, wsk, Lk)
+        if o is None or _idx(w, wsk) - INIT_DAYS < 0 or np.isnan(o[0] + o[1]).mean() > MAX_MISSING_YEAR:
+            by_year.append((sy - k, None))
+            continue
+        stk, _ = initial_state(w, crop, wod_mm, wsk)
+        trk = run(crop, wod_mm, _days(wsk, Lk), o[0], o[1], stk, runoff_threshold, runoff_fraction)
+        sd = int((trk.stress & (trk.season_year == sy - k)).sum())
+        by_year.append((sy - k, sd))
+        prev_stress.append(sd)
+        prev_metric.append(_metric(stk, wod_mm, scope)[0])
+    res.stress_by_year = by_year
+    res.mean_prev_stress_days = round(float(np.mean(prev_stress)), 1) if prev_stress else None
+    if prev_metric:
+        res.rank_lower = int(sum(m < pct for m in prev_metric))
+        res.rank_of = len(prev_metric)
+    if len(prev_stress) < years:
+        lim.append(f"Porównanie z {len(prev_stress)} z {years} poprzednich lat (pozostałe – niepełne dane).")
+
+    # ── horyzont 16 dni: tylko w fazach wrażliwych (D32) ──
+    stressed_now = info.sensitive and st.d1 > crop.p * wod_mm * st.zr
+    if info.sensitive:
+        future = [fc[d] for d in _days(analysis_date, analysis_date + timedelta(days=HORIZON_DAYS - 1)) if d in fc]
+        if forecast and len(future) >= 7:
+            res.horizon_kind, hz = "prognoza", future
+        else:
+            res.horizon_kind, hz = "scenariusz", climatology_horizon(w, analysis_date, HORIZON_DAYS, years)
+        sth = State(st.d1, st.d2, st.zr)
+        trh = run(crop, wod_mm, [x.day for x in hz], np.array([x.precip for x in hz]),
+                  np.array([x.et0 for x in hz]), sth, runoff_threshold, runoff_fraction)
+        res.horizon = [(d, round(float(a), 1), round(float(r), 1), ph)
+                       for d, a, r, ph in zip(trh.dates, trh.d1, trh.raw1, trh.phase)]
+        over = np.flatnonzero(trh.stress)
+        res.days_to_stress = 0 if stressed_now else (int(over[0]) + 1 if over.size else None)
+        res.risk = risk_class(res.days_to_stress)
+        res.irrigation = _irrigation_plan(crop, wod_mm, st, hz, res.days_to_stress, analysis_date, soil_category,
+                                          runoff_threshold, runoff_fraction)
     else:
-        res.irrigation = Irrigation(False)
+        res.irrigation = IrrigationResult(
+            "nieuzasadnione_w_fazie", f"Nawadnianie nieuzasadnione w tej fazie uprawy ({res.phase_label})."
+        )
+
+    res.description = _describe(res, tr, info, stressed_now)
     return res
+
+
+def _describe(res: SoilWaterResult, tr: Trace, info: DayInfo, stressed_now: bool) -> str:
+    if info.phase in IN_SEASON_SCOPE:
+        if info.phase == "dojrzewanie":
+            return "dojrzewanie – niedobór wody nie wymaga już działań" if res.water_pct is not None and res.water_pct < 50 \
+                else "dojrzewanie – wody wystarcza"
+        if stressed_now:
+            return f"{res.phase_label} – rośliny odczuwają brak wody"
+        if res.days_to_stress is not None:
+            return f"{res.phase_label} – rośliny zaczną odczuwać brak wody za ok. {res.days_to_stress} dni"
+        return f"{res.phase_label} – wody wystarcza na najbliższe dni"
+    prefix = "wschody jesienne" if info.phase == "wschody_jesienne" else "poza sezonem"
+    refill = len(tr.dtot) > 30 and tr.dtot[-31] - tr.dtot[-1] > 1.0
+    if res.water_pct is not None and res.water_pct < 50:
+        return f"{prefix} – niedobór wody" + (" po suchym lecie" if tr.dates[-1].month >= 8 else " po suchym okresie")
+    if refill:
+        return f"{prefix} – gleba odbudowuje zapas wody"
+    if res.water_pct is not None and res.water_pct >= 90:
+        return f"{prefix} – zapas wody w glebie odbudowany"
+    return f"{prefix} – zapas wody w normie"
+
+
+MIN_DOSE_INTERVAL_DAYS = 2  # nie częściej niż co 2 dni – realna logistyka deszczowni (D33)
+
+
+def _irrigation_plan(
+    crop: Crop, wod: float, st: State, hz: list[HorizonDay], days_to_stress: int | None, analysis_date: date,
+    soil_category: int | None, runoff_threshold: float, runoff_fraction: float,
+) -> IrrigationResult:
+    """Dawka jednorazowa wg kategorii gleby (≤ 35 mm); harmonogram dawek w 7 dniach z symulacji
+    (dawka, gdy ubytek strefy korzeni przekroczy RAW, nie częściej niż co 2 dni); łączny niedobór (D33)."""
+    if days_to_stress is None or days_to_stress > RISK_MEDIUM_DAYS:
+        return IrrigationResult("niepotrzebne", "Nawadnianie niepotrzebne – zapas wody wystarczy na najbliższe 7 dni.")
+    dose = min(MAX_DOSE_MM, CATEGORY_DOSE_MM.get(soil_category or 0, DEFAULT_DOSE_MM))
+    week = hz[:7]
+    pe = effective_precip(np.array([x.precip for x in week]), runoff_threshold, runoff_fraction)
+    d_no, d_irr, need, net, doses = st.d1, st.d1, 0.0, [], []
+    for k, (x, p) in enumerate(zip(week, pe)):
+        info = crop.day_info(x.day)
+        raw_k = crop.p * wod * min(info.zr, PROFILE_DEPTH_M)
+        etc = info.kc * (0.0 if np.isnan(x.et0) else x.et0)
+        p = 0.0 if np.isnan(p) else p
+        if d_irr > raw_k and (not doses or k - doses[-1] >= MIN_DOSE_INTERVAL_DAYS):
+            d_irr = max(0.0, d_irr - dose)
+            doses.append(k)
+        d_irr = max(0.0, d_irr + etc - p)
+        d_no = max(0.0, d_no + etc - p)  # bez nawadniania, bez redukcji Ks – zapotrzebowanie
+        need = max(need, d_no - raw_k)
+        net.append(max(0.0, etc - p))
+    if not doses:  # przekroczenie pod koniec tygodnia – jedna dawka w dniu przekroczenia
+        doses = [max(0, days_to_stress - 1)]
+    first = analysis_date + timedelta(days=doses[0])
+    mean_net = float(np.mean(net)) if net else 0.0
+    if len(doses) > 1:
+        interval = doses[1] - doses[0]
+    else:
+        interval = None if mean_net < 0.5 else int(min(14, max(MIN_DOSE_INTERVAL_DAYS, dose // mean_net)))
+    total = float(max(5, round(need / 5) * 5)) if need > 0 else dose
+    when = "teraz" if first == analysis_date else f"ok. {first:%d.%m}"
+    msg = f"{_fmt_mm(dose)} mm {when}"
+    if len(doses) > 1:
+        msg += f", powtórz za ok. {interval} dni (w 7 dniach {len(doses)} dawki, niedobór ok. {_fmt_mm(total)} mm)"
+    elif interval:
+        msg += f"; przy braku deszczu kolejna dawka za ok. {interval} dni"
+    return IrrigationResult("zalecane", msg, dose, first, interval, total, len(doses))
 
 
 # ── Model → pola kontraktu ──────────────────────────────────────────────────────────────────
@@ -692,84 +790,103 @@ RISK_STATUS = {"niskie": "ok", "średnie": "warn", "wysokie": "risk"}
 
 
 @dataclass
-class ModelIndicators:
+class ModelOutputs:
     soil_water_pct: Indicator
     soil_water_mm: Indicator
     risk_7d: RiskIndicator
     stress_days_by_year: list[YearStress]
-    irrigation: Recommendation | None
+    crop_season: CropSeason
+    soil_water: SoilWaterState
+    irrigation: IrrigationPlan
+    irrigation_rec: Recommendation | None
 
 
-def _no_model(note: str) -> tuple[Indicator, Indicator, RiskIndicator]:
-    tag = SourceTag(kind="brak_danych", source=MODEL_SOURCE)
-    return (
-        Indicator(value=None, unit="%", status="no_data", note=note, source_tag=tag),
-        Indicator(value=None, unit="mm", status="no_data", note=note, source_tag=tag),
-        RiskIndicator(value=None, unit="dni", status="no_data", note=note, source_tag=tag),
+def to_contract(res: SoilWaterResult, crop: Crop, analysis_date: date, no_model_note: str | None = None) -> ModelOutputs:
+    """Wynik modelu → indicators.soil_water_*, risk_7d, history.stress_days_by_year, crop_season,
+    soil_water, irrigation i rekomendacja „nawadnianie” (gdy zalecane)."""
+    crop_season = CropSeason(
+        phase=res.phase, phase_label=res.phase_label, season_year=res.season_year, season_start=res.season_start,
+        harvest=res.harvest, day_of_season=res.day_of_season, sensitive=res.sensitive, root_depth_m=res.root_depth_m,
     )
-
-
-def to_contract_indicators(res: SoilWaterResult, crop: Crop, analysis_date: date) -> ModelIndicators:
     years = [YearStress(year=y, stress_days=d, is_current=(i == 0)) for i, (y, d) in enumerate(res.stress_by_year)]
-    if res.season_status != "w_sezonie" or res.water_pct is None:
-        note = res.limitations[0] if res.limitations else "Brak danych do modelu wody w glebie."
-        pct, mm, risk = _no_model(note)
-        return ModelIndicators(pct, mm, risk, years, None)
+    model_tag = SourceTag(kind="szacunek_modelu", date=last_usable_day(analysis_date), source=MODEL_SOURCE)
 
-    tag = SourceTag(kind="szacunek_modelu", date=last_usable_day(analysis_date), source=MODEL_SOURCE)
-    status = "risk" if res.raw_exceeded else ("warn" if res.risk == "średnie" else "ok")
-    pct = Indicator(
-        value=res.water_pct,
-        unit="%",
-        label="rośliny odczuwają brak wody" if res.raw_exceeded else None,
-        status=status,
-        note=f"{res.water_mm:.0f} z {res.taw_mm:.0f} mm wody dostępnej w strefie korzeni ({crop.root_depth_m:g} m)",
-        source_tag=tag,
-    )
-    mm = Indicator(value=res.water_mm, unit="mm", status=status, note=f"próg stresu: ubytek > {res.raw_mm:.0f} mm", source_tag=tag)
+    if res.status != "ok" or no_model_note:
+        note = no_model_note or (res.limitations[0] if res.limitations else "Brak danych do modelu wody w glebie.")
+        tag = SourceTag(kind="brak_danych", source=MODEL_SOURCE)
+        return ModelOutputs(
+            Indicator(value=None, unit="%", status="no_data", note=note, source_tag=tag),
+            Indicator(value=None, unit="mm", status="no_data", note=note, source_tag=tag),
+            RiskIndicator(value=None, unit="dni", status="no_data", note=note, source_tag=tag),
+            years,
+            crop_season,
+            SoilWaterState(scope="profil", depth_m=PROFILE_DEPTH_M, description=note),
+            IrrigationPlan(status="brak_danych", message=note, source_tag=tag),
+            None,
+        )
 
-    if res.horizon_kind == "prognoza":
-        rtag = SourceTag(kind="prognoza", date=analysis_date, source="Open-Meteo + " + MODEL_SOURCE)
-        base = ""
+    zone = f"strefa korzeni {res.depth_m:g} m" if res.scope == "strefa_korzeni" else "profil ok. 1 m"
+    if res.sensitive:
+        status = "risk" if res.days_to_stress == 0 else ("warn" if res.risk == "średnie" else "ok")
     else:
-        rtag = SourceTag(kind="szacunek_modelu", date=analysis_date, source="scenariusz typowej pogody (10 lat)")
-        base = " (scenariusz typowej pogody)"
-    d = res.days_to_stress
-    if d == 0:
-        note = "rośliny już odczuwają brak wody" + base
-    elif d is None:
-        note = f"brak stresu w ciągu {len(res.horizon_dr)} dni" + base
-    else:
-        note = f"stres za ok. {d} dni" + base
-    rstatus = RISK_STATUS[res.risk or "niskie"]
-    if d == 0 and res.ks is not None and res.ks < 0.5:
-        rstatus = "danger"
-    risk = RiskIndicator(
-        value=d, unit="dni", label=(res.risk or "niskie").capitalize(), status=rstatus, note=note,
-        days_to_stress=d, source_tag=rtag,
-    )
+        status = "warn" if (res.water_pct or 0) < 50 else "ok"
+    pct = Indicator(value=res.water_pct, unit="%", label=res.phase_label, status=status,
+                    note=f"{res.description} ({zone})", source_tag=model_tag)
+    mm = Indicator(value=res.water_mm, unit="mm", status=status,
+                   note=f"woda dostępna dla roślin, {zone}", source_tag=model_tag)
 
+    if res.sensitive:
+        if res.horizon_kind == "prognoza":
+            rtag = SourceTag(kind="prognoza", date=analysis_date, source="Open-Meteo + " + MODEL_SOURCE)
+            base = ""
+        else:
+            rtag = SourceTag(kind="szacunek_modelu", date=analysis_date, source="scenariusz typowej pogody (10 lat)")
+            base = " (scenariusz typowej pogody)"
+        d = res.days_to_stress
+        note = ("rośliny już odczuwają brak wody" if d == 0 else
+                f"brak stresu w ciągu {HORIZON_DAYS} dni" if d is None else f"stres za ok. {d} dni") + base
+        risk = RiskIndicator(value=d, unit="dni", label=(res.risk or "niskie").capitalize(),
+                             status=RISK_STATUS[res.risk or "niskie"], note=note, days_to_stress=d, source_tag=rtag)
+    else:
+        rtag = model_tag
+        risk = RiskIndicator(value=None, unit="dni", label="Nie dotyczy", status="ok",
+                             note=f"nawadnianie nieuzasadnione w tej fazie uprawy ({res.phase_label})", source_tag=model_tag)
+
+    last = SeasonSummary(year=res.season_year, stress_days=res.stress_days_season,
+                         mean_prev_stress_days=res.mean_prev_stress_days) if res.season_complete else None
+    soil_water = SoilWaterState(
+        scope=res.scope, depth_m=res.depth_m, description=res.description,
+        rank=BalanceRank(lower_years=res.rank_lower, of_years=res.rank_of) if res.rank_of else None,
+        last_season=last,
+    )
+    irr = res.irrigation or IrrigationResult("brak_danych", "Brak danych do oceny nawadniania.")
+    plan = IrrigationPlan(status=irr.status, message=irr.message, dose_mm=irr.dose_mm, first_date=irr.first_date,
+                          interval_days=irr.interval_days, total_7d_mm=irr.total_7d_mm, doses_7d=irr.doses_7d,
+                          source_tag=rtag)
     rec = None
-    irr = res.irrigation
-    if irr and irr.needed:
-        when = "od razu" if irr.when == analysis_date else f"ok. {irr.when:%d.%m}"
+    if irr.status == "zalecane":
         rec = Recommendation(
             id="nawadnianie-model",
             category="nawadnianie",
-            title=f"Nawadnianie {when}",
-            description=f"Dawka ok. {irr.dose_mm} mm – uzupełnia wodę do pojemności polowej." + dose_hint(irr.dose_mm or 0),
+            title="Nawadnianie " + ("teraz" if irr.first_date == analysis_date else f"ok. {irr.first_date:%d.%m}"),
+            description=irr.message + ".",
             why=(
-                f"Woda w glebie {res.water_pct:.0f}% ({res.water_mm:.0f} z {res.taw_mm:.0f} mm). "
-                f"Rośliny odczuwają brak wody, gdy ubytek przekroczy {res.raw_mm:.0f} mm"
-                + ("; ten próg jest już przekroczony." if d == 0 else f"; według {'prognozy' if res.horizon_kind == 'prognoza' else 'scenariusza typowej pogody'} nastąpi to za ok. {d} dni.")
+                f"Woda w strefie korzeni {res.water_pct:.0f}% ({res.water_mm:.0f} mm). Rośliny odczuwają brak wody, "
+                f"gdy ubytek przekroczy {res.raw_root_mm:.0f} mm"
+                + ("; ten próg jest już przekroczony." if res.days_to_stress == 0 else
+                   f"; według {'prognozy' if res.horizon_kind == 'prognoza' else 'scenariusza typowej pogody'} "
+                   f"nastąpi to za ok. {res.days_to_stress} dni.")
+                + f" Dawka jednorazowa {_fmt_mm(irr.dose_mm or 0)} mm dobrana do gleby."
             ),
             inputs=[
-                Evidence(name="Woda w glebie", value=res.water_pct, unit="%", source=MODEL_SOURCE, date=last_usable_day(analysis_date)),
-                Evidence(name="Ubytek wody w strefie korzeni", value=res.dr_mm, unit="mm", source=MODEL_SOURCE),
-                Evidence(name="Próg stresu (łatwo dostępna woda, RAW)", value=res.raw_mm, unit="mm", source="FAO-56 + IUNG (WOD)"),
-                Evidence(name="Dni do stresu", value=d, unit="dni", source=rtag.source or MODEL_SOURCE),
+                Evidence(name="Woda w strefie korzeni", value=res.water_pct, unit="%", source=MODEL_SOURCE,
+                         date=last_usable_day(analysis_date)),
+                Evidence(name="Próg stresu (łatwo dostępna woda, RAW)", value=res.raw_root_mm, unit="mm",
+                         source="FAO-56 + IUNG (WOD)"),
+                Evidence(name="Dni do stresu", value=res.days_to_stress, unit="dni", source=rtag.source or MODEL_SOURCE),
+                Evidence(name="Niedobór do uzupełnienia w 7 dniach", value=irr.total_7d_mm, unit="mm", source=MODEL_SOURCE),
             ],
             confidence="srednia" if res.horizon_kind == "prognoza" else "ograniczona",
             rule_id="nawadnianie.model_fao56",
         )
-    return ModelIndicators(pct, mm, risk, years, rec)
+    return ModelOutputs(pct, mm, risk, years, crop_season, soil_water, plan, rec)
