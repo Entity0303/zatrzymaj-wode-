@@ -304,6 +304,10 @@ export type Recommendation = {
   /** GeoJSON geometria miejsca (EPSG:4326) – „Pokaż na mapie” */
   location?: GeoJSON.Geometry | null
   rule_id?: string | null
+  /** ważność w obrębie kategorii (większa = ważniejsza) */
+  priority?: number
+  /** pokazać w panelu działki (maks. 3: po jednej z kategorii); reszta – paszport */
+  in_panel?: boolean
 }
 
 export type SourceStatus = {
