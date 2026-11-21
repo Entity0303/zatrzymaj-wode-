@@ -4,6 +4,11 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-21 · `b/frontend` · B2: nowe pola kontraktu w panelu
+**Co:** panel działki pokazuje pola A3b i sekcję gleby: `CropSeasonCard` (faza, dzień sezonu, pasek start → zbiór, korzenie, wrażliwość), `SoilWaterCard` (zakres strefa korzeni / profil, opis, „tego dnia mniej wody było w N z 10 lat” z paskiem lat, podsumowanie zakończonego sezonu), `IrrigationCard` (status, dawka, pierwsza dawka, co ile dni, suma 7 dni – na końcu „Co zrobić?”), `SoilCard` (kategoria IUNG, WOD mm, udziały kategorii, klasy bonitacyjne / powód braku), `NonAgriculturalCard` („To nie jest grunt rolny” zamiast karty stanu; wtedy bez wskaźników i zaleceń). Kolory kodów IUNG w `theme/soil.ts` (wspólne z legendą). ~48 tekstów EN. Weryfikacja: `npm run build`, `oxlint`; w przeglądarce nie sprawdzane.
+**Pliki:** `frontend/src/features/parcel-panel/{CropSeasonCard,SoilWaterCard,IrrigationCard,SoilCard,NonAgriculturalCard,ParcelPanel}.tsx`, `frontend/src/theme/soil.ts`, `frontend/src/features/map/layers/Soil.tsx`, `frontend/src/lib/{format,i18n.en}.ts`.
+**Kontrakt API:** nie (tylko odczyt pól z `types.ts`).
+
 ## 2026-11-21 · `b/frontend` · merge `origin/a/backend` (A3b)
 **Co:** scalone zmiany A: kontrakt A3b (`crop_season`, `soil_water`, `irrigation` w `AnalysisResponse` + mock), ciągły bilans, fazy upraw, nawadnianie. Konflikt tylko w `.ai/decisions.md` – oba D30; D30–D34 zostają po stronie A (D30 cytowane w kodzie backendu), przełącznik języka przenumerowany na **D35** (odwołania w `i18n.ts`, `i18n.en.ts`, `LanguageProvider`, `LanguageToggle`, status B). Weryfikacja: `npm run build` OK, `pytest` 125 passed. Nowe pola kontraktu jeszcze nie pokazywane w UI.
 **Pliki:** `.ai/decisions.md`, `.ai/log/b-frontend.md`, `.ai/status/b-frontend.md`, `frontend/src/{lib/i18n.ts,lib/i18n.en.ts,components/LanguageProvider.tsx,components/LanguageToggle.tsx}` + pliki A z merge.

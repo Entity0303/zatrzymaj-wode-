@@ -9,6 +9,7 @@ _Stan na: 2026-11-21_
 - Wybór uprawy i daty uruchamia analizę (zmiana = przeliczenie); ekran ładowania z krokami, licznikiem i szkieletami; na mocku symulacja kroków, bez mocka `/api/analysis` (501 → komunikat „w budowie”).
 - Wybór uprawy (15 upraw IUNG), zapis działek w pamięci przeglądarki, prognoza 7 dni z `/api/forecast`.
 - Struktura `api/ mocks/ theme/ layout/ components/ features/ pages/`; panel czyta wynik analizy wg kontraktu, mock pod `?dane=przykladowe`.
+- **B2 – pola kontraktu A3b w panelu**: faza uprawy, woda w glebie (też poza sezonem, porównanie z 10 latami), plan nawadniania, gleba IUNG, „To nie jest grunt rolny”.
 - **B1 – wygląd dopasowany do grafik wzorcowych** (`ref-desktop`, `ref-mobile`, nowa `ref-style` – wykonana przez nas, źródło `design/ref-style.src.html`): pływające elementy bez linii, pogoda·data·język w jednej pigułce, dolny pasek jako jedna karta z podziałami, płaskie karty w panelu, karta stanu ze strzałką ›, okrąg z torem -soft w kolorze stanu, legendy (pasek 6 px, próbka „Chmury”), lewy pasek z kartą hasła jak na ref-desktop.
 
 ## W trakcie (gałąź)
@@ -17,7 +18,6 @@ _Stan na: 2026-11-21_
 ## Następne
 1. Sprawdzić B1 w przeglądarce (komputer, tablet, telefon; z `?dane=przykladowe`) – dotąd weryfikacja tylko `npm run build`.
 2. Warstwy mapy (krok 3 SPEC 17) – na razie tylko legendy; dane po gotowym `/api/layers`.
-3. Pokazać nowe pola kontraktu A3b: faza uprawy (`crop_season`), stan wody poza sezonem (`soil_water`), plan nawadniania (`irrigation`); sekcja gleby i „To nie jest grunt rolny” (`soil.non_agricultural`).
 4. Paszport wodny A–E na mocku (krok 4), wykresy Recharts w SectionB.
 
 ## Blokery / pytania do drugiej osoby

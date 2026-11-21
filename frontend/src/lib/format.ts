@@ -19,3 +19,10 @@ export const formatDatePl = (iso: string) =>
 
 export const weekdayShort = (iso: string) =>
   new Date(`${iso}T12:00:00`).toLocaleDateString(locale(), { weekday: 'short' }).replace('.', '')
+
+/** „20.06” – dzień i miesiąc bez roku. */
+export const formatDayMonth = (iso: string) =>
+  new Date(`${iso}T12:00:00`).toLocaleDateString(locale(), { day: '2-digit', month: '2-digit' })
+
+/** Udział 0–1 jako procent: 0,4 -> „40%”. */
+export const formatShare = (v: number) => `${Math.round(v * 100)}%`

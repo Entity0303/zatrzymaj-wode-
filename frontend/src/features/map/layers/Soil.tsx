@@ -1,4 +1,5 @@
 import { Layers } from 'lucide-react'
+import { SOIL_COLOR } from '@/theme/soil'
 import type { MapLayer } from './types'
 
 /**
@@ -13,11 +14,11 @@ const Soil: MapLayer = {
   legend: {
     kind: 'classes',
     items: [
-      { color: '#F2D64B', label: 'I – bardzo podatna na suszę' },
-      { color: '#F0A04B', label: 'II – podatna' },
-      { color: '#D9722E', label: 'III – średnio podatna' },
-      { color: '#9C3D2A', label: 'IV – mało podatna' },
-      { color: '#8E918F', label: 'Gleby organiczne' },
+      { color: SOIL_COLOR[1], label: 'I – bardzo podatna na suszę' },
+      { color: SOIL_COLOR[2], label: 'II – podatna' },
+      { color: SOIL_COLOR[3], label: 'III – średnio podatna' },
+      { color: SOIL_COLOR[4], label: 'IV – mało podatna' },
+      { color: SOIL_COLOR[5], label: 'Gleby organiczne' },
     ],
   },
   Overlay: null,

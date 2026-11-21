@@ -10,10 +10,15 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { formatDatePl } from '@/lib/format'
 import { AnalysisLoading } from './AnalysisLoading'
 import { CropField } from './CropField'
+import { CropSeasonCard } from './CropSeasonCard'
+import { IrrigationCard } from './IrrigationCard'
 import { KeyMetrics as Metrics } from './KeyMetrics'
+import { NonAgriculturalCard } from './NonAgriculturalCard'
 import { PanelEmpty } from './PanelEmpty'
 import { ParcelHeader } from './ParcelHeader'
 import { SectionTitle } from './SectionTitle'
+import { SoilCard } from './SoilCard'
+import { SoilWaterCard } from './SoilWaterCard'
 import { StatusCard } from './StatusCard'
 import type { AnalysisRun, ForecastState, SearchPhase } from './types'
 import { WhatToDo } from './WhatToDo'
@@ -90,6 +95,7 @@ export function ParcelPanel({
 
   const { parcel } = state
   const analysis = run.phase === 'done' ? run.analysis : null
+  const nonAgri = !!analysis?.soil.non_agricultural
   const steps: Step[] = analysis
     ? analysis.steps.map((s) => ({ label: s.label, state: s.state, note: s.note ?? undefined }))
     : [
@@ -128,7 +134,9 @@ export function ParcelPanel({
       {run.phase === 'error' && (
         <ErrorNotice {...run.error} onRetry={run.error.retryable ? onRetryAnalysis : undefined} />
       )}
-      <StatusCard crop={crop} analysis={analysis} />
+      {/* SPEC 15.1: grunt nierolny – zamiast oceny suszy komunikat, bez wskaźników i zaleceń */}
+      {nonAgri ? <NonAgriculturalCard soil={analysis!.soil} /> : <StatusCard crop={crop} analysis={analysis} />}
+      {analysis && !nonAgri && <CropSeasonCard season={analysis.crop_season} analysisDate={analysis.analysis_date} />}
       {crop && (
         <details className="group rounded-xl border bg-surface p-3.5">
           <summary className="flex min-h-6 cursor-pointer list-none items-center justify-between text-sm font-medium">
@@ -139,14 +147,26 @@ export function ParcelPanel({
           <LoadingSteps steps={steps} className="mt-3" />
         </details>
       )}
-      <section className="space-y-3">
-        <SectionTitle>{t('Kluczowe wskaźniki')}</SectionTitle>
-        <Metrics analysis={analysis} />
-      </section>
-      <section className="space-y-3">
-        <SectionTitle>{t('Co zrobić?')}</SectionTitle>
-        <WhatToDo analysis={analysis} />
-      </section>
+      {!nonAgri && (
+        <>
+          <section className="space-y-3">
+            <SectionTitle>{t('Kluczowe wskaźniki')}</SectionTitle>
+            <Metrics analysis={analysis} />
+            {analysis && <SoilWaterCard state={analysis.soil_water} />}
+          </section>
+          <section className="space-y-3">
+            <SectionTitle>{t('Co zrobić?')}</SectionTitle>
+            <WhatToDo analysis={analysis} />
+            {analysis && <IrrigationCard plan={analysis.irrigation} />}
+          </section>
+        </>
+      )}
+      {analysis && (
+        <section className="space-y-3">
+          <SectionTitle>{t('Gleba')}</SectionTitle>
+          <SoilCard soil={analysis.soil} />
+        </section>
+      )}
       <div className="space-y-2">
         <Tooltip>
           <TooltipTrigger asChild>
