@@ -12,7 +12,7 @@ import {
   useMap,
   useMapEvents,
 } from 'react-leaflet'
-import type { Parcel } from '@/api/types'
+import type { LayerResponse, Parcel } from '@/api/types'
 import type { Status } from '@/theme/status'
 import { parcelBounds, type MapInsets } from './geo'
 import { layerByKey, type LayerKey } from './layers'
@@ -92,6 +92,8 @@ const anchorIcon = L.divIcon({ className: '', iconSize: [0, 0] })
 type Props = {
   baseMap: BaseMap
   layer: LayerKey
+  /** dane aktywnej warstwy (null = brak / w budowie) */
+  layerData?: LayerResponse | null
   analysisDate: string
   parcel: Parcel | null
   parcelStatus: Status
@@ -113,6 +115,7 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
   {
     baseMap,
     layer,
+    layerData,
     analysisDate,
     parcel,
     parcelStatus,
@@ -166,6 +169,10 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
 
       {parcel && (
         <>
+          {/* aktywna warstwa danych przycięta do obrysu (features/map/layers/*) – pod białym obrysem */}
+          {ActiveOverlay && layerData && layerData.parcel_id === parcel.id && (
+            <ActiveOverlay parcel={parcel} analysisDate={analysisDate} data={layerData} />
+          )}
           {/* delikatna poświata pod białym obrysem 3 px (SPEC 5.1) */}
           <GeoJSON
             key={`${parcel.id}-halo`}
@@ -179,8 +186,6 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
             interactive={false}
             style={{ color: '#FFFFFF', weight: 3, opacity: 1, fillColor: '#FFFFFF', fillOpacity: 0.12 }}
           />
-          {/* aktywna warstwa danych przycięta do obrysu (features/map/layers/*) */}
-          {ActiveOverlay && <ActiveOverlay parcel={parcel} analysisDate={analysisDate} />}
           {labelPos && (
             <Marker position={labelPos} icon={anchorIcon} interactive={false} keyboard={false}>
               <Tooltip permanent direction="center" className="parcel-label" opacity={1}>

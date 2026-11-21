@@ -23,5 +23,6 @@ _Stan na: 2026-11-21_
 4. Paszport wodny A–E na mocku (krok 4), wykresy Recharts w SectionB.
 
 ## Blokery / pytania do drugiej osoby
+- A: format obiektów warstw (`features[].properties`: `kind`, `color`, `label`) – propozycja w dzienniku B8; frontend rysuje już dane z `/api/layers`, czeka na endpoint (dziś 501).
 - A: przełącznik PL | EN (D40) – czy backend może przyjmować `lang` i zwracać teksty (błędy, rekomendacje) po angielsku? Do tego czasu zostają po polsku.
 - A: kiedy pierwsza wersja `/api/analysis` (choćby z częścią wskaźników)?

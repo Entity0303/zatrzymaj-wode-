@@ -1,6 +1,6 @@
 import type { LucideIcon } from 'lucide-react'
 import type { ComponentType } from 'react'
-import type { LayerKey, Parcel } from '@/api/types'
+import type { LayerKey, LayerResponse, Parcel } from '@/api/types'
 
 export type { LayerKey }
 
@@ -18,7 +18,7 @@ export type LegendSpec =
   | { kind: 'symbols'; items: { symbol: 'arrow' | 'spot' | 'outflow' | 'line' | 'pin'; label: string }[] }
 
 /** Co dostaje warstwa rysowana wewnątrz mapy (react-leaflet). */
-export type LayerOverlayProps = { parcel: Parcel; analysisDate: string }
+export type LayerOverlayProps = { parcel: Parcel; analysisDate: string; data: LayerResponse }
 
 /** Jedna warstwa mapy (SPEC 5.3) = jeden plik w tym katalogu. */
 export type MapLayer = {
@@ -27,6 +27,6 @@ export type MapLayer = {
   short: string
   icon: LucideIcon
   legend: LegendSpec
-  /** Rysowanie danych przyciętych do obrysu działki; null = warstwa jeszcze nie liczona. */
+  /** Rysowanie danych z GET /api/layers/{key} przyciętych do obrysu działki. */
   Overlay: ComponentType<LayerOverlayProps> | null
 }

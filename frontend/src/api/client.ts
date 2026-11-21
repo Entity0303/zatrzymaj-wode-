@@ -1,5 +1,5 @@
 /** Klient API: zapytania do backendu i tłumaczenie błędów na prosty polski. Typy: ./types.ts */
-import type { AnalysisResponse, CropId, Forecast, Parcel } from './types'
+import type { AnalysisResponse, CropId, Forecast, LayerKey, LayerResponse, Parcel, PointValue } from './types'
 
 export class ApiError extends Error {
   status: number
@@ -34,6 +34,12 @@ export const api = {
   /** GET /api/analysis – backend zwraca na razie 501 „w budowie” (kontrakt: types.ts AnalysisResponse) */
   analysis: (parcelId: string, crop: CropId, date: string, signal?: AbortSignal) =>
     get<AnalysisResponse>('/api/analysis', { parcel_id: parcelId, crop, date }, signal),
+  /** GET /api/layers/{layer} – warstwa przycięta do obrysu działki (raster PNG + bbox, GeoJSON) */
+  layer: (layer: LayerKey, parcelId: string, date: string, signal?: AbortSignal) =>
+    get<LayerResponse>(`/api/layers/${layer}`, { parcel_id: parcelId, date }, signal),
+  /** GET /api/layers/{layer}/point – wartość warstwy w klikniętym punkcie (SPEC 5.4) */
+  layerPoint: (layer: LayerKey, lon: number, lat: number, date: string) =>
+    get<PointValue>(`/api/layers/${layer}/point`, { lon: lon.toFixed(7), lat: lat.toFixed(7), date }),
   /** GET /api/report.pdf – te same parametry co analiza; odpowiedź to plik PDF */
   reportPdf: async (parcelId: string, crop: CropId, date: string): Promise<Blob> => {
     const params: Record<string, string> = { parcel_id: parcelId, crop, date }

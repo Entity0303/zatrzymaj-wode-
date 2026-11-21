@@ -8,6 +8,7 @@ import { OfflineBanner } from '@/components/OfflineBanner'
 import { SampleDataBanner } from '@/components/SampleDataBanner'
 import { parcelBounds, parcelContains, type MapInsets } from '@/features/map/geo'
 import { layerByKey, type LayerKey } from '@/features/map/layers'
+import { useLayerData } from '@/features/map/layers/useLayerData'
 import { LegendCard } from '@/features/map/LegendCard'
 import { MapControls } from '@/features/map/MapControls'
 import { POLAND_CENTER, ParcelMap, type BaseMap } from '@/features/map/ParcelMap'
@@ -27,6 +28,7 @@ import { MobileSheet, snapHeights, type Snap } from '@/layout/MobileSheet'
 import { Sidebar } from '@/layout/Sidebar'
 import { TopBar } from '@/layout/TopBar'
 import { todayIso } from '@/lib/dates'
+import { formatDatePl } from '@/lib/format'
 import { BRAND_NAME, BRAND_TAGLINE } from '@/lib/brand'
 import { readLink, shareLink, writeLink } from '@/lib/deepLink'
 import { rememberAnalysis, useSettings } from '@/lib/storage'
@@ -105,6 +107,7 @@ export default function Start() {
   const mock = mockRequested()
   const { run, retry: retryAnalysis } = useAnalysis(parcel?.id ?? null, crop, asOf)
   const analysis = run.phase === 'done' ? run.analysis : null
+  const layerState = useLayerData(layer, parcel?.id ?? null, asOf)
   const passportOpen = !!analysis && passportFor === analysis
 
   // wysokość obszaru mapy – do położeń szuflady
@@ -178,8 +181,25 @@ export default function Start() {
 
   function onMapClick(lon: number, lat: number) {
     if (parcel && parcelContains(parcel, lon, lat)) {
-      // SPEC 5.4: klik wewnątrz działki = wartość aktywnej warstwy w punkcie (warstwy jeszcze nie liczymy)
-      setInsidePopup({ lon, lat, text: t('{layer}: brak danych w tym punkcie – warstwa w budowie.', { layer: t(layerByKey(layer).label) }) })
+      // SPEC 5.4: klik wewnątrz działki = wartość aktywnej warstwy w punkcie
+      const name = t(layerByKey(layer).label)
+      setInsidePopup({ lon, lat, text: t('{layer}: sprawdzam wartość w tym punkcie…', { layer: name }) })
+      api.layerPoint(layer, lon, lat, asOf).then(
+        (v) => setInsidePopup((cur) => (cur && cur.lon === lon && cur.lat === lat ? { lon, lat, text: t(v.text) } : cur)),
+        (e) =>
+          setInsidePopup((cur) =>
+            cur && cur.lon === lon && cur.lat === lat
+              ? {
+                  lon,
+                  lat,
+                  text:
+                    e instanceof ApiError && (e.status === 404 || e.status === 501)
+                      ? t('{layer}: brak danych w tym punkcie – warstwa w budowie.', { layer: name })
+                      : t('{layer}: nie udało się pobrać wartości w tym punkcie.', { layer: name }),
+                }
+              : cur,
+          ),
+      )
       return
     }
     searchByPoint(lon, lat)
@@ -352,6 +372,21 @@ export default function Start() {
   }
 
   const legend = layerByKey(layer)
+  // stan danych warstwy jako tekst pod legendą (nigdy sam kolor)
+  const legendStatus =
+    layerState.phase === 'idle'
+      ? t('Wybierz działkę, aby zobaczyć warstwę')
+      : layerState.phase === 'loading'
+        ? t('Wczytuję warstwę…')
+        : layerState.phase === 'unavailable'
+          ? isMobile
+            ? t('Brak danych – w budowie')
+            : t('Brak danych dla działki – warstwa w budowie')
+          : layerState.phase === 'error'
+            ? t('Nie udało się pobrać warstwy – mapa działa dalej')
+            : layerState.data.source_tag.date
+              ? t('Dane z {date}', { date: formatDatePl(layerState.data.source_tag.date) })
+              : (layerState.data.source_tag.source ?? '')
   const panelProps = {
     state: search,
     crop,
@@ -420,6 +455,7 @@ export default function Start() {
             parcel={parcel}
             parcelStatus={analysis?.status.level ?? 'no_data'}
             layer={layer}
+            layerData={layerState.phase === 'ok' ? layerState.data : null}
             analysisDate={asOf}
             candidates={candidates}
             pendingPoint={pendingPoint}
@@ -478,7 +514,7 @@ export default function Start() {
             <LegendCard
               title={legend.label}
               legend={legend.legend}
-              status={isMobile ? 'Brak danych – w budowie' : 'Brak danych dla działki – warstwa w budowie'}
+              status={legendStatus}
               compact={isMobile}
               className={
                 isMobile

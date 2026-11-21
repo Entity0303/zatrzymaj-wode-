@@ -566,4 +566,11 @@ export const EN: Record<string, string> = {
   'Żadna działka nie wymaga uwagi': 'No parcel needs attention',
   'Brak danych o bilansie dla tej działki': 'No water balance data for this parcel',
   'Wybierz działkę i uprawę – pokażemy bilans sezonu': 'Choose a parcel and a crop – we will show the season balance',
+  // warstwy mapy
+  '{layer}: sprawdzam wartość w tym punkcie…': '{layer}: checking the value at this point…',
+  '{layer}: nie udało się pobrać wartości w tym punkcie.': '{layer}: could not get the value at this point.',
+  'Wybierz działkę, aby zobaczyć warstwę': 'Choose a parcel to see the layer',
+  'Wczytuję warstwę…': 'Loading layer…',
+  'Nie udało się pobrać warstwy – mapa działa dalej': 'Could not load the layer – the map still works',
+  'Dane z {date}': 'Data from {date}',
 }
