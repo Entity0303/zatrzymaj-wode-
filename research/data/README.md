@@ -28,7 +28,7 @@ Pobrano i sprawdzono: **2026-11-21**.
 - **Płodozmian, przerwa, gleby, praktyka nawadniania**: szacunek wg ogólnych polskich zaleceń agrotechnicznych (IUNG-PIB, COBORU, podręczniki szczegółowej uprawy). Nie przepisywałem ich z jednego dokumentu w tej sesji, dlatego w kolumnie `zrodla` są oznaczone „szac.”. Gleby: `iung:` to kategorie podatności IUNG (I = bardzo podatna na suszę … IV), `kompleksy:` to kompleksy przydatności rolniczej (1 pszenny bardzo dobry … 9 zbożowo-pastewny słaby).
 
 ### Wartości szacunkowe (szac.) – do weryfikacji przez agronoma
-- **Ky rzepaku (1,0), kukurydzy na kiszonkę (1,0), rzepaku – jesień (0,3)**: brak w FAO-33. Rzepak jesień to faza wegetatywna, a jej plon jest w następnym roku, więc w rankingu trzeba użyć `rzepak`.
+- **Ky rzepaku (0,95), kukurydzy na kiszonkę (1,10), rzepaku – jesień (0,3)**: brak w FAO-33 (rzepak i kiszonka po kalibracji GUS, C3). Rzepak jesień to faza wegetatywna, a jej plon jest w następnym roku, więc w rankingu trzeba użyć `rzepak`.
 - **Ky warzyw (0,95), drzew owocowych (0,9), krzewów (0,85), truskawek (1,0), chmielu (0,9), tytoniu (0,9)**: szacunek.
 - **`ky_fazy` kukurydzy i zbóż jarych**: szacunek. W sprawdzonej tabeli są tylko wartości sezonowe.
 - **Tytoń**: Kc, fazy, Zr i p to założenie backendu, bo w FAO-56 go nie ma.
@@ -40,7 +40,7 @@ Pobrano i sprawdzono: **2026-11-21**.
 - **Fazy gatunków**: proporcje FAO-56 grupy przeskalowane do terminów gatunku (np. jęczmień ozimy zbiór 5 VII, owies 10 VIII), tą samą metodą co w backendzie.
 - **`in_ranking`**: `nie` dla `zboza_ozime` i `zboza_jare` (zastąpione przez gatunki) oraz `rzepak_jesien`, `chmiel`, `tyton`. W rankingu jest 17 upraw.
   - `straczkowe` zostaje w rankingu jako groch, bobik i fasola, bo łubin ich nie zastępuje.
-- **`wrazliwosc_na_susze`** (niska / srednia / wysoka): nowa kolumna dla wszystkich upraw, szac. Gatunki zbóż od najmniej wrażliwego: żyto (niska, Ky 0,80) < pszenżyto, jęczmień ozimy (0,90) < pszenica ozima (1,00, FAO-33) < jęczmień jary (1,10) < owies (1,15).
+- **`wrazliwosc_na_susze`** (niska / srednia / wysoka): nowa kolumna dla wszystkich upraw, szac. Ky zbóż po kalibracji GUS (C3): pszenica, żyto, pszenżyto, jęczmień ozimy 1,00 < jęczmień jary, owies 1,10. `wrazliwosc_na_susze` żyta zostaje „niska” (ocena agronomiczna – pytanie 1 do mentora), ale przewagę żyta w rankingu daje gleba, nie Ky.
 - **Ky**: FAO-33 zawiera tylko pszenicę. Ky żyta, pszenżyta, jęczmienia, owsa i łubinu to szacunki, które mają oddawać kolejność wrażliwości, a nie dokładne wartości.
 - **Gleby (kompleksy przydatności rolniczej)**:
   - pszenica: odpowiednie 1, 2, 3, 4, 8; nieodpowiednie 5, 6, 7, 9 i kat. IUNG I,
@@ -55,6 +55,12 @@ Pobrano i sprawdzono: **2026-11-21**.
 - **GUS**: żyto 4338, pszenżyto 4356 i owies 4350 to plony gatunku ogółem.
   - Formy ozime i jare GUS rozdziela tylko w powierzchni zasiewów (temat P1877), i to nie na poziomie województw. Dlatego `jeczmien_ozimy` i `jeczmien_jary` mają wspólną zmienną 4344 (jęczmień ogółem).
   - **Łubinu nie ma w BDL**: wyszukiwanie „łubin”, „bobik” i „groch” daje 0 zmiennych. Zastępnikiem są rośliny strączkowe razem (47740), oznaczone „ZASTĘPNIK” w `uwagi`.
+
+## C3 – kalibracja Ky z GUS (wpisana 2026-11-21)
+- **Zmienione Ky:** żyto 0,80 → 1,00, pszenżyto 0,90 → 1,00, jęczmień ozimy 0,90 → 1,00, owies 1,15 → 1,10, rzepak 1,00 → 0,95, kukurydza na kiszonkę 1,00 → 1,10.
+- **Podstawa:** spadki plonów GUS w latach suchych 2015/2018/2019 (`drought_report.md`). W `zrodla` każdej z tych upraw jest dopisek „KY ZMIENIONE (C3…)”.
+- **Bez zmian:** Ky zweryfikowane w FAO-33.
+- **Tabela dla mentora:** `do_mentora.md`.
 
 ## GUS BDL – ograniczenia
 - **Ozime i jare**: GUS nie rozdziela form. Dla zbóż ozimych zastępnikiem jest pszenica ogółem (4332), dla jarych jęczmień ogółem (4344).

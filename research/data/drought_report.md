@@ -5,10 +5,10 @@ Skrypt: `drought.py`.
 - **Dane szczegółowe:** `drought_sensitivity.csv` (uprawa × województwo × rok suchy).
 - **Podsumowanie:** `drought_summary.csv`.
 - **Spadek** = (średnia 2016–2025 − plon) / średnia. Dodatkowo liczę spadek względem trendu liniowego 2016–2025 dla każdego województwa, bo plony rosną w czasie, a 2018–2019 wypadają na początku serii.
-- **`crops.csv` nie jest zmieniany.**
+- **`crops.csv`**: skrypt go nie zmienia. Propozycję z sekcji niżej wpisałem ręcznie po zatwierdzeniu.
 
 ## Ranking (od najbardziej wrażliwych, spadek względem trendu, 16 woj. × 3 lata)
-| # | Uprawa | spadek vs trend | vs średnia 10 l. | 2018 | Ky teraz | Ky wg prostej |
+| # | Uprawa | spadek vs trend | vs średnia 10 l. | 2018 | Ky przed C3 | Ky wg prostej |
 |---|---|---|---|---|---|---|
 | 1 | ziemniak | 17,2 % | 21,1 % | 12,2 % | 1,10 ✔ | 1,19 |
 | 2 | kukurydza na ziarno | 16,3 % | 21,1 % | 13,4 % | 1,25 ✔ | 1,17 |
@@ -39,7 +39,7 @@ Skrypt: `drought.py`.
 
    Prosta z 5 punktów jest słabo dopasowana i ściska Ky do zakresu 0,95–1,19. Traktuję ją jako kierunek zmian, nie jako wartości.
 
-## Propozycja poprawionych Ky (do decyzji – NIE wpisane do crops.csv)
+## Propozycja poprawionych Ky – ZATWIERDZONA i wpisana do crops.csv (2026-11-21)
 | Uprawa | teraz | proponuję | dlaczego |
 |---|---|---|---|
 | żyto | 0,80 | **1,00** | GUS: spadki ≥ pszenica; przewaga żyta przez glebę, nie Ky |

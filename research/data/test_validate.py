@@ -67,7 +67,24 @@ def test_wheat_vs_rye_soils_and_drought():
         assert k in _kompleksy(by["zyto"]["gleby_odpowiednie"])
     assert {"1", "2", "3"} <= _kompleksy(by["pszenica_ozima"]["gleby_odpowiednie"])
     assert by["zyto"]["wrazliwosc_na_susze"] == "niska"
-    assert float(by["zyto"]["ky_total"]) < float(by["pszenica_ozima"]["ky_total"])
+    # po kalibracji GUS (C3) Ky żyta = Ky pszenicy – przewaga żyta wynika z gleby, nie z Ky
+    assert float(by["zyto"]["ky_total"]) <= float(by["pszenica_ozima"]["ky_total"])
+
+
+def test_ky_after_gus_calibration():
+    by = {r["crop_id"]: r for r in CROPS}
+    expected = {"zyto": 1.00, "pszenzyto_ozime": 1.00, "jeczmien_ozimy": 1.00, "owies": 1.10,
+                "rzepak": 0.95, "kukurydza_kiszonka": 1.10,
+                # zweryfikowane w FAO-33 – bez zmian
+                "pszenica_ozima": 1.00, "kukurydza_ziarno": 1.25, "ziemniak": 1.10,
+                "burak_cukrowy": 0.90, "straczkowe": 1.15}
+    for cid, ky in expected.items():
+        assert float(by[cid]["ky_total"]) == pytest.approx(ky), cid
+    for cid in ("zyto", "pszenzyto_ozime", "jeczmien_ozimy", "owies", "rzepak", "kukurydza_kiszonka"):
+        assert "KY ZMIENIONE (C3" in by[cid]["zrodla"], cid
+    # owies nadal wśród najbardziej wrażliwych zbóż (ex aequo z jęczmieniem jarym)
+    cereals = ["pszenica_ozima", "zyto", "pszenzyto_ozime", "jeczmien_ozimy", "jeczmien_jary", "owies"]
+    assert float(by["owies"]["ky_total"]) == max(float(by[c]["ky_total"]) for c in cereals)
 
 
 def test_lupin_light_soils():
