@@ -1,0 +1,125 @@
+{
+  "parcel_area_ha": 0.582,
+  "grid_step_m": 4.5,
+  "grid_cells": 4662,
+  "parcel_cells": 287,
+  "smoothing_sigma_m": 6.0,
+  "elev_min_m": 140.0,
+  "elev_max_m": 142.0,
+  "elev_mean_m": 140.9,
+  "relief_m": 2.0,
+  "slope_mean_pct": 3.1,
+  "slope_median_pct": 3.1,
+  "slope_p90_pct": 4.2,
+  "slope_max_pct": 6.1,
+  "steep_share_pct": 5.2,
+  "main_flow_azimuth_deg": 211.0,
+  "main_flow_direction": "południowy zachód",
+  "main_flow_direction_short": "SW",
+  "flow_consistency": 0.53,
+  "zone_share_pct": {
+    "plasko": 11.5,
+    "stok": 56.4,
+    "sucha_gorka": 0.0,
+    "mokry_dolek": 32.1
+  },
+  "n_hills": 0,
+  "hills": [],
+  "n_depressions": 0,
+  "depressions_total_volume_m3": 0.0,
+  "largest_depression": null,
+  "parcel_share_draining_to_depressions_pct": 0.0,
+  "twi_mean": 8.54,
+  "twi_p90": 10.69,
+  "n_outlets": 1,
+  "outlets": [
+    {
+      "location_lonlat": [
+        22.6007243,
+        53.0498069
+      ],
+      "direction": "południowy zachód",
+      "direction_short": "SW",
+      "azimuth_deg": 210.0,
+      "share_of_parcel_pct": 100.0,
+      "parcel_area_drained_m2": 5812.0,
+      "total_upstream_m2": 18954.0,
+      "width_m": 63.0
+    }
+  ],
+  "inflow_from_outside_m2": 36328.0,
+  "inflow_from_outside_ratio": 6.25,
+  "proposals": [
+    {
+      "type": "oczko_przy_odplywie",
+      "reason": "brak wyraźnego zagłębienia – najlepsze miejsce to najniższy punkt działki przy głównym miejscu odpływu wody",
+      "location_lonlat": [
+        22.6007595,
+        53.0498261
+      ],
+      "depression_area_m2": 0.0,
+      "max_depth_m": 0.0,
+      "storage_volume_m3": 0.0,
+      "catchment_m2": 18954.0,
+      "rain_mm": 20.0,
+      "inflow_gross_m3": 379.1,
+      "runoff_coeff": 0.3,
+      "inflow_runoff_m3": 113.7,
+      "suggested_pond_area_m2": 76.0,
+      "pond_depth_m": 1.5
+    }
+  ],
+  "thresholds": {
+    "flat_slope_pct": 3.0,
+    "hill_tpi_m": 0.3,
+    "wet_tpi_m": -0.3,
+    "twi_wet": 11.0,
+    "tpi_radius_m": 40.0,
+    "depression_min_depth_m": 0.2,
+    "depression_min_area_m2": 50.0,
+    "buffer_strip_slope_pct": 5.0,
+    "buffer_strip_min_share": 0.1,
+    "outlet_min_share": 0.05,
+    "rain_mm": 20.0,
+    "runoff_coeff": 0.3
+  },
+  "method": {
+    "flow": "D8 (kierunki, wyjścia) + D-infinity (TWI)",
+    "fill": "priority-flood (Barnes 2014)",
+    "slope": "Horn 3×3"
+  },
+  "compute_s": 0.128,
+  "parcel_id": "201305_2.0038.6/1",
+  "nmt_points": 4662,
+  "nmt_requests": 5,
+  "nmt_failed_requests": 0,
+  "nmt_missing_pct": 0.0,
+  "nmt_zero_values": 0,
+  "nmt_spikes_removed": 0,
+  "confidence": "wysoka",
+  "timing_s": {
+    "uldk": 4.47,
+    "nmt": 5.19,
+    "compute": 0.128,
+    "total": 9.79
+  },
+  "sources": [
+    {
+      "name": "ULDK GUGiK",
+      "url": "https://uldk.gugik.gov.pl/",
+      "what": "obrys działki"
+    },
+    {
+      "name": "NMT GUGiK",
+      "url": "https://services.gugik.gov.pl/nmt/",
+      "what": "wysokości (±0,1 m) w siatce 4.5 m, bufor 100 m"
+    }
+  ],
+  "limitations": [
+    "Siatka 4.5 m – formy mniejsze niż ~9 m (bruzdy, koleiny, rowki) są niewidoczne.",
+    "Wysokości podawane co 0,1 m – przy małych spadkach kierunek spływu jest niepewny; stosujemy wygładzenie σ = 6 m.",
+    "Bufor 100 m: zlewnia sięgająca dalej (długie stoki) jest niedoszacowana.",
+    "Model nie zna drenażu, rowów, przepustów, dróg ani orki wzdłuż/w poprzek stoku – rzeczywisty odpływ może iść inaczej.",
+    "Objętości zagłębień i dopływu to szacunek rzędu wielkości, nie projekt."
+  ]
+}
