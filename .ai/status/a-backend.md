@@ -1,6 +1,6 @@
 # Status – osoba A (Dominik), backend
 
-_Stan na: 2026-11-21 21:00_
+_Stan na: 2026-11-21 21:50_
 
 ## Zrobione
 - Wyszukiwanie działki ULDK: pełny identyfikator, „obręb numer”, punkt; `GET /api/parcel` (409 lista kandydatów, 404, 502 z nazwą źródła), timeout 10 s + jedna ponowna próba, cache 24 h.
@@ -32,10 +32,15 @@ _Stan na: 2026-11-21 21:00_
   - działki: indeks znanych (cache + `app/data/demo_parcels.json`), po id i po punkcie bez ULDK; blokada ULDK (302 / 429 / HTML) → ponowienia 1 s i 3 s → bezpiecznik 60 s; wspólny bezpiecznik dla źródeł, stan w `/api/status` („ograniczony (do HH:MM)”, czas polski) (D54);
   - `DEMO_OFFLINE=true` – zero zapytań zewnętrznych, brak w cache = czytelny 502; `/api/demo/examples` pokazuje tylko przykłady, które da się policzyć (D55);
   - `scripts/warm_demo.py` (przygotowanie przed prezentacją), `scripts/demo_check.py` (ścieżka demo z czasami); `smoke_cached_uldk.py` usunięty.
-- Testy: **256 bez sieci** (`docker run --network none`) + 5 live (A5b-1: 238). Ścieżka demo przy odciętej sieci (DEMO_OFFLINE, cache z wolumenu): wyszukanie 0,00 s, analiza 0,03–0,09 s, PDF 0,5–1,0 s.
+- **A6 (gałąź `a/backend`) – teren i spływ wody z NMT (port prototypu osoby C, bez merge `c/research`):**
+  - `sources/nmt.py` (POST po 1000 punktów, cache bez wygasania, bezpiecznik), `analysis/terrain.py` (rdzeń prototypu bez zmian + wejście aplikacyjne), `analysis/terrain_interpret.py` (kontrakt, zdania, progi oczka, warstwy), `rules/teren_gleba.yaml` (ocena stref z glebą) – D57–D59;
+  - sekcja `terrain` w `/api/analysis` (z uprawą i bez), `terrain_note` przy braku NMT; `/api/layers/teren` i `/api/layers/splyw` (GeoJSON przycięty, 3–11 kB); 5 reguł z terenu (oczko główne / „do rozważenia”, zastawka, pas zieleni E_MIOD, mokradło); przyczyna „teren”; NMT w `/api/status`; raport PDF: „Teren działki” (pasek, zdania, mapka stref) + szczegóły w „Gleba i teren”;
+  - zapas: zapisane prawdziwe wyniki NMT osoby C z 21.11 (`app/data/terrain/`, 201305 i 061704) – gdy NMT nie odpowiada;
+  - wszystkie źródła bez przekierowań, treść 3xx nieczytana, limity rozmiaru, User-Agent „Wodoskop/0.1 (HackNation 2026)” (D56); znaleziony i naprawiony na żywo błąd podwójnego dekodowania gzip.
+- Testy: **296 bez sieci** (`docker run --network none`) + 5 live (A5d: 256). Ścieżka demo przy odciętej sieci (DEMO_OFFLINE, cache z wolumenu, teren z zapisu): wyszukanie 0,00 s, analiza 0,06–0,08 s, warstwy 0,03–0,06 s, PDF 0,8–1,1 s.
 
 ## W trakcie (gałąź)
-- `a/backend` – A5d gotowe (commit + push); **do `main` nie mergowane**.
+- `a/backend` – A6 gotowe (commit + push); **do `main` nie mergowane**.
 
 ## Przed prezentacją (na dobrej sieci; w Git Bash poprzedź komendy `MSYS_NO_PATHCONV=1`)
 1. `docker compose up -d --build` – backend z wolumenem cache (`/data/cache.sqlite`).
@@ -50,16 +55,18 @@ _Stan na: 2026-11-21 21:00_
 3. Nowe `reports/examples/kukurydza-dzis.pdf` i `to-nie-jest-pole.pdf` (dziś jeszcze z A5 – stara logika). Aktualne: `susza-2018.pdf`, `mokry-rok-2021.pdf`, `stan-dzialki-bez-uprawy.pdf`, `stan-dzialki-201305_2-0038-6-1.pdf`.
 4. Kontrola „Kukurydza dziś” na 061704 (zastępczo na 201305: „poza sezonem”, 49 pkt) i zgodność gleby na 061704 i działkach testowych.
 5. KIEG nie odpowiadał (0 wpisów w cache) – po restarcie w trybie online pierwsza analiza czeka na niego ~6 s (bezpiecznik nie przeżywa restartu); w DEMO_OFFLINE nie dotyczy.
+6. **NMT GUGiK też odsyła 302** (A6) – porównanie na żywo 201305 z `research/terrain/out/201305_2.0038.6-1.facts.json` nie było możliwe; offline: ten sam kod rdzenia (testy prototypu przechodzą), siatka i liczba punktów identyczne z wynikiem C (test), zapisany wynik C używany jako zapas. Na dobrej sieci: `warm_demo.py` pobierze NMT do cache – potem porównać `terrain.zone_share_pct` z plikiem C.
 
 ## Następne
 1. **A5b-2 „Co tu posiać?”** – symulacja 15 upraw na pogodzie z 10 lat → `suggestions` (dziś null).
 2. Kalibracja progów statusu poza sezonem / bez uprawy (np. profil 61% w listopadzie = „Ryzyko 49”) i z IUNG SMSR.
-3. Teren z NMT + rowy BDOT10k (u osoby C) – klienty mają korzystać z `cached_fetch` (D53); Sentinel-2.
+3. Rowy i cieki BDOT10k (zastawka potwierdzona na mapie, warstwa „Spływ” z rowami), Sentinel-2; pas buforowy po warstwicy (dziś linia prosta – prototyp).
 4. README, `/api/layers`, sprzątanie `/api/dev/*`.
 
 ## Blokery / pytania do drugiej osoby
 - **B (Mefju): panel działki pokazuje „Stan działki” od razu po wybraniu działki – `GET /api/analysis` bez `crop` → `field_state`, `soil.consistency`, rekomendacje retencyjne** (szczegóły i lista plików frontendu zmienionych przez A: `contract-changes.md`, wpis A5b-1, „Dla Mefju”).
 - B: `IrrigationCard` – status `nie_praktykowane` (dziś etykieta „Nie stosuje się”); `status.scope_label` („poza sezonem”) przy karcie stanu; `storage.ts` – czy zapamiętywać analizę bez uprawy.
 - B: obraz kontenera frontendu nie ma `@fontsource-variable/fraunces` – `docker compose build frontend`.
+- **B (A6): pasek stref terenu, warstwy Teren i Spływ wody** – `contract-changes.md`, wpis A6 „Dla Mefju” (kolory, `kind`, dymki); w Terrain.tsx zmienić kolory stoku i płasko na #E8B931 i #5BB37F.
 - **B: przykłady na ekranie startowym brać z `GET /api/demo/examples`** – w trybie offline i przy blokadzie ULDK backend zwraca tylko przykłady, które działają (dziś: Susza 2018, Mokry rok 2021); lista lokalna pokaże jury przykłady, które skończą się błędem.
 - Wcześniejsze prośby A5 (pola rekomendacji, gleba, `previous_crop`, `/api/demo/examples`, raport PDF) – bez zmian.

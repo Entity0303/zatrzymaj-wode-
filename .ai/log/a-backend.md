@@ -4,6 +4,40 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-21 21:50 · `a/backend` · A6: teren i spływ wody z NMT (port prototypu osoby C)
+**Co:**
+- Prototyp `research/terrain/` z `origin/c/research` pobrany przez `git show` (bez merge). Rdzeń (`analyze_surface`, D8 / D-infinity, priority-flood, strefy, odpływy, propozycje) – bez zmian w `analysis/terrain.py`; testy prototypu → `tests/test_terrain.py` (10, przechodzą). Pobieranie: `sources/nmt.py` (httpx async, POST ≤ 1000 punktów, x = PÓŁNOC, y = WSCHÓD, cache bez wygasania, bezpiecznik).
+- Kontrakt (addytywnie): `terrain` + `terrain_note`, typy `Terrain*`; `/api/layers/teren` i `/api/layers/splyw` działają. Interpretacja (`terrain_interpret.py`): strefy z oceną gleba × teren (`rules/teren_gleba.yaml`), podsumowanie 2–3 zdania, fakty do reguł z progami oczka (D59), warstwy GeoJSON przycięte do działki i uproszczone.
+- Reguły z terenu: oczko w zagłębieniu (główna) / „Do rozważenia: małe oczko przy odpływie”, zastawka (sprawdź rów), pas zieleni / zadrzewienie (E_MIOD), mokradło; `permit_note` w regule (oczko: „może wymagać zgłoszenia lub pozwolenia – Wody Polskie i starostwo”, bez niezweryfikowanych progów). Przyczyna „teren”, NMT w `reliability` i `/api/status`, PDF „Teren działki”.
+- **Przekierowania (D56, dopisek do zadania):** wspólne `core/http.request` – bez `follow_redirects`, 3xx = blokada bez czytania treści, limity rozmiaru i czasu odczytu; ULDK, prognoza, NMT i `get_with_retry` przez nie. User-Agent „Wodoskop/0.1 (HackNation 2026)”. **Błąd znaleziony na żywo i naprawiony:** po odczycie strumieniowym odpowiedź gzip była dekodowana drugi raz (`/api/status` → 500, Open-Meteo / IUNG / mapa „DecodingError”) – testy na mockach tego nie łapały; dodane testy z prawdziwym gzip i uszkodzonym gzip.
+- **NMT GUGiK odsyła 302 (jak ULDK i KIEG)** – porównania na żywo z wynikiem C nie było. Zapas: zapisane prawdziwe wyniki NMT osoby C z 21.11 (`app/data/terrain/`, 201305 i 061704), oznaczone w ograniczeniach, źródło „częściowo”; test sprawdza zgodność liczb z `facts.json`.
+- Teren działek w cache (201305 – teren z zapisu C; 061704 – teren gotowy, działka czeka na ULDK):
+
+| Działka | Strefy (górka / stok / płasko / dołek) | Gleba | Zdania dla rolnika | Rekomendacje z terenu |
+|---|---|---|---|---|
+| 201305_2.0038.6/1 (0,58 ha) | 0 / 56 / 12 / 32% | zwięzła (kat. III) | „56% działki to stok – po ulewie woda spływa po powierzchni i zabiera glebę.” · „12% działki jest płaska – tu są najlepsze warunki wodne.” · „32% działki to dołek – na zwięzłej glebie wiosną i po ulewach stoi tu woda, uprawy mogą wymakać.” | bez uprawy: „Sprawdź rów przy miejscu odpływu – zastawka” (ostrzeżenie), „Do rozważenia: małe oczko przy odpływie” (ostrzeżenie, nie w panelu); Susza 2018 – poza limitem 5 (pierwszeństwo: zatrzymanie wody zamiast nawadniania, odłóż nawożenie) |
+| 061704_2.0011.383/2 (0,21 ha) | 0 / 49 / 48 / 3% | zwięzła (kat. IV) | „49% działki to stok – …zabiera glebę.” · „48% działki jest płaska – tu są najlepsze warunki wodne.” · „3% działki to dołek – …uprawy mogą wymakać.” | zastawka (odpływ 80%, dopływ 0,5 ha); oczko – brak (zlewnia 0,3 ha < 0,5 ha) |
+
+- Ścieżka demo przy odciętej sieci (`--network none`, DEMO_OFFLINE, wolumen cache):
+
+| Działka | Krok | HTTP | Czas | Wynik |
+|---|---|---|---|---|
+| Wnory-Wandy 6/1 – przykłady „Susza 2018”, „Mokry rok 2021” | Wyszukanie (id) | 200 | 0.00 s |  |
+| Wnory-Wandy 6/1 – przykłady „Susza 2018”, „Mokry rok 2021” | Wyszukanie (obręb numer) | 200 | 0.00 s |  |
+| Wnory-Wandy 6/1 – przykłady „Susza 2018”, „Mokry rok 2021” | Wyszukanie (punkt na mapie) | 200 | 0.00 s |  |
+| Wnory-Wandy 6/1 – przykłady „Susza 2018”, „Mokry rok 2021” | Analiza bez uprawy | 200 | 0.07 s | risk (43), pewność srednia; teren: stok 56%, płasko 12%, dołek 32% |
+| Wnory-Wandy 6/1 – przykłady „Susza 2018”, „Mokry rok 2021” | PDF bez uprawy | 200 | 1.06 s |  |
+| Wnory-Wandy 6/1 – przykłady „Susza 2018”, „Mokry rok 2021” | Warstwa Teren | 200 | 0.06 s | 3 obiektów, 3 kB |
+| Wnory-Wandy 6/1 – przykłady „Susza 2018”, „Mokry rok 2021” | Warstwa Spływ wody | 200 | 0.03 s | 46 obiektów, 10 kB |
+| Wnory-Wandy 6/1 – przykłady „Susza 2018”, „Mokry rok 2021” | Analiza: Susza 2018 | 200 | 0.06 s | danger (8), pewność srednia; teren: stok 56%, płasko 12%, dołek 32% |
+| Wnory-Wandy 6/1 – przykłady „Susza 2018”, „Mokry rok 2021” | PDF: Susza 2018 | 200 | 0.76 s |  |
+| Wnory-Wandy 6/1 – przykłady „Susza 2018”, „Mokry rok 2021” | Analiza: Mokry rok 2021 | 200 | 0.08 s | warn (59), pewność srednia; teren: stok 56%, płasko 12%, dołek 32% |
+| Wnory-Wandy 6/1 – przykłady „Susza 2018”, „Mokry rok 2021” | PDF: Mokry rok 2021 | 200 | 0.78 s |  |
+
+- Testy: **296 passed** bez sieci (+40: test_terrain 10, test_a6 27, test_contract 3 nowe – przykłady warstw i teren w przykładzie); `npm run build` OK.
+**Pliki:** `backend/app/{analysis/{terrain,terrain_interpret,causes,confidence,facts,recommendations}.py,analysis/rules/{retencja,teren_gleba}.yaml,core/{http,config}.py,sources/{nmt,uldk,weather_openmeteo}.py,routers/{analysis,layers,status}.py,report/{builder,charts}.py,report/report.css,report/templates/report.html,schemas/{analysis,layers}.py,data/terrain/*}`, `backend/scripts/{warm_demo,demo_check}.py`, `backend/tests/{test_terrain,test_a6,conftest,test_a5,test_a5b,test_a5d,test_analysis,test_contract,test_demo_status_report}.py`, `backend/tests/fixtures/terrain_201305_research.facts.json`, `frontend/src/api/types.ts`, `frontend/src/mocks/{analysis.sample,analysis.no-crop.sample,layers.teren.sample,layers.splyw.sample}.json`, `reports/examples/*.pdf`, `.ai/*`.
+**Kontrakt API:** TAK (addytywnie) – `terrain`, `terrain_note`, warstwy teren / spływ (osobny commit, `contract-changes.md`).
+
 ## 2026-11-21 21:00 · `a/backend` · A5d: odporność demo – trwały cache, działki bez ULDK, bezpiecznik, tryb offline
 **Co:**
 - **0. Trwały cache (D53):** `core/cache.py` – `TTLCache` = pamięć + jeden plik SQLite (`CACHE_DB`), wspólny dla wszystkich źródeł (ULDK, NASA POWER, Open-Meteo prognoza i archiwum, IUNG, KIEG, mapa glebowo-rolnicza, SoilGrids, ortofotomapa do PDF); czas ścienny; `ttl_s=None` = bez wygasania; plik niedostępny → sama pamięć (wcześniej wywracał start – znalezione na żywo: wolumen należał do roota, poprawione w Dockerfile). TTL: działki i gleba bez wygasania, pogoda zakończona > 7 dni temu bez wygasania, prognoza 1 h. NMT / BDOT10k / GUS – brak klientów (osoba C), warstwa gotowa.
