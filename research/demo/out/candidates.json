@@ -51,7 +51,10 @@
    "PODLOZE1": "ps",
    "PODLOZE2": "Null",
    "AKTUALNOSC": "Null"
-  }
+  },
+  "why": "Słaba, sucha ziemia (piasek, kat. IUNG I, kompleks 6): werdykt „słaba działka – siej rośliny odporne na suszę”.",
+  "expected": "❌ pszenica/rzepak/jęczmień/kukurydza, ✅ żyto/łubin",
+  "expected_status": "hipoteza do sprawdzenia w A8 (analiza backendu po pobraniu działki)"
  },
  "piasek-zyto": {
   "id": "piasek-zyto",
@@ -105,7 +108,10 @@
    "PODLOZE1": "pgl",
    "PODLOZE2": "Null",
    "AKTUALNOSC": "01.01.1978"
-  }
+  },
+  "why": "Lekki piasek na Kurpiach (kompleks 5 żytni dobry): pszenica na granicy opłacalności, bezpieczniej żyto.",
+  "expected": "❌ pszenica/rzepak, ✅ żyto/łubin (kat. IUNG II – werdykt łagodniejszy niż Notecka)",
+  "expected_status": "hipoteza do sprawdzenia w A8 (analiza backendu po pobraniu działki)"
  },
  "czarnoziem-pszenica": {
   "id": "czarnoziem-pszenica",
@@ -154,7 +160,10 @@
    "PODLOZE1": "li",
    "PODLOZE2": "Null",
    "AKTUALNOSC": "Null"
-  }
+  },
+  "why": "Najlepsza gleba w Polsce (czarnoziem, kompleks 1, kat. IUNG IV): kontrast do słabej ziemi – tu pszenica jest bezpieczna.",
+  "expected": "✅ pszenica/rzepak/burak/kukurydza, 🟡 żyto (opłacalniejsze uprawy)",
+  "expected_status": "hipoteza do sprawdzenia w A8 (analiza backendu po pobraniu działki)"
  },
  "kujawy-susza": {
   "id": "kujawy-susza",
@@ -208,7 +217,10 @@
    "PODLOZE1": "glp",
    "PODLOZE2": "Null",
    "AKTUALNOSC": "22.12.1969"
-  }
+  },
+  "why": "Dobra gleba (kompleks 1) w najsuchszym regionie Polski: woda, a nie gleba, ogranicza plon; stacja IMGW 6 km – porównanie opadów.",
+  "expected": "✅ pszenica/rzepak/burak, ryzyko suszy w kilku z 10 lat; rekomendacje retencji glebowej",
+  "expected_status": "hipoteza do sprawdzenia w A8 (analiza backendu po pobraniu działki)"
  },
  "less-erozja": {
   "id": "less-erozja",
@@ -257,7 +269,10 @@
    "PODLOZE1": "l",
    "PODLOZE2": "Null",
    "AKTUALNOSC": "Null"
-  }
+  },
+  "why": "Lessowe pola między wąwozami: woda spływa po stoku i zabiera glebę – teren, wyjście wody, pas buforowy.",
+  "expected": "✅ pszenica/burak (dobra gleba), teren: stok > 5 %, propozycja pasa buforowego w poprzek spływu",
+  "expected_status": "hipoteza do sprawdzenia w A8 (analiza backendu po pobraniu działki)"
  },
  "pojezierze-oczko": {
   "id": "pojezierze-oczko",
@@ -311,7 +326,10 @@
    "PODLOZE1": "gs",
    "PODLOZE2": "Null",
    "AKTUALNOSC": "23.10.2019"
-  }
+  },
+  "why": "Morena z zagłębieniami bez odpływu: tu zbiera się woda – propozycja oczka wodnego w dołku.",
+  "expected": "teren: mokry dołek / zagłębienie, propozycja oczka (formalności: zgłoszenie wodnoprawne)",
+  "expected_status": "hipoteza do sprawdzenia w A8 (analiza backendu po pobraniu działki)"
  },
  "zulawy-mady": {
   "id": "zulawy-mady",
@@ -365,7 +383,10 @@
    "PODLOZE1": "Null",
    "PODLOZE2": "Null",
    "AKTUALNOSC": "Null"
-  }
+  },
+  "why": "Ciężkie mady na płaskich Żuławach: problemem jest raczej nadmiar wody i melioracja niż susza.",
+  "expected": "✅ pszenica/burak/rzepak, teren płaski, mało dni suszy; ostrzeżenie o zastoiskach przy ulewie",
+  "expected_status": "hipoteza do sprawdzenia w A8 (analiza backendu po pobraniu działki)"
  },
  "pogorze-stok": {
   "id": "pogorze-stok",
@@ -419,7 +440,11 @@
    "PODLOZE1": "płz",
    "PODLOZE2": "Null",
    "AKTUALNOSC": "01.01.1974"
-  }
+  },
+  "why": "Wąskie pasy pól na stoku Pogórza: sucha górka u góry, spływ w dół – retencja na stoku.",
+  "expected": "teren: sucha górka + stok, propozycja pasa buforowego; ✅ zboża, ostrożnie z kukurydzą (erozja)",
+  "uwagi": "Pasy pól na Pogórzu mają ok. 30–40 m szerokości – 30 m od każdej granicy jest niemożliwe; punkt leży w osi pasa (ortofotomapa), zapas 38 m liczony wzdłuż pasa. Działka z ULDK będzie wąska.",
+  "expected_status": "hipoteza do sprawdzenia w A8 (analiza backendu po pobraniu działki)"
  },
  "kurpie-slaba": {
   "id": "kurpie-slaba",
@@ -474,6 +499,9 @@
    "PODLOZE2": "Null",
    "AKTUALNOSC": "01.01.1978"
   },
-  "uwagi": "NIE UŻYWAĆ: punkt testu backendu (21,43 / 53,27) leży na skraju lasu przy drodze (ortofotomapa) – rozrost obszaru wchodzi w las; słaba ziemia = notecka-slaba"
+  "uwagi": "NIE UŻYWAĆ: punkt testu backendu (21,43 / 53,27) leży na skraju lasu przy drodze (ortofotomapa) – rozrost obszaru wchodzi w las; słaba ziemia = notecka-slaba",
+  "why": "NIE UŻYWAĆ – punkt na skraju lasu przy drodze.",
+  "expected": "–",
+  "expected_status": "–"
  }
 }
