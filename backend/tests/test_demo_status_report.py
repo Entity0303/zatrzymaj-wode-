@@ -169,16 +169,16 @@ def test_report_pdf_with_polish_text(client):
     r = client.get("/api/report.pdf", params=Q)
     assert r.status_code == 200, r.text
     assert r.headers["content-type"] == "application/pdf" and r.content.startswith(b"%PDF")
-    assert 'filename="paszport-wodny-201305_2.0038.6-1-2018-06-10.pdf"' in r.headers["content-disposition"]
+    assert 'filename="paszport-wodny-201305_2.0038.6-1-2018-06-10-skrocony.pdf"' in r.headers["content-disposition"]
     assert int(r.headers["x-generation-ms"]) < 10_000
     assert ortho.called
     text = _pdf_text(r.content)
-    for phrase in ("Werdykt działki", "Woda na działce", "Co zrobić z wodą", "Skąd te dane", "Gleba, teren i skąd dane",
-                   "Dlaczego?", "Raport ma charakter pomocniczy", "Zboża ozime", "glina lekka pylasta", "Na tle 10 lat"):
+    for phrase in ("Werdykt działki", "Raport skrócony", "Co tu posiać?", "Co zrobić z wodą", "Na tle 10 lat",
+                   "Raport ma charakter pomocniczy", "Zboża ozime", "glina lekka pylasta"):
         assert phrase in text, phrase
     assert "ż" in text and "ą" in text and "ł" in text and "ę" in text  # polskie znaki w tekście PDF
     pages = len(PdfReader(io.BytesIO(r.content)).pages)
-    assert 3 <= pages <= 5
+    assert pages == 2  # A5e-2: raport skrócony
 
 
 @respx.mock

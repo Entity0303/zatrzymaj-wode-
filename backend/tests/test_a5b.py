@@ -305,14 +305,17 @@ def test_report_pdf_without_crop(client):
     respx.get(settings.ortho_wms_url).mock(return_value=httpx.Response(503))
     r = client.get("/api/report.pdf", params=NO_CROP)
     assert r.status_code == 200, r.text
-    assert 'filename="stan-wodny-dzialki-201305_2.0038.6-1-2018-06-10.pdf"' in r.headers["content-disposition"]
+    assert 'filename="stan-wodny-dzialki-201305_2.0038.6-1-2018-06-10-skrocony.pdf"' in r.headers["content-disposition"]
     reader = PdfReader(io.BytesIO(r.content))
     text = "\n".join(p.extract_text() for p in reader.pages)
-    for phrase in ("Werdykt działki", "Woda na działce", "stan wody na działce", "Co zrobić z wodą",
-                   "Gleba, teren i skąd dane", "Skąd te dane", "Najważniejsze ograniczenia"):
+    for phrase in ("Werdykt działki", "Raport skrócony", "Co tu posiać?", "Co zrobić z wodą", "Na tle 10 lat"):
         assert phrase in text, phrase
     assert "Paszport wodny" not in text and "Dni stresu" not in text
-    assert 3 <= len(reader.pages) <= 5  # A5e: raport krótki 4–5 stron (bez rankingu – krótka pogoda w teście)
+    assert len(reader.pages) == 2  # A5e-2: raport skrócony = dokładnie 2 strony
+    full = client.get("/api/report.pdf", params={**NO_CROP, "report_type": "full"})
+    tf = "\n".join(p.extract_text() for p in PdfReader(io.BytesIO(full.content)).pages)
+    for phrase in ("Raport szczegółowy", "Woda na działce", "stan wody na działce", "Gleba, teren i skąd dane", "Skąd te dane"):
+        assert phrase in tf, phrase
 
 
 def test_unknown_crop_still_422(client):

@@ -77,7 +77,17 @@ def first_sentence(text: str | None) -> str:
     return text[: m.start()] if m else text
 
 
-_env.filters.update(num=num, pct=pct, date_pl=date_pl, first_sentence=first_sentence)
+def sentences(text: str | None, n: int = 2) -> str:
+    """Pierwsze `n` zdań (karta działania w raporcie skróconym: 1–2 zdania)."""
+    if not text:
+        return ""
+    parts = re.split(r"(?<=[.!?])\s+(?=[A-ZĄĆĘŁŃÓŚŹŻ])", text.strip())
+    return " ".join(parts[:n])
+
+
+_env.filters.update(num=num, pct=pct, date_pl=date_pl, first_sentence=first_sentence, sentences=sentences)
+REPORT_LABEL = {"short": "Raport skrócony", "full": "Raport szczegółowy"}
+REPORT_SLUG = {"short": "skrocony", "full": "szczegolowy"}
 SHORT_RECS = 4
 SHORT_LIMITATIONS = 5
 
@@ -217,7 +227,7 @@ def qr_svg(url: str) -> str:
 def filename(a: AnalysisResponse, report_type: str = "short") -> str:
     safe = re.sub(r"[^0-9A-Za-z_.-]+", "-", a.parcel.id).strip("-")
     kind = "paszport-wodny" if a.crop else "stan-wodny-dzialki"
-    return f"{kind}-{safe}-{a.analysis_date.isoformat()}{'-pelny' if report_type == 'full' else ''}.pdf"
+    return f"{kind}-{safe}-{a.analysis_date.isoformat()}-{REPORT_SLUG.get(report_type, 'skrocony')}.pdf"
 
 
 def top_limitations(a: AnalysisResponse, n: int = SHORT_LIMITATIONS) -> list[str]:
@@ -282,6 +292,9 @@ def render_html(a: AnalysisResponse, ortho: str | None, generated: dt.datetime |
         "css": Markup((HERE / "report.css").read_text(encoding="utf-8")),
         # A5e: raport krótki (4–5 stron) / pełny
         "full": report_type == "full",
+        "report_label": REPORT_LABEL.get(report_type, REPORT_LABEL["short"]),
+        "chart_years_small": Markup(charts.season_bars(a.seasonal_balance_by_year, a.seasonal_balance_mean_mm,
+                                                       width=620, height=128) or ""),
         "top_items": top_items(a),
         "recs": a.recommendations if report_type == "full" else a.recommendations[:SHORT_RECS],
         "more_recs": 0 if report_type == "full" else max(0, len(a.recommendations) - SHORT_RECS),
@@ -291,7 +304,7 @@ def render_html(a: AnalysisResponse, ortho: str | None, generated: dt.datetime |
         "soil_short": soil_short(a),
         "chart_years": Markup(charts.season_bars(a.seasonal_balance_by_year, a.seasonal_balance_mean_mm) or ""),
         "year_below": bool(a.seasonal_balance_by_year and a.seasonal_balance_mean_mm is not None
-                           and a.seasonal_balance_by_year[-1].bilans_mm < a.seasonal_balance_mean_mm),
+                           and a.seasonal_balance_by_year[-1].balance_mm < a.seasonal_balance_mean_mm),
     }
     return _env.get_template("report.html").render(**ctx)
 

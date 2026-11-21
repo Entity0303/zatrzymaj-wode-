@@ -507,6 +507,14 @@ def parse_history(crop_history: str | None) -> list[str]:
             "message": f"Nieznana uprawa w historii pola: {exc}. Podaj 1–3 uprawy po przecinku albo „nie_wiem”."}) from exc
 
 
+def species_to_group(crop_id: str | None) -> str | None:
+    """A5e-2 (D80): gatunek z rankingu (pszenica_ozima, łubin…) w `crop` / `previous_crop` → uprawa IUNG jego grupy
+    (zboza_ozime, straczkowe…), bo model wody liczy grupy (15 upraw)."""
+    if crop_id and crop_id not in CROPS and crop_id in ALL_CROPS and ALL_CROPS[crop_id].group_id in CROPS:
+        return ALL_CROPS[crop_id].group_id
+    return crop_id
+
+
 def validate_params(crop: str | None, analysis_date: dt.date, previous_crop: str | None, today: dt.date) -> None:
     """Uprawa opcjonalna (A5b-1): bez niej – „Stan działki”. Nieznana uprawa / zła data – 422."""
     if crop and crop not in CROPS:
@@ -554,14 +562,15 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
     t0 = perf_counter()
     today = dt.date.today()
     analysis_date = date or today
+    crop, previous_crop = species_to_group(crop), species_to_group(previous_crop)
     validate_params(crop, analysis_date, previous_crop, today)
     crop_hist = parse_history(crop_history)
     try:
         planned = choice_mod.parse_planned(planned_crops)
     except ValueError as exc:
         raise HTTPException(status_code=422, detail={
-            "message": f"Nieznana uprawa w planie siewu: {exc}. Podaj 1–3 uprawy z rankingu (crop_id), np. "
-                       "„pszenica_ozima,rzepak”."}) from exc
+            "message": f"Nieznana uprawa w planie siewu: {exc}. Podaj 1–3 uprawy (crop_id albo grupa), np. "
+                       "„pszenica_ozima,zboza_jare”."}) from exc
     if cultivated_area_ha is not None and not 0 < cultivated_area_ha <= 10_000:
         raise HTTPException(status_code=422, detail={"message": "Powierzchnia uprawy musi być większa od 0 ha."})
     if not crop_hist and previous_crop in CROPS:  # zgodność z A5: sam przedplon = historia 1 roku
@@ -833,7 +842,7 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
         crop_history=crop_hist,
         cultivated_area_ha=area_ha,
         planned_crops=planned,
-        seasonal_balance_by_year=[SeasonalBalanceYear(rok=y, bilans_mm=v, biezacy=c) for y, v, c in wb.by_year],
+        seasonal_balance_by_year=[SeasonalBalanceYear(year=y, balance_mm=v, current=c) for y, v, c in wb.by_year],
         seasonal_balance_mean_mm=wb.mean_balance_mm,
         seasonal_balance_label=(f"od {format_date_pl(wb.season_start, with_year=False)} do "
                                 f"{format_date_pl(wb.data_until, with_year=False)}" if wb.data_until else None),

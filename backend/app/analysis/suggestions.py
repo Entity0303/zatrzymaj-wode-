@@ -230,6 +230,21 @@ def _years(n: int) -> str:
     return "1 roku" if n == 1 else f"{n} lat"
 
 
+def years_break(n: int) -> str:
+    """„rok” / „2 lata” / „5 lat” – do „lepiej zrobić … przerwy”."""
+    if n <= 1:
+        return "rok"
+    return f"{n} lata" if n % 10 in (2, 3, 4) and n % 100 not in (12, 13, 14) else f"{n} lat"
+
+
+def grew(crop_id: str) -> str:
+    """„rosła” / „rósł” / „rosło” / „rosły” – wg rodzaju nazwy uprawy (rules/verdict.yaml: gender)."""
+    from app.analysis import verdict as verdict_mod
+
+    g = verdict_mod.cfg().get("gender", {}).get(crop_id, "pl")
+    return {"f": "rosła", "m": "rósł", "n": "rosło"}.get(g, "rosły")
+
+
 def rotation(crop: Crop, history: list[str]) -> RotationCheck:
     known = [(k + 1, h) for k, h in enumerate(history) if h != HISTORY_UNKNOWN]
     if not known:
@@ -239,17 +254,18 @@ def rotation(crop: Crop, history: list[str]) -> RotationCheck:
     for k, h in known:  # twarda reguła: ta sama uprawa przed upływem min. przerwy
         if _same(h, crop.id) and k <= crop.min_break_years:
             why = BREAK_REASON.get(crop.id) or BREAK_REASON.get(crop.group_id)
-            notes.append(f"{crop.label} – ta uprawa rosła tu {_ago(k)}, a potrzeba {_years(crop.min_break_years)} "
-                         f"przerwy" + (f" ({why})." if why else "."))
+            notes.append(f"{crop.label} {grew(crop.id)} tu {_ago(k)} – po sobie częściej chorują"
+                         + (f" ({why})" if why else "") + f", lepiej zrobić {years_break(crop.min_break_years)} przerwy.")
             return RotationCheck(status="naruszenie", notes=notes)
     last = history[0]
     if last != HISTORY_UNKNOWN:
         prev = ALL_CROPS[last]
-        good_txt = (f"Dobry przedplon: rok temu {prev.label.lower()}"
-                    + (" – owies przerywa choroby zbóż" if last == "owies" and _is_cereal(crop.id) else "") + ".")
-        bad_txt = f"Zły przedplon: rok temu {prev.label.lower()} – więcej chorób i szkodników, niższy plon."
+        good_txt = (f"Dobry przedplon – rok temu {grew(last)} tu {prev.label.lower()}"
+                    + (" (owies przerywa choroby zbóż)" if last == "owies" and _is_cereal(crop.id) else "") + ".")
+        bad_txt = (f"Słaby przedplon – rok temu {grew(last)} tu {prev.label.lower()}; więcej chorób i szkodników, "
+                   "niższy plon.")
         if _same(last, crop.id) and crop.min_break_years == 0:
-            notes.append(f"{crop.label} znosi uprawę po sobie – przerwa nie jest konieczna.")
+            notes.append(f"{crop.label} znosi uprawę po sobie – przerwa nie jest konieczna.")  # A5e-2: bez zmian
         elif last in crop.good_previous:  # dokładny gatunek ma pierwszeństwo przed grupą (owies przed pszenicą)
             status = "plus"
             notes.append(good_txt)
@@ -258,7 +274,7 @@ def rotation(crop: Crop, history: list[str]) -> RotationCheck:
             notes.append(bad_txt)
         elif _is_cereal(last) and _is_cereal(crop.id):
             status = "ostrzezenie"
-            notes.append("Zboże po zbożu – więcej chorób, niższy plon; to ostrzeżenie, nie zakaz.")
+            notes.append("Zboże po zbożu – więcej chorób i niższy plon; można, ale lepiej zmienić uprawę.")
         elif prev.group_id in crop.good_previous:
             status = "plus"
             notes.append(good_txt)

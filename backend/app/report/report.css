@@ -184,3 +184,26 @@ p.rdesc { margin: 4pt 0; }
 section .cards .card .value { font-size: 15pt; }
 section .cards .card .note { font-size: 8.8pt; }
 .box .zbar svg { width: 100%; height: auto; }
+
+/* ── A5e-2: raport skrócony – strona 2 (wszystko na jednej stronie) ── */
+.report-kind { font-size: 10pt; font-weight: 700; color: #5F6B64; letter-spacing: .3pt; }
+.p2c .p2-title { font-size: 19pt; margin-bottom: 2pt; }
+.p2c p.lead { font-size: 9pt; color: #5F6B64; margin: 0 0 6pt; }
+.p2c .choice-head { font-size: 12pt; margin: 2pt 0 2pt; }
+.p2c p.choice-summary { font-size: 10.5pt; margin: 0 0 4pt; }
+.choice-head2 { font-size: 11pt; font-weight: 750; color: #2F6B47; margin: 8pt 0 3pt; border-bottom: 1pt solid #E3DED4; padding-bottom: 1pt; }
+table.ctab { border-collapse: collapse; width: 100%; font-size: 9.5pt; }
+table.ctab tr.c1 td { padding: 4pt 5pt 1pt; background: #F6F4EF; }
+table.ctab tr.c1 td:first-child { border-left: 5pt solid #B8BDB9; }
+table.ctab tr.c2 td { padding: 2pt 5pt 6pt 10pt; font-size: 9.3pt; border-bottom: .6pt solid #E3DED4; }
+table.ctab .k { color: #5F6B64; font-size: 8.3pt; }
+table.ctab td.cname { width: 40%; }
+.p2c table.alt { font-size: 9.2pt; }
+.p2c table.alt td { padding: 3pt 4pt; }
+.p2c td.aname { width: 22%; } .p2c td.arel { width: 52pt; }
+.p2c table.rank { font-size: 9.2pt; }
+.p2c .nosow { margin-top: 6pt; padding: 5pt 8pt; font-size: 9.2pt; }
+ol.wact2 { margin: 2pt 0 0 14pt; padding: 0; font-size: 9.4pt; }
+ol.wact2 li { margin-bottom: 3pt; }
+p.year-sentence { font-size: 10pt; font-weight: 600; margin: 0 0 2pt; }
+.small-bars svg { width: 100%; height: auto; }

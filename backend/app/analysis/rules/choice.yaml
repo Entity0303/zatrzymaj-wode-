@@ -1,17 +1,19 @@
-# „Twój wybór + lepsze możliwości” (A5e, D77): szablony zdań i progi. Deterministycznie, bez AI.
+# „Twój wybór + lepsze możliwości” (A5e, D77; poprawki A5e-2, D80): szablony zdań i progi. Deterministycznie, bez AI.
 # Liczby (plony, ryzyko, tony) są w polach ChoiceItem – zdanie `why` mówi coś NOWEGO (gleba / susza / przedplon).
 choice:
   max_planned: 3
   max_alternatives: 3
-  better_margin: 3        # ocena rankingu wyższa o ≥ 3 pkt od najlepszej wybranej = „lepsza”
-  similar_margin: 8       # w granicach 8 pkt poniżej najlepszej wybranej = „podobna”
+  similar_relative_yield: 0.05   # alternatywa: plon względny ≥ plon względny wyboru − 0,05 („podobny lub lepszy”)
   top_n: 5
   not_recommended_max: 6
+  # grupy upraw bez własnego wiersza w rankingu → gatunki, które je reprezentują (pozostałe grupy: po group_id z crops.csv)
+  group_alias:
+    rzepak_jesien: [rzepak]
 
   # jedno zdanie „dlaczego” dla wybranej uprawy – pierwsza pasująca reguła (kolejność = priorytet)
   why:
     perennial: "To uprawa wieloletnia – inwestycja na lata, więc liczby traktuj tylko orientacyjnie i policz opłacalność osobno."
-    rotation_violation: "Ta sama uprawa rosła tu za niedawno – choroby i szkodniki zostają w glebie, potrzeba dłuższej przerwy."
+    rotation_violation: "{label} {grew} tu {ago} – po sobie częściej chorują, lepiej zrobić przerwę."
     soil_bad_light: "Lekka ziemia trzyma mało wody, a ta uprawa ma duże wymagania wodne."
     soil_bad: "Ta gleba nie jest odpowiednia dla tej uprawy – plon wyraźnie spada."
     drought_bad_sensitive: "Jest wrażliwa na suszę, a na tej działce zbyt często brakuje wody w kluczowym okresie wzrostu."
@@ -23,16 +25,23 @@ choice:
     possible_soil: "Pasuje do gleby, ale w suche lata plon wyraźnie spada."
     neutral: "Da się tu uprawiać, ale ta działka nie daje tej uprawie szczególnych zalet."
 
-  # zdanie przy alternatywie (kolejność = priorytet)
+  # grupa upraw w planie siewu (np. zboża ozime) – oceniamy wszystkie gatunki grupy i pokazujemy najlepszy
+  group_note: "Z grupy {group} najlepiej wypada: {best}."
+  unrated: "{label}: tej uprawy nie ma w rankingu (brak danych o plonach) – oceniamy ją tylko w analizie stanu wody."
+
+  # zdanie przy alternatywie – mówi, W CZYM jest lepsza (ryzyko suszy / gleba); bez porównywania t/ha różnych gatunków
   alternative_why:
-    rotation_plus: "Po {prev_gen} {crop_nom} – dobry przedplon."
-    less_drought: "Rzadziej traci plon przez suszę: {risk} z {n} lat wobec {ref_risk} dla {ref_gen}."
-    more_yield: "Daje więcej z hektara: typowo {yield_t} t/ha wobec {ref_yield} t/ha dla {ref_gen}."
-    soil_good: "Dobrze pasuje do tej gleby i podobnie dobrze znosi suszę."
+    risk_soil_light: "{cand} znosi suszę i lekką, piaszczystą glebę – strata ponad 20% plonu w {risk} z {n} lat zamiast {ref_risk}."
+    risk_soil: "{cand} lepiej pasuje do tej gleby i lepiej znosi suszę – strata ponad 20% plonu w {risk} z {n} lat zamiast {ref_risk}."
+    risk: "{cand} lepiej znosi suszę na tej działce – strata ponad 20% plonu w {risk} z {n} lat zamiast {ref_risk}."
+    rotation_only: "Po {ref_gen} na tym samym polu lepiej zrobić przerwę – {cand_low} jej nie wymaga; ryzyko suszy podobne ({risk} z {n} lat)."
+    rotation_only_plus: "Po {prev_gen} {cand_low} – dobry przedplon i przerwa, której potrzebuje to pole; ryzyko suszy podobne ({risk} z {n} lat)."
+    plus_suffix: " Po {prev_gen} to korzystny przedplon."
+    no_ref: "Dobrze wypada na tej działce – strata ponad 20% plonu w {risk} z {n} lat."
 
   # powód w „nie siej: …” – jeden, krótki
   not_recommended:
-    rotation: "ta uprawa rosła {ago}, potrzeba {years} przerwy"
+    rotation: "{grew} tu {ago} – lepiej zrobić {years} przerwy"
     soil_light: "za mało wody na tej glebie"
     soil: "gleba nie pasuje do tej uprawy"
     drought: "susza zabiera ponad 20% plonu w {risk} z {n} lat"
@@ -40,8 +49,9 @@ choice:
   summary:
     perennial_only: "Uprawy wieloletnie to inwestycja na lata – wymagają osobnej analizy opłacalności."
     all_bad: "Tej uprawy na tej działce nie polecamy – poniżej lepsze możliwości."
+    all_bad_no_alt: "Tej uprawy na tej działce nie polecamy."
     some_bad: "Nie wszystkie wybrane uprawy pasują do tej działki – tutaj nie polecamy: {bad}."
     good: "Twój wybór pasuje do tej działki."
-    good_but_better: "Twój wybór jest dobry, ale poniżej są uprawy, które wypadają tu jeszcze lepiej."
-    possible_but_better: "Twój wybór jest możliwy, ale na tej działce są lepsze opcje – zobacz poniżej."
+    good_but_better: "Twój wybór jest dobry, ale poniżej są uprawy, które lepiej znoszą suszę na tej działce."
+    possible_but_better: "Twój wybór jest możliwy, ale na tej działce są uprawy, które lepiej znoszą suszę – zobacz poniżej."
     possible: "Twój wybór jest możliwy – w suche lata plon wyraźnie spada."

@@ -119,6 +119,30 @@ verdict:
     drzewa_owocowe: "drzewa owocowe"
     krzewy_owocowe: "krzewy owocowe"
     truskawki: "truskawki"
+  # rodzaj gramatyczny nazwy (label) – do „rosła / rósł / rosło / rosły” (A5e-2): f, m, n, pl
+  gender:
+    pszenica_ozima: f
+    kukurydza_ziarno: f
+    kukurydza_kiszonka: f
+    zyto: n
+    pszenzyto_ozime: n
+    jeczmien_ozimy: m
+    jeczmien_jary: m
+    owies: m
+    lubin: m
+    ziemniak: m
+    burak_cukrowy: m
+    chmiel: m
+    tyton: m
+    rzepak: pl
+    rzepak_jesien: pl
+    straczkowe: pl
+    warzywa: pl
+    drzewa_owocowe: pl
+    krzewy_owocowe: pl
+    truskawki: pl
+    zboza_ozime: pl
+    zboza_jare: pl
   # najczęściej siane uprawy polowe – pierwszeństwo na liście ❌ (żeby rolnik od razu zobaczył swoje)
   popular: [pszenica_ozima, rzepak, kukurydza_ziarno, jeczmien_jary, jeczmien_ozimy, pszenzyto_ozime, zyto, ziemniak,
             burak_cukrowy, owies, kukurydza_kiszonka, lubin, straczkowe, warzywa]

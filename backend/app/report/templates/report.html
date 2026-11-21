@@ -19,6 +19,7 @@
         <span class="name">WODOSKOP</span><span class="tagline-brand">prześwietl swoją działkę pod kątem suszy</span>
       </div>
       <div class="p1-title">Werdykt działki</div>
+      <div class="report-kind">{{ report_label }}</div>
       <div class="p1-parcel">{{ parcel_name }}</div>
       <div class="muted small">{{ parcel_place }} · data analizy {{ a.analysis_date|date_pl }}{% if a.crop %} · uprawa: {{ crop_label }}{% else %} · bez wybranej uprawy{% endif %}</div>
     </div>
@@ -62,6 +63,66 @@
   {% endif %}
 </section>
 
+{% if not full %}
+{# ═══ RAPORT SKRÓCONY – STRONA 2: co tu posiać + 3 działania z wodą + mały wykres 10 lat (A5e-2, D81) ═══ #}
+<section class="page-break p2c">
+  <div class="p2-title">Co tu posiać?</div>
+  {% if sug %}
+  <p class="lead">Plony bez nawadniania (sezony {{ sug.seasons|first }}–{{ sug.seasons|last }}) · powierzchnia {{ sug.area.value_ha|num(2, 'ha') }}{% if sug.area.estimated %} (oszacowana){% endif %} · historia pola: {% if history_labels %}{{ history_labels }}{% else %}nie podano{% endif %}</p>
+  {% if sug.choice %}
+  <div class="choice-head">Twój wybór</div>
+  {% if sug.choice_summary %}<p class="choice-summary">{{ sug.choice_summary }}</p>{% endif %}
+  <table class="ctab">
+    {% for c in sug.choice %}
+    <tr class="c1" style="border-left-color: {{ CAT[c.category][1] if c.category else '#B8BDB9' }}">
+      <td class="cname"><b>{{ c.label }}</b> {% if c.category %}<span class="cchip" style="background: {{ CAT[c.category][1] }}">{{ CAT[c.category][0] }} {{ c.category_label }}</span>{% else %}<span class="cchip" style="background:#B8BDB9">wieloletnia</span>{% endif %}</td>
+      <td><span class="k">typowo</span> <b>{{ c.yield_typical_t_ha|num(1, 't/ha') }}</b>{% if c.total_typical_t is not none %}<span class="k"> · ok. {{ c.total_typical_t|num(1, 't') }}</span>{% endif %}</td>
+      <td><span class="k">słaby rok</span> <b>{{ c.yield_weak_t_ha|num(1, 't/ha') }}</b> <span class="k">({{ c.weak_year }})</span></td>
+      <td><span class="k">ryzyko suszy</span> <b>{{ c.drought_risk_years }} na {{ c.years_simulated }}</b></td>
+    </tr>
+    <tr class="c2"><td colspan="4">{% if c.group_note %}<b>{{ c.group_note }}</b> {% endif %}{{ c.why }}{% if not (c.rotation.status == 'naruszenie' and 'po sobie' in c.why) %}{% for n in c.rotation.notes %} <span class="{{ 'bad-t' if c.rotation.status == 'naruszenie' else 'muted' }}">Płodozmian: {{ n }}</span>{% endfor %}{% endif %}</td></tr>
+    {% endfor %}
+  </table>
+  {% for n in sug.choice_notes %}<p class="tiny muted">{{ n }}</p>{% endfor %}
+  {% if sug.alternatives %}
+  <div class="choice-head2">Lepsze możliwości na tej działce</div>
+  <table class="alt">
+    {% for x in sug.alternatives %}
+    <tr><td class="arel"><span class="cchip" style="background: {{ '#5BB37F' if x.relation == 'lepsza' else '#8FAF9A' }}">{{ x.relation }}</span></td>
+      <td class="aname"><b>{{ x.label }}</b></td>
+      <td class="num">{{ x.drought_risk_years }} na {{ x.years_simulated }} lat</td>
+      <td class="awhy">{{ x.why }}</td></tr>
+    {% endfor %}
+  </table>
+  {% endif %}
+  {% else %}
+  <div class="choice-head">Najlepsze na tej działce</div>
+  <table class="rank">
+    <tr><th></th><th>Uprawa</th><th>Typowo</th><th>Razem</th><th>Słaby rok</th><th>Ryzyko suszy</th></tr>
+    {% for i in top_items %}
+    <tr><td><span class="cico" style="background: {{ CAT[i.category][1] }}">{{ CAT[i.category][0] }}</span></td>
+      <td><b>{{ i.label }}</b></td><td class="num">{{ i.yield_typical_t_ha|num(1, 't/ha') }}</td>
+      <td class="num">{{ i.total_typical_t|num(1, 't') }}</td>
+      <td class="num">{{ i.yield_weak_t_ha|num(1, 't/ha') }} ({{ i.weak_year }})</td>
+      <td class="num">{{ i.drought_risk_years }} na {{ i.years_simulated }} lat</td></tr>
+    {% endfor %}
+  </table>
+  {% endif %}
+  <div class="nosow">{% if sug.not_recommended %}<b class="bad-l">{{ 'Nie polecamy' if sug.choice else 'Nie siej' }}:</b> {% for n in sug.not_recommended %}{{ n.label|lower }} ({{ n.reason }}){% if not loop.last %}; {% endif %}{% endfor %}.{% else %}<b>{{ 'Nie polecamy' if sug.choice else 'Nie siej' }}:</b> żadna z popularnych upraw polowych nie jest tu odradzana.{% endif %}</div>
+  {% else %}
+  <p class="muted">Ranking upraw niedostępny dla tej działki (grunt nierolny albo za mało danych pogodowych).</p>
+  {% endif %}
+
+  <div class="choice-head2">Co zrobić z wodą</div>
+  <ol class="wact2">{% for r in water_actions %}<li><b>{{ r.title }}.</b> {{ r.description|sentences(2) }}</li>{% else %}<li class="muted">Brak działań wynikających z danych.</li>{% endfor %}</ol>
+
+  <div class="choice-head2">Na tle 10 lat</div>
+  {% if a.history.summary %}<p class="year-sentence">{{ a.history.summary }}</p>{% endif %}
+  {% if chart_years_small %}<div class="chart small-bars">{{ chart_years_small }}</div>
+  <p class="tiny muted">Ile wody zostało {{ a.seasonal_balance_label or '' }} w każdym roku: spadło minus wyparowało, mm · dane pogodowe do {{ weather_until }} · linia przerywana – średnia.</p>{% endif %}
+  <p class="tiny muted">Raport szczegółowy: stan wody, przyczyny, wszystkie działania z formalnościami, gleba, teren, źródła i ograniczenia.</p>
+</section>
+{% else %}
 {# ═══ STRONA 2: CO TU POSIAĆ? (A5e – wokół wyboru rolnika) ═══ #}
 {% if sug %}
 <section class="page-break">
@@ -85,7 +146,7 @@
       <div><span class="k">Ryzyko suszy</span><span class="v">{{ c.drought_risk_years }} na {{ c.years_simulated }} lat</span><span class="s">strata ponad 20% plonu</span></div>
     </div>
     <p class="cwhy">{{ c.why }}</p>
-    {% for n in c.rotation.notes %}<p class="crot {{ 'bad-t' if c.rotation.status == 'naruszenie' else '' }}">Płodozmian: {{ n }}</p>{% endfor %}
+    {% if not (c.rotation.status == 'naruszenie' and 'po sobie' in c.why) %}{% for n in c.rotation.notes %}<p class="crot {{ 'bad-t' if c.rotation.status == 'naruszenie' else '' }}">Płodozmian: {{ n }}</p>{% endfor %}{% endif %}
   </div>
   {% endfor %}
   {% if sug.alternatives %}
@@ -123,7 +184,7 @@
     {% if sug.not_recommended %}<b class="bad-l">Nie siej:</b> {% for n in sug.not_recommended %}{{ n.label|lower }} ({{ n.reason }}){% if not loop.last %}; {% endif %}{% endfor %}.
     {% else %}<b>Nie siej:</b> żadna z popularnych upraw polowych nie jest tu odradzana.{% endif %}
   </div>
-  {% if sug.perennials %}<p class="small muted">Uprawy wieloletnie (sady, krzewy, truskawki) to inwestycja na lata – {% if full %}tabela w dalszej części raportu{% else %}oceniamy je w raporcie pełnym{% endif %}.</p>{% endif %}
+  {% if sug.perennials %}<p class="small muted">Uprawy wieloletnie (sady, krzewy, truskawki) to inwestycja na lata – {% if full %}tabela w dalszej części raportu{% else %}oceniamy je w raporcie szczegółowym{% endif %}.</p>{% endif %}
   <p class="tiny muted">Ryzyko suszy = w ilu sezonach na 10 susza zabrałaby ponad 20% plonu. {{ sug.note }}</p>
 </section>
 {% endif %}
@@ -196,7 +257,7 @@
     <div class="rwhy"><b>Dlaczego:</b> {{ r.why|first_sentence }}</div>
   </div>
   {% else %}<p class="muted">Brak rekomendacji – nie wynikają z danych dla tej działki (np. grunt nierolny albo brak danych o glebie).</p>{% endfor %}
-  {% if more_recs %}<p class="small muted">Pozostałe działania ({{ more_recs }}) – w aplikacji{% if not full %} i w raporcie pełnym{% endif %}.</p>{% endif %}
+  {% if more_recs %}<p class="small muted">Pozostałe działania ({{ more_recs }}) – w aplikacji{% if not full %} i w raporcie szczegółowym{% endif %}.</p>{% endif %}
   <p class="small muted">{% if terrain %}Miejsca działań (oczko, pas zieleni, odpływ) – na mapie w aplikacji, warstwa „Spływ wody”.{% else %}Miejsca działań na mapie – po analizie terenu.{% endif %}</p>
 </section>
 
@@ -240,11 +301,13 @@
   </table>
   <h3 style="margin-top:8pt">{% if full %}Ograniczenia{% else %}Najważniejsze ograniczenia{% endif %}</h3>
   <ul class="lim">{% for l in limitations %}<li>{{ l }}</li>{% endfor %}</ul>
-  {% if not full and more_limits %}<p class="tiny muted">Pozostałe ograniczenia ({{ more_limits }}) – w raporcie pełnym.</p>{% endif %}
+  {% if not full and more_limits %}<p class="tiny muted">Pozostałe ograniczenia ({{ more_limits }}) – w raporcie szczegółowym.</p>{% endif %}
 </section>
 
+{% endif %}
+
 {% if full %}
-{# ═══ RAPORT PEŁNY: wszystkie uprawy ═══ #}
+{# ═══ RAPORT SZCZEGÓŁOWY: wszystkie uprawy ═══ #}
 {% if sug %}
 <section class="page-break">
   <div class="p2-title">Wszystkie uprawy</div>
@@ -276,7 +339,7 @@
 </section>
 {% endif %}
 
-{# ═══ RAPORT PEŁNY: szczegóły techniczne ═══ #}
+{# ═══ RAPORT SZCZEGÓŁOWY: szczegóły techniczne ═══ #}
 <section class="page-break">
   <div class="p2-title">Szczegóły techniczne</div>
   <table class="kv">

@@ -205,11 +205,11 @@ def bar(value: float | None, color: str, width: int = 140, height: int = 8) -> s
 def season_bars(years, mean_mm: float | None, width: int = 680, height: int = 190) -> str | None:
     """„Na tle 10 lat” (A5e): słupek na każdy rok – ile wody zostało od początku sezonu do tego samego dnia
     (spadło minus wyparowało, mm); bieżący rok wyróżniony, linia przerywana = średnia z lat porównawczych.
-    `years` – lista SeasonalBalanceYear (rok, bilans_mm, biezacy) – te same liczby co w API."""
-    ys = [y for y in years if y.bilans_mm is not None]
+    `years` – lista SeasonalBalanceYear (year, balance_mm, current) – te same liczby co w API."""
+    ys = [y for y in years if y.balance_mm is not None]
     if len(ys) < 2:
         return None
-    vals = [y.bilans_mm for y in ys] + ([mean_mm] if mean_mm is not None else []) + [0.0]
+    vals = [y.balance_mm for y in ys] + ([mean_mm] if mean_mm is not None else []) + [0.0]
     lo, hi = min(vals), max(vals)
     pad = max(10.0, 0.08 * (hi - lo))
     lo, hi = lo - pad, hi + pad
@@ -229,19 +229,19 @@ def season_bars(years, mean_mm: float | None, width: int = 680, height: int = 19
     y0 = y_of(0.0)
     parts.append(f'<line x1="{pad_l}" x2="{width - pad_r}" y1="{y0:.1f}" y2="{y0:.1f}" stroke="{C["muted"]}" stroke-width="0.9"/>')
     bw = (width - pad_l - pad_r) / len(ys)
-    below_mean = mean_mm is not None and ys[-1].bilans_mm < mean_mm
+    below_mean = mean_mm is not None and ys[-1].balance_mm < mean_mm
     for i, y in enumerate(ys):
         x = pad_l + i * bw + bw * 0.18
-        top, bot = sorted((y_of(y.bilans_mm), y0))
-        color = (C["danger"] if below_mean else C["brand"]) if y.biezacy else C["nodata"]
+        top, bot = sorted((y_of(y.balance_mm), y0))
+        color = (C["danger"] if below_mean else C["brand"]) if y.current else C["nodata"]
         parts.append(f'<rect x="{x:.1f}" y="{top:.1f}" width="{bw * 0.64:.1f}" height="{max(bot - top, 0.8):.1f}" '
                      f'fill="{color}" rx="1.5"/>')
-        lab_y = top - 3 if y.bilans_mm >= 0 else bot + 10
-        weight = ' font-weight="700"' if y.biezacy else ""
+        lab_y = top - 3 if y.balance_mm >= 0 else bot + 10
+        weight = ' font-weight="700"' if y.current else ""
         parts.append(f'<text x="{x + bw * 0.32:.1f}" y="{lab_y:.1f}" text-anchor="middle" font-size="8.5" '
-                     f'fill="{C["text"] if y.biezacy else C["muted"]}"{weight}>{_num(y.bilans_mm)}</text>')
+                     f'fill="{C["text"] if y.current else C["muted"]}"{weight}>{_num(y.balance_mm)}</text>')
         parts.append(f'<text x="{x + bw * 0.32:.1f}" y="{height - 6}" text-anchor="middle" '
-                     f'fill="{C["text"] if y.biezacy else C["muted"]}"{weight}>{y.rok}</text>')
+                     f'fill="{C["text"] if y.current else C["muted"]}"{weight}>{y.year}</text>')
     if mean_mm is not None:
         ym = y_of(mean_mm)
         parts.append(f'<line x1="{pad_l}" x2="{width - pad_r}" y1="{ym:.1f}" y2="{ym:.1f}" stroke="{C["water"]}" '
