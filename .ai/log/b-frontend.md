@@ -4,6 +4,11 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-21 · `b/frontend` · B14: poprawka – długa nazwa uprawy wychodziła poza pole
+**Co:** w wąskim polu wyboru uprawy (tablet 298 px, zwinięta karta) długie nazwy („Kukurydza na kiszonkę”, „Rzepak i rzepik (jesień)”) wypychały strzałkę poza pole. Teraz: pole jako kontener – „Uprawa:” widoczne dopiero od 340 px szerokości pola (ikona zostaje), nazwa skracana „…” jeśli nadal za długa, pełna nazwa w dymku, strzałka zawsze widoczna. Sprawdzone pomiarem i zrzutami (1440, 1024, 390 px).
+**Pliki:** `frontend/src/features/parcel-panel/CropField.tsx`.
+**Kontrakt API:** nie.
+
 ## 2026-11-21 · `b/frontend` · B13: zwinięty panel działki (komputer)
 **Co:** przy wybranej działce prawy panel domyślnie jako mała karta (wysokość wg treści): nazwa działki, gmina/obręb/ha, wybór uprawy, w trakcie analizy pasek postępu, potem okrąg stanu + odznaka + nagłówek oceny, przyciski „Pełny panel” i „Paszport wodny”. Pełny panel ma „Zwiń panel”. Wybór zapamiętany (`zw.ui.v1.panel`). Pusty stan (przykłady), paszport, kreator zgłoszeń i telefon bez zmian.
 **Pliki:** `frontend/src/features/parcel-panel/ParcelSummary.tsx`, `frontend/src/pages/Start.tsx`, `frontend/src/lib/{storage,i18n.en}.ts`.
