@@ -19,5 +19,4 @@ _Stan na: 2026-11-21 15:40_
 
 ## Blokery / pytania do drugiej osoby
 - B: czy w panelu „Woda w glebie” duża liczba to `soil_water_pct` czy `soil_water_mm` (kontrakt ma oba)?
-- **Propozycja zmiany kontraktu (do uzgodnienia z B, NIE wprowadzona):** w `History` brakuje pól na liczby, które już liczymy, a dziś są tylko w tekście `summary`: odchylenie od średniej (mm), ranking (ile lat niższy bilans / z ilu), najdłuższy okres bez opadu (dni + data końca), lata użyte w paśmie. Patrz log 2026-11-21 15:40.
 - B: `stress_days_by_year` będzie pustą listą do czasu A3 – UI powinien pokazać „Brak danych”, nie zera.

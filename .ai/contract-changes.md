@@ -13,3 +13,12 @@ Endpoint zwraca 501 „w budowie”.
 
 Jednocześnie spisane jako kontrakt istniejące odpowiedzi: `GET /api/parcel` (`schemas/parcel.py`: Parcel, ParcelCandidates przy 409, ErrorDetail przy 404/502) i `GET /api/forecast` (`schemas/weather.py`) – bez zmiany formatu. Szkielety: `schemas/layers.py`, `schemas/reports.py` (raport PDF, zgłoszenia).
 **Łamie zgodność:** nie (nowy endpoint; istniejące bez zmian).
+
+### 2026-11-21 · gałąź `a/gleba` · A + B (uzgodnione – propozycja z A1)
+**Rozszerzenie `History` o 4 pola** (`schemas/analysis.py` ↔ `types.ts`, przykład w `mocks/analysis.sample.json`):
+- `balance_deviation_mm: float | null` – bieżący bilans − średnia z lat porównawczych (mm),
+- `balance_rank: { lower_years, of_years } | null` – w ilu latach bilans był niższy niż teraz i z ilu lat,
+- `longest_dry_spell: { days, end_date } | null` – najdłuższy okres bez opadu (< 1 mm) w sezonie,
+- `band_years: int[]` – lata użyte w paśmie porównawczym (lata z niepełnymi danymi pominięte).
+Wszystkie opcjonalne (brak danych = `null` / pusta lista). Liczone w `analysis/water_balance.py` od A1, wcześniej tylko w tekście `summary`.
+**Łamie zgodność:** nie (pola dodane, opcjonalne).

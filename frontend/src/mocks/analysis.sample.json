@@ -126,6 +126,10 @@
       { "month": 6, "current_mm": 12, "mean_mm": 66 }
     ],
     "summary": "W 6 z 10 ostatnich lat w maju–lipcu brakowało wody. Najgorszy był 2018 (41 dni stresu).",
+    "balance_deviation_mm": -84,
+    "balance_rank": { "lower_years": 1, "of_years": 10 },
+    "longest_dry_spell": { "days": 17, "end_date": "2026-06-12" },
+    "band_years": [2025, 2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016],
     "source_tag": { "kind": "obliczenia", "date": "2026-06-14", "source": "NASA POWER" }
   },
   "causes": [

@@ -138,6 +138,20 @@ class MonthlyPrecip(Contract):
     mean_mm: float | None
 
 
+class BalanceRank(Contract):
+    """Pozycja bieżącego bilansu na tle lat porównawczych."""
+
+    lower_years: int = Field(ge=0, description="W ilu latach porównawczych bilans był NIŻSZY niż teraz (0 = najgorszy)")
+    of_years: int = Field(ge=0, description="Z ilu lat porównawczych (lata z niepełnymi danymi pominięte)")
+
+
+class DrySpell(Contract):
+    """Najdłuższy okres bez opadu (opad < 1 mm) w bieżącym sezonie."""
+
+    days: int = Field(ge=0)
+    end_date: dt.date | None = Field(None, description="Ostatni dzień tego okresu")
+
+
 class History(Contract):
     period_start: dt.date
     period_end: dt.date
@@ -147,6 +161,10 @@ class History(Contract):
     stress_days_by_year: list[YearStress]
     monthly_precip: list[MonthlyPrecip]
     summary: str | None = Field(None, description="Np. 'W 6 z 10 ostatnich lat w maju–lipcu brakowało wody.'")
+    balance_deviation_mm: float | None = Field(None, description="Bieżący bilans − średnia z lat porównawczych, mm")
+    balance_rank: BalanceRank | None = None
+    longest_dry_spell: DrySpell | None = None
+    band_years: list[int] = Field(default_factory=list, description="Lata użyte w paśmie porównawczym")
     source_tag: SourceTag
 
 

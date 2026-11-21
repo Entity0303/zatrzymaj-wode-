@@ -151,6 +151,17 @@ export type YearStress = { year: number; stress_days: number | null; is_current?
 
 export type MonthlyPrecip = { month: number; current_mm: number | null; mean_mm: number | null }
 
+/** Pozycja bieżącego bilansu na tle lat porównawczych */
+export type BalanceRank = {
+  /** w ilu latach bilans był NIŻSZY niż teraz (0 = najgorszy) */
+  lower_years: number
+  /** z ilu lat porównawczych */
+  of_years: number
+}
+
+/** Najdłuższy okres bez opadu (opad < 1 mm) w bieżącym sezonie */
+export type DrySpell = { days: number; end_date?: ISODate | null }
+
 export type History = {
   period_start: ISODate
   period_end: ISODate
@@ -160,6 +171,12 @@ export type History = {
   stress_days_by_year: YearStress[]
   monthly_precip: MonthlyPrecip[]
   summary?: string | null
+  /** bieżący bilans − średnia z lat porównawczych, mm */
+  balance_deviation_mm?: number | null
+  balance_rank?: BalanceRank | null
+  longest_dry_spell?: DrySpell | null
+  /** lata użyte w paśmie porównawczym */
+  band_years?: number[]
   source_tag: SourceTag
 }
 
