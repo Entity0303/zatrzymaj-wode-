@@ -4,6 +4,28 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-21 19:30 · `integracja` · INT1: połączenie a/backend + b/frontend (bez main)
+**Co:**
+- Gałąź `integracja` od `origin/main` (kamień milowy 1) + `origin/b/frontend` (B10, B11 – bez konfliktów) + `origin/a/backend` (A5, `bb2df36`).
+- Jedyny konflikt: `.ai/decisions.md` – obie strony zajęły D40. D40–D46 zostają u A, przełącznik języka B przenumerowany na **D47** (dopisek o historii numeru); odwołania „(D40)” w komentarzach `i18n.ts`, `i18n.en.ts`, `LanguageProvider.tsx`, `LanguageToggle.tsx` → „(D47)”. Status i dziennik B nadal piszą D40 – do poprawy przez B.
+- `backend/`, `types.ts`, `analysis.sample.json` = dokładnie `a/backend`; `frontend/` (poza 4 komentarzami) i `design/` = dokładnie `b/frontend`. B nic własnego do kontraktu nie dodał.
+- Weryfikacja: `pytest` w kontenerze bez sieci z zamontowanym `frontend/` – 210 passed (5 live pominięte); `npm run build` – OK bez poprawek; `docker compose up --build` lokalnie na 8001/5174 (8000/5173 zajęte przez drugi klon; override poza repo): `/api/health` 200, `/api/analysis` (201305_2.0038.6/1, zboza_ozime, 2018-06-10) 200 – „Susza”, 5 rekomendacji, nawadnianie zalecane; zimna analiza 2019-06-10 – 1,6 s; `/api/report.pdf` 200 (165 kB, 1,6 s); frontend 200, proxy `/api` 200. `/api/status`: KIEG i SoilGrids chwilowo niedostępne (zewnętrzne).
+- Rozjazdy UI ↔ kontrakt A5 przekazane osobie B (lista w odpowiedzi INT1): rekomendacje bez `when_label`/`permit`/`warning`/`eco_scheme`, gleba bez `texture`/`permeability`/`soil_map`, brak wyboru przedplonu i `previous_crop` w zapytaniach, przykłady lokalne zamiast `/api/demo/examples`, `/api/status` nieużywane, 404 z `/api/report.pdf` pokazywane jako „w budowie”.
+**Pliki:** `.ai/decisions.md`, `.ai/log/a-backend.md`, `.ai/status/a-backend.md`, 4 komentarze we `frontend/src/{lib,components}` + pliki obu gałęzi z merge.
+**Kontrakt API:** nie (kontrakt bez zmian – wersja A5 z `a/backend`).
+
+## 2026-11-21 18:30 · `a/backend` · A5: konsultacja z mentorem + gotowość do 3-minutowej oceny
+**Co:**
+- A0: `docs/kowr/*.pdf` (treść zadania, podstawy naukowe, regulamin); D40 – wnioski z konsultacji (prof. Gozdowski).
+- A1–A7: reguły przejrzane wg „Podstaw naukowych” (23: retencja 13, agrotechnika 8, nawadnianie 2; 4 czekają na teren). Silnik: `timing` (teraz / po zbiorze / przed następnym sezonem), `permit` (none/maybe/required + Wody Polskie), `eco_scheme` (E_MPW, E_USU, E_WSG, E_ZSU, plan nawożenia), `fertilization`, operator `exists`; wybór: panel 3, paszport 5, niepewne z ostrzeżeniem i nigdy pierwsze. Retencja zawsze (test 15 upraw × 12 miesięcy). „Odłóż nawożenie” przy silnym stresie. Płodozmian z `previous_crop`.
+- A8: SoilGrids (`sources/soilgrids.py`), klasa uziarnienia USDA po polsku, Ksat Saxton–Rawls, woda z ulewy (`analysis/soil_texture.py`); mapa glebowo-rolnicza GUGiK sprawdzona na żywo – działa (`sources/soil_map.py`): kompleks, gatunek, warstwy, typ, rok mapy.
+- A9: kontrakt (osobny commit 798d5aa) + mock = prawdziwa odpowiedź „Susza 2018” z przedplonem.
+- B1–B5: `app/demo.py`, `GET /api/demo/examples`, rozgrzewka w `lifespan` (co 6 h, `DEMO_WARMUP`), `GET /api/status`, `GET /api/report.pdf` (WeasyPrint + Jinja2 + segno, Inter OFL; Dockerfile: Pango, HarfBuzz). Cache: TTL na wpis, przeterminowany wpis przy awarii (pewność −1).
+- Znalezione na żywo i naprawione: ULDK odsyła 302 → `resp/uldk.php` z pozornym „0” → było 404 „nie znaleziono działki” (teraz ponowienia na nowym połączeniu, 502 przy porażce); KIEG wisiał do 26 s (twardy limit na źródło + bezpiecznik); SoilGrids chwilami nie odpowiada (12 s, bezpiecznik 5 min); nagłówek „mniejszy zapas niż zwykle” przy bilansie lepszym niż zwykle (poprawione).
+- C: `backend/scripts/smoke.py`, `reports/examples/*.pdf` (4). Smoke 10/10 OK (analiza po rozgrzewce 0,01–0,05 s, na zimno do 7,7 s; PDF 1,1–2,5 s).
+**Pliki:** `backend/app/{demo.py,main.py}`, `backend/app/analysis/{facts,recommendations,confidence,scoring,soil_texture,water_balance}.py`, `backend/app/analysis/rules/*.yaml`, `backend/app/core/{cache,config}.py`, `backend/app/sources/{soilgrids,soil_map,uldk,iung,kieg,weather_power,weather_openmeteo}.py`, `backend/app/routers/{analysis,demo,status,reports}.py`, `backend/app/report/*`, `backend/app/schemas/{analysis,demo,status}.py`, `backend/{requirements.txt,Dockerfile}`, `backend/scripts/smoke.py`, `backend/tests/{conftest,test_a5,test_demo_status_report,test_analysis}.py`, `frontend/src/api/types.ts`, `frontend/src/mocks/analysis.sample.json`, `docs/kowr/*`, `reports/examples/*`, `.env.example`.
+**Kontrakt API:** TAK – pola rekomendacji, gleby, `previous_crop`, nowe endpointy (osobny commit, `contract-changes.md`).
+
 ## 2026-11-21 17:18 · `a/backend` · A4: ocena, pewność, przyczyny, rekomendacje, pełne /api/analysis (kamień milowy 1)
 **Co:**
 - `requirements.txt` (osobny commit): PyYAML. Kontrakt (osobny commit 738415c): `Recommendation.priority`, `in_panel`. Mock (osobny commit 612509d): zapis prawdziwej odpowiedzi.

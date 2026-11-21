@@ -8,7 +8,7 @@ const LANGS: { id: Lang; label: string; name: string }[] = [
 ]
 
 /**
- * Przełącznik języka PL | EN (D40). Komputer: pigułka z dwoma przyciskami;
+ * Przełącznik języka PL | EN (D47). Komputer: pigułka z dwoma przyciskami;
  * telefon (`compact`): jeden okrągły przycisk 48 px z kodem drugiego języka.
  * Nazwy języków celowo nie są tłumaczone – każdy widzi swój język po swojemu.
  */

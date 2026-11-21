@@ -100,6 +100,16 @@ export type CropId =
   | 'chmiel'
   | 'tyton'
 
+/** uprawa w poprzednim roku (przedplon): 15 upraw + „nie wiem” */
+export type PreviousCropId = CropId | 'nie_wiem'
+
+/** formalności: none – bez formalności; maybe – może wymagać zgłoszenia wodnoprawnego; required – pozwolenie wodnoprawne */
+export type PermitLevel = 'none' | 'maybe' | 'required'
+/** kiedy działać: teraz / po zbiorze / przed następnym sezonem */
+export type RecommendationWhen = 'teraz' | 'po_zbiorze' | 'przed_sezonem'
+/** woda z ulewy: szybko wsiąka i ucieka / dobrze ją zatrzymuje / ryzyko spływu i zastoisk */
+export type RainRetention = 'ucieka' | 'zatrzymuje' | 'splywa'
+
 export type StepState = 'done' | 'active' | 'error' | 'pending'
 export type SourceAvailability = 'ok' | 'czesciowo' | 'brak'
 export type CauseFactor = 'opady' | 'parowanie' | 'gleba' | 'teren' | 'uprawa' | 'inne'
@@ -236,6 +246,60 @@ export type Soil = {
   non_agricultural_reason?: NonAgriculturalReason | null
   /** gotowy komunikat dla rolnika */
   non_agricultural_note?: string | null
+  /** frakcje i klasa uziarnienia 0–30 cm (SoilGrids) */
+  texture?: SoilTexture | null
+  /** przepuszczalność i zachowanie wody przy ulewie */
+  permeability?: SoilPermeability | null
+  /** mapa glebowo-rolnicza (GUGiK): kompleks i gatunek gleby */
+  soil_map?: SoilMapInfo | null
+  /** powód braku frakcji / mapy glebowo-rolniczej */
+  texture_note?: string | null
+  source_tag: SourceTag
+}
+
+/** uziarnienie 0–30 cm – SoilGrids 250 m (ISRIC) */
+export type SoilTexture = {
+  sand_pct: number
+  silt_pct: number
+  clay_pct: number
+  /** węgiel organiczny, % */
+  organic_carbon_pct?: number | null
+  /** klasa uziarnienia po polsku (trójkąt USDA), np. 'glina piaszczysta' */
+  texture_class: string
+  /** kod klasy USDA, np. 'sandy_loam' */
+  texture_code: string
+  depth: string
+  source_tag: SourceTag
+}
+
+/** przepuszczalność (Ksat) – Saxton i Rawls (2006) */
+export type SoilPermeability = {
+  ksat_mm_h: number
+  /** bardzo duża / duża / średnia / mała / bardzo mała */
+  label: string
+  rain_retention: RainRetention
+  /** zdanie dla rolnika: co dzieje się z wodą z ulewy */
+  description: string
+  method: string
+  source_tag: SourceTag
+}
+
+/** mapa glebowo-rolnicza 1:5000 (PZGiK) – kontur w środku działki */
+export type SoilMapInfo = {
+  /** kompleks przydatności rolniczej, np. '2', '2z' */
+  complex_code?: string | null
+  /** np. 'pszenny dobry' */
+  complex_label?: string | null
+  /** gatunek wierzchniej warstwy, np. 'pgl' */
+  species_code?: string | null
+  /** np. 'piasek gliniasty lekki' */
+  species_label?: string | null
+  /** utwory głębszych warstw, od góry */
+  deeper?: string[]
+  /** typ/podtyp gleby, np. 'Bw' */
+  soil_type_code?: string | null
+  /** rok opracowania mapy */
+  mapped_year?: number | null
   source_tag: SourceTag
 }
 
@@ -308,6 +372,29 @@ export type Recommendation = {
   priority?: number
   /** pokazać w panelu działki (maks. 3: po jednej z kategorii); reszta – paszport */
   in_panel?: boolean
+  /** kiedy działać */
+  when: RecommendationWhen
+  /** np. 'teraz', 'po zbiorze', 'przed następnym sezonem' */
+  when_label: string
+  /** formalności */
+  permit: PermitLevel
+  /** np. 'Bez formalności – możesz to zrobić sam.' */
+  permit_note: string
+  /** link do Wód Polskich (maybe / required) */
+  permit_url?: string | null
+  /** przy niskiej pewności: 'obarczone dużym ryzykiem błędu' */
+  warning?: string | null
+  /** powiązany ekoschemat ARiMR (bez kwot dopłat) */
+  eco_scheme?: EcoScheme | null
+}
+
+/** ekoschemat (PS WPR, ARiMR) – tylko informacja, bez kwot */
+export type EcoScheme = {
+  name: string
+  practice: string
+  /** kod praktyki, np. 'E_MPW' */
+  code?: string | null
+  note: string
 }
 
 export type SourceStatus = {
@@ -340,6 +427,8 @@ export type LoadingStep = {
 export type AnalysisResponse = {
   parcel: Parcel
   crop: CropId
+  /** uprawa w poprzednim roku (jeśli podana) */
+  previous_crop?: PreviousCropId | null
   analysis_date: ISODate
   historical: boolean
   generated_at: ISODateTime
@@ -418,3 +507,49 @@ export type InfraReport = InfraReportIn & {
   confirmations: number
   addressee: string
 }
+
+// ── schemas/demo.py – GET /api/demo/examples ───────────────────────────────────────────────
+
+/** przykład do oceny – wynik zawsze z normalnego GET /api/analysis */
+export type DemoExample = {
+  id: string
+  title: string
+  description: string
+  parcel_id: string
+  crop: CropId
+  date: ISODate
+  previous_crop?: PreviousCropId | null
+}
+
+// ── schemas/status.py – GET /api/status ────────────────────────────────────────────────────
+
+export type WarmupState = 'wylaczona' | 'oczekuje' | 'w_toku' | 'gotowe' | 'blad'
+
+export type ServiceStatus = {
+  name: string
+  used_for: string
+  ok: boolean
+  response_ms?: number | null
+  error?: string | null
+  cache_entries: number
+  cache_newest_age_s?: number | null
+}
+
+export type WarmupItem = {
+  id: string
+  title: string
+  state: WarmupState
+  duration_ms?: number | null
+  finished_at?: ISODateTime | null
+  error?: string | null
+}
+
+export type StatusResponse = {
+  checked_at: ISODateTime
+  all_ok: boolean
+  services: ServiceStatus[]
+  warmup_enabled: boolean
+  warmup: WarmupItem[]
+}
+
+// GET /api/report.pdf?parcel_id=&crop=&date=&previous_crop= – plik PDF (application/pdf)

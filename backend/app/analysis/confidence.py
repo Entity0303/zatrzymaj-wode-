@@ -3,6 +3,7 @@
 Pewność liczona punktowo z jawnych przesłanek (start 100 pkt, odejmowanie za braki i uproszczenia),
 progi: ≥ 75 wysoka, ≥ 50 średnia, < 50 ograniczona. Bez zdjęć satelitarnych lub analizy terenu
 – najwyżej „średnia” (D36). Ograniczenia = przesłanki + ograniczenia z modułów + stałe.
+Dane z przeterminowanego cache (źródło nie odpowiadało, D44) – pewność o jeden poziom niżej.
 """
 
 from dataclasses import dataclass, field
@@ -10,6 +11,7 @@ from datetime import date
 
 from app.analysis.soil import SoilAssessment
 from app.analysis.water_balance import SoilWaterResult, WaterBalanceResult
+from app.core.cache import StaleHit
 from app.schemas.analysis import Completeness, Confidence, Reliability, SourceStatus
 
 # ── PRZESŁANKI I PUNKTY (D36) ───────────────────────────────────────────────────────────────
@@ -27,6 +29,7 @@ PENALTY = {
     "gleba_nierolna_czesc": 5,  # < 80% gleb mineralnych użytków rolnych
     "satelita_brak": 15,
     "teren_brak": 10,
+    "frakcje_brak": 5,  # brak SoilGrids – bez przepuszczalności i uziarnienia
 }
 LEVELS: list[tuple[int, Confidence]] = [(75, "wysoka"), (50, "srednia"), (0, "ograniczona")]
 CONSTANT_LIMITATIONS = [
@@ -62,6 +65,12 @@ class ConfidenceInputs:
     satellite: bool = False
     terrain: bool = False
     extra_limitations: list[str] = field(default_factory=list)
+    soilgrids: str | None = None  # "ok" | "brak" | None (nie pytano)
+    soilgrids_error: str | None = None
+    soil_map: str | None = None  # "ok" | "brak_konturu" | "brak" | None
+    soil_map_error: str | None = None
+    soil_map_year: int | None = None
+    stale: list[StaleHit] = field(default_factory=list)
 
 
 def premises(i: ConfidenceInputs) -> list[Premise]:
@@ -89,6 +98,8 @@ def premises(i: ConfidenceInputs) -> list[Premise]:
         add("prognoza_brak", "brak prognozy pogody – ryzyko ze scenariusza typowej pogody")
     if i.forecast_ok is None and i.model and i.model.horizon_kind == "scenariusz":
         add("data_historyczna", "data historyczna – ryzyko na 7 dni ze scenariusza typowej pogody")
+    if i.soilgrids == "brak":
+        add("frakcje_brak", "brak frakcji gleby (SoilGrids)")
     if i.soil.method is None:
         add("gleba_brak", "brak danych o glebie (IUNG)")
     else:
@@ -101,9 +112,18 @@ def premises(i: ConfidenceInputs) -> list[Premise]:
     return out
 
 
-def level(points: int, capped: bool) -> Confidence:
+ORDER: list[Confidence] = ["wysoka", "srednia", "ograniczona"]
+
+
+def level(points: int, capped: bool, stale: bool = False) -> Confidence:
     lv = next(name for t, name in LEVELS if points >= t)
-    return "srednia" if capped and lv == "wysoka" else lv
+    lv = "srednia" if capped and lv == "wysoka" else lv
+    return ORDER[min(ORDER.index(lv) + 1, 2)] if stale else lv
+
+
+def stale_text(h: StaleHit) -> str:
+    local = h.stored_at.astimezone()
+    return f"{h.source}: dane z cache z dnia {local:%d.%m.%Y %H:%M} (źródło nie odpowiadało)"
 
 
 def _dedupe(items: list[str]) -> list[str]:
@@ -118,9 +138,11 @@ def _dedupe(items: list[str]) -> list[str]:
 def reliability(i: ConfidenceInputs) -> tuple[Reliability, list[Premise], int]:
     prem = premises(i)
     points = max(0, 100 - sum(p.points for p in prem))
-    conf = level(points, capped=not (i.satellite and i.terrain))
+    conf = level(points, capped=not (i.satellite and i.terrain), stale=bool(i.stale))
     top = sorted(prem, key=lambda p: -p.points)[:3]
     reason = ("Ograniczenia: " + "; ".join(p.text for p in top) + ".") if top else "Wszystkie źródła danych dostępne."
+    if i.stale:
+        reason = "Część danych z pamięci podręcznej (źródło nie odpowiadało) – pewność obniżona. " + reason
 
     sources: list[SourceStatus] = [
         SourceStatus(name="ULDK GUGiK", used_for="granice i powierzchnia działki", data_date=i.parcel_fetched, status="ok"),
@@ -140,6 +162,23 @@ def reliability(i: ConfidenceInputs) -> tuple[Reliability, list[Premise], int]:
             resolution="kilka km", status="ok" if i.forecast_ok else "brak", note=i.forecast_error,
         ))
     sources += i.soil.sources  # IUNG + EGiB (informacyjnie)
+    if i.soilgrids is not None:
+        sources.append(SourceStatus(
+            name="SoilGrids (ISRIC)", used_for="frakcje gleby 0–30 cm, przepuszczalność", data_date=None,
+            resolution="250 m", status="ok" if i.soilgrids == "ok" else "brak", note=i.soilgrids_error or "model globalny",
+        ))
+    if i.soil_map is not None:
+        sources.append(SourceStatus(
+            name="Mapa glebowo-rolnicza (GUGiK)", used_for="kompleks i gatunek gleby (informacyjnie)", data_date=None,
+            resolution="1:5000", status="ok" if i.soil_map == "ok" else "brak",
+            note=(f"mapa z ok. {i.soil_map_year} r." if i.soil_map_year else None) if i.soil_map == "ok" else
+            (i.soil_map_error or "brak konturu w tym miejscu"),
+        ))
+    stale_by_source = {h.source: h for h in i.stale}
+    sources = [
+        s.model_copy(update={"status": "czesciowo", "note": stale_text(stale_by_source[s.name]).split(": ", 1)[1]})
+        if s.name in stale_by_source else s for s in sources
+    ]
     sources += [
         SourceStatus(name="Sentinel-2 L2A", used_for="kondycja i wilgotność roślin", data_date=None, resolution="10 m",
                      status="brak", note="w przygotowaniu"),
@@ -148,10 +187,10 @@ def reliability(i: ConfidenceInputs) -> tuple[Reliability, list[Premise], int]:
         SourceStatus(name="BDOT10k", used_for="rowy, cieki i zbiorniki w okolicy", data_date=None,
                      status="brak", note="w przygotowaniu"),
     ]
-    core = [s for s in sources if not s.name.startswith("EGiB")]
+    core = [s for s in sources if not s.name.startswith("EGiB") and not s.name.startswith("Mapa glebowo")]
     completeness = Completeness(available=sum(s.status != "brak" for s in core), total=len(core))
 
-    lim = list(i.weather_notes)
+    lim = [stale_text(h) + "." for h in i.stale] + list(i.weather_notes)
     if i.weather_name and not i.weather_fallback:
         lim.insert(0, f"Pogoda uśredniona dla obszaru {i.weather_resolution} ({i.weather_name}).")
     if i.wb:

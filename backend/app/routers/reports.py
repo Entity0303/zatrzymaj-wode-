@@ -1,12 +1,20 @@
-"""POST /api/reports – raport PDF „Paszport wodny działki” (SZKIELET, HTTP 501).
+"""Raport PDF „Paszport wodny działki”.
+
+GET /api/report.pdf?parcel_id=&crop=&date=&previous_crop= – DZIAŁA (A5): normalna analiza + PDF (app/report/).
+POST /api/reports i GET /api/reports/{id}.pdf – zapis raportów w systemie (SZKIELET, HTTP 501).
 
 Kontrakt: app/schemas/reports.py. Układ raportu: design/SPEC_UI.md 10.2. Generowanie: app/report/.
 TODO (osoba A): WeasyPrint, A4 pionowo, 2–3 strony, kod QR do analizy online.
 """
 
-from fastapi import APIRouter
+import datetime as dt
+from time import perf_counter
+
+from fastapi import APIRouter, Query, Response
 
 from app.core.http import not_implemented
+from app.report.builder import build_pdf, filename
+from app.routers.analysis import run_analysis
 from app.schemas.reports import ReportMeta, ReportRequest
 
 router = APIRouter(prefix="/api/reports", tags=["raporty"])
@@ -20,3 +28,28 @@ async def create_report(req: ReportRequest) -> ReportMeta:
 @router.get("/{report_id}.pdf", responses={501: {"description": "W budowie"}})
 async def get_report_pdf(report_id: str):
     raise not_implemented("Pobieranie raportu PDF")
+
+
+# ── GET /api/report.pdf – raport PDF z normalnej analizy (A5/B5) ─────────────────────────────
+
+pdf_router = APIRouter(prefix="/api", tags=["raporty"])
+
+
+@pdf_router.get("/report.pdf", response_class=Response,
+                responses={200: {"content": {"application/pdf": {}}, "description": "Paszport wodny działki (PDF, A4)"},
+                           404: {"description": "Nie znaleziono działki"}, 422: {"description": "Brak uprawy / zła data"},
+                           502: {"description": "Brak działki lub pogody"}})
+async def get_report_pdf_now(
+    parcel_id: str = Query(description="Pełny identyfikator działki ULDK"),
+    crop: str | None = Query(None, description="Uprawa (15 upraw IUNG SMSR)"),
+    date: dt.date | None = Query(None, description="Data analizy (domyślnie dziś)"),
+    previous_crop: str | None = Query(None, description="Uprawa w poprzednim roku albo 'nie_wiem'"),
+) -> Response:
+    """Liczy analizę (jak GET /api/analysis) i zwraca „Paszport wodny działki” w PDF (A4, do druku)."""
+    t0 = perf_counter()
+    a = await run_analysis(parcel_id, crop, date, previous_crop)
+    pdf = await build_pdf(a)
+    return Response(pdf, media_type="application/pdf", headers={
+        "Content-Disposition": f'attachment; filename="{filename(a)}"',
+        "X-Generation-Ms": str(int((perf_counter() - t0) * 1000)),
+    })

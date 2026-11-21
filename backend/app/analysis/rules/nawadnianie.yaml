@@ -1,9 +1,12 @@
 # Reguły NAWADNIANIA – kategoria ostatnia (opcjonalna). Plan dawek z modelu FAO-56 (A3b, D33).
+# Pobór wody do nawadniania wymaga pozwolenia wodnoprawnego – Wody Polskie (D40): permit: required.
 rules:
   - id: nawadnianie.plan_dawek
     category: nawadnianie
     priority: 100
     confidence_fact: irrigation_confidence
+    timing: teraz
+    permit: required
     when:
       all:
         - {fact: irrigation_status, eq: zalecane}
@@ -16,6 +19,8 @@ rules:
     category: nawadnianie
     priority: 60
     confidence: ograniczona
+    timing: teraz
+    permit: required
     when:
       all:
         - {fact: sensitive, eq: true}

@@ -20,7 +20,7 @@ import numpy as np
 import shapely
 from shapely.geometry.base import BaseGeometry
 
-from app.core.cache import TTLCache
+from app.core.cache import TTLCache, cached_fetch
 from app.core.config import settings
 from app.core.geo import sample_points, to_wgs84
 from app.core.http import SourceError, get_with_retry
@@ -52,7 +52,7 @@ NOT_AGRICULTURAL = {5, 11, 12, 13, 14}  # gdy > 50% działki – ocena suszy rol
 # granica ± połowa szerokości sąsiedniej kategorii (II: 42,4 mm, III: 32,5 mm).
 REPRESENTATIVE_WOD_MM = {1: 106.3, 2: 148.7, 3: 186.2, 4: 218.8}
 
-_cache: TTLCache["SoilResult"] = TTLCache(ttl_s=24 * 3600, max_items=512)
+_cache: TTLCache["SoilResult"] = TTLCache(ttl_s=7 * 24 * 3600, max_items=512, name="IUNG-PIB")
 
 
 @dataclass
@@ -242,10 +242,11 @@ def _key(geom_2180: BaseGeometry) -> str:
 
 async def soil_for_parcel(geom_2180: BaseGeometry) -> SoilResult:
     """WCS, a gdy zawiedzie – punkty GetFeatureInfo. Obie metody zawiodą -> SourceError."""
-    key = _key(geom_2180)
-    hit = _cache.get(key)
-    if hit is not None:
-        return hit
+    return await cached_fetch(_cache, _key(geom_2180), SOURCE_SHORT, lambda: _download(geom_2180), timeout_s=14.0,
+                              breaker_s=60)
+
+
+async def _download(geom_2180: BaseGeometry) -> SoilResult:
     try:
         res = await fetch_wcs(geom_2180)
     except SourceError as wcs_err:
@@ -255,7 +256,6 @@ async def soil_for_parcel(geom_2180: BaseGeometry) -> SoilResult:
             raise SourceError(SOURCE, f"WCS: {wcs_err.message}; GetFeatureInfo: {gfi_err.message}") from gfi_err
         if not res.total:
             raise SourceError(SOURCE, f"WCS: {wcs_err.message}; GetFeatureInfo: brak danych w punktach") from wcs_err
-    _cache.set(key, res)
     return res
 
 
