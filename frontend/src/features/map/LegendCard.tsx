@@ -70,22 +70,34 @@ export function LegendCard({
   style?: CSSProperties
 }) {
   const { t } = useLang()
-  if (collapsed && onToggle)
+  if (collapsed && onToggle) {
+    // zwinięta: sam pasek kolorów warstwy (gradient albo próbki klas) – rozwija się po kliknięciu
+    const colors =
+      legend.kind === 'gradient' ? null : legend.kind === 'classes' ? legend.items.map((i) => i.color) : ['#9cc7ef', '#2F80C9', '#E5675C']
     return (
       <button
         type="button"
         onClick={onToggle}
         aria-expanded={false}
+        aria-label={t('Pokaż legendę: {title}', { title: t(title) })}
         style={style}
-        className={cn('flex h-10 items-center gap-2 rounded-full bg-legend/90 px-3.5 text-sm font-medium text-white shadow-float hover:bg-legend', className)}
+        className={cn('flex h-9 w-56 items-center gap-2 rounded-full bg-legend/90 px-3 shadow-float hover:bg-legend', className)}
       >
-        {legend.kind === 'gradient' && (
-          <span className="h-2 w-8 rounded-full" style={{ background: `linear-gradient(90deg, ${legend.colors.join(',')})` }} aria-hidden />
+        {colors ? (
+          <span className="flex h-2 flex-1 overflow-hidden rounded-full" aria-hidden>
+            {colors.map((c) => (
+              <span key={c} className="flex-1" style={{ background: c }} />
+            ))}
+          </span>
+        ) : (
+          legend.kind === 'gradient' && (
+            <span className="h-2 flex-1 rounded-full" style={{ background: `linear-gradient(90deg, ${legend.colors.join(',')})` }} aria-hidden />
+          )
         )}
-        {t('Legenda')}: {t(title)}
-        <ChevronUp className="size-4" aria-hidden />
+        <ChevronUp className="size-4 text-white/80" aria-hidden />
       </button>
     )
+  }
   return (
     <section
       aria-label={t('Legenda: {title}', { title: t(title) })}

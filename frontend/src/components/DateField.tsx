@@ -26,7 +26,7 @@ export function DateField({
       )}
     >
       <CalendarDays className="size-5 shrink-0 text-amber" aria-hidden />
-      <span className={cn('text-sm whitespace-nowrap text-text-muted', compact ? 'max-[419px]:hidden' : 'hidden xl:inline')}>
+      <span className={cn('text-sm whitespace-nowrap text-text-muted', compact ? 'max-[419px]:hidden' : 'hidden 2xl:inline')}>
         {t('Data analizy')}
       </span>
       <input
@@ -37,7 +37,7 @@ export function DateField({
         min={minAnalysisIso()}
         max={todayIso()}
         onChange={(e) => e.target.value && onChange(e.target.value)}
-        className="tabular min-w-0 flex-1 bg-transparent text-base font-semibold outline-none"
+        className={cn('tabular bg-transparent text-base font-semibold outline-none', compact ? 'min-w-0 flex-1' : 'w-[8.75rem] shrink-0')}
       />
     </label>
   )

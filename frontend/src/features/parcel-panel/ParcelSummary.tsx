@@ -1,31 +1,31 @@
-import { BookOpenText, ChevronDown, Leaf, Loader2, X } from 'lucide-react'
-import type { CropId, Parcel } from '@/api/types'
+import { BookOpenText, ChevronDown, ChevronUp, Leaf, Loader2, X } from 'lucide-react'
+import type { Parcel } from '@/api/types'
 import { ErrorNotice } from '@/components/ErrorNotice'
-import { ScoreRing } from '@/components/ScoreRing'
-import { StatusBadge } from '@/components/StatusBadge'
-import { formatHa } from '@/lib/format'
 import { useLang } from '@/lib/i18n'
-import { STATUS } from '@/theme/status'
-import { CropField } from './CropField'
+import { FieldOverview, type RefineProps } from './FieldOverview'
+import { NonAgriculturalCard } from './NonAgriculturalCard'
+import { RiskSummary } from './RiskSummary'
+import { useParcelTitle } from './parcelTitle'
 import type { AnalysisRun } from './types'
 
 /**
- * Zwinięty panel działki (komputer): tylko to, co najważniejsze – działka, uprawa, stan jednym zdaniem,
- * „Pełny panel” i „Paszport wodny”. Mniej rzeczy naraz na ekranie; całość jednym klikiem.
+ * Zwinięty panel działki (komputer) – domyślny widok po wybraniu działki. Mało naraz (uwagi z testów):
+ * werdykt, „teraz”, 3 najlepsze uprawy, „Doprecyzuj”; „Pełny raport” (paszport) i „Szczegóły” na życzenie.
  */
 export function ParcelSummary({
   parcel,
-  crop,
-  onCropChange,
+  refine,
   run,
   onRetryAnalysis,
   onExpand,
   onClose,
+  onCollapse,
   onOpenPassport,
 }: {
+  /** zwija panel do samej belki z nazwą */
+  onCollapse?: () => void
   parcel: Parcel
-  crop: CropId | null
-  onCropChange: (c: CropId) => void
+  refine: RefineProps
   run: AnalysisRun
   onRetryAnalysis?: () => void
   onExpand: () => void
@@ -35,10 +35,9 @@ export function ParcelSummary({
 }) {
   const { t } = useLang()
   const analysis = run.phase === 'done' ? run.analysis : null
-  const level = analysis?.status.level ?? 'no_data'
-  const s = STATUS[level]
   const steps = run.phase === 'loading' ? run.steps : []
   const done = steps.filter((x) => x.state === 'done').length
+  const { title, sub } = useParcelTitle(parcel)
 
   return (
     <div className="space-y-4 p-5">
@@ -47,11 +46,20 @@ export function ParcelSummary({
           <Leaf className="size-5" aria-hidden />
         </span>
         <div className="min-w-0 flex-1">
-          <h2 className="font-display truncate text-2xl leading-8 font-semibold">{t('Działka {numer}', { numer: parcel.numer })}</h2>
-          <p className="truncate text-sm leading-5 text-text-muted">
-            {t('gm. {gmina}, obręb {obreb}', { gmina: parcel.gmina, obreb: parcel.obreb })} · {formatHa(parcel.powierzchnia_ha)} ha
-          </p>
+          <h2 className="font-name line-clamp-2 text-xl leading-7 font-semibold">{title}</h2>
+          <p className="text-sm leading-5 text-text-muted">{sub}</p>
         </div>
+        {onCollapse && (
+          <button
+            type="button"
+            onClick={onCollapse}
+            aria-label={t('Zwiń panel')}
+            title={t('Zwiń panel')}
+            className="-mt-1 flex size-10 shrink-0 items-center justify-center rounded-full text-text-muted hover:bg-surface-2"
+          >
+            <ChevronUp className="size-5" />
+          </button>
+        )}
         {onClose && (
           <button
             type="button"
@@ -64,13 +72,11 @@ export function ParcelSummary({
         )}
       </div>
 
-      <CropField crop={crop} onChange={onCropChange} />
-
       {run.phase === 'loading' && (
         <div className="space-y-2 rounded-xl bg-surface-2/60 p-3.5">
           <p className="flex items-center gap-2 text-sm font-medium">
             <Loader2 className="size-4 animate-spin text-brand" aria-hidden />
-            {t('Liczę ocenę wody dla działki…')}
+            {t('Sprawdzam działkę: gleba, pogoda z 10 lat, teren…')}
           </p>
           <div className="h-1.5 overflow-hidden rounded-full bg-surface-2" aria-hidden>
             <div className="h-full rounded-full bg-brand transition-all" style={{ width: `${(done / Math.max(1, steps.length)) * 100}%` }} />
@@ -80,35 +86,31 @@ export function ParcelSummary({
 
       {run.phase === 'error' && <ErrorNotice {...run.error} onRetry={run.error.retryable ? onRetryAnalysis : undefined} />}
 
-      {analysis && (
-        <div className={`flex items-center gap-4 rounded-xl p-4 ${s.bg}`}>
-          {analysis.status.score != null && (
-            <ScoreRing value={analysis.status.score} size={64} stroke={7} color={s.ring.color} track={s.ring.track} />
-          )}
-          <div className="min-w-0 flex-1 space-y-1">
-            <StatusBadge status={level} size="sm" />
-            <p className="font-display line-clamp-2 text-lg leading-6 font-semibold">{t(analysis.status.headline)}</p>
-          </div>
-        </div>
+      {analysis?.soil.non_agricultural && <NonAgriculturalCard soil={analysis.soil} onPickOther={onClose} />}
+      {analysis && !analysis.soil.non_agricultural && (
+        <>
+          <RiskSummary analysis={analysis} />
+          <FieldOverview analysis={analysis} refine={refine} />
+        </>
       )}
 
       <div className="flex gap-2">
-        <button
-          type="button"
-          onClick={onExpand}
-          className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-md border bg-surface text-sm font-semibold hover:bg-surface-2"
-        >
-          {t('Pełny panel')} <ChevronDown className="size-4 text-text-muted" aria-hidden />
-        </button>
-        {analysis && onOpenPassport && (
+        {analysis && !analysis.soil.non_agricultural && onOpenPassport && (
           <button
             type="button"
             onClick={onOpenPassport}
             className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-md bg-brand-dark text-sm font-semibold text-white hover:bg-brand"
           >
-            <BookOpenText className="size-4" aria-hidden /> {t('Paszport wodny')}
+            <BookOpenText className="size-4" aria-hidden /> {t('Pełny raport')}
           </button>
         )}
+        <button
+          type="button"
+          onClick={onExpand}
+          className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-md border bg-surface text-sm font-semibold hover:bg-surface-2"
+        >
+          {t('Szczegóły')} <ChevronDown className="size-4 text-text-muted" aria-hidden />
+        </button>
       </div>
     </div>
   )

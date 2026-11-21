@@ -1,11 +1,10 @@
 import type { Map as LeafletMap } from 'leaflet'
-import { Suspense, lazy, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, cloneElement, lazy, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { ChevronDown, ChevronUp, LayoutPanelTop } from 'lucide-react'
+import { ChevronUp } from 'lucide-react'
 import L from 'leaflet'
 import { ApiError, api, describeError } from '@/api/client'
-import { isPlaceQuery, type Place } from '@/api/places.proposal'
-import type { CropId, Parcel, ParcelCandidates } from '@/api/types'
+import type { CropId, Parcel, ParcelCandidates, SearchResult } from '@/api/types'
 import { OfflineBanner } from '@/components/OfflineBanner'
 import { SampleDataBanner } from '@/components/SampleDataBanner'
 import { parcelBounds, parcelContains, type MapInsets } from '@/features/map/geo'
@@ -17,7 +16,11 @@ import { POLAND_CENTER, ParcelMap, type BaseMap } from '@/features/map/ParcelMap
 import { MobileSheetHeader } from '@/features/parcel-panel/MobileSheetHeader'
 import { ParcelPanel } from '@/features/parcel-panel/ParcelPanel'
 import { ParcelSummary } from '@/features/parcel-panel/ParcelSummary'
+import { PanelCollapsed } from '@/features/parcel-panel/PanelCollapsed'
 import { ExploreBar } from '@/features/intro/ExploreBar'
+import { IntroHero } from '@/features/intro/IntroHero'
+import { useDemoExamples } from '@/features/intro/useDemoExamples'
+import { SOIL_SUSCEPTIBILITY_LEGEND } from '@/features/map/SoilSusceptibilityLayer'
 import { LocateButton } from '@/features/search/LocateButton'
 import { Passport } from '@/features/passport/Passport'
 import { exampleDate, type Example } from '@/features/parcel-panel/examples'
@@ -28,18 +31,19 @@ import { SearchBar } from '@/features/search/SearchBar'
 import { useForecast } from '@/features/weather/useForecast'
 import { WeatherWidget } from '@/features/weather/WeatherWidget'
 import { DateField } from '@/components/DateField'
-import { BottomCards } from '@/layout/BottomCards'
-import { BottomCardsStack } from '@/layout/BottomCardsStack'
+import { LayerMenu } from '@/features/map/LayerMenu'
+import { FarmDrawer } from '@/layout/FarmDrawer'
 import { BottomTabs } from '@/layout/BottomTabs'
 import { MobileSheet, snapHeights, type Snap } from '@/layout/MobileSheet'
 import { Sidebar } from '@/layout/Sidebar'
 import { TopBar } from '@/layout/TopBar'
 import { todayIso } from '@/lib/dates'
-import { formatDatePl, formatNum } from '@/lib/format'
+import { formatDatePl, formatHa, formatNum } from '@/lib/format'
 import { BRAND_NAME, BRAND_TAGLINE } from '@/lib/brand'
 import { readLink, shareLink, writeLink } from '@/lib/deepLink'
 import { rememberAnalysis, useSettings, useUiPrefs } from '@/lib/storage'
 import { useReportDownload } from '@/features/reports/useReportDownload'
+import { ReportForm } from '@/features/reports/ReportForm'
 import { useMediaQuery, useOnline, usePrefersReducedMotion, useSavedParcels } from '@/lib/hooks'
 import { mockRequested } from '@/mocks/useMockAnalysis'
 import { locale, useLang } from '@/lib/i18n'
@@ -57,20 +61,15 @@ const SHEET_COLLAPSED = 156
 
 const SHEET_TOP = 116 // pod wyszukiwarką i pigułkami warstw
 
-// Komputer/tablet: dolny pasek kart i odstępy 16 px (SPEC 2.4, 4.5)
-const CARDS_H = 166
-
-
-// karty schowane: przycisk „Pogoda, gospodarstwo…” 44 px w lewym dolnym rogu
-const TOGGLE_H = 44
 
 const round1 = (v: number) => Math.round(v * 10) / 10
 
 // Widok 3D – osobny plik i biblioteka (MapLibre GL), pobierane dopiero po kliknięciu „3D”
 const Terrain3D = lazy(() => import('@/features/map3d/Terrain3D'))
 
-// Komputer: paszport wodny jako szeroki panel (SPEC 7)
-const PASSPORT_W = 640
+
+/** stała pusta historia pola – ta sama tablica między renderami (zależności efektów) */
+const NO_HISTORY: string[] = []
 
 export default function Start() {
   const { t } = useLang()
@@ -82,11 +81,19 @@ export default function Start() {
 
   const [search, setSearch] = useState<SearchPhase>({ phase: 'idle' })
   const [candidates, setCandidates] = useState<Parcel[]>([])
-  const [crops, setCrops] = useState<Record<string, CropId>>({})
+  const [crops, setCrops] = useState<Record<string, CropId | null>>({})
+  // B3 „Doprecyzuj”: historia pola (indeks 0 = rok temu) i powierzchnia uprawy – na działkę
+  const [histories, setHistories] = useState<Record<string, string[]>>({})
+  const [areas, setAreas] = useState<Record<string, number | null>>({})
+  // A5e: „Co planujesz posiać?” – do 3 upraw / grup, na działkę
+  const [plans, setPlans] = useState<Record<string, string[]>>({})
+  const [reportFormOpen, setReportFormOpen] = useState(false)
+  // obszar przybliżony (brak działki w ULDK): punkt kliknięcia – analiza liczona po lon/lat
+  const [approxPoints, setApproxPoints] = useState<Record<string, [number, number]>>({})
   // link z adresu (?dzialka=&uprawa=&data=) – czytany raz przy wejściu
   const [link] = useState(readLink)
   const [asOf, setAsOf] = useState(link.data ?? todayIso())
-  const [layer, setLayer] = useState<LayerKey>('kondycja')
+  const [layer, setLayer] = useState<LayerKey>('teren') // Kondycja upraw nie ma jeszcze danych
   const [view, setView] = useState<'2d' | '3d'>('2d')
   const [settings] = useSettings()
   const [ui, setUi] = useUiPrefs()
@@ -111,6 +118,11 @@ export default function Start() {
   const reqId = useRef(0)
   // uprawa z linku – przypisywana do działki, gdy wyszukiwanie ją znajdzie
   const pendingCrop = useRef(link.uprawa)
+  const pendingHistory = useRef(link.historia)
+  const pendingPlan = useRef(link.plan)
+  // karta powitalna (B0): tylko przy wejściu bez działki w linku; znika po pierwszym działaniu
+  const [hero, setHero] = useState(() => !link.dzialka)
+  const demoExamples = useDemoExamples()
   // przykład jednym klikiem: na telefonie po znalezieniu działki szuflada do połowy (wynik od razu widoczny)
   const expandAfterFind = useRef(false)
   // ?widok=paszport – po pierwszej gotowej analizie od razu paszport wodny
@@ -122,7 +134,11 @@ export default function Start() {
   // analiza: startuje po wyborze uprawy, zmiana uprawy/daty przelicza; dopóki backend zwraca 501,
   // w trybie deweloperskim można podejrzeć mock z symulacją ładowania (?dane=przykladowe)
   const mock = mockRequested()
-  const { run, retry: retryAnalysis } = useAnalysis(parcel?.id ?? null, crop, asOf)
+  const history = parcel ? (histories[parcel.id] ?? NO_HISTORY) : NO_HISTORY
+  const area = parcel ? (areas[parcel.id] ?? null) : null
+  const planned = parcel ? (plans[parcel.id] ?? NO_HISTORY) : NO_HISTORY
+  const approxPoint = parcel ? (approxPoints[parcel.id] ?? null) : null
+  const { run, retry: retryAnalysis } = useAnalysis(parcel?.id ?? null, crop, asOf, { point: approxPoint, cropHistory: history, area, plannedCrops: planned })
   const analysis = run.phase === 'done' ? run.analysis : null
   const layerState = useLayerData(layer, parcel?.id ?? null, asOf)
   const passportOpen = !!analysis && passportFor === analysis
@@ -137,17 +153,25 @@ export default function Start() {
     return () => ro.disconnect()
   }, [])
 
-  // komputer/tablet: dolny pasek kart tylko na życzenie (mniej rzeczy naraz na ekranie)
-  const cardsShown = !isMobile && ui.cards
   // komputer: przy wybranej działce domyślnie mała karta podsumowania, pełny panel na życzenie
   const summaryOnly = !isMobile && !ui.panel && search.phase === 'parcel' && !passportOpen && !infra
-  const FLOAT_BOTTOM = cardsShown ? 16 + CARDS_H + 24 : 16 // dół panelu i legendy
-  const CONTROLS_BOTTOM = cardsShown ? FLOAT_BOTTOM + 28 : 16 + TOGGLE_H + 36 // kontrolki nad skalą mapy
-  const MAP_BOTTOM_DESKTOP = cardsShown ? 16 + CARDS_H + 2 : 16 + TOGGLE_H + 4 // skala i atrybucje
+  // komputer: panel zwinięty do samej belki (mapa odsłonięta); nowa działka – znów rozwinięty
+  const [panelMin, setPanelMin] = useState(false)
+  const [minFor, setMinFor] = useState<string | null>(null)
+  if ((parcel?.id ?? null) !== minFor) {
+    setMinFor(parcel?.id ?? null)
+    setPanelMin(false)
+  }
+  const collapsed = panelMin && !!parcel && !infra
+  // „Moje gospodarstwo” pływa nad mapą (nie zajmuje pasa na dole) – panel sięga do dołu z marginesem 16 px
+  const FLOAT_BOTTOM = 16
+  // komputer: dół panelu działki – nad rzędem kontrolek mapy (44 px) i atrybucją
+  const PANEL_BOTTOM = 32 + 44 + 12
+  const MAP_BOTTOM_DESKTOP = 0 // atrybucja w prawym dolnym rogu, pod kontrolkami
   const sheetVisible = snapHeights(areaH, SHEET_COLLAPSED, SHEET_TOP)[snap]
   const insets: MapInsets = isMobile
     ? { top: 120, right: 64, bottom: SHEET_COLLAPSED + 130, left: 8 }
-    : { top: 128, right: (passportOpen ? PASSPORT_W : isDesktop ? 380 : 340) + 16, bottom: FLOAT_BOTTOM, left: 76 }
+    : { top: 128, right: (isDesktop ? 380 : 340) + 16, bottom: FLOAT_BOTTOM, left: 76 }
 
   // ── wyszukiwanie działki ──────────────────────────────────────────────────────────────────
   async function find(fn: () => Promise<Parcel>, kind: 'number' | 'point') {
@@ -181,69 +205,70 @@ export default function Start() {
   }
 
   const searchByNumber = (q: string) => find(() => api.parcelById(q), 'number')
+  // komunikaty o błędach usług pokazujemy dopiero po działaniu użytkownika (nie przy wejściu z linku)
+  const userActed = useRef(false)
 
-  // ── miejsce po nazwie („Tczów”): lista obrębów/gmin → mapa przybliża → klik w pole ──────────
-  const [places, setPlaces] = useState<Place[]>([])
-  const [placeBusy, setPlaceBusy] = useState(false)
-  const [placeError, setPlaceError] = useState<string | null>(null)
-  const placeReq = useRef(0)
-
-  async function searchPlace(q: string) {
-    const id = ++placeReq.current
-    setPlaces([])
-    setPlaceError(null)
-    setPlaceBusy(true)
-    try {
-      const r = await api.places(q)
-      if (id !== placeReq.current) return
-      if (r.places.length === 1) pickPlace(r.places[0])
-      else setPlaces(r.places)
-    } catch (e) {
-      if (id !== placeReq.current) return
-      setPlaceError(
-        e instanceof ApiError && e.status === 404 && (e.detail as { message?: string } | null)?.message === 'nie znaleziono miejsca'
-          ? t('Nie znaleziono miejsca „{q}”', { q })
-          : e instanceof ApiError && (e.status === 404 || e.status === 501)
-            ? t('Szukanie po samej nazwie jeszcze w budowie – wpisz nazwę z numerem działki, np. „{q} 123”', { q })
-            : t('Nie udało się wyszukać miejsca – spróbuj ponownie'),
-      )
-    } finally {
-      if (id === placeReq.current) setPlaceBusy(false)
+  // ── podpowiedź z /api/search: działka → wczytaj, miejscowość → mapa przybliża → klik w pole ──
+  function pickResult(r: SearchResult) {
+    userActed.current = true
+    setHero(false)
+    if (r.kind === 'parcel' && r.parcel_id) {
+      const id = r.parcel_id
+      return find(() => api.parcelById(id), 'number')
     }
-  }
-
-  function pickPlace(pl: Place) {
-    setPlaces([])
-    setPlaceError(null)
     const map = mapRef.current
     if (!map) return
-    const b = L.latLngBounds([pl.bbox[1], pl.bbox[0]], [pl.bbox[3], pl.bbox[2]])
     const opts = {
       paddingTopLeft: [insets.left + 24, insets.top + 24] as [number, number],
       paddingBottomRight: [insets.right + 24, insets.bottom + 24] as [number, number],
-      maxZoom: 15,
+      maxZoom: r.bbox_approx ? 14 : 16,
     }
-    if (reducedMotion) map.fitBounds(b, { ...opts, animate: false })
-    else map.flyToBounds(b, { ...opts, duration: 1 })
-    showToast(t('{name}: kliknij swoje pole na mapie', { name: pl.name }))
+    if (r.bbox) {
+      const bb = L.latLngBounds([r.bbox[1], r.bbox[0]], [r.bbox[3], r.bbox[2]])
+      if (reducedMotion) map.fitBounds(bb, { ...opts, animate: false })
+      else map.flyToBounds(bb, { ...opts, duration: 1 })
+    } else if (r.lon != null && r.lat != null) map.setView([r.lat, r.lon], 14, { animate: !reducedMotion })
+    showToast(t('{name}: kliknij swoje pole na mapie', { name: r.name ?? r.label }))
   }
 
-  /** jedno pole wyszukiwania, 3 rodzaje zapytań: identyfikator / „obręb numer” → działka, sama nazwa → miejsce */
+  /** Enter bez wybranej podpowiedzi: identyfikator / „obręb numer” → działka */
   const onSearch = (q: string) => {
-    if (isPlaceQuery(q)) return searchPlace(q)
-    setPlaces([])
-    setPlaceError(null)
+    userActed.current = true
+    setHero(false)
     searchByNumber(q)
   }
   const searchByPoint = (lon: number, lat: number) => {
     setPendingPoint([lon, lat])
-    find(() => api.parcelByPoint(lon, lat), 'point')
+    find(async () => {
+      try {
+        return await api.parcelByPoint(lon, lat)
+      } catch (e) {
+        // brak działki w tym miejscu albo ULDK chwilowo nie działa – analiza kwadratu wokół punktu
+        if (!(e instanceof ApiError) || e.status === 0 || e.status === 409 || e.status === 400) throw e
+        const a = await api.analysis({ point: [lon, lat], date: asOf }).catch(() => {
+          throw e
+        })
+        if (a.parcel.source !== 'approximate') return a.parcel
+        setApproxPoints((m) => ({ ...m, [a.parcel.id]: [lon, lat] }))
+        return a.parcel
+      }
+    }, 'point')
   }
   const retry = () => {
     if (lastRequest.current) find(lastRequest.current.fn, lastRequest.current.kind)
   }
 
   function applyPendingCrop(p: Parcel) {
+    const pl = pendingPlan.current
+    if (pl.length) {
+      pendingPlan.current = []
+      setPlans((m) => ({ ...m, [p.id]: pl }))
+    }
+    const h = pendingHistory.current
+    if (h.length) {
+      pendingHistory.current = []
+      setHistories((m) => ({ ...m, [p.id]: h }))
+    }
     const c = pendingCrop.current
     if (!c) return
     pendingCrop.current = null
@@ -259,6 +284,8 @@ export default function Start() {
   }
 
   function onMapClick(lon: number, lat: number) {
+    userActed.current = true
+    setHero(false)
     if (infra?.picking) {
       setInfra({ point: [lon, lat], picking: false })
       if (isMobile) setSnap('full')
@@ -290,6 +317,8 @@ export default function Start() {
   }
 
   function locate() {
+    userActed.current = true
+    setHero(false)
     const fail = (message: string) => {
       setSearch({
         phase: 'error',
@@ -355,12 +384,13 @@ export default function Start() {
 
   // adres w pasku = bieżąca działka, uprawa i data (można go skopiować wprost z przeglądarki)
   useEffect(() => {
-    if (parcel) writeLink({ dzialka: parcel.id, uprawa: crop, data: asOf })
-  }, [parcel, crop, asOf])
+    // obszar przybliżony nie ma identyfikatora działki – link bez niego
+    if (parcel && !approxPoint) writeLink({ dzialka: parcel.id, uprawa: crop, data: asOf, historia: history, plan: planned })
+  }, [parcel, crop, asOf, history, planned, approxPoint])
 
   function copyLink() {
     if (!parcel) return
-    const href = shareLink({ dzialka: parcel.id, uprawa: crop, data: asOf, widok: passportOpen ? 'paszport' : null })
+    const href = shareLink({ dzialka: parcel.id, uprawa: crop, data: asOf, historia: history, plan: planned, widok: passportOpen ? 'paszport' : null })
     if (!navigator.clipboard) return showToast(t('Skopiuj adres z paska przeglądarki – to link do tej analizy'))
     navigator.clipboard.writeText(href).then(
       () => showToast(t('Skopiowano link do tej analizy')),
@@ -372,7 +402,6 @@ export default function Start() {
   function openPassport() {
     if (!analysis) return
     setPassportFor(analysis)
-    if (isMobile) setSnap('full')
   }
   const closePassport = useCallback(() => setPassportFor(null), [])
   useEffect(() => {
@@ -386,7 +415,6 @@ export default function Start() {
     if (!analysis || !pendingPassport.current) return
     pendingPassport.current = false
     setPassportFor(analysis)
-    if (isMobile) setSnap('full')
   }, [analysis, isMobile])
   // adres pamięta otwarty paszport (link „Kopiuj” otworzy go od razu)
   useEffect(() => {
@@ -401,6 +429,7 @@ export default function Start() {
   useEffect(() => setHighlight(null), [analysis])
 
   function showOnMap(g: GeoJSON.Geometry) {
+    setPassportFor(null)
     setHighlight(g)
     if (isMobile) setSnap('collapsed')
     const map = mapRef.current
@@ -417,6 +446,8 @@ export default function Start() {
 
   // ── „Zobacz przykład”: działka + uprawa + data jednym klikiem ───────────────────────────────
   function openExample(e: Example) {
+    userActed.current = true
+    setHero(false)
     pendingCrop.current = e.crop
     setPassportFor(null)
     setAsOf(exampleDate(e))
@@ -441,10 +472,19 @@ export default function Start() {
 
   // ── raport PDF: te same parametry co analiza ─────────────────────────────────────────────
   const report = useReportDownload(
-    parcel && crop && analysis ? { parcelId: parcel.id, numer: parcel.numer, crop, date: asOf } : null,
+    parcel && analysis
+      ? { parcelId: parcel.id, point: approxPoint, numer: approxPoint ? 'obszar' : parcel.numer, crop: analysis.crop, date: asOf, cropHistory: history, area, plannedCrops: planned }
+      : null,
   )
+  // „Pobierz raport” otwiera formularz „Przygotuj raport” (skrócony / szczegółowy)
+  const reportUi = { ...report, download: () => setReportFormOpen(true) }
+  const reportIncluded = [
+    planned.length ? t('plan: {n}', { n: planned.length }) : null,
+    history.some((h) => h && h !== 'nie_wiem') ? t('historia pola') : null,
+    area ? `${formatHa(area)} ha` : null,
+  ].filter(Boolean) as string[]
   const clearReportError = report.clearError
-  useEffect(() => clearReportError(), [parcel?.id, crop, asOf, clearReportError])
+  useEffect(() => clearReportError(), [parcel?.id, crop, asOf, history, area, planned, clearReportError])
   // telefon: błąd raportu ma być widoczny – szuflada do połowy
   useEffect(() => {
     if (report.error && isMobile) setSnap('half')
@@ -461,7 +501,10 @@ export default function Start() {
 
   const { forecast, state: forecastState } = useForecast(weatherTarget)
 
-  const onMoveEnd = useCallback((lon: number, lat: number) => {
+  // poziom przybliżenia – mapa gleb (i jej legenda) tylko przy oddaleniu
+  const [zoom, setZoom] = useState(6)
+  const onMoveEnd = useCallback((lon: number, lat: number, z: number) => {
+    setZoom(z)
     setMapCenter((prev) => {
       const next: [number, number] = [round1(lon), round1(lat)]
       return prev[0] === next[0] && prev[1] === next[1] ? prev : next
@@ -503,12 +546,26 @@ export default function Start() {
               : layerState.data.source_tag.date
               ? t('Dane z {date}', { date: formatDatePl(layerState.data.source_tag.date) })
               : (layerState.data.source_tag.source ?? '')
-  const panelProps = {
-    state: search,
+  const refine = {
     crop,
-    onCropChange: (c: CropId) => {
+    onCropChange: (c: CropId | null) => {
       if (parcel) setCrops((m) => ({ ...m, [parcel.id]: c }))
     },
+    history,
+    onHistoryChange: (h: string[]) => {
+      if (parcel) setHistories((m) => ({ ...m, [parcel.id]: h }))
+    },
+    onAreaChange: (ha: number | null) => {
+      if (parcel) setAreas((m) => ({ ...m, [parcel.id]: ha }))
+    },
+    planned,
+    onPlannedChange: (pl: string[]) => {
+      if (parcel) setPlans((m) => ({ ...m, [parcel.id]: pl.slice(0, 3) }))
+    },
+  }
+  const panelProps = {
+    state: search,
+    refine,
     asOf,
     forecastState,
     run,
@@ -521,13 +578,30 @@ export default function Start() {
     onRetry: retry,
     onFocusSearch: focusSearch,
     onLocate: locate,
-    report,
-    onCopyLink: parcel ? copyLink : undefined,
+    report: reportUi,
     onOpenPassport: openPassport,
     onShowOnMap: showOnMap,
     onReportInfra: openInfra,
     onExample: openExample,
+    onClose: backToExplore,
   }
+
+  // warstwy bez danych z serwera (dziś 501) – wyszarzone w menu „wkrótce”
+  const layerMenu = (side: 'top' | 'bottom') => (
+    <LayerMenu
+      value={layer}
+      onChange={setLayer}
+      view={view}
+      onViewChange={(v) => {
+        setView(v)
+        // w 3D najciekawszy jest teren
+        if (v === '3d' && (layer === 'kondycja' || layer === 'wilgotnosc')) setLayer('teren')
+      }}
+      unavailable={['kondycja', 'wilgotnosc', 'gleba']}
+      canUse3d={!!parcel}
+      side={side}
+    />
+  )
 
   // przeglądanie mapy: dopóki nie wybrano działki – sama mapa (pola uprawne podświetlone) i mały pasek
   const intro = !parcel && !infra
@@ -543,25 +617,22 @@ export default function Start() {
     setInsidePopup(null)
     setPendingPoint(null)
     setView('2d')
-    writeLink({ dzialka: null, uprawa: null, data: null, widok: null })
+    writeLink({ dzialka: null, uprawa: null, data: null, historia: [], plan: [], widok: null })
     if (isMobile) setSnap('collapsed')
   }
 
   const searchBar = (
     <SearchBar
-      loading={search.phase === 'loading' || placeBusy}
-      error={placeError ?? (search.phase === 'error' ? t(search.error.title, search.error.vars) : null)}
-      places={places}
-      onPickPlace={pickPlace}
+      loading={search.phase === 'loading'}
+      error={search.phase === 'error' && userActed.current ? t(search.error.title, search.error.vars) : null}
+      onPickResult={pickResult}
       candidates={candidates}
       total={search.phase === 'candidates' ? search.total : candidates.length}
       onSearch={onSearch}
       onPick={pickCandidate}
-      selected={parcel ? `${parcel.obreb} ${parcel.numer}` : null}
+      selected={parcel ? (parcel.source === 'approximate' ? t('Obszar przybliżony') : `${parcel.obreb} ${parcel.numer}`) : null}
       placeholder={isMobile ? t('Numer działki') : undefined}
       onDismiss={() => {
-        setPlaces([])
-        setPlaceError(null)
         if (candidates.length) {
           setCandidates([])
           setSearch({ phase: 'idle' })
@@ -606,6 +677,7 @@ export default function Start() {
             highlight={infra ? infraMarker : highlight}
             infraRefresh={infraRefresh}
             intro={intro}
+            soil={intro}
             insets={insets}
             reducedMotion={reducedMotion}
             onMapClick={onMapClick}
@@ -616,12 +688,32 @@ export default function Start() {
 
           {intro ? (
             <>
-              <ExploreBar
-                isMobile={isMobile}
-                search={searchBar}
-                locate={<LocateButton locating={locating} onClick={locate} iconOnly />}
-                onExample={openExample}
+              {hero ? (
+                <IntroHero
+                  search={searchBar}
+                  locate={<LocateButton locating={locating} onClick={locate} iconOnly />}
+                  examples={demoExamples}
+                  onExample={openExample}
+                />
+              ) : (
+                <ExploreBar
+                  isMobile={isMobile}
+                  search={searchBar}
+                  locate={<LocateButton locating={locating} onClick={locate} iconOnly />}
+                  onExample={openExample}
+                  examples={demoExamples}
+                />
+              )}
+              {/* legenda mapy startowej: podatność gleb na suszę (IUNG) – tylko gdy warstwa jest widoczna (zoom ≤ 11) */}
+              {zoom <= 11 && (
+              <LegendCard
+                title="Podatność gleb na suszę"
+                legend={SOIL_SUSCEPTIBILITY_LEGEND}
+                status="IUNG-PIB · tereny nierolnicze bez koloru"
+                compact={isMobile}
+                className={isMobile ? 'absolute right-3 bottom-20 z-[1100] w-52' : 'absolute right-4 bottom-4 z-[1300]'}
               />
+              )}
               <MapControls
                 className={isMobile ? 'absolute top-[76px] right-3 z-[1000]' : 'absolute bottom-4 left-4 z-[1000]'}
                 onZoomIn={() => mapRef.current?.zoomIn()}
@@ -652,22 +744,12 @@ export default function Start() {
             </Suspense>
           )}
           <TopBar
-            onBack={backToExplore}
             isMobile={isMobile}
-            search={searchBar}
+            search={cloneElement(searchBar, { trailing: <LocateButton locating={locating} onClick={locate} inField /> })}
             weather={weather()}
-            locating={locating}
-            onLocate={locate}
             asOf={asOf}
             onAsOfChange={setAsOf}
-            layer={layer}
-            onLayerChange={setLayer}
-            view={view}
-            onViewChange={(v) => {
-              setView(v)
-              // w 3D najciekawszy jest teren
-              if (v === '3d' && (layer === 'kondycja' || layer === 'wilgotnosc')) setLayer('teren')
-            }}
+            layerButton={isMobile ? layerMenu('bottom') : undefined}
           />
 
           {/* telefon: przy pełnej szufladzie napis zasłaniałby nagłówek działki */}
@@ -686,8 +768,8 @@ export default function Start() {
           {/* ── kontrolki mapy: komputer – lewy dolny róg; telefon – po prawej (SPEC 5.2, 12) ── */}
           {view === '2d' && (
           <MapControls
-            className={isMobile ? 'absolute top-[120px] right-3 z-[1000]' : 'absolute left-4 z-[1000]'}
-            style={isMobile ? undefined : { bottom: CONTROLS_BOTTOM }}
+            className={isMobile ? 'absolute top-[120px] right-3 z-[1000]' : 'absolute right-4 bottom-8 z-[1000]'}
+            horizontal={!isMobile}
             onZoomIn={() => mapRef.current?.zoomIn()}
             onZoomOut={() => mapRef.current?.zoomOut()}
             onBackToParcel={backToParcel}
@@ -700,40 +782,66 @@ export default function Start() {
 
           {/* ── legenda aktywnej warstwy (SPEC 5.3) ── */}
           {/* telefon: tylko przy zwiniętej szufladzie – wyżej zasłaniałaby działkę na małym kawałku mapy */}
-          {(!isMobile || snap === 'collapsed') && (
+          {isMobile && snap === 'collapsed' && (
             <LegendCard
               title={legend.label}
               legend={legend.legend}
               status={legendStatus}
-              compact={isMobile}
-              collapsed={!isMobile && !ui.legend}
-              onToggle={isMobile ? undefined : () => setUi({ legend: !ui.legend })}
-              className={
-                isMobile
-                  ? 'absolute left-3 z-[1000] w-56'
-                  : passportOpen
-                    ? 'absolute right-[672px] z-[1000]'
-                    : 'absolute right-[372px] z-[1000] xl:right-[412px]'
-              }
-              style={{ bottom: isMobile ? sheetVisible + 32 : FLOAT_BOTTOM }}
+              compact
+              className="absolute left-3 z-[1000] w-56"
+              style={{ bottom: sheetVisible + 32 }}
             />
+          )}
+          {!isMobile && (
+            <div className="absolute bottom-4 left-4 z-[1300] flex flex-col items-start gap-2">
+              {!ui.cards && (
+                <LegendCard
+                  title={legend.label}
+                  legend={legend.legend}
+                  status={legendStatus}
+                  collapsed={!ui.legend}
+                  onToggle={() => setUi({ legend: !ui.legend })}
+                />
+              )}
+              <div className="relative flex items-center gap-2">
+                {layerMenu('top')}
+                <FarmDrawer
+                  open={ui.cards}
+                  onToggle={() => setUi({ cards: !ui.cards })}
+                  panelStyle={{ width: `min(960px, calc(100vw - ${(isDesktop ? 412 : 372) + 140}px))` }}
+                  saved={saved}
+                  analysis={analysis}
+                  asOf={asOf}
+                  onAsOfChange={setAsOf}
+                  forecast={forecast}
+                  forecastLoading={forecastState === 'loading'}
+                  forecastError={forecastState === 'error'}
+                  where={where}
+                  historical={historical}
+                  updated={updated}
+                />
+              </div>
+            </div>
           )}
 
           {/* ── prawy panel działki: 380 px komputer, 340 px tablet (SPEC 4.4, 12) ── */}
           {!isMobile && (
             <aside
-              aria-label={passportOpen ? t('Paszport wodny') : t('Panel działki')}
-              className={
-                passportOpen
-                  ? 'absolute top-[128px] right-4 z-[1100] flex flex-col overflow-hidden rounded-xl bg-surface shadow-float'
-                  : 'absolute top-[128px] right-4 z-[1100] flex w-[340px] flex-col overflow-hidden rounded-xl bg-surface shadow-float xl:w-[380px]'
-              }
+              aria-label={t('Panel działki')}
+              className="absolute top-[128px] right-4 z-[1100] flex w-[340px] flex-col overflow-hidden rounded-xl bg-surface shadow-float xl:w-[380px]"
               style={{
-                bottom: summaryOnly ? undefined : FLOAT_BOTTOM,
-                maxHeight: summaryOnly ? `calc(100% - 128px - ${FLOAT_BOTTOM}px)` : undefined,
-                width: passportOpen ? `min(${PASSPORT_W}px, calc(100% - 120px))` : undefined,
+                bottom: summaryOnly || collapsed ? undefined : PANEL_BOTTOM,
+                maxHeight: summaryOnly ? `calc(100% - 128px - ${PANEL_BOTTOM}px)` : undefined,
               }}
             >
+              {collapsed && parcel ? (
+                <PanelCollapsed
+                  parcel={parcel}
+                  status={analysis && !analysis.soil.non_agricultural ? analysis.status.level : null}
+                  onExpand={() => setPanelMin(false)}
+                  onClose={backToExplore}
+                />
+              ) : (
               <div className="min-h-0 flex-1 overflow-y-auto p-5">
                 {infraOpen ? (
                   <div className="-m-5 h-[calc(100%+40px)]">
@@ -745,18 +853,16 @@ export default function Start() {
                       onSaved={() => setInfraRefresh((n) => n + 1)}
                     />
                   </div>
-                ) : passportOpen && analysis ? (
-                  <Passport analysis={analysis} onClose={closePassport} report={report} onCopyLink={copyLink} onShowOnMap={showOnMap} />
                 ) : summaryOnly && parcel ? (
                   <div className="-m-5">
                     <ParcelSummary
                       parcel={parcel}
-                      crop={crop}
-                      onCropChange={panelProps.onCropChange}
+                      refine={refine}
                       run={run}
                       onRetryAnalysis={retryAnalysis}
                       onExpand={() => setUi({ panel: true })}
                       onClose={backToExplore}
+                      onCollapse={() => setPanelMin(true)}
                       onOpenPassport={openPassport}
                     />
                   </div>
@@ -775,46 +881,8 @@ export default function Start() {
                   </>
                 )}
               </div>
+              )}
             </aside>
-          )}
-
-          {/* ── dolny pasek 5 kart (SPEC 4.5) ── */}
-          {!isMobile && !cardsShown && (
-            <button
-              type="button"
-              onClick={() => setUi({ cards: true })}
-              aria-expanded={false}
-              className="absolute bottom-4 left-4 z-[1000] flex items-center gap-2 rounded-full bg-surface px-4 text-sm font-medium shadow-float hover:bg-sage-soft"
-              style={{ height: TOGGLE_H }}
-            >
-              <LayoutPanelTop className="size-4 text-brand" aria-hidden />
-              {t('Pogoda, gospodarstwo, oś czasu')}
-              <ChevronUp className="size-4 text-text-muted" aria-hidden />
-            </button>
-          )}
-          {cardsShown && (
-            <div className="absolute inset-x-4 bottom-4 z-[1000]" style={{ height: CARDS_H }}>
-              <button
-                type="button"
-                onClick={() => setUi({ cards: false })}
-                aria-expanded
-                className="absolute -top-10 left-1/2 z-10 flex h-8 -translate-x-1/2 items-center gap-1.5 rounded-full bg-surface px-3 text-sm font-medium shadow-float hover:bg-sage-soft"
-              >
-                <ChevronDown className="size-4 text-text-muted" aria-hidden /> {t('Ukryj')}
-              </button>
-              <BottomCards
-                saved={saved}
-                analysis={analysis}
-                asOf={asOf}
-                onAsOfChange={setAsOf}
-                forecast={forecast}
-                forecastLoading={forecastState === 'loading'}
-                forecastError={forecastState === 'error'}
-                where={where}
-                historical={historical}
-                updated={updated}
-              />
-            </div>
           )}
 
           {/* ── szuflada od dołu (telefon) ── */}
@@ -832,8 +900,9 @@ export default function Start() {
                   saved={parcel ? isSaved(parcel.id) : false}
                   onToggleSave={panelProps.onToggleSave}
                   onCopied={panelProps.onCopied}
+                  onClose={backToExplore}
                   status={analysis?.status.level ?? 'no_data'}
-                  onReport={analysis ? report.download : undefined}
+                  onReport={analysis ? reportUi.download : undefined}
                   reportBusy={report.busy}
                 />
               }
@@ -851,10 +920,6 @@ export default function Start() {
                     onSaved={() => setInfraRefresh((n) => n + 1)}
                   />
                 </div>
-              ) : passportOpen && analysis ? (
-                <div className="px-1 pt-5">
-                  <Passport analysis={analysis} onClose={closePassport} report={report} onCopyLink={copyLink} onShowOnMap={showOnMap} />
-                </div>
               ) : (
               <div className="space-y-5">
                 <div className="flex gap-2 [&>label]:min-w-0 [&>label]:flex-1">
@@ -862,11 +927,14 @@ export default function Start() {
                   {weather(true)}
                 </div>
                 <ParcelPanel {...panelProps} hideHeader />
-                <BottomCardsStack
+                <FarmDrawer
+                  inline
+                  open={ui.cards}
+                  onToggle={() => setUi({ cards: !ui.cards })}
                   saved={saved}
-                analysis={analysis}
-                asOf={asOf}
-                onAsOfChange={setAsOf}
+                  analysis={analysis}
+                  asOf={asOf}
+                  onAsOfChange={setAsOf}
                   forecast={forecast}
                   forecastLoading={forecastState === 'loading'}
                   forecastError={forecastState === 'error'}
@@ -895,6 +963,11 @@ export default function Start() {
             </div>
           )}
 
+          {/* paszport wodny – pełny ekran nad mapą i panelem (nic nie prześwituje) */}
+          {passportOpen && analysis && (
+            <Passport analysis={analysis} onClose={closePassport} report={reportUi} onCopyLink={copyLink} onShowOnMap={showOnMap} />
+          )}
+
           {/* wydruk paszportu: osobna kopia poza układem mapy (window.print) */}
           {passportOpen && analysis && createPortal(
             <div className="hidden bg-white p-8 text-text print:block">
@@ -905,6 +978,17 @@ export default function Start() {
 
           </div>
           )}
+
+          <ReportForm
+            open={reportFormOpen && !!analysis}
+            onClose={() => setReportFormOpen(false)}
+            busy={report.busy}
+            included={reportIncluded}
+            onGenerate={(type) => {
+              setReportFormOpen(false)
+              void report.download(type)
+            }}
+          />
 
           {toast && (
             <div

@@ -6,7 +6,6 @@ import {
   MapContainer,
   Marker,
   Popup,
-  ScaleControl,
   TileLayer,
   Tooltip,
   useMap,
@@ -17,6 +16,7 @@ import type { Status } from '@/theme/status'
 import { parcelBounds, type MapInsets } from './geo'
 import { layerByKey, type LayerKey } from './layers'
 import { ParcelLabel } from './ParcelLabel'
+import { SoilSusceptibilityLayer } from './SoilSusceptibilityLayer'
 import { InfraPins } from '@/features/infra-reports/InfraPins'
 import { useLang } from '@/lib/i18n'
 
@@ -30,8 +30,7 @@ const ORTO_WMTS =
   '?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=ORTOFOTOMAPA&STYLE=default' +
   '&FORMAT=image/jpeg&TILEMATRIXSET=EPSG:3857&TILEMATRIX=EPSG:3857:{z}&TILEROW={y}&TILECOL={x}'
 
-/** Start bez działki w adresie: pola uprawne z bliska (okolice działki z przykładu „Susza 2018”, Podlasie). */
-const INTRO_VIEW: [number, number] = [53.047, 22.594]
+/** Start bez działki w adresie: cała Polska (z podatnością gleb na suszę – „susza + gleba” od pierwszego spojrzenia). */
 
 function IntroView({ active }: { active: boolean }) {
   const map = useMap()
@@ -40,7 +39,10 @@ function IntroView({ active }: { active: boolean }) {
     // tylko przy pierwszym wejściu – powrót z działki zostawia mapę tam, gdzie była
     if (!active || done.current) return
     done.current = true
-    map.setView(INTRO_VIEW, 13, { animate: false })
+    map.setView(POLAND_CENTER, 6, { animate: false })
+    // komputer: karta powitalna po lewej – Polska z mapą gleb przesunięta w prawą część ekranu
+    const w = map.getSize().x
+    if (w >= 1024) map.panBy([-Math.round(w * 0.2), 0], { animate: false })
   }, [active, map])
   return null
 }
@@ -83,13 +85,13 @@ function Events({
   onMoveEnd,
 }: {
   onClick: (lon: number, lat: number) => void
-  onMoveEnd: (lon: number, lat: number) => void
+  onMoveEnd: (lon: number, lat: number, zoom: number) => void
 }) {
   const map = useMapEvents({
     click: (e: LeafletMouseEvent) => onClick(e.latlng.lng, e.latlng.lat),
     moveend: () => {
       const c = map.getCenter()
-      onMoveEnd(c.lng, c.lat)
+      onMoveEnd(c.lng, c.lat, map.getZoom())
     },
   })
   return null
@@ -120,13 +122,15 @@ type Props = {
   insets: MapInsets
   reducedMotion: boolean
   onMapClick: (lon: number, lat: number) => void
-  onMoveEnd: (lon: number, lat: number) => void
+  onMoveEnd: (lon: number, lat: number, zoom: number) => void
   onSelectCandidate: (p: Parcel) => void
   onClosePopup: () => void
   /** miejsce rekomendacji („Pokaż na mapie”) */
   highlight?: GeoJSON.Geometry | null
-  /** ekran powitalny – widok pól z bliska */
+  /** ekran powitalny – widok całej Polski */
   intro?: boolean
+  /** podatność gleb na suszę (IUNG) – mapa startowa */
+  soil?: boolean
   /** zgłoszenia rowów/zbiorników wokół działki; zmiana `infraRefresh` = ponowne pobranie */
   infraRefresh?: number
 }
@@ -151,6 +155,7 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
     onClosePopup,
     highlight,
     intro = false,
+    soil = false,
     infraRefresh = 0,
   },
   ref,
@@ -177,6 +182,17 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
       className="absolute inset-0 z-0 h-full w-full"
       aria-label="Mapa działek. Kliknij pole, aby je wybrać."
     >
+      {/* tło całej Europy pod ortofotomapą (poza Polską zamiast białego pola) */}
+      {baseMap === 'orto' && (
+        <TileLayer
+          key="s2cloudless"
+          url="https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless_3857/default/g/{z}/{y}/{x}.jpg"
+          maxNativeZoom={15}
+          maxZoom={20}
+          zIndex={0}
+          attribution='<a href="https://s2maps.eu">Sentinel-2 cloudless 2016</a> © EOX (CC BY 4.0), dane Copernicus'
+        />
+      )}
       {baseMap === 'orto' ? (
         <TileLayer
           key="orto"
@@ -194,7 +210,6 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
           attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         />
       )}
-      <ScaleControl position="bottomleft" imperial={false} />
 
       {parcel && (
         <>
@@ -218,7 +233,7 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
           {labelPos && (
             <Marker position={labelPos} icon={anchorIcon} interactive={false} keyboard={false}>
               <Tooltip permanent direction="center" className="parcel-label" opacity={1}>
-                <ParcelLabel number={parcel.numer} status={parcelStatus} />
+                <ParcelLabel number={parcel.numer} status={parcelStatus} approx={parcel.source === 'approximate'} />
               </Tooltip>
             </Marker>
           )}
@@ -279,6 +294,7 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
       )}
 
       <IntroView active={intro} />
+      {soil && <SoilSusceptibilityLayer />}
       <InfraPins bbox={infraBox} refresh={infraRefresh} />
 
       <FitTo parcel={parcel} candidates={candidates} insets={insets} reducedMotion={reducedMotion} />

@@ -1,4 +1,4 @@
-import { FileDown, Leaf, Loader2 } from 'lucide-react'
+import { FileDown, Leaf, Loader2, X } from 'lucide-react'
 import type { Parcel, StatusLevel } from '@/api/types'
 import { LogoMark } from '@/components/LogoMark'
 import { StatusBadge } from '@/components/StatusBadge'
@@ -7,6 +7,7 @@ import { formatHa, shortCounty } from '@/lib/format'
 import { ParcelActions } from './ParcelActions'
 import type { SearchPhase } from './types'
 import { useLang } from '@/lib/i18n'
+import { useParcelTitle } from './parcelTitle'
 
 /** Zwinięta część szuflady: nazwa działki + status + „Raport” (SPEC 12). */
 export function MobileSheetHeader({
@@ -18,7 +19,10 @@ export function MobileSheetHeader({
   status = 'no_data',
   onReport,
   reportBusy,
+  onClose,
 }: {
+  /** zamyka działkę – powrót do mapy */
+  onClose?: () => void
   status?: StatusLevel
   /** pobranie raportu PDF; brak = analiza jeszcze niegotowa */
   onReport?: () => void
@@ -29,21 +33,71 @@ export function MobileSheetHeader({
   onToggleSave: () => void
   onCopied: () => void
 }) {
-  const { t } = useLang()
   if (parcel)
     return (
+      <ParcelHead
+        parcel={parcel}
+        saved={saved}
+        onToggleSave={onToggleSave}
+        onCopied={onCopied}
+        status={status}
+        onReport={onReport}
+        reportBusy={reportBusy}
+        onClose={onClose}
+      />
+    )
+  return <EmptyHead search={search} />
+}
+
+function ParcelHead({
+  parcel,
+  saved,
+  onToggleSave,
+  onCopied,
+  status,
+  onReport,
+  reportBusy,
+  onClose,
+}: {
+  parcel: Parcel
+  saved: boolean
+  onToggleSave: () => void
+  onCopied: () => void
+  status: StatusLevel
+  onReport?: () => void
+  reportBusy?: boolean
+  onClose?: () => void
+}) {
+  const { t } = useLang()
+  const { approx, title } = useParcelTitle(parcel)
+  return (
       <div className="space-y-1">
         <div className="flex items-center gap-2.5">
           <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-ok-soft text-brand">
             <Leaf className="size-5" aria-hidden />
           </span>
-          <h2 className="font-display min-w-0 flex-1 truncate text-2xl leading-8 font-semibold">{t('Działka {numer}', { numer: parcel.numer })}</h2>
-          <span className="tabular shrink-0 text-lg font-semibold" title={t('Pomiar – z granic działki w ewidencji (ULDK GUGiK)')}>
+          <h2 className="font-name min-w-0 flex-1 truncate text-2xl leading-8 font-semibold">{title}</h2>
+          <span
+            className="tabular shrink-0 text-lg font-semibold"
+            title={t(approx ? 'Kwadrat wokół wskazanego punktu – brak granic działki' : 'Pomiar – z granic działki w ewidencji (ULDK GUGiK)')}
+          >
             {formatHa(parcel.powierzchnia_ha)} ha
           </span>
+          {onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label={t('Zamknij działkę i wróć do mapy')}
+              className="-mr-2 flex size-10 shrink-0 items-center justify-center rounded-full text-text-muted hover:bg-surface-2"
+            >
+              <X className="size-5" />
+            </button>
+          )}
         </div>
         <p className="truncate pl-[46px] text-sm leading-5 text-text-muted">
-          {t('gm. {gmina}, obręb {obreb}', { gmina: parcel.gmina, obreb: parcel.obreb })} · {shortCounty(parcel.powiat)}
+          {approx
+            ? t('wokół wskazanego punktu')
+            : `${t('gm. {gmina}, obręb {obreb}', { gmina: parcel.gmina, obreb: parcel.obreb })} · ${shortCounty(parcel.powiat)}`}
         </p>
         <div className="flex items-center gap-1 pl-[46px]">
           <StatusBadge status={status} size="sm" />
@@ -60,7 +114,11 @@ export function MobileSheetHeader({
           </button>
         </div>
       </div>
-    )
+  )
+}
+
+function EmptyHead({ search }: { search: SearchPhase }) {
+  const { t } = useLang()
   const title =
     search.phase === 'loading'
       ? t('Szukam działki…')

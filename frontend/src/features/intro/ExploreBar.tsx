@@ -1,71 +1,59 @@
-import { ChevronDown, Menu, MousePointerClick } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { ChevronDown, FileText, Languages, Map as MapIcon, Menu as MenuIcon, MousePointerClick, Settings, Sparkles, X, type LucideIcon } from 'lucide-react'
+import { useState, type ReactNode } from 'react'
 import { LogoMark } from '@/components/LogoMark'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { EXAMPLES, type Example } from '@/features/parcel-panel/examples'
 import { BRAND_NAME } from '@/lib/brand'
 import { useLang } from '@/lib/i18n'
-import { goTo } from '@/lib/router'
+import { goTo, type PageKey } from '@/lib/router'
+
+/** Przycisk w lewej kolumnie: ikona + podpis pod spodem (bez rozwijanego menu), dymek z opisem. */
+function RailButton({ icon: Icon, label, hint, onClick }: { icon: LucideIcon; label: string; hint: string; onClick: () => void }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          onClick={onClick}
+          className="flex w-[72px] flex-col items-center gap-0.5 rounded-xl bg-surface/95 px-1 py-2 text-xs leading-4 font-medium shadow-float hover:bg-sage-soft md:w-20"
+        >
+          <Icon className="size-5 text-brand" aria-hidden />
+          {label}
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="right">{hint}</TooltipContent>
+    </Tooltip>
+  )
+}
 
 /**
- * Tryb przeglądania mapy (jak w mapach internetowych): mały pasek u góry – logo, wyszukiwarka,
- * „Moja lokalizacja”, przykłady i menu – oraz podpowiedź na dole. Reszta interfejsu po kliknięciu pola.
+ * Tryb przeglądania mapy (jak w mapach internetowych): u góry logo, wyszukiwarka, „Moja lokalizacja”, „Przykłady”;
+ * po lewej kolumna z podpisanymi przyciskami stron i języka (zamiast ☰); na dole podpowiedź.
+ * Reszta interfejsu pojawia się po kliknięciu pola.
  */
 export function ExploreBar({
   isMobile,
   search,
   locate,
   onExample,
+  examples = EXAMPLES,
 }: {
   isMobile: boolean
   search: ReactNode
   locate: ReactNode
   onExample: (e: Example) => void
+  /** lista z /api/demo/examples */
+  examples?: Example[]
 }) {
   const { t, lang, setLang } = useLang()
-  const pill = 'flex h-12 shrink-0 items-center gap-2 rounded-full bg-surface px-4 text-sm font-medium shadow-float hover:bg-sage-soft'
-  const menuItem = 'min-h-11 text-sm'
+  const [menu, setMenu] = useState(false)
 
-  const examples = (
-    <>
-      <DropdownMenuLabel className="text-xs tracking-wider text-text-muted uppercase">{t('Zobacz przykład')}</DropdownMenuLabel>
-      {EXAMPLES.map((e) => (
-        <DropdownMenuItem key={e.id} className={menuItem} onSelect={() => onExample(e)}>
-          <span className={`flex size-7 items-center justify-center rounded-full ${e.tone}`}>
-            <e.icon className="size-4" />
-          </span>
-          <span className="min-w-0">
-            <span className="block font-medium">{t(e.title)}</span>
-            <span className="block text-xs text-text-muted">{t(e.text)}</span>
-          </span>
-        </DropdownMenuItem>
-      ))}
-    </>
-  )
-  const pages = (
-    <>
-      <DropdownMenuItem className={menuItem} onSelect={() => goTo('parcels')}>
-        {t('Moje działki')}
-      </DropdownMenuItem>
-      <DropdownMenuItem className={menuItem} onSelect={() => goTo('reports')}>
-        {t('Raporty')}
-      </DropdownMenuItem>
-      <DropdownMenuItem className={menuItem} onSelect={() => goTo('settings')}>
-        {t('Ustawienia')}
-      </DropdownMenuItem>
-      <DropdownMenuSeparator />
-      <DropdownMenuItem className={menuItem} onSelect={() => setLang(lang === 'pl' ? 'en' : 'pl')}>
-        {lang === 'pl' ? 'English' : 'Polski'}
-      </DropdownMenuItem>
-    </>
-  )
+  const pages: { key: PageKey; icon: LucideIcon; label: string; hint: string }[] = [
+    { key: 'parcels', icon: MapIcon, label: 'Moje działki', hint: 'Działki zapisane gwiazdką' },
+    { key: 'reports', icon: FileText, label: 'Raporty', hint: 'Poprzednie paszporty wodne' },
+    { key: 'settings', icon: Settings, label: 'Ustawienia', hint: 'Mapa, tryb, język, zapisane dane' },
+  ]
 
   return (
     <>
@@ -75,42 +63,77 @@ export function ExploreBar({
           <span className="font-display text-lg font-bold text-brand max-md:hidden">{BRAND_NAME}</span>
         </div>
         <div className="flex min-w-0 flex-1 items-start gap-2 md:max-w-[560px]">{search}</div>
-        {locate}
-        {!isMobile && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button type="button" className={pill}>
-                {t('Przykłady')} <ChevronDown className="size-4 text-text-muted" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="z-[1500] w-80 rounded-xl">
-              {examples}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="shrink-0">{locate}</span>
+          </TooltipTrigger>
+          <TooltipContent>{t('Moja lokalizacja – znajdź działkę, na której stoisz')}</TooltipContent>
+        </Tooltip>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button type="button" aria-label={t('Menu')} className="flex size-12 shrink-0 items-center justify-center rounded-full bg-surface shadow-float hover:bg-sage-soft">
-              <Menu className="size-5" />
+            <button
+              type="button"
+              aria-label={t('Przykłady')}
+              className="flex h-12 shrink-0 items-center gap-2 rounded-full bg-surface px-4 text-sm font-medium shadow-float hover:bg-sage-soft max-md:w-12 max-md:justify-center max-md:px-0"
+            >
+              <Sparkles className="size-4 text-amber md:hidden" aria-hidden />
+              <span className="max-md:hidden">{t('Przykłady')}</span>
+              <ChevronDown className="size-4 text-text-muted max-md:hidden" aria-hidden />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="z-[1500] w-72 rounded-xl">
-            {isMobile && (
-              <>
-                {examples}
-                <DropdownMenuSeparator />
-              </>
-            )}
-            {pages}
+          <DropdownMenuContent align="end" className="z-[1500] w-80 rounded-xl">
+            <DropdownMenuLabel className="text-xs tracking-wider text-text-muted uppercase">{t('Zobacz przykład')}</DropdownMenuLabel>
+            {examples.map((e) => (
+              <DropdownMenuItem key={e.id} className="min-h-11 text-sm" onSelect={() => onExample(e)}>
+                <span className={`flex size-7 items-center justify-center rounded-full ${e.tone}`}>
+                  <e.icon className="size-4" />
+                </span>
+                <span className="min-w-0">
+                  <span className="block font-medium">{t(e.title)}</span>
+                  <span className="block text-xs text-text-muted">{t(e.text)}</span>
+                </span>
+              </DropdownMenuItem>
+            ))}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      {/* lewa kolumna (zamiast ☰): strony i język – zawsze widoczne, z podpisami */}
+      <nav aria-label={t('Nawigacja główna')} className="pointer-events-auto absolute top-[72px] left-3 z-[1100] flex flex-col items-start gap-2 md:top-[76px] md:left-4">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              onClick={() => setMenu((o) => !o)}
+              aria-expanded={menu}
+              aria-label={t(menu ? 'Zwiń menu' : 'Menu')}
+              className="flex size-10 items-center justify-center rounded-full bg-surface/95 text-text shadow-float hover:bg-sage-soft"
+            >
+              {menu ? <X className="size-4" aria-hidden /> : <MenuIcon className="size-4" aria-hidden />}
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="right">{t('Moje działki, raporty, ustawienia, język')}</TooltipContent>
+        </Tooltip>
+        {menu && (
+          <div className="flex flex-col gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
+            {pages.map((p) => (
+              <RailButton key={p.key} icon={p.icon} label={t(p.label)} hint={t(p.hint)} onClick={() => goTo(p.key)} />
+            ))}
+            <RailButton
+              icon={Languages}
+              label={lang === 'pl' ? 'English' : 'Polski'}
+              hint={lang === 'pl' ? 'Switch to English' : 'Przełącz na polski'}
+              onClick={() => setLang(lang === 'pl' ? 'en' : 'pl')}
+            />
+          </div>
+        )}
+      </nav>
 
       {/* podpowiedź: co zrobić na mapie */}
       <div className="pointer-events-none absolute inset-x-3 bottom-6 z-[1100] flex justify-center animate-in fade-in slide-in-from-bottom-3 duration-700">
         <p className="flex items-center gap-2.5 rounded-full bg-text/85 py-2.5 pr-4 pl-3 text-sm text-white shadow-float backdrop-blur">
           <MousePointerClick className="size-4 shrink-0" aria-hidden />
-          {t('Przybliż mapę i kliknij swoje pole')}
+          {t(isMobile ? 'Kliknij swoje pole na mapie' : 'Przybliż mapę i kliknij swoje pole')}
         </p>
       </div>
     </>
