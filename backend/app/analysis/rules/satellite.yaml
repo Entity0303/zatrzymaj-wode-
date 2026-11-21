@@ -1,0 +1,67 @@
+# Sentinel-2: progi, zdania dla rolnika, kolory warstw (A11, D87). Wartości orientacyjne (SZACUNEK) – do kalibracji
+# z agronomem. Zdanie budujemy z WARTOŚCI (NDVI, NDMI, różnica do tej samej pory rok temu), nie z kalendarza.
+satellite:
+  live:
+    days_back: 60              # ostatnia czysta scena z ostatnich 60 dni (przed datą analizy) …
+    min_valid_pct: 70          # … z ≥ 70% ważnych pikseli (roślinność / gleba wg SCL) w obrysie
+    fallback_min_valid_pct: 20 # brak czystej – ostatnia z ≥ 20% ważnych pikseli, z ostrzeżeniem
+    last_year_tolerance_days: 20
+    max_scl_checks: 6          # najwyżej tyle masek SCL na żywo (kafel ~30 kB każda)
+    max_scl_checks_last_year: 4
+    clear_scene_cloud_pct: 40  # sceny z chmurami ≤ 40% całej sceny – najpierw najnowsze (o działce decyduje SCL); reszta wg chmur
+  series:
+    months: 12
+    bin_days: 15
+    max_scl_checks_per_bin: 2
+    max_scene_cloud_pct: 60
+  # sezon wegetacji – tu NDMI może znaczyć stres wodny; poza sezonem (X–III) zieleń = oziminy / międzyplon
+  season_months: [4, 5, 6, 7, 8, 9]
+  ndvi:                        # klasy: Tucker 1979; Sentinel Hub / EOS – gleba 0,1–0,2, rzadka roślinność 0,2–0,5, gęsta > 0,6
+    - {max: 0.25, key: gleba, label: "goła gleba albo ściernisko"}
+    - {max: 0.50, key: slaba, label: "słaba lub rzadka roślinność"}
+    - {max: 0.70, key: umiarkowana, label: "umiarkowana zieleń"}
+    - {max: 9.99, key: gesta, label: "gęsta zieleń"}
+  # NDMI (Gao 1996, NDWI na B8/B11) zależy od gęstości łanu – oceniamy go tylko przy NDVI ≥ 0,5 i w sezonie;
+  # przy rzadkiej roślinności NDMI pokazuje głównie suchą glebę. Progi przesunięte względem propozycji
+  # (−0,2 / 0,1 → −0,1 / 0,2): wg skali EOS / Sentinel Hub NDMI < 0 przy gęstym łanie = wysoki stres wodny.
+  ndmi_min_ndvi: 0.5
+  ndmi:
+    - {max: -0.10, key: sucho, label: "mało wody w liściach"}
+    - {max: 0.20, key: srednio, label: "średnio nawodnione liście"}
+    - {max: 9.99, key: dobrze, label: "liście dobrze nawodnione"}
+  ndvi_change: 0.10            # różnica do tej samej pory rok temu > 0,1 = wyraźnie lepiej / gorzej
+  ndvi_change_anomaly_off_season: 0.20  # poza sezonem: tylko duża różnica jest anomalią (inna uprawa też zmienia zieleń)
+  sentences:
+    prefix: "Zdjęcie satelitarne z {date}: "
+    state_season:
+      gleba: "na polu nie ma teraz zieleni – goła gleba albo ściernisko."
+      slaba: "słaba lub rzadka roślinność."
+      umiarkowana: "umiarkowana zieleń."
+      gesta: "gęsta zieleń – rośliny dobrze rozwinięte."
+    state_off:
+      gleba: "pole bez zieleni – goła gleba albo ściernisko (zwykle po zbiorze lub orce)."
+      slaba: "mało zieleni – pole po zbiorze albo młode rośliny."
+      umiarkowana: "pole częściowo zielone – prawdopodobnie młode oziminy lub międzyplon."
+      gesta: "pole zielone – prawdopodobnie wzeszło zboże ozime, rzepak lub międzyplon."
+    compare:
+      better: " Zieleń wyraźnie lepsza niż rok temu."
+      similar: " Zieleń podobna jak rok temu."
+      worse: " Rośliny słabsze niż rok temu."
+      worse_off: " Zieleń wyraźnie słabsza niż rok temu (to może być też inna uprawa)."
+      none: " Brak bezchmurnego zdjęcia z tej samej pory rok temu do porównania."
+    stress_worse: " Rośliny słabsze niż rok temu i mają mało wody w liściach – możliwy stres wodny."
+    stress: " Rośliny mają mało wody w liściach – obserwuj, czy nie pojawia się stres wodny."
+    wet: " Liście dobrze nawodnione."
+    partial: " Zdjęcie częściowo zachmurzone – widać {valid:.0f}% działki."
+    none: "Brak bezchmurnego zdjęcia satelitarnego działki z ostatnich {days} dni – kondycji roślin nie oceniamy."
+    pending: "Pobieram zdjęcie satelitarne…"
+  colors:
+    kondycja:                  # te same barwy co legenda frontendu (CropHealth.tsx)
+      stops: [[0.0, "#C0473C"], [0.3, "#E2A23B"], [0.6, "#5F9F63"], [0.9, "#1F4230"]]
+      left: "Słaba roślinność"
+      right: "Bujna"
+    wilgotnosc:                # PlantMoisture.tsx
+      stops: [[-0.4, "#8B6B4A"], [0.0, "#E9DCC3"], [0.4, "#2F80C9"]]
+      left: "Sucho"
+      right: "Wilgotno"
+    cloud: "#FFFFFF"

@@ -178,16 +178,20 @@ def test_cumulative_balance_and_band():
     assert last.max == pytest.approx(-0.1 * SEASON_DAYS)  # 2008
     assert last.mean == pytest.approx(-0.55 * SEASON_DAYS)
     assert r.band_years == list(range(2017, 2007, -1))
-    assert r.deviation_mm == pytest.approx(-2.0 * SEASON_DAYS + 0.55 * SEASON_DAYS, abs=0.1)
+    # A5e: mm zaokrąglone do całości, odchylenie = różnica zaokrąglonych (jedno źródło liczby)
+    assert r.deviation_mm == round(-2.0 * SEASON_DAYS) - round(-0.55 * SEASON_DAYS)
     assert r.lower_years == 0 and r.percentile == 0.0
     assert h.stress_days_by_year == []  # wypełni model wody w glebie (A3)
     # pola dodane do kontraktu (contract-changes 2026-11-21)
-    assert h.balance_deviation_mm == pytest.approx(-1.45 * SEASON_DAYS, abs=0.1)
+    assert h.balance_deviation_mm == pytest.approx(-1.45 * SEASON_DAYS, abs=1)
     assert (h.balance_rank.lower_years, h.balance_rank.of_years) == (0, 10)
     assert h.longest_dry_spell.days == 0 and h.longest_dry_spell.end_date is None
     assert h.band_years == list(range(2017, 2007, -1))
     assert h.source_tag.kind == "obliczenia" and h.source_tag.date == date(2018, 7, 14)
-    assert "Niższy bilans był w 0 z 10 lat" in h.summary
+    assert h.summary == "Ten rok jest najsuchszy z ostatnich 10 lat."
+    assert "Niższy bilans był w 0 z 10 lat" in h.details and "spadło minus wyparowało" in h.details
+    assert len(r.by_year) == 11 and r.by_year[-1] == (2018, r.current_balance_mm, True)
+    assert [y for y, _v, _c in r.by_year] == list(range(2008, 2019))
     assert r.limitations == []
 
 

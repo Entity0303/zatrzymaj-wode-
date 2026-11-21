@@ -3,6 +3,13 @@
 ranking:
   # Plon potencjalny Ym = percentyl plonów GUS w województwie (10 lat) × współczynnik gleby
   gus_percentile: 90
+  # A7 (D84): korekta progu Ym po przejściu na opad ze stacji IMGW (suchszy o 14–23% niż NASA POWER) – tylko uprawy,
+  # których średni plon symulowany na przeciętnej glebie odbiegał od średniej GUS o więcej niż ±15%
+  # (scripts/calibrate_ranking.py: podlaskie, lubelskie, wielkopolskie, kujawsko-pomorskie). Ky z danych C bez zmian.
+  ym_adjust:
+    straczkowe: 1.15        # było −16…−25% → −3…−14%
+    ziemniak: 1.08          # było −4…−19% → +4…−12%
+    drzewa_owocowe: 0.85    # było +8…+30% → −8…+10% (krótka, niejednorodna seria GUS)
   # Przydatność gleby działki dla uprawy (kolumny gleby_odpowiednie / gleby_nieodpowiednie w crops.csv):
   # „neutralna” = przeciętna gleba województwa (kalibracja do średniej GUS)
   soil_factor:

@@ -59,6 +59,35 @@ class Settings(BaseSettings):
     # zapasowe wyniki terenu z app/data/terrain (prawdziwe NMT z 21.11, osoba C) – gdy NMT nie odpowiada (D57)
     terrain_saved_results: bool = True
 
+    # Sentinel-2 L2A (A11, D86): Earth Search STAC + COG (AWS) – to nie GUGiK
+    sentinel_stac_url: str = "https://earth-search.aws.element84.com/v1/search"
+    sentinel_budget_s: float = 15.0      # tryb na żywo: ok. 15 s …
+    sentinel_budget_mb: float = 10.0     # … i ok. 10 MB na działkę
+    sentinel_timeout_s: float = 6.0      # pojedyncze zapytanie (STAC / kafel COG); przerwany odczyt – 1 ponowienie
+    sentinel_breaker_s: float = 120.0
+    sentinel_cache_ttl_today_s: float = 43_200  # wynik dla „dziś” – 12 h (nowe przeloty co 2–5 dni)
+    sentinel_background: bool = True     # analiza bez wyniku w cache uruchamia liczenie w tle
+    sentinel_enabled: bool = True        # False = bez zapytań do Earth Search (testy) – tylko cache
+
+    # opad ze stacji IMGW (A7, D82): magazyn app/data/imgw/opady.npz; wyłączony = opad z NASA POWER jak przed A7
+    imgw_enabled: bool = True
+    imgw_store: str = ""                 # ścieżka magazynu (puste = app/data/imgw/opady.npz)
+    imgw_max_km: float = 30.0            # stacje w promieniu 30 km …
+    imgw_fallback_km: float = 50.0       # … a gdy brak – do 50 km (pewność o poziom niżej)
+    imgw_max_stations: int = 3
+
+    # wyszukiwanie miejsc po nazwie (A5c, D73): PRNG GUGiK (WFS) → rezerwa Nominatim OSM → słownik demo
+    prng_url: str = "https://mapy.geoportal.gov.pl/wss/service/PZGIK/PRNG/WFS/GeographicalNames"
+    prng_timeout_s: float = 8.0
+    prng_min_interval_s: float = 1.2     # odstęp między zapytaniami do PRNG (po serii szybkich zapytań serwer odrzuca połączenia)
+    prng_retry_delay_s: float = 3.0
+    prng_breaker_s: float = 60.0
+    nominatim_url: str = "https://nominatim.openstreetmap.org"
+    nominatim_timeout_s: float = 6.0
+    nominatim_min_interval_s: float = 1.1  # polityka OSM: najwyżej 1 zapytanie na sekundę
+    nominatim_breaker_s: float = 60.0
+    search_timeout_s: float = 14.0        # łączny limit jednego wyszukiwania
+
     # przykłady demo: rozgrzewka cache przy starcie (w tle) i co tyle godzin
     demo_warmup: bool = True
     demo_warmup_interval_h: float = 6.0

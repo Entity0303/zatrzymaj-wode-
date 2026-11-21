@@ -1,0 +1,47 @@
+{
+  "parcel_id": "201305_2.0038.6/1",
+  "layer": "wilgotnosc",
+  "analysis_date": "2026-11-21",
+  "raster": {
+    "image_url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJAAAABwCAYAAADxAvk6AAAExElEQVR42u3c20/bdRjH8f5H3vsn6JVZYpy6aKZOzYCNDXGchDGg41hOQimDtUAPnFtgQimMQstpFNg4OKCLh5EgSf8IrN77eS6IWUreF+870vzo9/W9efL86oj0lDlUgcY82cTPP8rG2otkT6q+lHU9+ETWfv+arPH2B++01sKPZP6G27LBx9/LBpzfyYLNBbI5X41sZTMpcwAIQAACEIAABCAAAQhAAAIQgAAEoJwBNJR9SJUFLNJTLlsI1MsWgw2ymSeVsvHOYpl1AINOXXvRNdllgVkXoLv0U13JdVl/9U2ZvyFPdpAYlgEIQAACEIAABCAAAQhAAAIQgAAEoNwBFGjMl/kb82TWoMrKW/ONrO/hTZmn4oYs0JQvswah1qCvv/ormXXAncUfyy4LtKf8c5l1waZ7K2QAAhCAAAQgAAEIQAACEIAABCAAASh3AI203pMNtxbKpjzlGVXYXSoLtdyVXVxcbKgsYNbCmq/uW5k1SLUWsrLfgex5qEkWHaiVzQ/W6YacsmFXocx6fgABCEAAAhCAAAQgAAEIQAACEIAAlDuAfHW3ZNYgzTrg7N9kVGMdRbLxzmJZFvmlCjTl64xBqzWotAZ12Usie9b/UGYBjo+6ZNbC32jbfRmAAAQgAAEIQAACEIAABCAAAQhAAModQCNt92S+2lsyC9BlG3bdzagi7lKZNeic8lTIwt0lsskunfX/WQt1E10PZNYgODHZLtv8xSOb6auUAQhAAAIQgAAEIAABCEAAAhCAAASg3AFk/YCTuXDmKsyogs0FslDLHZkFyFpIC7l0Yx0/yCLuMpkFNDpQK5szmh9yyma91bKXzwcdqq1onyzsLpUBCEAAAhCAAAQgAAEIQAACEIAABKDcAZSK9suWx1plMf9j2ZyvJqOyXjy0DtACEmwqkFkLa//3oPSyxfz1GZUFxHpxsSnvQxmAAAQgAAEIQAACEIAABCAAAQhAAModQG9SU7J0KiJ7sz0te702KtuJeWXJcIdsfbpblphoz6gWAvWyyX+WxkTvGpC18PZitteh2phxy6wfMgcQgAAEIAABCEAAAhCAAAQgAAEIQLkD6Ow4Ljs9XJCdpxOyv06WZW8PYrK9uF+WivbJrBfnkuFO2cp4m2xppDmjsgapFhBrYc4CbgGZ9VbLAAQgAAEIQAACEIAABCAAAQhAAALQ1QE0upiUvT1KyH5/rTs91h0f6E5ehGXprYjsPL0iM4Hvz+uMC2A9n3VBjjcmMqqdBZ9sPYtE1fvTFzIAAQhAAAIQgAAEIAABCEAAAhCAAHR1ALkmV2UTS0lZfF13nl6WnR7GZEfr47I/9uZkv+4lZC93ddYFONzTWUB/230mS/+71PffHayEZNaLn+6yz2QAAhCAAAQgAAEIQAACEIAABCAAAejqALrzdE3mHNVVhXQji6sy64DOjpZkJ4cJmQVoe0d3dqKzPn9nVxeOJ2VTy7rNlG53cUDmqbghAxCAAAQgAAEIQAACEIAABCAAAQhAVwfQe1WbsvdrN2SVwTVZy+SqzBrEHbzSWQtjfx4lZFvbuqN9nQXIWrhLH+r2X+msCzDrfSR7+uhrWVfJdRmAAAQgAAEIQAACEIAABCAAAQhAAMoZQH8DXfKneWPymzEAAAAASUVORK5CYII=",
+    "bbox": [
+      22.59955,
+      53.049345,
+      22.60228,
+      53.050639
+    ]
+  },
+  "features": null,
+  "value_range": [
+    -0.4,
+    0.4
+  ],
+  "legend": [
+    {
+      "value": -0.4,
+      "color": "#8B6B4A",
+      "label": null
+    },
+    {
+      "value": 0.0,
+      "color": "#E9DCC3",
+      "label": null
+    },
+    {
+      "value": 0.4,
+      "color": "#2F80C9",
+      "label": null
+    }
+  ],
+  "legend_title": "NDMI – wilgotność roślin",
+  "legend_left": "Sucho",
+  "legend_right": "Wilgotno",
+  "value": -0.242,
+  "scene_date": "2026-11-16",
+  "note": "NDMI – wilgotność roślin: mediana -0.24 · zdjęcie z 16.11.2026",
+  "source_tag": {
+    "kind": "pomiar",
+    "date": "2026-11-16",
+    "source": "Sentinel-2 L2A (Earth Search)"
+  }
+}

@@ -17,9 +17,12 @@ Wszystko wektorowo; pętle tylko po latach (≤ 10) i miesiącach (≤ 12).
 
 from dataclasses import dataclass, field
 from datetime import date, timedelta
+from functools import lru_cache
 from math import ceil
+from pathlib import Path
 
 import numpy as np
+import yaml
 
 from app.analysis.crops import PHASE_LABELS, Crop, DayInfo, no_irrigation_sentence
 from app.analysis.et0 import DailyWeather
@@ -101,6 +104,26 @@ def format_mm(v: float, signed: bool = True) -> str:
     return s
 
 
+@lru_cache
+def _history_text() -> dict:
+    return yaml.safe_load((Path(__file__).parent / "rules" / "history_text.yaml").read_text(encoding="utf-8"))["history_text"]
+
+
+def history_sentence(lower_years: int | None, of_years: int) -> str:
+    """Proste zdanie „Na tle 10 lat” z liczby lat suchszych od tegorocznego (progi i teksty: rules/history_text.yaml)."""
+    cfg = _history_text()
+    s = cfg["sentences"]
+    if lower_years is None or of_years <= 0:
+        return s["no_comparison"]
+    t, share = cfg["thresholds"], lower_years / of_years
+    kind = ("most_dry" if lower_years == 0 else "most_wet" if lower_years == of_years else
+            "drier_only" if share <= t["drier_max_share"] else
+            "slightly_drier" if share <= t["slightly_drier_max_share"] else
+            "average" if share <= t["average_max_share"] else
+            "slightly_wetter" if share <= t["slightly_wetter_max_share"] else "wetter")
+    return s[kind].format(k=lower_years, n=of_years)
+
+
 def _r1(v: float | None) -> float | None:
     return None if v is None or np.isnan(v) else round(float(v), 1)
 
@@ -126,6 +149,7 @@ class WaterBalanceResult:
     missing_days_season: int = 0
     et0_methods_season: dict[str, int] = field(default_factory=dict)
     limitations: list[str] = field(default_factory=list)
+    by_year: list[tuple[int, float, bool]] = field(default_factory=list)  # (rok, bilans mm, bieżący) – A5e, słupki
 
 
 # ── Obliczenia ──────────────────────────────────────────────────────────────────────────────
@@ -244,6 +268,7 @@ def build_history(
     current_total = float(cum[-1])
     mean_total = deviation = percentile = None
     lower_years = None
+    by_year: list[tuple[int, float, bool]] = []
     if rows:
         c = np.nancumsum(np.vstack(rows), axis=1)
         bmin, bmax, bmean = c.min(axis=0), c.max(axis=0), c.mean(axis=0)
@@ -253,9 +278,16 @@ def build_history(
         ]
         totals = c[:, -1]
         mean_total = float(totals.mean())
-        deviation = current_total - mean_total
         lower_years = int((totals < current_total).sum())
         percentile = 100.0 * lower_years / len(totals)
+        # jedno źródło liczby (A5e): wszędzie pokazujemy mm zaokrąglone do całości, a odchylenie = różnica tych
+        # zaokrąglonych liczb (inaczej wychodziło −154 w jednym miejscu i −153 w drugim)
+        current_total, mean_total = float(round(current_total)), float(round(mean_total))
+        deviation = current_total - mean_total
+        by_year = sorted([(y, float(round(t)), False) for y, t in zip(band_years, totals)]) + [
+            (s0.year, current_total, True)]
+    else:
+        current_total = float(round(current_total))
 
     # ── opady miesięczne: bieżący sezon vs średnia z lat porównawczych (te same dni miesiąca) ──
     monthly: list[MonthlyPrecip] = []
@@ -279,14 +311,15 @@ def build_history(
     dry_len, dry_end_i = longest_run(np.nan_to_num(cur_p, nan=np.inf) < DRY_DAY_MM)
     dry_end = series_dates[dry_end_i] if dry_len else None
 
-    # ── podsumowanie – wyłącznie z policzonych liczb ──
-    summary = (
-        f"Od {format_date_pl(s0, with_year=False)} do {format_date_pl(data_until)} bilans wody "
-        f"(opad − parowanie) wynosi {format_mm(current_total)} mm."
+    # ── podsumowanie – proste zdanie (YAML), liczby szczegółowo w `details` ──
+    summary = history_sentence(lower_years, len(band_years))
+    details = (
+        f"Od {format_date_pl(s0, with_year=False)} do {format_date_pl(data_until)}: spadło minus wyparowało = "
+        f"{format_mm(current_total)} mm."
     )
     if mean_total is not None and deviation is not None and lower_years is not None:
         more_less = "mniej" if deviation < 0 else "więcej"
-        summary += (
+        details += (
             f" Średnio w tym okresie w latach {min(band_years)}–{max(band_years)}: {format_mm(mean_total)} mm"
             f" – o {format_mm(deviation, signed=False)} mm {more_less} niż zwykle."
             f" Niższy bilans był w {lower_years} z {len(band_years)} lat."
@@ -301,6 +334,7 @@ def build_history(
         stress_days_by_year=[],  # wypełni model wody w glebie (zadanie A3) – nie zgadujemy
         monthly_precip=monthly,
         summary=summary,
+        details=details,
         balance_deviation_mm=_r1(deviation),
         balance_rank=BalanceRank(lower_years=lower_years, of_years=len(band_years)) if lower_years is not None else None,
         longest_dry_spell=DrySpell(days=dry_len, end_date=dry_end),
@@ -324,6 +358,7 @@ def build_history(
         missing_days_season=missing,
         et0_methods_season=season_methods,
         limitations=limitations,
+        by_year=by_year,
     )
 
 
@@ -1018,15 +1053,15 @@ def recent_balance(w: DailyWeather, analysis_date: date, days: int = RECENT_DAYS
     seg = _segment(kbw, _idx(w, start), days)
     if seg is None or np.isnan(seg).mean() > MAX_MISSING_MONTH:
         return RecentBalance(days, start, until, None, None, None, None, 0, None)
-    cur = float(np.nansum(seg))
+    cur = float(round(float(np.nansum(seg))))  # mm do całości; odchylenie = różnica zaokrąglonych (jedno źródło liczby)
     prev = []
     for k in range(1, years + 1):
         sk = _segment(kbw, _idx(w, shift_years(start, k)), days)
         if sk is not None and np.isnan(sk).mean() <= MAX_MISSING_MONTH:
             prev.append(float(np.nansum(sk)))
     if not prev:
-        return RecentBalance(days, start, until, round(cur, 1), None, None, None, 0, None)
-    mean = float(np.mean(prev))
-    lower = int(sum(x < cur for x in prev))
-    return RecentBalance(days, start, until, round(cur, 1), round(mean, 1), round(cur - mean, 1), lower, len(prev),
+        return RecentBalance(days, start, until, cur, None, None, None, 0, None)
+    lower = int(sum(x < float(np.nansum(seg)) for x in prev))
+    mean = float(round(float(np.mean(prev))))
+    return RecentBalance(days, start, until, cur, mean, cur - mean, lower, len(prev),
                          round(100.0 * lower / len(prev), 1))

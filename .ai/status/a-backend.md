@@ -1,6 +1,6 @@
 # Status – osoba A (Dominik), backend
 
-_Stan na: 2026-11-22 01:10_
+_Stan na: 2026-11-22 12:30_
 
 ## Zrobione
 - Wyszukiwanie działki ULDK: pełny identyfikator, „obręb numer”, punkt; `GET /api/parcel` (409 lista kandydatów, 404, 502 z nazwą źródła), timeout 10 s + jedna ponowna próba, cache 24 h.
@@ -49,10 +49,33 @@ _Stan na: 2026-11-22 01:10_
   - analiza po punkcie `lon`/`lat` – obszar przybliżony 1 ha, gdy ULDK nie odpowiada (`analysis/approx_area.py`, D69); test słabej ziemi: Puszcza Notecka i Kurpie – ❌ pszenica, rzepak; ✅ żyto, łubin (owies ❌ – D70);
   - PDF: str. 1 „Werdykt”, str. 2 „Co tu posiać?”, maks. 6 stron (D71); przykłady i PNG pierwszych stron: `reports/examples/{dobra,slaba}-*-p1.png`.
 - **A5b-2c:** nazwa „Wodoskop” w PDF i API, bez QR (włącza `PUBLIC_URL`), „woda” w werdykcie = `info`, PDF obszaru przybliżonego bez komunikatów technicznych (D72).
-- Testy: **343 bez sieci** (`docker run --network none`) + 5 live. Analiza z cache: 0,04–0,2 s; PDF 1–2 s (punkt przy blokadzie ULDK ~5 s – ponowienia ULDK).
+- **A5c (gałąź `a/backend`) – wyszukiwanie + własny obrys pola:**
+  - `GET /api/search?q=` (`routers/search.py`, `core/search_query.py`, `sources/{prng,nominatim,places}.py`): identyfikator → działka, „obręb numer” → działki (kilka obrębów = lista z gminą i powiatem; ponowienie z nazwą kanoniczną), nazwa → miejscowości (słownik demo + **PRNG GUGiK** + rezerwa Nominatim OSM); brak wyników = 200 + `hint`; awarie źródeł w `notices` (D73, D74);
+  - UUG GUGiK zablokowany z tej sieci („blocked for abuse”), ULDK 302 – „Tczów 123” nie dało się potwierdzić na żywo (przyczyny w D74);
+  - `GET /api/parcel?lon&lat` – istniał, dopisane testy; `Parcel.source` / `name`;
+  - własny obrys: `POST /api/analysis` i `POST /api/report.pdf` z `geometry` (0,05–200 ha, w Polsce, bez samoprzecięć, id z kształtu, gmina z ULDK / Nominatim) – D75;
+  - słownik demo `app/data/places_demo.json` (offline), `scripts/build_places_demo.py`.
+- **A5e (gałąź `a/backend`) – raport krótszy + wybór rolnika:**
+  - `planned_crops` (1–3) → `suggestions.choice` / `choice_summary` / `alternatives` / `not_recommended` / `top_ids` (`analysis/choice.py`, `rules/choice.yaml`) – D77;
+  - `report_type` short (5 stron) / full (8–9 stron), nowe strony: Co tu posiać? · Woda na działce (słupki „Na tle 10 lat”) · Co zrobić z wodą (maks. 4) · Gleba, teren i skąd dane – D78;
+  - jedno źródło liczby (mm do całości, odchylenie z zaokrąglonych), `history.summary` prostym zdaniem + `details`, `seasonal_balance_by_year` / `_mean_mm` / `_label`, `weather_data_until` – D78;
+  - jeden stan wody poza sezonem uprawy (status = stan działki), `irrigation` tylko w fazach wzrostu, reguły nawadniania z `in_season`, jedno „najważniejsze” w PDF – D79; ziemniak `optional` – D76.
+- **A5e-2:** raport skrócony = 2 strony (werdykt + co siać / 3 działania / mały wykres 10 lat), reszta w szczegółowym (D81); alternatywy tylko z mniejszym ryzykiem suszy (wyjątek: ❌ przez płodozmian), grupy upraw w planie siewu, płodozmian ludzkim językiem (D80); pola wykresu `year` / `balance_mm` / `current`.
+- **A7 (gałąź `a/backend`) – opad ze stacji IMGW:**
+  - magazyn `app/data/imgw/opady.npz` (1,09 MB, 449 stacji, 2016–10.2026) budowany przez `scripts/build_imgw.py` – w repo, bez zapytań do IMGW w czasie analizy (D82);
+  - `sources/imgw.py` + `analysis/precip.py` (`rules/precip.yaml`): IDW z ≤ 3 stacji ≤ 30 km, rezerwa 50 km i NASA, korekta NASA dla dni bez pomiaru, zgodność źródeł, `precip_sources` (D83); cały model (bilans, status, ranking, werdykt, PDF) na opadzie IMGW;
+  - kalibracja GUS powtórzona (`scripts/calibrate_ranking.py`), `ym_adjust` dla 3 upraw – wszystko w ±14% (D84); zdania płodozmianu z nazwą uprawy (D85).
+- **A11 (gałąź `a/backend`) – satelita Sentinel-2:**
+  - `sources/sentinel.py` (Earth Search STAC, odczyt tylko kafli okna działki z COG przez tifffile – BSD-3, bez imagecodecs / GDAL), `analysis/satellite.py` + `rules/satellite.yaml`: NDVI / NDMI (mediany w obrysie, maska SCL, odrzucone zbyt ciemne piksele), ostatnia scena ≤ 60 dni z ≥ 70% widocznej działki + rok temu ±20 dni, zdanie i poziom z wartości (D86–D87);
+  - `GET/POST /api/satellite` na żywo w budżecie 15 s / 10 MB (201305: 8,3 s / 8,4 MB; Notecka: 6,7 s / 7,35 MB), `/api/analysis` tylko z cache (`pending` + tło), `/api/layers/kondycja` i `/wilgotnosc` (PNG data URI + bbox + legenda), werdykt `rosliny`, wskaźniki crop_health / plant_moisture, pewność i źródła (D88);
+  - raport szczegółowy – strona „Z satelity” (mapka NDVI, wartości, szereg 12 mies.); skrócony – jedno zdanie, nadal 2 strony; `scripts/warm_satellite.py`, satelita w `warm_demo.py`; cache 201305 i Notecka (scena + rok temu + szereg).
+- Testy: **485 bez sieci** (457 + 28 w `test_a11.py`) (`docker run --network none`) + 5 live. Analiza z cache: 0,04–0,7 s; PDF 0,5–1,3 s.
 
 ## W trakcie (gałąź)
-- `a/backend` – A5b-2b i A5b-2c gotowe (commit + push); **do `main` nie mergowane**.
+- `a/backend` – A5b-2b … A5e-2, A7 i A11 gotowe (commit + push); **do `main` nie mergowane**.
+
+## Uwaga (A5e)
+- Backend w kontenerze działa teraz w trybie **DEMO_OFFLINE** (tylko cache) – GUGiK oznaczył sieć jako nadużycie; przykłady PDF wygenerowane z cache. Powrót: `docker compose up -d backend` (bez zmiennej) – dopiero na innej sieci.
 
 ## Przed prezentacją (na dobrej sieci; w Git Bash poprzedź komendy `MSYS_NO_PATHCONV=1`)
 1. `docker compose up -d --build` – backend z wolumenem cache (`/data/cache.sqlite`).
@@ -70,9 +93,12 @@ _Stan na: 2026-11-22 01:10_
 6. **NMT GUGiK też odsyła 302** (A6) – porównanie na żywo 201305 z `research/terrain/out/201305_2.0038.6-1.facts.json` nie było możliwe; offline: ten sam kod rdzenia (testy prototypu przechodzą), siatka i liczba punktów identyczne z wynikiem C (test), zapisany wynik C używany jako zapas. Na dobrej sieci: `warm_demo.py` pobierze NMT do cache – potem porównać `terrain.zone_share_pct` z plikiem C.
 
 ## Następne
+0a. **IMGW:** przed prezentacją odświeżyć magazyn (`docker compose run --rm -e DEMO_OFFLINE=false backend python scripts/build_imgw.py`, ~10 s) i zacommitować `app/data/imgw/`; rozważyć `--from 2006` (lata sprzed 2016 dla dat historycznych – dziś skorygowana NASA) i ERA5-Land jako trzecie źródło (`EXTRA_SOURCES`), gdy limit Open-Meteo minie.
+0. **Na żywo z innej sieci (A5c):** `Tczów 123`, `Tczów 123/4`, `Wola 1` przez `/api/search` (ULDK); ew. `GetRegionByNameOrId` (obręby / gminy po nazwie) jako dodatkowe źródło; porównanie PRNG z ULDK dla obrębów o nietypowych nazwach.
 1. Werdykt i ranking – do weryfikacji z agronomem / mentorem: owies na piasku (dziś ❌), współczynniki gleby, progi kategorii, próg KBW V–VI < −100 mm i 3 / 5 lat; norma opadów (NASA POWER zawyża względem IMGW).
 2. Obszar przybliżony: województwo z granic administracyjnych zamiast najbliższego środka (dziś przy granicy może być sąsiednie).
-3. Rowy i cieki BDOT10k (zastawka potwierdzona na mapie, warstwa „Spływ” z rowami), Sentinel-2; pas buforowy po warstwicy.
+3. Rowy i cieki BDOT10k (zastawka potwierdzona na mapie, warstwa „Spływ” z rowami); pas buforowy po warstwicy.
+3a. **Sentinel-2:** przed prezentacją `warm_demo.py` (szereg 12 mies. dla działek demo, ok. 3–4 min / 70–110 MB na działkę); kalibracja progów NDVI / NDMI z agronomem; rok 2016 (Copernicus Data Space); ew. zgodność modelu wody z NDMI w sezonie jako składnik pewności.
 4. README, `/api/layers`, sprzątanie `/api/dev/*`; ceny skupu (`price`).
 
 ## Blokery / pytania do drugiej osoby
@@ -81,6 +107,11 @@ _Stan na: 2026-11-22 01:10_
 - B: obraz kontenera frontendu nie ma `@fontsource-variable/fraunces` – `docker compose build frontend`.
 - **B (A5b-2a): ranking „Co tu posiać?”, pola historii 1–3 lat i powierzchni** – `contract-changes.md`, wpis A5b-2a „Dla Mefju”.
 - **B (A5b-2b): karta „Werdykt” na samej górze panelu, pasek stref, oznaczenie obszaru przybliżonego, klik na mapie → `?lon=&lat=`, sekcja wieloletnich, status `informacyjne`** – `contract-changes.md`, wpis A5b-2b „Dla Mefju”.
+- **B (A11): warstwy Kondycja upraw i Wilgotność roślin (`/api/layers/kondycja|wilgotnosc`), karta „Z satelity” w paszporcie, pozycja werdyktu `rosliny`, ładowanie osobno ze stanem „Pobieram zdjęcie satelitarne…” (`satellite.status = pending` → `GET /api/satellite`)** – `contract-changes.md`, wpis A11 „Dla Mefju”.
+- **B (A7): `precip_sources` – zdanie o źródłach opadów, stacja i odległość w paszporcie i karcie Werdyktu, odznaka zgodności** – `contract-changes.md`, wpis A7.
+- **B (A5e-2): pola wykresu `year` / `balance_mm` / `current`; „Raport skrócony / szczegółowy”; grupy w „Co planujesz posiać?”; `group_note`, `choice_notes`** – `contract-changes.md`, wpis A5e-2.
+- **B (A5e): formularz „Przygotuj raport” (co planujesz posiać, historia pola, powierzchnia, krótki / pełny), ten sam blok w panelu „Co tu posiać?” (Twój wybór + lepsze możliwości + „Nie siej”), wykres słupkowy „Na tle 10 lat” z `seasonal_balance_by_year`, jeden stan wody poza sezonem** – `contract-changes.md`, wpis A5e „Dla Mefju”.
+- **B (A5c): lista podpowiedzi `/api/search` (grupy Działki / Miejscowości, debounce 300 ms), przybliżenie do `bbox`, „Narysuj swoje pole” jako opcja dodatkowa (`POST /api/analysis` z `geometry`), `Parcel.source = drawn`; różnice względem `places.proposal.ts`** – `contract-changes.md`, wpis A5c „Dla Mefju”.
 - **B (A5b-2c): pozycja `woda` w werdykcie ma `level = info` (kropla #2F80C9); nie pokazywać `approximate_area.reason`** – `contract-changes.md`.
 - **B (A6): pasek stref terenu, warstwy Teren i Spływ wody** – `contract-changes.md`, wpis A6 „Dla Mefju” (kolory, `kind`, dymki); w Terrain.tsx zmienić kolory stoku i płasko na #E8B931 i #5BB37F.
 - **B: przykłady na ekranie startowym brać z `GET /api/demo/examples`** – w trybie offline i przy blokadzie ULDK backend zwraca tylko przykłady, które działają (dziś: Susza 2018, Mokry rok 2021); lista lokalna pokaże jury przykłady, które skończą się błędem.

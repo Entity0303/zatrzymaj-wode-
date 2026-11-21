@@ -4,6 +4,60 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-22 12:30 · `a/backend` · A11: satelita Sentinel-2 w backendzie
+**Co:** (GUGiK nieodpytywany; sieć – tylko Earth Search / AWS przez `core/http.request`; backend w DEMO_OFFLINE)
+- **Źródło** (D86): `sources/sentinel.py` – STAC (POST, `fields`), nagłówek COG z rzadkiego bufora przez tifffile (BSD-3), tylko kafle okna działki (Range, równolegle), jedna ponowna próba odczytu; prototyp osoby C przez `git show`, bez merge.
+- **Obliczenia** (D87): `analysis/satellite.py` + `rules/satellite.yaml` – siatka działki w UTM sceny, SCL → pasma tylko dla sceny z ≥ 70% widocznej działki, piksele z odbiciem ≤ 0 odrzucone (zimą NDVI fałszywie 1,0), NDVI / NDMI mediany, rok temu ±20 dni (tylko NDVI), zdanie i poziom z wartości; NDMI tylko w sezonie przy NDVI ≥ 0,5 (progi −0,1 / 0,2).
+- **API** (D88): `GET/POST /api/satellite` (`routers/satellite.py`), analiza tylko z cache (`pending` + tło), raport najpierw liczy satelitę, `/api/layers/kondycja|wilgotnosc` (PNG data URI, bbox, legenda; 404 bez sceny), werdykt `rosliny`, wskaźniki i pewność; `sentinel_enabled` (testy bez Earth Search).
+- **Pomiar na żywo (budżet 15 s / 10 MB, 22.11.2026):** 201305 – 8,3 s, 8,4 MB, 18 zapytań, scena 16.11.2026 NDVI 0,857 NDMI −0,242 (widać 73,8% – reszta zbyt ciemna), rok temu 04.11.2025 NDVI 0,832 → „…pole zielone – prawdopodobnie wzeszło zboże ozime, rzepak lub międzyplon. Zieleń podobna jak rok temu.”; Notecka (obszar przybliżony) – 6,7 s, 7,35 MB, scena 05.11.2026 NDVI 0,485 NDMI 0,102 → „…mało zieleni – pole po zbiorze albo młode rośliny.” (rok temu z rozgrzewki: 19.10.2025, NDVI 0,504 – „podobna”). Szereg: 201305 – 11 punktów (245 s, 68,5 MB), Notecka – 15 (183 s, 109 MB). Warstwy PNG 0,4–1,5 kB.
+- **Raport:** szczegółowy – str. 4 „Z satelity” (201305: 10 stron, Notecka: 9); skrócone nadal 2 strony; PDF + PNG w `reports/examples/` (`*-z-satelity.png`).
+**Pliki:** `backend/app/{sources/sentinel.py, analysis/satellite.py, analysis/rules/satellite.yaml, routers/satellite.py}`, `backend/scripts/warm_satellite.py` (nowe / przepisane), `analysis/{confidence,verdict}.py`, `routers/{analysis,layers,reports}.py`, `schemas/{analysis,layers}.py`, `core/{config,http}.py`, `report/{builder.py,charts.py,report.css,templates/report.html}`, `scripts/warm_demo.py`, `main.py`, `requirements.txt` (tifffile), testy (`test_a11.py` – 28; `conftest.py`, `test_a6.py`, `test_contract.py`); frontend: `api/types.ts`, `mocks/{analysis.choice,satellite,layers.kondycja,layers.wilgotnosc}.sample.json`.
+**Kontrakt:** TAK (addytywnie) – `/api/satellite`, `satellite` w analizie, `VerdictKind` `rosliny`, pola legendy w `LayerResponse` (`contract-changes.md`, wpis A11 „Dla Mefju”).
+
+---
+
+## 2026-11-22 08:30 · `a/backend` · A7: opad ze stacji IMGW jako źródło główne
+**Co:** (GUGiK nieodpytywany; IMGW – tylko skrypt budujący magazyn; backend w DEMO_OFFLINE)
+- **Magazyn IMGW** (D82): `scripts/build_imgw.py` → `app/data/imgw/opady.npz` 1,09 MB (449 stacji, 2016-01-01 – 2026-10-31, 855 plików, 171 s; odświeżenie 10 s) – w repo. Parser i reguły z prototypu osoby C (`git show origin/c/research:research/precip/…`, bez merge).
+- **Opad dla działki** (D83): `sources/imgw.py`, `analysis/precip.py`, `rules/precip.yaml` – IDW ≤ 3 stacje ≤ 30 km, rezerwa 50 km / NASA, dni bez pomiaru = NASA × współczynnik, zgodność na sumach okien; podmiana w `load_weather_history` → bilans, status, ranking, werdykt, PDF na nowym opadzie; `precip_sources` w kontrakcie; pewność i źródła w `reliability`.
+- **Kalibracja GUS** (D84): `scripts/calibrate_ranking.py`; `ym_adjust` strączkowe 1,15, ziemniak 1,08, drzewa 0,85 → maks. odchylenie 14%.
+- **Przed / po (21.11.2026):** 201305 – opad 704 → 613 mm/rok (IV–IX 407 → 352), lata z niedoborem V–VI 3 → 4, ryzyko pszenica / żyto / rzepak 1 → 3 z 10; Notecka – 633 → 543 mm (346 → 300), 7 → 9 lat, ryzyko 7/7/7 bez zmian; Kurpie – 711 → 615 mm, 3 → 4 lata, pszenica 3 → 4, żyto 2 → 3. Susza 10.06.2018 (201305, zboża ozime): woda 17 → 14%, dni stresu 21 → 29; 15.07.2018 kukurydza: wynik 63 → 50, dni stresu 0 → 5.
+- **Teksty** (D85): „Pszenica ozima rosła tu rok temu – lepiej zrobić rok przerwy.”; strona 1 PDF ściśnięta (dłuższe zdanie o opadach) – raport skrócony nadal 2 strony.
+**Pliki:** `backend/app/{sources/imgw.py, analysis/precip.py, analysis/rules/precip.yaml, data/imgw/{opady.npz,index.json,stations.json}}` (nowe), `analysis/{confidence,verdict,suggestions,choice}.py`, `rules/{verdict,ranking,choice}.yaml`, `routers/analysis.py`, `schemas/analysis.py`, `core/config.py`, `report/{report.css,templates/report.html}`, `scripts/{build_imgw.py,calibrate_ranking.py}`, `tests/{test_a7.py (20 testów), conftest.py, test_a5e.py, test_contract.py, fixtures/imgw/}`; frontend: `api/types.ts`, `mocks/analysis.choice.sample.json`.
+**Kontrakt:** TAK (addytywnie) – `precip_sources` (`contract-changes.md`, wpis A7 „Dla Mefju”).
+
+## 2026-11-22 06:00 · `a/backend` · A5e-2: raport skrócony 2 strony, alternatywy, grupy upraw, nazwy pól
+**Co:** (bez zapytań do GUGiK – backend w DEMO_OFFLINE)
+- **Raport skrócony = 2 strony** (D81): str. 2 = co tu posiać (wybór + lepsze możliwości / top 5, „Nie polecamy / Nie siej”) + 3 działania z wodą po 1–2 zdania + mały wykres słupkowy 10 lat ze zdaniem; dawne str. 2–5 → raport szczegółowy (8–9 stron); etykiety i pliki „skrocony” / „szczegolowy”.
+- **Alternatywy** (D80): tylko mniejsze ryzyko suszy przy podobnym plonie względnym; wyjątek ❌ przez sam płodozmian („podobna”, bez zboża po zbożu); zdanie mówi, w czym lepsza. Notecka: pszenica 7/10 → łubin 4/10 (bez ziemniaka i żyta 7/10).
+- **Grupy upraw** w `planned_crops` (najlepszy gatunek + `group_note`, `choice_notes` dla chmielu / tytoniu) i gatunki w `crop` / `previous_crop` (→ grupa) – bez 422.
+- **Nazwy pól** `seasonal_balance_by_year`: `year`, `balance_mm`, `current`.
+- **Teksty płodozmianu** naturalne, z rodzajem gramatycznym („rosła / rósł / rosły tu rok temu – po sobie częściej chorują, lepiej zrobić rok przerwy”).
+- PNG obu stron raportu skróconego: `reports/examples/{dobra,slaba}-skrocony[-wybor]-p{1,2}.png`; PDF szczegółowe.
+**Pliki:** `backend/app/analysis/{choice.py, suggestions.py, rules/{choice.yaml, verdict.yaml}}`, `routers/analysis.py`, `schemas/analysis.py`, `report/{builder.py, charts.py, report.css, templates/report.html}`, testy (`test_a5e`, `test_a5b`, `test_a5b2`, `test_a5b2b`, `test_a6`, `test_demo_status_report`, `test_contract`); frontend: `api/types.ts`, `mocks/analysis.choice.sample.json`.
+**Kontrakt:** TAK – zmiana nazw pól wykresu + pola addytywne (`contract-changes.md`, wpis A5e-2).
+
+## 2026-11-22 04:30 · `a/backend` · A5e: raport krótszy i czytelniejszy + „co planuję posiać”
+**Co:** (bez zapytań do GUGiK – backend w DEMO_OFFLINE, testy na mockach)
+- **Wybór rolnika** (D77): `planned_crops` 1–3 w analizie i PDF (GET/POST); `suggestions.choice` (kategoria, plony t/ha i t, słaby rok, ryzyko, płodozmian, jedno zdanie „dlaczego” bez liczb), `choice_summary`, `alternatives` (lepsza / podobna, „Po pszenicy ozimej rzepak i rzepik – dobry przedplon.”), `not_recommended` (jeden powód), `top_ids`.
+- **Raport** (D78): `report_type` short (5 stron) / full (8–9): Werdykt · Co tu posiać? · Woda na działce (słupki 10 lat + zdanie, „Dlaczego?”, opad) · Co zrobić z wodą (4 karty, jedno „najważniejsze”) · Gleba, teren i skąd dane (5 ograniczeń); full + wszystkie uprawy i szczegóły techniczne. Prosty język („spadło minus wyparowało”, „Dane pogodowe do …”).
+- **Jedna liczba** (D78): mm bilansów zaokrąglone w obliczeniach, odchylenie = różnica zaokrąglonych (koniec −154 vs −153); `history.summary` prostym zdaniem (YAML), dawny tekst w `history.details`; `seasonal_balance_by_year` (11), `seasonal_balance_mean_mm`, `seasonal_balance_label`, `weather_data_until`.
+- **Jeden stan wody** (D79): przed siewem / po zbiorze status = stan działki, woda w glebie = profil, `irrigation = null`, reguły nawadniania tylko `in_season`; werdykt „…uprawy nie ma w polu”. Ziemniak `optional` (D76).
+- Przykłady: `reports/examples/{dobra,slaba}-short.pdf`, `-short-wybor.pdf` (pszenica ozima, rok temu pszenica), `-full.pdf` + PNG wszystkich stron short.
+**Pliki:** `backend/app/analysis/{choice.py (nowy), water_balance.py, facts.py, verdict.py, scoring.py, rules/{choice.yaml, history_text.yaml (nowe), nawadnianie.yaml, verdict.yaml}}`, `data/crops/crops.csv`, `routers/{analysis,reports}.py`, `schemas/analysis.py`, `report/{builder.py, charts.py, report.css, templates/report.html}`, testy (`test_a5e.py` nowy; dopasowane: `test_a5b`, `test_a5b2`, `test_a5b2b`, `test_a6`, `test_demo_status_report`, `test_weather_history`, `test_contract`); frontend: `api/types.ts`, `mocks/analysis.choice.sample.json`.
+**Kontrakt:** TAK (addytywnie) – `contract-changes.md`, wpis A5e „Dla Mefju”.
+
+## 2026-11-22 02:20 · `a/backend` · A5c: wyszukiwanie (`/api/search`), działka z kliknięcia, własny obrys pola
+**Co:**
+- **Geokoder (test na żywo, D73):** ULDK 302, UUG „blocked for abuse”, **PRNG GUGiK WFS działa** (źródło główne), Nominatim działa (rezerwa + odwrotne geokodowanie). Odkrycia o PRNG: literał z polskim znakiem nie dopasowuje się – wzorzec LIKE z `.`; serwer odrzuca szybkie serie połączeń – odstęp 1,2 s + ponowienie.
+- **`GET /api/search`** (D74): rozpoznawanie formatu (id / „obręb numer” / nazwa / przecinek = gmina), działki przez istniejące `uldk.by_id` (+ wariant z myślnikiem i nazwy kanoniczne), miejscowości: słownik demo + PRNG + Nominatim; do 10 wyników z `label`, `lon/lat/bbox`; 200 + podpowiedź przy braku wyników; awarie w `notices`. „Tczów 123” – przyczyny opisane w D74 (nie do potwierdzenia na żywo: ULDK 302).
+- **`GET /api/parcel?lon&lat`** – już było; dopisane testy.
+- **Własny obrys** (D75): `POST /api/analysis` i `/api/report.pdf` z `geometry`, walidacja z czytelnymi komunikatami, `parcel.source = drawn`, id z kształtu, gmina z ULDK / Nominatim, PDF „Pole narysowane przez rolnika”.
+- Słownik demo (9 miejscowości z PRNG) + `scripts/build_places_demo.py`; `.ai/test-parcels.md` – tabela smoke.
+**Pliki:** `backend/app/{core/search_query.py, sources/{prng,nominatim,places}.py, routers/search.py, schemas/search.py, analysis/drawn_field.py, data/places_demo.json}`, `core/config.py`, `main.py`, `routers/{analysis,reports,parcel}.py`, `schemas/{analysis,parcel}.py`, `sources/uldk.py`, `analysis/{confidence,approx_area}.py`, `report/{builder.py,templates/report.html}`, `scripts/build_places_demo.py`, `tests/{test_a5c.py,conftest.py,fixtures/{prng_tcz.xml,nominatim_*.json}}`; frontend: `api/types.ts`, `mocks/{search,drawn}.sample.json`.
+**Kontrakt:** TAK (addytywnie) – `/api/search`, `Parcel.source/name`, `POST` z `geometry` (`contract-changes.md`, „Dla Mefju” + różnice względem `places.proposal.ts`).
+**Uwaga:** `tsc -b` zgłasza tylko brak `maplibre-gl` (kod B, `features/map3d`); backend 403 testy bez sieci.
+
 ## 2026-11-22 01:10 · `a/backend` · A5b-2c: drobne poprawki PDF – nazwa Wodoskop, bez QR, „woda” = info
 **Co:** nazwa produktu „Wodoskop” (nagłówek + podtytuł, stopka, `<title>`, metadane author/generator, tytuł API); QR tylko przy ustawionym `PUBLIC_URL` (domyślnie puste, `.env.example` zakomentowane); werdykt – pozycja `woda` ma `level = info` (ikona kropli #2F80C9 w PDF), poziom całości liczony bez niej; PDF obszaru przybliżonego – tylko nota „brak dokładnych granic działki” (usunięte „ULDK” z noty i ograniczeń, powód techniczny nie trafia do PDF); nowe PNG pierwszych stron. Testy: +3 (343).
 **Pliki:** `core/config.py`, `.env.example`, `main.py`, `analysis/{verdict,approx_area,confidence}.py`, `schemas/analysis.py`, `report/{builder.py,report.css,templates/report.html}`, `tests/test_a5b2b.py`; frontend: `api/types.ts`, mocki.

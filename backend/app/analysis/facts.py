@@ -25,6 +25,7 @@ from app.sources.soil_map import LIGHT
 ROMAN = {1: "I", 2: "II", 3: "III", 4: "IV"}
 OFF_SEASON_PHASES = {"przed_siewem", "po_zbiorze", "spoczynek_zimowy", "wschody_jesienne"}
 IN_SEASON_PHASES = {"poczatkowa", "rozwoj", "pelnia", "dojrzewanie"}
+CROP_OFF_PHASES = {"przed_siewem", "po_zbiorze"}  # A5e (D79): uprawy nie ma w polu – status = stan działki
 CEREALS = {"zboza_ozime", "zboza_jare"}  # „zboże po zbożu” (D42)
 
 # fakt -> (opis do „Dlaczego?”, jednostka, źródło)

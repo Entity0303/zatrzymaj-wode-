@@ -4,7 +4,7 @@ Odpowiednik TypeScript: frontend/src/api/types.ts (Parcel, DataSource, ParcelCan
 Zmiany tylko po uzgodnieniu i w obu miejscach naraz (CLAUDE.md – Praca zespołowa).
 """
 
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -29,6 +29,10 @@ class Parcel(BaseModel):
     powierzchnia_ha: float = Field(description="Z geometrii w EPSG:2180, nie z ewidencji")
     geometria: dict[str, Any] = Field(description="GeoJSON Polygon/MultiPolygon w EPSG:4326")
     zrodlo: DataSource
+    source: Literal["uldk", "drawn", "approximate"] = Field(
+        "uldk", description="uldk – działka z ewidencji (ULDK); drawn – pole narysowane przez rolnika; "
+                            "approximate – obszar 1 ha wokół punktu (brak granic z ULDK)")
+    name: str | None = Field(None, description="Nazwa pola, gdy nie jest działką ewidencyjną, np. 'Pole narysowane przez rolnika'")
 
 
 class ParcelCandidates(BaseModel):

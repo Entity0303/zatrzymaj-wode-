@@ -94,7 +94,7 @@ def precip_stats(w: DailyWeather, last: date, years: int = 10) -> dict | None:
             "deficit_list": [r[0] for r in rows if r[3] < thr], "first": rows[0][0], "last": rows[-1][0]}
 
 
-def precip_statement(st: dict | None) -> VerdictStatement | None:
+def precip_statement(st: dict | None, measured: bool = False) -> VerdictStatement | None:
     if st is None:
         return None
     c, t = cfg()["precip"], cfg()["thresholds"]
@@ -108,9 +108,15 @@ def precip_statement(st: dict | None) -> VerdictStatement | None:
         key = "low"
     text = c[key].format(**st)
     norm = t["precip_norm_year_mm"]
-    text += c["norm_tail"].format(norm_mm=norm)  # neutralnie – NASA POWER zawyża opad względem IMGW (D68)
+    if measured:  # A7: opad ze stacji IMGW – porównanie z normą wprost
+        ratio = st["year_mm"] / norm
+        key_n = "norm_low" if ratio < 0.95 else "norm_high" if ratio > 1.05 else "norm_same"
+        text += c[key_n].format(norm_mm=norm)
+    else:  # neutralnie – NASA POWER zawyża opad względem IMGW (D68)
+        text += c["norm_tail"].format(norm_mm=norm)
     nums = {k: st[k] for k in ("year_mm", "season_mm", "deficit_years", "years", "first", "last")}
     nums["norma_mm"] = norm
+    nums["zrodlo_opadu"] = "IMGW" if measured else "NASA POWER"
     return VerdictStatement(kind="opady", level=level, text=text, numbers=nums)
 
 
@@ -226,24 +232,38 @@ def _match(cond: dict, lv: dict[str, str], wet: float, dry: float) -> bool:
     return True
 
 
+def plants_statement(sat) -> VerdictStatement | None:
+    """A11: pozycja „rosliny” – tylko gdy jest zdjęcie satelitarne (zdanie z wartości NDVI / NDMI i porównania)."""
+    if sat is None or getattr(sat, "status", None) != "ok" or not sat.sentence:
+        return None
+    return VerdictStatement(kind="rosliny", level=sat.level or "info", text=sat.sentence,
+                            numbers={"ndvi": sat.ndvi, "ndmi": sat.ndmi, "data": sat.date.isoformat() if sat.date else None,
+                                     "ndvi_rok_temu": sat.last_year.ndvi if sat.last_year else None})
+
+
 def build(prof: SoilProfile, wod_mm: float | None, w: DailyWeather, last: date, terrain: Terrain | None,
           sug: CropSuggestions | None, recs: list[Recommendation], field_status: OverallStatus | None,
-          chosen: tuple[str, str, OverallStatus] | None = None) -> Verdict:
+          chosen: tuple[str, str, OverallStatus, bool] | None = None, measured_precip: bool = False,
+          satellite=None) -> Verdict:
     sts = [soil_statement(prof, wod_mm)]
-    p = precip_statement(precip_stats(w, last))
+    p = precip_statement(precip_stats(w, last), measured_precip)
     if p:
         sts.append(p)
     sts.append(terrain_statement(terrain))
+    plants = plants_statement(satellite)
+    if plants:
+        sts.append(plants)
     crops, good, bad = crops_statement(sug, prof.group == "lekka")
     if crops:
         sts.append(crops)
     sts.append(water_statement(recs))
     if chosen:
-        label, phase, status = chosen
+        label, phase, status, off = (*chosen, False)[:4]
+        tpl = cfg()["chosen_crop_off"] if off else cfg()["chosen_crop"]
         sts.append(VerdictStatement(kind="uprawa_wybrana", level=STATUS_LEVEL.get(status.level, "warn"),
-                                    text=cfg()["chosen_crop"].format(crop=label, phase=phase, headline=status.headline),
-                                    numbers={"wynik": status.score}))
-    lv = {s.kind: s.level for s in sts if s.kind in ("gleba", "opady", "teren", "uprawy")}
+                                    text=tpl.format(crop=label, phase=phase, headline=status.headline),
+                                    numbers={"wynik": status.score, "poza_sezonem": 1 if off else 0}))
+    lv = {s.kind: s.level for s in sts if s.kind in ("gleba", "opady", "teren", "uprawy")}  # „rosliny” – bez wpływu na nagłówek
     wet = terrain.zone_share_pct.get("mokry_dolek", 0.0) if terrain else 0.0
     dry = terrain.zone_share_pct.get("sucha_gorka", 0.0) if terrain else 0.0
     headline = next(h["text"] for h in cfg()["headlines"] if _match(h["if"], lv, wet, dry))

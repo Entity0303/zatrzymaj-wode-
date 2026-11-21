@@ -396,7 +396,7 @@ def test_layers_from_saved_result_and_errors(client):
     b = client.get("/api/layers/teren", params={"parcel_id": PID}).json()
     shares = {f["properties"]["zone"]: f["properties"]["share_pct"] for f in b["features"]["features"]}
     assert shares == {"plasko": 11.5, "stok": 56.4, "mokry_dolek": 32.1} and "21.11.2026" in b["source_tag"]["source"]
-    assert client.get("/api/layers/kondycja", params={"parcel_id": PID}).status_code == 501
+    assert client.get("/api/layers/gleba", params={"parcel_id": PID}).status_code == 501  # A11: kondycja działa
 
 
 # ── demo offline, wydajność, raport ─────────────────────────────────────────────────────────
@@ -436,5 +436,9 @@ def test_report_pdf_terrain_section(client):
     r = client.get("/api/report.pdf", params=Q)
     assert r.status_code == 200
     text = "\n".join(p.extract_text() for p in PdfReader(io.BytesIO(r.content)).pages)
-    for phrase in ("Gleba i teren", "obniżenie – zbiera się woda", "32% działki to obniżenie", "Teren (NMT GUGiK)", "Dla dociekliwych"):
+    for phrase in ("obniżenie – zbiera się woda", "32% działki to obniżenie"):  # strona 1 (werdykt)
         assert phrase in text, phrase
+    full = client.get("/api/report.pdf", params={**Q, "report_type": "full"})  # A5e-2: teren w raporcie szczegółowym
+    text_full = "\n".join(p.extract_text() for p in PdfReader(io.BytesIO(full.content)).pages)
+    for phrase in ("Gleba, teren i skąd dane", "NMT GUGiK", "Woda spływa", "Teren – szczegóły", "Siatka"):
+        assert phrase in text_full, phrase

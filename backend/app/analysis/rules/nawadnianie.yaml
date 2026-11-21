@@ -11,6 +11,7 @@ rules:
     permit: required
     when:
       all:
+        - {fact: in_season, eq: true}
         - {fact: irrigation_status, eq: zalecane}
         - {fact: irrigation_practice, eq: common}
     title: "Nawadnianie {irrigation_when}"
@@ -26,6 +27,7 @@ rules:
     permit: required
     when:
       all:
+        - {fact: in_season, eq: true}
         - {fact: sensitive, eq: true}
         - {fact: irrigation_practice, eq: common}
         - {fact: irrigation_status, eq: niepotrzebne}
@@ -46,6 +48,7 @@ rules:
     permit_note: "Pobór wody do nawadniania może wymagać pozwolenia wodnoprawnego – Wody Polskie."
     when:
       all:
+        - {fact: in_season, eq: true}   # A5e: zero nawadniania poza sezonem uprawy (kukurydza w listopadzie)
         - {fact: irrigation_practice, eq: optional}
         - {fact: season_deficit_mm, gte: 10}
     title: "Nawadnianie – tylko przy własnym źródle wody"

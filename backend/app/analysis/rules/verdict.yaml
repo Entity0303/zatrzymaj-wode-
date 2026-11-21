@@ -35,6 +35,10 @@ verdict:
     bad: "Opady za niskie wiosną – w {deficit_years} z {years} lat w maju–czerwcu brakowało wody; średnio {year_mm} mm opadów na rok ({season_mm} mm od kwietnia do września)."
     # porównanie z normą neutralnie: NASA POWER (PRECTOTCORR, ~50 km) daje ok. 15–20% więcej niż normy stacji IMGW
     norm_tail: " Dla porównania: średnio w Polsce ok. {norm_mm} mm na rok."
+    # A7: opad ze stacji IMGW – porównanie z normą wprost
+    norm_low: " To mniej niż średnio w Polsce (ok. {norm_mm} mm na rok) – pomiar ze stacji IMGW."
+    norm_high: " To więcej niż średnio w Polsce (ok. {norm_mm} mm na rok) – pomiar ze stacji IMGW."
+    norm_same: " To tyle, co średnio w Polsce (ok. {norm_mm} mm na rok) – pomiar ze stacji IMGW."
 
   crops:
     best: "Bezpiecznie posiejesz {best}."
@@ -58,6 +62,8 @@ verdict:
   terrain_missing: "Brak danych o ukształtowaniu terenu – nie wiemy, gdzie na działce jest sucho, a gdzie mokro."
 
   chosen_crop: "{crop} ({phase}): {headline}."
+  # A5e (D79): przed siewem / po zbiorze uprawy nie ma w polu – zdanie mówi o stanie działki, nie o uprawie
+  chosen_crop_off: "{crop} – teraz {phase}, uprawy nie ma w polu. Stan wody na działce: {headline}."
 
   # Nagłówek – pierwsza pasująca reguła (warunki: poziomy pozycji, liczba „źle”, udziały stref terenu)
   headlines:
@@ -86,6 +92,14 @@ verdict:
     burak_cukrowy: "buraków cukrowych"
     straczkowe: "roślin strączkowych"
     warzywa: "warzyw"
+    zboza_ozime: "zbóż ozimych"
+    zboza_jare: "zbóż jarych"
+    rzepak_jesien: "rzepaku"
+    chmiel: "chmielu"
+    tyton: "tytoniu"
+    drzewa_owocowe: "drzew owocowych"
+    krzewy_owocowe: "krzewów owocowych"
+    truskawki: "truskawek"
   accusative:
     pszenica_ozima: "pszenicę ozimą"
     zyto: "żyto"
@@ -101,6 +115,38 @@ verdict:
     burak_cukrowy: "buraki cukrowe"
     straczkowe: "rośliny strączkowe"
     warzywa: "warzywa"
+    zboza_ozime: "zboża ozime"
+    zboza_jare: "zboża jare"
+    rzepak_jesien: "rzepak"
+    chmiel: "chmiel"
+    tyton: "tytoń"
+    drzewa_owocowe: "drzewa owocowe"
+    krzewy_owocowe: "krzewy owocowe"
+    truskawki: "truskawki"
+  # rodzaj gramatyczny nazwy (label) – do „rosła / rósł / rosło / rosły” (A5e-2): f, m, n, pl
+  gender:
+    pszenica_ozima: f
+    kukurydza_ziarno: f
+    kukurydza_kiszonka: f
+    zyto: n
+    pszenzyto_ozime: n
+    jeczmien_ozimy: m
+    jeczmien_jary: m
+    owies: m
+    lubin: m
+    ziemniak: m
+    burak_cukrowy: m
+    chmiel: m
+    tyton: m
+    rzepak: pl
+    rzepak_jesien: pl
+    straczkowe: pl
+    warzywa: pl
+    drzewa_owocowe: pl
+    krzewy_owocowe: pl
+    truskawki: pl
+    zboza_ozime: pl
+    zboza_jare: pl
   # najczęściej siane uprawy polowe – pierwszeństwo na liście ❌ (żeby rolnik od razu zobaczył swoje)
   popular: [pszenica_ozima, rzepak, kukurydza_ziarno, jeczmien_jary, jeczmien_ozimy, pszenzyto_ozime, zyto, ziemniak,
             burak_cukrowy, owies, kukurydza_kiszonka, lubin, straczkowe, warzywa]

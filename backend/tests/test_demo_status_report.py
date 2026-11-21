@@ -169,17 +169,16 @@ def test_report_pdf_with_polish_text(client):
     r = client.get("/api/report.pdf", params=Q)
     assert r.status_code == 200, r.text
     assert r.headers["content-type"] == "application/pdf" and r.content.startswith(b"%PDF")
-    assert 'filename="paszport-wodny-201305_2.0038.6-1-2018-06-10.pdf"' in r.headers["content-disposition"]
+    assert 'filename="paszport-wodny-201305_2.0038.6-1-2018-06-10-skrocony.pdf"' in r.headers["content-disposition"]
     assert int(r.headers["x-generation-ms"]) < 10_000
     assert ortho.called
     text = _pdf_text(r.content)
-    for phrase in ("Paszport wodny działki", "Co mogę zrobić?", "Skąd te dane", "Gleba i teren", "Dlaczego?",
-                   "Wygenerowano", "Raport ma charakter pomocniczy", "Zboża ozime", "glina lekka pylasta", "Zbóż w Polsce się nie nawadnia",
-                   "Stan działki"):
+    for phrase in ("Werdykt działki", "Raport skrócony", "Co tu posiać?", "Co zrobić z wodą", "Na tle 10 lat",
+                   "Raport ma charakter pomocniczy", "Zboża ozime", "glina lekka pylasta"):
         assert phrase in text, phrase
     assert "ż" in text and "ą" in text and "ł" in text and "ę" in text  # polskie znaki w tekście PDF
     pages = len(PdfReader(io.BytesIO(r.content)).pages)
-    assert 2 <= pages <= 5
+    assert pages == 2  # A5e-2: raport skrócony
 
 
 @respx.mock
@@ -200,9 +199,9 @@ def test_report_errors_like_analysis(client):
 def test_report_html_sections_and_qr(client):
     mock_all()
     a = AnalysisResponse.model_validate(client.get("/api/analysis", params=Q).json())
-    html = render_html(a, ortho=None)
-    for sec in ("A. Stan obecny", "B. Na tle 10 lat", "C. Dlaczego?", "D. Co mogę zrobić?", "Gleba i teren",
-                "E. Skąd te dane"):
+    html = render_html(a, ortho=None, report_type="full")
+    for sec in ("Woda na działce", "Na tle 10 lat", "Dlaczego?", "Co zrobić z wodą", "Gleba, teren i skąd dane",
+                "Skąd te dane", "Szczegóły techniczne"):
         assert sec in html
     assert "<svg" in html and "polygon" in html  # wykresy i obrys działki
     url = analysis_url(a)
