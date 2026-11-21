@@ -30,3 +30,23 @@ export const cropLabel = (id: CropId | null) => {
   const label = CROPS.find((c) => c.id === id)?.label
   return label ? tr(label) : null
 }
+
+/**
+ * Uprawy, których w Polsce praktycznie się nie nawadnia (irrigation_practice = "not_practiced"):
+ * zboża i rzepak. Dla nich bez karty nawadniania, dawek i zaleceń nawadniania – zamiast tego retencja.
+ * Zapas, gdy odpowiedź nie ma `irrigation.practice` (kontrakt A5b-1) – wtedy liczy się pole z serwera.
+ */
+export const IRRIGATION_NOT_PRACTICED: readonly CropId[] = ['zboza_ozime', 'zboza_jare', 'rzepak', 'rzepak_jesien', 'straczkowe']
+
+export const irrigationPracticed = (crop: CropId | null | undefined) => !crop || !IRRIGATION_NOT_PRACTICED.includes(crop)
+
+/**
+ * Czy pokazywać nawadnianie (kartę, dawki, zalecenia, alert) dla tego wyniku analizy:
+ * serwer mówi „nie_praktykowane” / practice = not_practiced → nie; brak pola → lista lokalna.
+ */
+export function irrigationShown(a: { crop: CropId | null; irrigation: { status: string; practice?: string | null } | null }) {
+  if (!a.irrigation) return false
+  if (a.irrigation.status === 'nie_praktykowane' || a.irrigation.practice === 'not_practiced') return false
+  if (a.irrigation.practice) return true
+  return irrigationPracticed(a.crop)
+}

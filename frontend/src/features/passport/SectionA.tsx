@@ -7,6 +7,7 @@ import { formatDatePl, formatNum } from '@/lib/format'
 import { STATUS } from '@/theme/status'
 import { useLang } from '@/lib/i18n'
 import { PassportSection } from './PassportSection'
+import { TerrainCard } from '@/features/parcel-panel/TerrainCard'
 
 const val = (i: Indicator, digits = 0) => (i.value === null ? null : formatNum(i.value, digits))
 const tagDate = (i: Indicator) => (i.source_tag.date ? formatDatePl(i.source_tag.date) : undefined)
@@ -94,6 +95,7 @@ export function SectionA({ analysis }: { analysis: AnalysisResponse }) {
           {ind.soil_capacity.label && <p className="text-sm leading-5 text-text-muted">{t(ind.soil_capacity.label)}</p>}
         </MetricCard>
       </div>
+      <TerrainCard terrain={analysis.terrain} note={analysis.terrain_note} />
     </PassportSection>
   )
 }

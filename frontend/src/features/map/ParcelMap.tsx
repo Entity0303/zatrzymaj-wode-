@@ -1,5 +1,5 @@
 import L, { type LeafletMouseEvent, type Map as LeafletMap } from 'leaflet'
-import { forwardRef, useEffect, useMemo } from 'react'
+import { forwardRef, useEffect, useMemo, useRef } from 'react'
 import {
   CircleMarker,
   GeoJSON,
@@ -29,6 +29,21 @@ const ORTO_WMTS =
   'https://mapy.geoportal.gov.pl/wss/service/PZGIK/ORTO/WMTS/StandardResolution' +
   '?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=ORTOFOTOMAPA&STYLE=default' +
   '&FORMAT=image/jpeg&TILEMATRIXSET=EPSG:3857&TILEMATRIX=EPSG:3857:{z}&TILEROW={y}&TILECOL={x}'
+
+/** Start bez działki w adresie: pola uprawne z bliska (okolice działki z przykładu „Susza 2018”, Podlasie). */
+const INTRO_VIEW: [number, number] = [53.047, 22.594]
+
+function IntroView({ active }: { active: boolean }) {
+  const map = useMap()
+  const done = useRef(false)
+  useEffect(() => {
+    // tylko przy pierwszym wejściu – powrót z działki zostawia mapę tam, gdzie była
+    if (!active || done.current) return
+    done.current = true
+    map.setView(INTRO_VIEW, 13, { animate: false })
+  }, [active, map])
+  return null
+}
 
 function FitTo({
   parcel,
@@ -110,6 +125,8 @@ type Props = {
   onClosePopup: () => void
   /** miejsce rekomendacji („Pokaż na mapie”) */
   highlight?: GeoJSON.Geometry | null
+  /** ekran powitalny – widok pól z bliska */
+  intro?: boolean
   /** zgłoszenia rowów/zbiorników wokół działki; zmiana `infraRefresh` = ponowne pobranie */
   infraRefresh?: number
 }
@@ -133,6 +150,7 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
     onSelectCandidate,
     onClosePopup,
     highlight,
+    intro = false,
     infraRefresh = 0,
   },
   ref,
@@ -260,6 +278,7 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
         />
       )}
 
+      <IntroView active={intro} />
       <InfraPins bbox={infraBox} refresh={infraRefresh} />
 
       <FitTo parcel={parcel} candidates={candidates} insets={insets} reducedMotion={reducedMotion} />

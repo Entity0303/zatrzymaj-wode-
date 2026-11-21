@@ -104,3 +104,13 @@ export function rememberAnalysis(a: AnalysisResponse) {
 export const useHistory = () => useStored<AnalysisRecord[]>(HISTORY_KEY, [])
 
 export const SAVED_KEY = 'zw.saved-parcels.v1'
+
+// ── widok: co jest rozwinięte (mniej rzeczy naraz na ekranie) ─────────────────────────────────
+export type UiPrefs = { cards: boolean; legend: boolean; details: boolean; panel: boolean }
+export const UI_KEY = 'zw.ui.v1'
+export const DEFAULT_UI: UiPrefs = { cards: false, legend: false, details: false, panel: false }
+export const useUiPrefs = () => {
+  const [u, set] = useStored<UiPrefs>(UI_KEY, DEFAULT_UI)
+  const ui = { ...DEFAULT_UI, ...u }
+  return [ui, (patch: Partial<UiPrefs>) => set({ ...ui, ...patch })] as const
+}
