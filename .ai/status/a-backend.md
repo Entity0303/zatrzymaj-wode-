@@ -1,6 +1,6 @@
 # Status – osoba A (Dominik), backend
 
-_Stan na: 2026-11-21 20:30_
+_Stan na: 2026-11-21 21:00_
 
 ## Zrobione
 - Wyszukiwanie działki ULDK: pełny identyfikator, „obręb numer”, punkt; `GET /api/parcel` (409 lista kandydatów, 404, 502 z nazwą źródła), timeout 10 s + jedna ponowna próba, cache 24 h.
@@ -27,25 +27,39 @@ _Stan na: 2026-11-21 20:30_
   - analiza i PDF bez uprawy: `field_state` (pokrycie referencyjne FAO-56, D50, przebieg od 1 XI z pasmem 10 lat, KBW 30 dni), `crop`/`crop_season`/`irrigation` = null, `suggestions` = null (A5b-2), PDF „Stan wodny działki”;
   - kontrakt (A5b-1 w `contract-changes.md`) + minimalne poprawki typów w 5 plikach frontendu (za zgodą właściciela);
   - `scripts/smoke_cached_uldk.py` – smoke w procesie z zapisanym obrysem ULDK (gdy ULDK ogranicza ruch).
-- Testy: **238 bez sieci** (`docker run --network none`) + 5 live (A5: 210). Smoke A5b-1 (obrys 201305 z zapisu ULDK, reszta na żywo): 5/5 przypadków 201305 OK; analiza 0,02–6,2 s, PDF 1,2–2,8 s.
+- **A5d (gałąź `a/backend`) – odporność demo (ULDK blokuje IP sieci hackathonu):**
+  - trwały cache SQLite wszystkich źródeł (`core/cache.py`, D53) w wolumenie Dockera `/data` – przeżywa restart i reload; działki, gleba, pogoda historyczna bez wygasania, prognoza 1 h; plik niedostępny = tylko pamięć (bez błędu startu);
+  - działki: indeks znanych (cache + `app/data/demo_parcels.json`), po id i po punkcie bez ULDK; blokada ULDK (302 / 429 / HTML) → ponowienia 1 s i 3 s → bezpiecznik 60 s; wspólny bezpiecznik dla źródeł, stan w `/api/status` („ograniczony (do HH:MM)”, czas polski) (D54);
+  - `DEMO_OFFLINE=true` – zero zapytań zewnętrznych, brak w cache = czytelny 502; `/api/demo/examples` pokazuje tylko przykłady, które da się policzyć (D55);
+  - `scripts/warm_demo.py` (przygotowanie przed prezentacją), `scripts/demo_check.py` (ścieżka demo z czasami); `smoke_cached_uldk.py` usunięty.
+- Testy: **256 bez sieci** (`docker run --network none`) + 5 live (A5b-1: 238). Ścieżka demo przy odciętej sieci (DEMO_OFFLINE, cache z wolumenu): wyszukanie 0,00 s, analiza 0,03–0,09 s, PDF 0,5–1,0 s.
 
 ## W trakcie (gałąź)
-- `a/backend` – A5b-1 gotowe (commit + push); **do `main` nie mergowane**.
+- `a/backend` – A5d gotowe (commit + push); **do `main` nie mergowane**.
 
-## Do zrobienia NA ŻYWO (ULDK GUGiK ograniczał ruch – 302 przez całą sesję A5b-1)
-1. `scripts/smoke.py` na pełnych przykładach – przypadki z ULDK: „Kukurydza – stan dziś” (061704), „To nie jest pole” (143203) i 5 działek z `test-parcels.md` (dziś 502).
-2. Ponownie wygenerować `reports/examples/kukurydza-dzis.pdf` i `to-nie-jest-pole.pdf` – **są jeszcze z A5** (stara logika: m.in. „Ryzyko 39” poza sezonem). Nowe: `susza-2018.pdf`, `mokry-rok-2021.pdf`, `stan-dzialki-bez-uprawy.pdf`.
-3. Kontrola „Kukurydza dziś” na właściwej działce 061704 (zastępczo na 201305: „poza sezonem”, 49 pkt – bez kar za stres kukurydzy).
-4. Zbadać zgodność gleby na 061704 (IUNG IV/III, mapa – pył zwykły na piasku) i pozostałych działkach testowych.
+## Przed prezentacją (na dobrej sieci; w Git Bash poprzedź komendy `MSYS_NO_PATHCONV=1`)
+1. `docker compose up -d --build` – backend z wolumenem cache (`/data/cache.sqlite`).
+2. `docker compose exec backend python scripts/warm_demo.py --out /reports/examples` – pobiera brakujące działki z ULDK, potem wszystkie dane działek demo i PDF-y; na końcu „Działki demo gotowe: N z 5” (dziś **1 z 5** – ULDK blokuje).
+3. `DEMO_OFFLINE=true docker compose up -d backend` (PowerShell: `$env:DEMO_OFFLINE="true"; docker compose up -d backend`) – tylko cache, zero zapytań zewnętrznych.
+4. `docker compose exec backend python scripts/demo_check.py` – musi skończyć się „WYNIK: OK – ścieżka demo działa”.
+5. `curl http://localhost:8000/api/status` – ULDK „ok” albo „ograniczony (do HH:MM)”; w trybie offline każde źródło „tryb demo offline” z liczbą wpisów w cache. Powrót do zwykłego trybu: `docker compose up -d backend` (bez zmiennej).
+
+## Do zrobienia NA ŻYWO (ULDK GUGiK blokuje IP – 302 przez całe sesje A5b-1 i A5d)
+1. `warm_demo.py` na sieci, w której ULDK odpowiada – uzupełni w `app/data/demo_parcels.json` działki z `needs_fetch`: **061704_2.0011.383/2** („Kukurydza – stan dziś”), **143203_2.0027.112/11** („To nie jest pole”), **Szczytno 126/3** (gm. Kampinos), **Lasotka 118** – i zacommitować plik.
+2. Pełny `scripts/smoke.py` na wszystkich przykładach i działkach z `test-parcels.md`.
+3. Nowe `reports/examples/kukurydza-dzis.pdf` i `to-nie-jest-pole.pdf` (dziś jeszcze z A5 – stara logika). Aktualne: `susza-2018.pdf`, `mokry-rok-2021.pdf`, `stan-dzialki-bez-uprawy.pdf`, `stan-dzialki-201305_2-0038-6-1.pdf`.
+4. Kontrola „Kukurydza dziś” na 061704 (zastępczo na 201305: „poza sezonem”, 49 pkt) i zgodność gleby na 061704 i działkach testowych.
+5. KIEG nie odpowiadał (0 wpisów w cache) – po restarcie w trybie online pierwsza analiza czeka na niego ~6 s (bezpiecznik nie przeżywa restartu); w DEMO_OFFLINE nie dotyczy.
 
 ## Następne
 1. **A5b-2 „Co tu posiać?”** – symulacja 15 upraw na pogodzie z 10 lat → `suggestions` (dziś null).
 2. Kalibracja progów statusu poza sezonem / bez uprawy (np. profil 61% w listopadzie = „Ryzyko 49”) i z IUNG SMSR.
-3. Teren z NMT + rowy BDOT10k (u osoby C – patrz pamięć), Sentinel-2.
-4. README, `/api/layers`, sprzątanie `/api/dev/*`, trwały cache (SQLite) – reloady czyszczą cache w pamięci.
+3. Teren z NMT + rowy BDOT10k (u osoby C) – klienty mają korzystać z `cached_fetch` (D53); Sentinel-2.
+4. README, `/api/layers`, sprzątanie `/api/dev/*`.
 
 ## Blokery / pytania do drugiej osoby
 - **B (Mefju): panel działki pokazuje „Stan działki” od razu po wybraniu działki – `GET /api/analysis` bez `crop` → `field_state`, `soil.consistency`, rekomendacje retencyjne** (szczegóły i lista plików frontendu zmienionych przez A: `contract-changes.md`, wpis A5b-1, „Dla Mefju”).
 - B: `IrrigationCard` – status `nie_praktykowane` (dziś etykieta „Nie stosuje się”); `status.scope_label` („poza sezonem”) przy karcie stanu; `storage.ts` – czy zapamiętywać analizę bez uprawy.
 - B: obraz kontenera frontendu nie ma `@fontsource-variable/fraunces` – `docker compose build frontend`.
+- **B: przykłady na ekranie startowym brać z `GET /api/demo/examples`** – w trybie offline i przy blokadzie ULDK backend zwraca tylko przykłady, które działają (dziś: Susza 2018, Mokry rok 2021); lista lokalna pokaże jury przykłady, które skończą się błędem.
 - Wcześniejsze prośby A5 (pola rekomendacji, gleba, `previous_crop`, `/api/demo/examples`, raport PDF) – bez zmian.

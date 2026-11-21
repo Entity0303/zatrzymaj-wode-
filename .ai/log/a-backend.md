@@ -4,6 +4,32 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-21 21:00 · `a/backend` · A5d: odporność demo – trwały cache, działki bez ULDK, bezpiecznik, tryb offline
+**Co:**
+- **0. Trwały cache (D53):** `core/cache.py` – `TTLCache` = pamięć + jeden plik SQLite (`CACHE_DB`), wspólny dla wszystkich źródeł (ULDK, NASA POWER, Open-Meteo prognoza i archiwum, IUNG, KIEG, mapa glebowo-rolnicza, SoilGrids, ortofotomapa do PDF); czas ścienny; `ttl_s=None` = bez wygasania; plik niedostępny → sama pamięć (wcześniej wywracał start – znalezione na żywo: wolumen należał do roota, poprawione w Dockerfile). TTL: działki i gleba bez wygasania, pogoda zakończona > 7 dni temu bez wygasania, prognoza 1 h. NMT / BDOT10k / GUS – brak klientów (osoba C), warstwa gotowa.
+- **1–2. Działki (D54):** indeks znanych działek (cache + `app/data/demo_parcels.json`: 5 działek, pełne dane 201305_2.0038.6/1, reszta `needs_fetch`); po id i po punkcie bez ULDK; „obręb numer” przy blokadzie – ze znanych.
+- **3. Blokada ULDK:** 302 / 429 / HTML → ponowienia 1 s, 3 s → 502 + bezpiecznik 60 s; wspólny bezpiecznik na źródło; `/api/status` bez sondowania źródeł z otwartym bezpiecznikiem, „ograniczony (do HH:MM)” w czasie polskim; rozgrzewka nie pyta ULDK o znane działki.
+- **4. DEMO_OFFLINE (D55):** zero zapytań zewnętrznych, brak w cache = 502 z komunikatem; `/api/demo/examples` filtruje niedziałające przykłady (offline / blokada ULDK). `scripts/warm_demo.py`, `scripts/demo_check.py`; `smoke_cached_uldk.py` usunięty. `docker-compose.yml`: wolumen `cache-data:/data`, `CACHE_DB`, `DEMO_OFFLINE`, montaż `scripts/` i `reports/`, `--reload-dir app`.
+- **5. Testy:** `tests/test_a5d.py` (18) – zapis/odczyt i restart na tym samym pliku, TTL prognozy, pogoda bez wygasania, działka po punkcie z cache, działki demo bez sieci, blokada 302/429/HTML + bezpiecznik, status „ograniczony”, rozgrzewka bez ULDK, DEMO_OFFLINE (502, status bez sond, pełna ścieżka demo z cache bez żadnego zapytania), filtr przykładów; `conftest.py` – izolacja cache i bezpieczników między testami. **256 passed** w `docker run --network none`.
+- **Na żywo:** `warm_demo.py` – ULDK zablokowany (061704: 3 próby → bezpiecznik, reszta pominięta bez zapytań); 201305: analiza bez uprawy + Susza 2018 + Mokry rok 2021 + PDF-y; cache: NASA 3, mapa glebowo-rolnicza 9, IUNG 1, SoilGrids 1, prognoza 1, ortofotomapa 1, ULDK 1, KIEG 0 (nie odpowiada). Restart kontenera – cache został (analiza 0,06 s). Kontener `--network none` + `DEMO_OFFLINE=true` + wolumen:
+
+| Działka | Krok | HTTP | Czas | Wynik |
+|---|---|---|---|---|
+| Wnory-Wandy 6/1 – przykłady „Susza 2018”, „Mokry rok 2021” | Wyszukanie (id) | 200 | 0.00 s |  |
+| Wnory-Wandy 6/1 – przykłady „Susza 2018”, „Mokry rok 2021” | Wyszukanie (obręb numer) | 200 | 0.00 s |  |
+| Wnory-Wandy 6/1 – przykłady „Susza 2018”, „Mokry rok 2021” | Wyszukanie (punkt na mapie) | 200 | 0.00 s |  |
+| Wnory-Wandy 6/1 – przykłady „Susza 2018”, „Mokry rok 2021” | Analiza bez uprawy | 200 | 0.09 s | risk (43), pewność srednia |
+| Wnory-Wandy 6/1 – przykłady „Susza 2018”, „Mokry rok 2021” | PDF bez uprawy | 200 | 0.99 s |  |
+| Wnory-Wandy 6/1 – przykłady „Susza 2018”, „Mokry rok 2021” | Analiza: Susza 2018 | 200 | 0.03 s | danger (8), pewność srednia |
+| Wnory-Wandy 6/1 – przykłady „Susza 2018”, „Mokry rok 2021” | PDF: Susza 2018 | 200 | 0.59 s |  |
+| Wnory-Wandy 6/1 – przykłady „Susza 2018”, „Mokry rok 2021” | Analiza: Mokry rok 2021 | 200 | 0.09 s | warn (59), pewność srednia |
+| Wnory-Wandy 6/1 – przykłady „Susza 2018”, „Mokry rok 2021” | PDF: Mokry rok 2021 | 200 | 0.52 s |  |
+
+  Przykłady offline: susza-2018, mokry-rok-2021.
+- Zaległe z A5b-1 (smoke na wszystkich przykładach, PDF-y kukurydza/las, 061704) – nadal czekają na ULDK (status).
+**Pliki:** `backend/app/core/{cache,config,http}.py`, `backend/app/sources/{uldk,weather_power,weather_openmeteo,iung,kieg,soil_map,soilgrids}.py`, `backend/app/routers/{status,demo}.py`, `backend/app/{demo,main}.py`, `backend/app/report/builder.py`, `backend/app/analysis/confidence.py`, `backend/app/data/demo_parcels.json`, `backend/scripts/{warm_demo,demo_check}.py` (−`smoke_cached_uldk.py`), `backend/tests/{conftest,test_a5d,test_demo_status_report}.py`, `backend/{Dockerfile,CLAUDE.md}`, `docker-compose.yml`, `.env.example`, `reports/examples/*.pdf`, `.ai/*`.
+**Kontrakt API:** NIE (stan ULDK w istniejącym polu `ServiceStatus.error`; `/api/demo/examples` – ten sam format, krótsza lista offline).
+
 ## 2026-11-21 20:30 · `a/backend` · A5b-1: stan działki bez uprawy, nawadnianie wg praktyki, ekoschematy, status poza sezonem, zgodność gleby
 **Co:**
 - **1. Nawadnianie (D48):** `Crop.irrigation_practice` (not_practiced: zboża, rzepak, strączkowe; optional: kukurydza, burak, tytoń; common: ziemniak, warzywa, sady, owoce miękkie, chmiel). `not_practiced` → `irrigation.status = nie_praktykowane`, bez dawek; silnik pomija kategorię „nawadnianie”; 3 reguły zastępcze przy stresie ≤ 7 dni (`retencja.bez_nawadniania_zatrzymaj_wode`, `agrotechnika.bez_nawadniania_parowanie`, `agrotechnika.bez_nawadniania_termin_zabiegow`) ze zdaniem „Zbóż w Polsce się nie nawadnia – liczy się zatrzymanie wody w glebie”. `optional` – dopisek w planie dawek.
