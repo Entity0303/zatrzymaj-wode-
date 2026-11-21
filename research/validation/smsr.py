@@ -116,6 +116,9 @@ def cached(path: Path, url: str) -> tuple[str, float | None]:
 
 def _table_text(page: str) -> str:
     t = re.sub(r"<script.*?</script>", "", page, flags=re.S)
+    # wiersze wyznaczają znaczniki HTML, nie łamanie linii w źródle strony
+    t = re.sub(r"\s*\n\s*", " ", t)
+    t = re.sub(r"<(h\d|table|div|p|section)\b", r"\n<\1", t)
     t = re.sub(r"</t[dh]>", " | ", t)
     t = re.sub(r"</tr>", "\n", t)
     t = html.unescape(re.sub(r"<[^>]+>", "", t))
