@@ -12,3 +12,4 @@ segno>=1.6  # kod QR w raporcie (SVG), licencja BSD-3
 # testy
 pytest>=8.0
 respx>=0.21
+pypdf>=4.0  # test raportu PDF (polskie znaki), licencja BSD-3
