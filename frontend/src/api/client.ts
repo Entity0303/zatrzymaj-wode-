@@ -76,3 +76,28 @@ export function describeError(e: unknown, kind: 'number' | 'point'): ErrorInfo {
     }
   return { title: 'Błąd serwera', message: `Serwer zwrócił błąd ${e.status}.`, stillWorks, retryable: true }
 }
+
+/** Błąd GET /api/analysis po polsku – mapa, dane działki i prognoza działają dalej. */
+export function describeAnalysisError(e: unknown): ErrorInfo {
+  const stillWorks = 'Mapa, granice działki i prognoza pogody działają dalej.'
+  if (!(e instanceof ApiError))
+    return { title: 'Nie udało się policzyć oceny', message: 'Wystąpił nieoczekiwany błąd.', stillWorks, retryable: true }
+  const detail = e.detail as { source?: string; message?: string } | null
+  if (e.status === 0)
+    return { title: 'Brak połączenia', message: 'Nie można połączyć się z serwerem aplikacji. Sprawdź internet.', retryable: true }
+  if (e.status === 501)
+    return {
+      title: 'Ocena sytuacji wodnej jest jeszcze w budowie',
+      message: 'Serwer nie liczy jeszcze analizy działki.',
+      stillWorks,
+      retryable: false,
+    }
+  if (e.status === 502 || e.status === 504)
+    return {
+      title: `Usługa ${detail?.source ?? 'zewnętrzna'} nie odpowiada`,
+      message: detail?.message ?? 'Nie udało się pobrać danych do analizy.',
+      stillWorks,
+      retryable: true,
+    }
+  return { title: 'Błąd serwera', message: `Serwer zwrócił błąd ${e.status}.`, stillWorks, retryable: true }
+}

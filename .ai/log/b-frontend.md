@@ -4,6 +4,11 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-21 · `b/wybor-uprawy-ladowanie`
+**Co:** uruchamianie analizy po wyborze uprawy; zmiana uprawy lub daty analizy przelicza od nowa (poprzednie zapytanie przerywane). Ekran ładowania w panelu (SPEC 13 krok 4, 15.1): karta „Liczę ocenę wody dla działki…” z uprawą, datą, licznikiem sekund i paskiem postępu, `LoadingSteps` ✓/⏳/✕, szkielety wskaźników i rekomendacji. Na mocku (`?dane=przykladowe`) kroki z `analysis.sample.json` przechodzą kolejno w tempie `duration_ms` (maks. 2,5 s/krok), potem wynik. Bez mocka: `GET /api/analysis`; backend nie przesyła postępu, więc wszystkie kroki „w toku” do odpowiedzi (nie udajemy postępu); 501 → komunikat „Ocena sytuacji wodnej jest jeszcze w budowie”, 502/504 → „Spróbuj ponownie”.
+**Pliki:** `frontend/src/features/parcel-panel/{useAnalysis.ts,AnalysisLoading.tsx,ParcelPanel.tsx,types.ts}`, `frontend/src/mocks/useMockAnalysis.ts`, `frontend/src/api/client.ts` (`describeAnalysisError`), `frontend/src/pages/Start.tsx`.
+**Kontrakt API:** nie.
+
 ## 2026-11-21 15:20 · `main` · commit f31e94c
 **Co:** podział na `api/ mocks/ theme/ layout/ components/ features/ pages/` (1 komponent / warstwa / sekcja = 1 plik), bez zmiany wyglądu; `api/types.ts` identyczny z Pydantic; mock `analysis.sample.json` (tylko dev + `?dane=przykladowe`, napis „DANE PRZYKŁADOWE”); panel działki czyta wynik analizy; szkielety paszportu A–E, raportów, zgłoszeń i stron.
 **Pliki:** `frontend/src/**` (86), `frontend/tsconfig.app.json`, `frontend/components.json`.

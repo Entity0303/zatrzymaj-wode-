@@ -1,5 +1,5 @@
 import { FileDown } from 'lucide-react'
-import type { AnalysisResponse, CropId } from '@/api/types'
+import type { CropId } from '@/api/types'
 import { EmptyState } from '@/components/EmptyState'
 import { ErrorNotice } from '@/components/ErrorNotice'
 import { FieldIllustration } from '@/components/FieldIllustration'
@@ -8,13 +8,14 @@ import { SourceTag } from '@/components/SourceTag'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { formatDatePl } from '@/lib/format'
+import { AnalysisLoading } from './AnalysisLoading'
 import { CropField } from './CropField'
 import { KeyMetrics as Metrics } from './KeyMetrics'
 import { PanelEmpty } from './PanelEmpty'
 import { ParcelHeader } from './ParcelHeader'
 import { SectionTitle } from './SectionTitle'
 import { StatusCard } from './StatusCard'
-import type { ForecastState, SearchPhase } from './types'
+import type { AnalysisRun, ForecastState, SearchPhase } from './types'
 import { WhatToDo } from './WhatToDo'
 
 /** Panel działki (SPEC 6) – prawa karta na komputerze, treść szuflady na telefonie. */
@@ -24,7 +25,8 @@ export function ParcelPanel({
   onCropChange,
   asOf,
   forecastState,
-  analysis = null,
+  run = { phase: 'idle' },
+  onRetryAnalysis,
   saved,
   onToggleSave,
   onCopied,
@@ -38,8 +40,9 @@ export function ParcelPanel({
   onCropChange: (c: CropId) => void
   asOf: string
   forecastState: ForecastState
-  /** wynik /api/analysis (null = jeszcze nie liczona) */
-  analysis?: AnalysisResponse | null
+  /** przebieg analizy (useAnalysis) */
+  run?: AnalysisRun
+  onRetryAnalysis?: () => void
   saved: boolean
   onToggleSave: () => void
   onCopied: () => void
@@ -81,6 +84,7 @@ export function ParcelPanel({
     )
 
   const { parcel } = state
+  const analysis = run.phase === 'done' ? run.analysis : null
   const steps: Step[] = analysis
     ? analysis.steps.map((s) => ({ label: s.label, state: s.state, note: s.note ?? undefined }))
     : [
@@ -97,10 +101,28 @@ export function ParcelPanel({
     { label: 'Bilans wody', state: 'pending', note: 'w budowie' },
   ]
 
-  return (
-    <div className="space-y-5">
+  const header = (
+    <>
       {!hideHeader && <ParcelHeader parcel={parcel} saved={saved} onToggleSave={onToggleSave} onCopied={onCopied} />}
       <CropField crop={crop} onChange={onCropChange} />
+    </>
+  )
+
+  // ekran ładowania analizy: mapa już pokazuje działkę, w panelu kroki i szkielety (SPEC 15.1)
+  if (run.phase === 'loading' && crop)
+    return (
+      <div className="space-y-5">
+        {header}
+        <AnalysisLoading key={run.key} steps={run.steps} crop={crop} asOf={asOf} />
+      </div>
+    )
+
+  return (
+    <div className="space-y-5">
+      {header}
+      {run.phase === 'error' && (
+        <ErrorNotice {...run.error} onRetry={run.error.retryable ? onRetryAnalysis : undefined} />
+      )}
       <StatusCard crop={crop} analysis={analysis} />
       {crop && (
         <details className="group rounded-xl border bg-surface p-3.5">

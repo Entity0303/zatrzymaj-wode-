@@ -12,6 +12,7 @@ import { POLAND_CENTER, ParcelMap, type BaseMap } from '@/features/map/ParcelMap
 import { MobileSheetHeader } from '@/features/parcel-panel/MobileSheetHeader'
 import { ParcelPanel } from '@/features/parcel-panel/ParcelPanel'
 import type { SearchPhase } from '@/features/parcel-panel/types'
+import { useAnalysis } from '@/features/parcel-panel/useAnalysis'
 import { SearchBar } from '@/features/search/SearchBar'
 import { useForecast } from '@/features/weather/useForecast'
 import { WeatherWidget } from '@/features/weather/WeatherWidget'
@@ -24,7 +25,7 @@ import { Sidebar } from '@/layout/Sidebar'
 import { TopBar } from '@/layout/TopBar'
 import { todayIso } from '@/lib/dates'
 import { useMediaQuery, useOnline, usePrefersReducedMotion, useSavedParcels } from '@/lib/hooks'
-import { useMockAnalysis } from '@/mocks/useMockAnalysis'
+import { mockRequested } from '@/mocks/useMockAnalysis'
 
 /** Ekran Start (SPEC 4, 12): mapa + panel działki + dolny pasek kart / szuflada na telefonie. */
 
@@ -77,9 +78,11 @@ export default function Start() {
 
   const parcel = search.phase === 'parcel' ? search.parcel : null
   const crop = parcel ? (crops[parcel.id] ?? null) : null
-  // analiza: dopóki backend zwraca 501, w trybie deweloperskim można podejrzeć mock (?dane=przykladowe)
-  const mock = useMockAnalysis()
-  const analysis = parcel && crop ? mock : null
+  // analiza: startuje po wyborze uprawy, zmiana uprawy/daty przelicza; dopóki backend zwraca 501,
+  // w trybie deweloperskim można podejrzeć mock z symulacją ładowania (?dane=przykladowe)
+  const mock = mockRequested()
+  const { run, retry: retryAnalysis } = useAnalysis(parcel?.id ?? null, crop, asOf)
+  const analysis = run.phase === 'done' ? run.analysis : null
 
   // wysokość obszaru mapy – do położeń szuflady
   useLayoutEffect(() => {
@@ -237,7 +240,8 @@ export default function Start() {
     },
     asOf,
     forecastState,
-    analysis,
+    run,
+    onRetryAnalysis: retryAnalysis,
     saved: parcel ? isSaved(parcel.id) : false,
     onToggleSave: () => {
       if (parcel) toggleSave(parcel)
