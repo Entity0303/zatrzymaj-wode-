@@ -63,6 +63,7 @@ class Crop:
     kind: str  # "jara" | "ozima" | "jesienna" | "wieloletnia"
     source: str
     autumn_sowing: tuple[int, int] | None = None  # ozime: siew jesienny następnego sezonu
+    irrigation_practice: str = "optional"  # "not_practiced" | "optional" | "common" (D48)
     phases: tuple[int, int, int, int] = field(init=False)
 
     def __post_init__(self) -> None:
@@ -218,6 +219,37 @@ CROPS: dict[str, Crop] = {c.id: c for c in [
          "Założenie – tytoń nie występuje w tab. 12/22 FAO-56"),
 ]}
 # fmt: on
+
+
+# ── Praktyka nawadniania w Polsce (D48) ─────────────────────────────────────────────────────
+# not_practiced – w Polsce się nie nawadnia: brak planu dawek i rekomendacji nawadniania, w zamian
+#   zatrzymanie wody w glebie, ograniczenie parowania i termin zabiegów;
+# optional – nawadnia się rzadko (gdy jest woda i sprzęt) – plan dawek z dopiskiem;
+# common – nawadnianie to typowa praktyka.
+IRRIGATION_PRACTICE: dict[str, str] = {
+    "zboza_ozime": "not_practiced", "zboza_jare": "not_practiced",
+    "rzepak": "not_practiced", "rzepak_jesien": "not_practiced",
+    "straczkowe": "not_practiced",  # groch, bobik, łubin, soja na nasiona – w PL bez nawadniania
+    "kukurydza_ziarno": "optional", "kukurydza_kiszonka": "optional",
+    "burak_cukrowy": "optional",  # deszczownie tylko w części plantacji (gleby lekkie)
+    "tyton": "optional",  # nawadniany doraźnie przy wysadzaniu i w suszy
+    "ziemniak": "common", "warzywa": "common", "drzewa_owocowe": "common", "krzewy_owocowe": "common",
+    "truskawki": "common",
+    "chmiel": "common",  # plantacje chmielu (Lubelszczyzna) zwykle z nawadnianiem kroplowym
+}
+# dopełniacz do zdania „… w Polsce się nie nawadnia” (wymóg A5b-1)
+NOT_IRRIGATED_GENITIVE = {"zboza_ozime": "Zbóż", "zboza_jare": "Zbóż", "rzepak": "Rzepaku",
+                          "rzepak_jesien": "Rzepaku", "straczkowe": "Roślin strączkowych"}
+for _c in CROPS.values():
+    object.__setattr__(_c, "irrigation_practice", IRRIGATION_PRACTICE[_c.id])
+
+
+def no_irrigation_sentence(crop: "Crop") -> str | None:
+    """„Zbóż w Polsce się nie nawadnia – liczy się zatrzymanie wody w glebie” (tylko not_practiced)."""
+    if crop.irrigation_practice != "not_practiced":
+        return None
+    who = NOT_IRRIGATED_GENITIVE.get(crop.id, crop.label)
+    return f"{who} w Polsce się nie nawadnia – liczy się zatrzymanie wody w glebie"
 
 
 def get_crop(crop_id: str) -> Crop:

@@ -14,6 +14,7 @@ from app.main import app
 from app.schemas.analysis import AnalysisResponse
 
 SAMPLE = Path(__file__).resolve().parents[2] / "frontend" / "src" / "mocks" / "analysis.sample.json"
+SAMPLE_NO_CROP = SAMPLE.with_name("analysis.no-crop.sample.json")
 TYPES_TS = Path(__file__).resolve().parents[2] / "frontend" / "src" / "api" / "types.ts"
 
 
@@ -24,9 +25,12 @@ def client():
 
 
 @pytest.mark.skipif(not SAMPLE.exists(), reason="brak katalogu frontend/ obok backend/")
-def test_frontend_sample_matches_contract():
-    data = json.loads(SAMPLE.read_text(encoding="utf-8"))
+@pytest.mark.parametrize("sample", [SAMPLE, SAMPLE_NO_CROP], ids=["z_uprawa", "bez_uprawy"])
+def test_frontend_sample_matches_contract(sample):
+    data = json.loads(sample.read_text(encoding="utf-8"))
     a = AnalysisResponse.model_validate(data)
+    if sample == SAMPLE_NO_CROP:  # A5b-1: odpowiedź bez uprawy
+        assert a.crop is None and a.crop_season is None and a.irrigation is None and a.field_state is not None
     # zasady z kontraktu
     cats = [r.category for r in a.recommendations]
     order = ["retencja", "agrotechnika", "nawadnianie"]
@@ -59,11 +63,11 @@ def test_ts_types_name_every_contract_field():
     walk(AnalysisResponse)
 
 
-def test_analysis_endpoint_requires_crop(client):
-    # pełne /api/analysis (A4) – scenariusze z mockami źródeł w test_analysis.py; tu bez sieci
-    r = client.get("/api/analysis", params={"parcel_id": "143203_2.0027.112/11"})
-    assert r.status_code == 422
-    assert "Wybierz uprawę" in r.json()["detail"]["message"]
+def test_analysis_crop_is_optional(client):
+    # A5b-1: bez uprawy – „Stan działki” (scenariusze z mockami źródeł w test_a5b.py); tu bez sieci – tylko OpenAPI
+    params = client.get("/openapi.json").json()["paths"]["/api/analysis"]["get"]["parameters"]
+    crop = next(p for p in params if p["name"] == "crop")
+    assert crop["required"] is False
 
 
 def test_analysis_rejects_unknown_crop(client):

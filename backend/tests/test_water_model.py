@@ -1,5 +1,6 @@
 """A3/A3b: uprawy (FAO-56, kalendarz PL) i ciągły model wody w glebie – bez sieci."""
 
+import dataclasses
 import json
 from datetime import date, timedelta
 from pathlib import Path
@@ -47,6 +48,8 @@ WKT_201305 = (
 ULDK_ONE = f"0\nSRID=2180;{WKT_201305}|201305_2.0038.6/1|podlaskie|powiat wysokomazowiecki|Kobylin-Borzymy|Wnory-Wandy|6/1\n"
 WHEAT = get_crop("zboza_ozime")
 MAIZE = get_crop("kukurydza_ziarno")
+# pszenica „jak nawadniana” – do testów planu dawek (prawdziwych zbóż w PL się nie nawadnia, D48)
+WHEAT_IRR = dataclasses.replace(WHEAT, irrigation_practice="common")
 WOD = 150.0
 
 
@@ -212,29 +215,29 @@ def test_no_reset_at_sowing_dry_spring_maize_starts_with_deficit():
 
 def test_ripening_no_alarm_no_irrigation():
     w = synth(date(2006, 8, 1), date(2018, 7, 14), _dry_2018, _et0_seasonal)
-    r = soil_water_model(w, WHEAT, WOD, date(2018, 7, 15))
+    r = soil_water_model(w, WHEAT_IRR, WOD, date(2018, 7, 15))
     assert r.phase == "dojrzewanie" and not r.sensitive and r.scope == "strefa_korzeni"
     assert r.irrigation.status == "nieuzasadnione_w_fazie" and r.days_to_stress is None
     assert r.stress_days_season > 0  # stres z faz wrażliwych sezonu policzony
-    out = to_contract(r, WHEAT, date(2018, 7, 15))
+    out = to_contract(r, WHEAT_IRR, date(2018, 7, 15))
     assert out.risk_7d.value is None and out.risk_7d.label == "Nie dotyczy"
-    assert "nawadnianie nieuzasadnione w tej fazie uprawy" in out.risk_7d.note
+    assert "poza fazą wrażliwą" in out.risk_7d.note
     assert out.irrigation.status == "nieuzasadnione_w_fazie" and out.irrigation_rec is None
 
 
 def test_after_harvest_no_irrigation_but_water_state_and_season_summary():
     w = synth(date(2006, 8, 1), date(2018, 8, 9), _dry_2018, _et0_seasonal)
-    r = soil_water_model(w, WHEAT, WOD, date(2018, 8, 10))
+    r = soil_water_model(w, WHEAT_IRR, WOD, date(2018, 8, 10))
     assert r.phase == "po_zbiorze" and r.irrigation.status == "nieuzasadnione_w_fazie"
     assert r.water_pct is not None and r.scope == "profil" and r.season_complete
-    out = to_contract(r, WHEAT, date(2018, 8, 10))
+    out = to_contract(r, WHEAT_IRR, date(2018, 8, 10))
     assert out.soil_water.last_season.year == 2018 and out.soil_water.last_season.stress_days == r.stress_days_season
 
 
 @pytest.mark.parametrize(("category", "dose"), [(1, 17.5), (2, 22.5), (3, 27.5), (4, 32.5), (None, 22.5)])
 def test_irrigation_dose_by_soil_category(category, dose):
     w = synth(date(2006, 8, 1), date(2018, 6, 9), _dry_2018, _et0_seasonal)
-    r = soil_water_model(w, WHEAT, WOD, date(2018, 6, 10), soil_category=category)
+    r = soil_water_model(w, WHEAT_IRR, WOD, date(2018, 6, 10), soil_category=category)
     assert r.sensitive and r.irrigation.status == "zalecane"
     assert r.irrigation.dose_mm == dose <= MAX_DOSE_MM
     assert r.irrigation.first_date == date(2018, 6, 10) and r.irrigation.total_7d_mm >= dose
@@ -245,7 +248,7 @@ def test_irrigation_dose_by_soil_category(category, dose):
 
 def test_wet_season_irrigation_not_needed():
     w = synth(date(2006, 8, 1), date(2018, 6, 9), _wet, _et0_seasonal)
-    r = soil_water_model(w, WHEAT, WOD, date(2018, 6, 10))
+    r = soil_water_model(w, WHEAT_IRR, WOD, date(2018, 6, 10))
     assert r.irrigation.status == "niepotrzebne" and r.risk == "niskie" and r.stress_days_season == 0
 
 
@@ -305,9 +308,8 @@ def test_dev_water_endpoint(client):
     b = r.json()
     assert b["soil"]["dominant_code"] == 3 and b["crop_season"]["phase"] == "pelnia"
     assert b["soil_water_pct"]["value"] is not None and b["soil_water"]["scope"] == "strefa_korzeni"
-    assert b["irrigation"]["status"] in ("zalecane", "niepotrzebne")
-    if b["irrigation"]["status"] == "zalecane":
-        assert b["irrigation"]["dose_mm"] == 27.5  # kategoria III
+    assert b["irrigation"]["status"] == "nie_praktykowane" and b["irrigation"]["dose_mm"] is None  # D48
+    assert b["irrigation"]["message"].startswith("Zbóż w Polsce się nie nawadnia")
     assert b["stress_days_by_year"][0]["year"] == 2018
 
 

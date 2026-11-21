@@ -21,7 +21,7 @@ from math import ceil
 
 import numpy as np
 
-from app.analysis.crops import PHASE_LABELS, Crop, DayInfo
+from app.analysis.crops import PHASE_LABELS, Crop, DayInfo, no_irrigation_sentence
 from app.analysis.et0 import DailyWeather
 from app.schemas.analysis import (
     BalanceRank,
@@ -519,6 +519,38 @@ def climatology_horizon(w: DailyWeather, start: date, n: int, years: int = 10) -
     return out
 
 
+def data_until_for(w: DailyWeather, last: date) -> date | None:
+    """Ostatni dzień z kompletem opadu i ET0, nie później niż `last`."""
+    kbw = w.climatic_water_balance
+    i_req = min(_idx(w, last), len(w.dates) - 1)
+    valid = np.flatnonzero(~np.isnan(kbw[: i_req + 1])) if i_req >= 0 else np.array([], dtype=int)
+    return w.dates[valid[-1]].astype(object) if valid.size else None
+
+
+def bridged_inputs(
+    w: DailyWeather, start: date, last: date, forecast: list[HorizonDay] | None, years: int = 10,
+) -> tuple[list[float], list[float], date, list[str]] | None:
+    """Opad i ET0 od `start` do `last`: obserwacje do ostatniego dnia z danymi, luka opóźnienia źródła – Open-Meteo
+    (`past_days`), a gdy go brak – scenariusz typowej pogody (D27). None = za mało danych (też na stan początkowy)."""
+    data_until = data_until_for(w, last)
+    obs = _observed(w, start, data_until) if data_until and data_until >= start else None
+    if obs is None or _idx(w, start) - INIT_DAYS < 0:
+        return None
+    p_in, e_in, notes = list(obs[0]), list(obs[1]), []
+    gap = (last - data_until).days
+    fc = {d.day: d for d in (forecast or [])}
+    if gap > 0:
+        bridge = [fc.get(data_until + timedelta(days=k + 1)) for k in range(gap)]
+        if all(b is not None and not np.isnan(b.precip) and not np.isnan(b.et0) for b in bridge):
+            notes.append(f"Ostatnie {gap} dni przed datą analizy uzupełnione danymi modelu Open-Meteo.")
+        else:
+            bridge = climatology_horizon(w, data_until + timedelta(days=1), gap, years)
+            notes.append(f"Ostatnie {gap} dni przed datą analizy bez danych – uzupełnione scenariuszem typowej pogody.")
+        p_in += [b.precip for b in bridge]
+        e_in += [b.et0 for b in bridge]
+    return p_in, e_in, data_until, notes
+
+
 def risk_class(days_to_stress: int | None) -> str:
     if days_to_stress is not None and days_to_stress <= RISK_HIGH_DAYS:
         return "wysokie"
@@ -621,28 +653,15 @@ def soil_water_model(
     lim = res.limitations
 
     # ── dane: obserwacje do ostatniego dnia z kompletem, luka (opóźnienie źródła) – prognoza/scenariusz ──
-    kbw = w.climatic_water_balance
-    i_req = min(_idx(w, L), len(w.dates) - 1)
-    valid = np.flatnonzero(~np.isnan(kbw[: i_req + 1])) if i_req >= 0 else np.array([], dtype=int)
-    data_until = w.dates[valid[-1]].astype(object) if valid.size else None
-    obs = _observed(w, ws, data_until) if data_until and data_until >= ws else None
-    if obs is None or _idx(w, ws) - INIT_DAYS < 0:
+    fc = {d.day: d for d in (forecast or [])}
+    inputs = bridged_inputs(w, ws, L, forecast, years)
+    if inputs is None:
         lim.append("Za mało danych pogodowych do modelu wody w glebie.")
         res.irrigation = IrrigationResult("brak_danych", "Brak danych do oceny nawadniania.")
         return res
+    p_in, e_in, data_until, notes = inputs
     res.data_until = data_until
-    p_in, e_in = list(obs[0]), list(obs[1])
-    gap = (L - data_until).days
-    fc = {d.day: d for d in (forecast or [])}
-    if gap > 0:
-        bridge = [fc.get(data_until + timedelta(days=k + 1)) for k in range(gap)]
-        if all(b is not None and not np.isnan(b.precip) and not np.isnan(b.et0) for b in bridge):
-            lim.append(f"Ostatnie {gap} dni przed datą analizy uzupełnione danymi modelu Open-Meteo.")
-        else:
-            bridge = climatology_horizon(w, data_until + timedelta(days=1), gap, years)
-            lim.append(f"Ostatnie {gap} dni przed datą analizy bez danych – uzupełnione scenariuszem typowej pogody.")
-        p_in += [b.precip for b in bridge]
-        e_in += [b.et0 for b in bridge]
+    lim += notes
 
     st, bal = initial_state(w, crop, wod_mm, ws)
     res.init_balance_mm = bal
@@ -707,8 +726,13 @@ def soil_water_model(
         over = np.flatnonzero(trh.stress)
         res.days_to_stress = 0 if stressed_now else (int(over[0]) + 1 if over.size else None)
         res.risk = risk_class(res.days_to_stress)
-        res.irrigation = _irrigation_plan(crop, wod_mm, st, hz, res.days_to_stress, analysis_date, soil_category,
-                                          runoff_threshold, runoff_fraction)
+        if crop.irrigation_practice == "not_practiced":  # D48: bez dawek i bez planu
+            res.irrigation = IrrigationResult("nie_praktykowane", no_irrigation_sentence(crop) + ".")
+        else:
+            res.irrigation = _irrigation_plan(crop, wod_mm, st, hz, res.days_to_stress, analysis_date, soil_category,
+                                              runoff_threshold, runoff_fraction)
+    elif crop.irrigation_practice == "not_practiced":
+        res.irrigation = IrrigationResult("nie_praktykowane", no_irrigation_sentence(crop) + ".")
     else:
         res.irrigation = IrrigationResult(
             "nieuzasadnione_w_fazie", f"Nawadnianie nieuzasadnione w tej fazie uprawy ({res.phase_label})."
@@ -821,7 +845,7 @@ def to_contract(res: SoilWaterResult, crop: Crop, analysis_date: date, no_model_
             years,
             crop_season,
             SoilWaterState(scope="profil", depth_m=PROFILE_DEPTH_M, description=note),
-            IrrigationPlan(status="brak_danych", message=note, source_tag=tag),
+            IrrigationPlan(status="brak_danych", message=note, practice=crop.irrigation_practice, source_tag=tag),
             None,
         )
 
@@ -850,7 +874,7 @@ def to_contract(res: SoilWaterResult, crop: Crop, analysis_date: date, no_model_
     else:
         rtag = model_tag
         risk = RiskIndicator(value=None, unit="dni", label="Nie dotyczy", status="ok",
-                             note=f"nawadnianie nieuzasadnione w tej fazie uprawy ({res.phase_label})", source_tag=model_tag)
+                             note=f"{res.phase_label} – poza fazą wrażliwą na brak wody", source_tag=model_tag)
 
     last = SeasonSummary(year=res.season_year, stress_days=res.stress_days_season,
                          mean_prev_stress_days=res.mean_prev_stress_days) if res.season_complete else None
@@ -862,9 +886,9 @@ def to_contract(res: SoilWaterResult, crop: Crop, analysis_date: date, no_model_
     irr = res.irrigation or IrrigationResult("brak_danych", "Brak danych do oceny nawadniania.")
     plan = IrrigationPlan(status=irr.status, message=irr.message, dose_mm=irr.dose_mm, first_date=irr.first_date,
                           interval_days=irr.interval_days, total_7d_mm=irr.total_7d_mm, doses_7d=irr.doses_7d,
-                          source_tag=rtag)
+                          practice=crop.irrigation_practice, source_tag=rtag)
     rec = None
-    if irr.status == "zalecane":
+    if irr.status == "zalecane" and crop.irrigation_practice != "not_practiced":
         rec = Recommendation(
             id="nawadnianie-model",
             category="nawadnianie",
@@ -940,3 +964,45 @@ def season_sums(w: DailyWeather, analysis_date: date, season_start: date | None 
         round(e_cur, 1), round(float(np.mean(es)), 1) if es else None,
         round(float(np.nanmean(recent)), 2) if recent.size and not np.isnan(recent).all() else None,
     )
+
+
+# ── Bilans opad − ET0 z ostatnich tygodni (status poza sezonem i bez uprawy, A5b-1) ──────────
+
+RECENT_DAYS = 30
+
+
+@dataclass
+class RecentBalance:
+    days: int
+    start: date | None
+    until: date | None
+    balance_mm: float | None
+    mean_mm: float | None
+    deviation_mm: float | None
+    lower_years: int | None
+    of_years: int
+    percentile: float | None  # % lat z NIŻSZYM bilansem w tym samym oknie (0 = najgorszy)
+
+
+def recent_balance(w: DailyWeather, analysis_date: date, days: int = RECENT_DAYS, years: int = 10) -> RecentBalance:
+    """KBW = opad − ET0 z ostatnich `days` dni z danymi (do dnia przed analizą) i te same dni w `years` latach."""
+    until = data_until_for(w, last_usable_day(analysis_date))
+    if until is None:
+        return RecentBalance(days, None, None, None, None, None, None, 0, None)
+    start = until - timedelta(days=days - 1)
+    kbw = w.climatic_water_balance
+    seg = _segment(kbw, _idx(w, start), days)
+    if seg is None or np.isnan(seg).mean() > MAX_MISSING_MONTH:
+        return RecentBalance(days, start, until, None, None, None, None, 0, None)
+    cur = float(np.nansum(seg))
+    prev = []
+    for k in range(1, years + 1):
+        sk = _segment(kbw, _idx(w, shift_years(start, k)), days)
+        if sk is not None and np.isnan(sk).mean() <= MAX_MISSING_MONTH:
+            prev.append(float(np.nansum(sk)))
+    if not prev:
+        return RecentBalance(days, start, until, round(cur, 1), None, None, None, 0, None)
+    mean = float(np.mean(prev))
+    lower = int(sum(x < cur for x in prev))
+    return RecentBalance(days, start, until, round(cur, 1), round(mean, 1), round(cur - mean, 1), lower, len(prev),
+                         round(100.0 * lower / len(prev), 1))

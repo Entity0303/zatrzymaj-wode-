@@ -30,6 +30,7 @@ PENALTY = {
     "satelita_brak": 15,
     "teren_brak": 10,
     "frakcje_brak": 5,  # brak SoilGrids – bez przepuszczalności i uziarnienia
+    "gleba_konflikt": 10,  # źródła gleby różnią się (mapa glebowo-rolnicza / IUNG / SoilGrids, D49)
 }
 LEVELS: list[tuple[int, Confidence]] = [(75, "wysoka"), (50, "srednia"), (0, "ograniczona")]
 CONSTANT_LIMITATIONS = [
@@ -71,6 +72,8 @@ class ConfidenceInputs:
     soil_map_error: str | None = None
     soil_map_year: int | None = None
     stale: list[StaleHit] = field(default_factory=list)
+    soil_conflict: bool = False
+    soil_basis_label: str | None = None  # źródło kategorii gleby, gdy inne niż IUNG
 
 
 def premises(i: ConfidenceInputs) -> list[Premise]:
@@ -98,10 +101,13 @@ def premises(i: ConfidenceInputs) -> list[Premise]:
         add("prognoza_brak", "brak prognozy pogody – ryzyko ze scenariusza typowej pogody")
     if i.forecast_ok is None and i.model and i.model.horizon_kind == "scenariusz":
         add("data_historyczna", "data historyczna – ryzyko na 7 dni ze scenariusza typowej pogody")
+    if i.soil_conflict:
+        add("gleba_konflikt", "źródła gleby różnią się – sprawdź glebę na polu")
     if i.soilgrids == "brak":
         add("frakcje_brak", "brak frakcji gleby (SoilGrids)")
     if i.soil.method is None:
-        add("gleba_brak", "brak danych o glebie (IUNG)")
+        add("gleba_brak", "brak danych o glebie (IUNG)" + (f" – kategoria wg: {i.soil_basis_label.lower()}"
+                                                           if i.soil_basis_label else ""))
     else:
         if i.soil.method == "punkty":
             add("gleba_punkty", "gleba sprawdzona w punktach (metoda zapasowa)")
@@ -169,7 +175,7 @@ def reliability(i: ConfidenceInputs) -> tuple[Reliability, list[Premise], int]:
         ))
     if i.soil_map is not None:
         sources.append(SourceStatus(
-            name="Mapa glebowo-rolnicza (GUGiK)", used_for="kompleks i gatunek gleby (informacyjnie)", data_date=None,
+            name="Mapa glebowo-rolnicza (GUGiK)", used_for="kompleks i gatunek gleby, zgodność z IUNG", data_date=None,
             resolution="1:5000", status="ok" if i.soil_map == "ok" else "brak",
             note=(f"mapa z ok. {i.soil_map_year} r." if i.soil_map_year else None) if i.soil_map == "ok" else
             (i.soil_map_error or "brak konturu w tym miejscu"),

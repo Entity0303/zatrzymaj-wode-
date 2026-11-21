@@ -12,7 +12,7 @@ Fakt = None (brak danych) -> warunek fałszywy. Szablon z brakującym faktem -> 
 A5 (D42, konsultacja z mentorem): pola reguły
   timing: teraz | po_zbiorze | przed_sezonem  albo {in_season: …, off_season: …},
   permit: none | maybe | required (domyślnie: nawadnianie – required, reszta – none),
-  eco_scheme: klucz z ECO_SCHEMES, fertilization: true – reguła o nawożeniu (pomijana przy silnym stresie).
+  eco_scheme: kod z ALLOWED_ECO_CODES (ARiMR 2026), fertilization: true – reguła o nawożeniu (pomijana przy silnym stresie).
 
 Kolejność: retencja -> agrotechnika -> nawadnianie; w grupie: najpierw pewne (bez ostrzeżenia), potem bez
 formalności, potem „teraz” przed „po zbiorze” i „przed następnym sezonem”, na końcu priorytet.
@@ -36,7 +36,7 @@ CATEGORY_ORDER = ["retencja", "agrotechnika", "nawadnianie"]
 OPS = {"eq", "ne", "in", "not_in", "lt", "lte", "gt", "gte", "exists"}
 # fakty techniczne – nie pokazujemy ich jako „danych wejściowych”
 HIDDEN_FACTS = {"sensitive", "off_season", "crop_kind", "irrigation_status", "season_complete", "non_agricultural",
-                "in_season", "strong_stress"}
+                "in_season", "strong_stress", "has_crop", "irrigation_practice", "water_stress_7d"}
 DISPLAY_FACT = {"phase": "phase_label", "crop": "crop_label", "rain_retention": "rain_retention_label",
                 "light_soil": "soil_txt", "same_crop": "previous_crop_label", "cereal_after_cereal": "previous_crop_label",
                 "soil_species": "texture_label"}
@@ -57,18 +57,20 @@ LOW_CONFIDENCE_WARNING = "Obarczone dużym ryzykiem błędu – traktuj jako wsk
 CONFIDENCE_BONUS = {"wysoka": 10, "srednia": 0, "ograniczona": -20}
 _ECO_CARBON = "Rolnictwo węglowe i zarządzanie składnikami odżywczymi"
 ECO_NOTE = "Sprawdź aktualne warunki w ARiMR."
-# Ekoschematy PS WPR 2023–2027 (ARiMR) – nazwy praktyk; bez kwot dopłat (D42)
+# Ekoschematy ARiMR 2026 – TYLKO potwierdzone kody (A5b-1, D51); bez kwot dopłat (D42).
+# Reguła z kodem spoza tej listy nie przejdzie walidacji przy wczytaniu.
+ALLOWED_ECO_CODES = ("E_MPW", "E_USU", "E_WSG", "E_PN", "E_MIOD", "E_EKSTUZ")
 ECO_SCHEMES: dict[str, EcoScheme] = {
     "E_MPW": EcoScheme(name=_ECO_CARBON, practice="Międzyplony ozime lub wsiewki śródplonowe", code="E_MPW", note=ECO_NOTE),
     "E_USU": EcoScheme(name=_ECO_CARBON, practice="Uproszczone systemy uprawy", code="E_USU", note=ECO_NOTE),
     "E_WSG": EcoScheme(name=_ECO_CARBON, practice="Wymieszanie słomy z glebą", code="E_WSG", note=ECO_NOTE),
-    "E_ZSU": EcoScheme(name=_ECO_CARBON, practice="Zróżnicowana struktura upraw", code="E_ZSU", note=ECO_NOTE),
-    "PLAN_NAWOZENIA": EcoScheme(name=_ECO_CARBON, practice="Opracowanie i przestrzeganie planu nawożenia",
-                                code=None, note=ECO_NOTE),
-    "TUZ_RETENCJA": EcoScheme(name="Retencjonowanie wody na trwałych użytkach zielonych",
-                              practice="Retencjonowanie wody na TUZ (tylko trwałe użytki zielone)", code=None,
-                              note=ECO_NOTE),
+    "E_PN": EcoScheme(name=_ECO_CARBON, practice="Opracowanie i przestrzeganie planu nawożenia", code="E_PN", note=ECO_NOTE),
+    "E_MIOD": EcoScheme(name="Obszary z roślinami miododajnymi", practice="Obszary z roślinami miododajnymi",
+                        code="E_MIOD", note=ECO_NOTE),
+    "E_EKSTUZ": EcoScheme(name=_ECO_CARBON, practice="Ekstensywne użytkowanie TUZ z obsadą zwierząt", code="E_EKSTUZ",
+                          note=ECO_NOTE),
 }
+assert set(ECO_SCHEMES) == set(ALLOWED_ECO_CODES) and all(k == v.code for k, v in ECO_SCHEMES.items())
 
 
 class RuleError(ValueError):
@@ -129,7 +131,7 @@ def _validate(raw: dict, src: str) -> Rule:
     if permit not in PERMITS:
         raise RuleError(f"{src}: złe 'permit' w {raw['id']}")
     eco = raw.get("eco_scheme")
-    if eco is not None and eco not in ECO_SCHEMES:
+    if eco is not None and eco not in ALLOWED_ECO_CODES:
         raise RuleError(f"{src}: nieznany ekoschemat w {raw['id']}: {eco}")
     return Rule(
         id=raw["id"], category=raw["category"], priority=int(raw["priority"]),
@@ -259,6 +261,8 @@ def evaluate(facts: Facts, available: set[str] | None = None, rules: tuple[Rule,
         if conds is None:
             continue
         when = rule.when_for(facts)
+        if rule.category == "nawadnianie" and facts.get("irrigation_practice") in ("not_practiced", None):
+            continue  # D48: uprawy, których w Polsce się nie nawadnia (i analiza bez uprawy) – nigdy nawadnianie
         if rule.fertilization and facts.get("strong_stress") and when == "teraz":
             ev.skipped_missing_data.append(rule.id)  # przy suszy nawóz nie zadziała (D40, D42)
             continue

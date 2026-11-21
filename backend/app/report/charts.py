@@ -6,7 +6,7 @@ Każda funkcja zwraca gotowy znacznik <svg> (wstawiany do szablonu bez escapowan
 import datetime as dt
 from html import escape
 
-from app.schemas.analysis import BandPoint, History, MonthlyPrecip, SeriesPoint, YearStress
+from app.schemas.analysis import BandPoint, FieldState, History, MonthlyPrecip, SeriesPoint, YearStress
 
 C = {
     "brand": "#2F6B47", "water": "#2F80C9", "water_soft": "#E3F0FB", "danger": "#C8453B", "warn": "#E8B931",
@@ -35,14 +35,27 @@ def _ticks(lo: float, hi: float, n: int = 5) -> list[float]:
 
 def balance_chart(h: History, width: int = 680, height: int = 190) -> str | None:
     """Bilans wody narastająco: pasmo min–max z 10 lat, średnia (przerywana), bieżący sezon (gruba linia)."""
-    band: list[BandPoint] = [b for b in h.balance_band if b.min is not None and b.max is not None]
-    cur: list[SeriesPoint] = [p for p in h.balance_cumulative if p.value is not None]
+    return band_chart(h.balance_band, h.balance_cumulative, "mm", (h.balance_deviation_mm or 0) < 0, width, height)
+
+
+def soil_water_chart(f: FieldState, width: int = 680, height: int = 170) -> str | None:
+    """Stan działki: woda dostępna w profilu (%) od 1 listopada na tle tego samego okresu w 10 latach."""
+    r = f.soil_water.rank
+    below = bool(r and r.of_years and r.lower_years < r.of_years / 2)
+    return band_chart(f.series_band, f.series, "%", below, width, height, fixed=(0.0, 100.0))
+
+
+def band_chart(band_in: list[BandPoint], cur_in: list[SeriesPoint], unit: str, below: bool, width: int = 680,
+               height: int = 190, fixed: tuple[float, float] | None = None) -> str | None:
+    """Pasmo min–max z 10 lat, średnia (przerywana), bieżący okres (gruba linia; czerwona, gdy gorzej niż zwykle)."""
+    band: list[BandPoint] = [b for b in band_in if b.min is not None and b.max is not None]
+    cur: list[SeriesPoint] = [p for p in cur_in if p.value is not None]
     if not band and not cur:
         return None
     dates = [b.date for b in band] + [p.date for p in cur]
     d0, d1 = min(dates), max(dates)
     vals = [b.min for b in band] + [b.max for b in band] + [p.value for p in cur] + [0.0]
-    lo, hi = min(vals), max(vals)
+    lo, hi = fixed or (min(vals), max(vals))
     pad_l, pad_r, pad_t, pad_b = 46, 12, 12, 26
     w, hh = width - pad_l - pad_r, height - pad_t - pad_b
     days = max((d1 - d0).days, 1)
@@ -74,11 +87,12 @@ def balance_chart(h: History, width: int = 680, height: int = 190) -> str | None
     if cur:
         pts = " ".join(f"{x(p.date):.1f},{y(p.value):.1f}" for p in cur)
         last = cur[-1]
-        color = C["danger"] if (h.balance_deviation_mm or 0) < 0 else C["brand"]
+        color = C["danger"] if below else C["brand"]
+        label = f"{_num(last.value)}{unit}" if unit == "%" else f"{_num(last.value)} {unit}"
         parts.append(f'<polyline points="{pts}" fill="none" stroke="{color}" stroke-width="2.4"/>')
         parts.append(f'<circle cx="{x(last.date):.1f}" cy="{y(last.value):.1f}" r="3.5" fill="{color}"/>')
-        parts.append(f'<text x="{min(x(last.date) + 6, width - 60):.1f}" y="{y(last.value) - 6:.1f}" fill="{color}" font-weight="600">{_num(last.value)} mm</text>')
-    parts.append(f'<text x="{pad_l}" y="{pad_t - 2}" fill="{C["muted"]}">mm</text>')
+        parts.append(f'<text x="{min(x(last.date) + 6, width - 60):.1f}" y="{max(y(last.value) - 6, pad_t + 8):.1f}" fill="{color}" font-weight="600">{label}</text>')
+    parts.append(f'<text x="{pad_l}" y="{pad_t - 2}" fill="{C["muted"]}">{unit}</text>')
     parts.append("</svg>")
     return "".join(parts)
 

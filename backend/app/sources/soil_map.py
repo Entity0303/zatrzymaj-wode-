@@ -6,12 +6,14 @@ rolniczej, typ gleby i gatunek (uziarnienie) kolejnych warstw – PODLOZE1 = war
 Punkt poza zasięgiem mapy → pusta odpowiedź (None, nie błąd). Mapy z lat 1960–1980 – informacja dodatkowa.
 """
 
+import asyncio
 import re
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 
 from app.core.cache import TTLCache, cached_fetch
 from app.core.config import settings
+from app.core.geo import sample_points, to_wgs84
 from app.core.http import SourceError, get_with_retry
 
 SOURCE = "Mapa glebowo-rolnicza (GUGiK)"
@@ -115,6 +117,22 @@ async def soil_map_at(lon: float, lat: float) -> "SoilMapResult | None":
         return parse_response(resp.text)
 
     return await cached_fetch(_cache, key, SOURCE, download, timeout_s=7.5, breaker_s=300)
+
+
+PARCEL_POINTS = 9  # punkt reprezentatywny + 8 rozłożonych w obrysie (udziały gleb, zgodność z IUNG – D49)
+
+
+async def soil_map_for_parcel(geom_2180, n: int = PARCEL_POINTS) -> list["SoilMapResult | None"]:
+    """Kontury mapy w kilku punktach działki (równolegle, każdy z cache). Pierwszy = punkt reprezentatywny.
+    Błąd w części punktów – pomijamy je; błąd we wszystkich – SourceError."""
+    pts = [geom_2180.representative_point()] + (sample_points(geom_2180, n - 1) if n > 1 else [])
+    ll = [to_wgs84(p) for p in pts]
+    res = await asyncio.gather(*(soil_map_at(p.x, p.y) for p in ll), return_exceptions=True)
+    ok = [r for r in res if not isinstance(r, BaseException)]
+    if not ok:
+        err = next((r for r in res if isinstance(r, SourceError)), None)
+        raise err or SourceError(SOURCE, "brak odpowiedzi")
+    return [None if isinstance(r, BaseException) else r for r in res]
 
 
 def clear_cache() -> None:

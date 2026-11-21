@@ -8,9 +8,16 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Any
 
-from app.analysis.crops import CROPS, Crop
+from app.analysis.crops import CROPS, Crop, no_irrigation_sentence
+from app.analysis.field_state import FieldStateResult
 from app.analysis.soil import SoilAssessment
-from app.analysis.water_balance import SeasonSums, SoilWaterResult, WaterBalanceResult, format_date_pl
+from app.analysis.water_balance import (
+    RecentBalance,
+    SeasonSums,
+    SoilWaterResult,
+    WaterBalanceResult,
+    format_date_pl,
+)
 from app.schemas.analysis import Soil
 from app.sources.soil_map import LIGHT
 
@@ -52,7 +59,12 @@ FACT_META: dict[str, tuple[str, str | None, str]] = {
     "rain_retention_label": ("Woda z ulewy", None, "SoilGrids + Saxton i Rawls (2006)"),
     "soil_complex_label": ("Kompleks przydatności rolniczej", None, "Mapa glebowo-rolnicza (GUGiK)"),
     "soil_txt": ("Gleba", None, "IUNG-PIB, mapa glebowo-rolnicza, SoilGrids"),
+    "kbw30_mm": ("Bilans wody z ostatnich 30 dni (opad − parowanie)", "mm", "NASA POWER"),
+    "kbw30_percentile": ("Lata z niższym bilansem wody w ostatnich 30 dniach", "%", "NASA POWER"),
+    "et0_recent_mm_day": ("Parowanie (ET0) w ostatnich 7 dniach", "mm/dzień", "NASA POWER, FAO-56"),
 }
+OPTIONAL_IRRIGATION_NOTE = (" {crop} w Polsce nawadnia się rzadko – ma to sens tylko przy dostępnej wodzie i sprzęcie"
+                            " (pozwolenie wodnoprawne).")
 RAIN_LABEL = {"ucieka": "szybko wsiąka i ucieka w głąb", "zatrzymuje": "dobrze ją zatrzymuje",
               "splywa": "ryzyko spływu i zastoisk"}
 
@@ -72,8 +84,30 @@ def _pct(lower: int | None, of: int | None) -> float | None:
     return None if lower is None or not of else round(100 * lower / of, 0)
 
 
+def recent_facts(recent: RecentBalance | None) -> dict[str, Any]:
+    v: dict[str, Any] = {
+        "kbw30_mm": recent.balance_mm if recent else None,
+        "kbw30_percentile": recent.percentile if recent else None,
+        "kbw30_deviation_mm": recent.deviation_mm if recent else None,
+        "kbw30_mean_mm": recent.mean_mm if recent else None,
+    }
+    dev30 = v["kbw30_deviation_mm"]
+    v["kbw30_vs_mean_txt"] = (
+        None if v["kbw30_mm"] is None else "brak porównania z ostatnimi latami" if dev30 is None else
+        "tyle co zwykle" if abs(dev30) < 5 else f"o {abs(dev30):.0f} mm {'mniej' if dev30 < 0 else 'więcej'} niż zwykle"
+    )
+    return v
+
+
+def field_facts(field: FieldStateResult, recent: RecentBalance | None) -> Facts:
+    """Minimalne fakty do statusu „stan wody na działce” (field_state.status)."""
+    return Facts({"has_crop": False, "water_pct": field.water_pct if field.status == "ok" else None,
+                  "water_mm": field.water_mm, "water_rank_lower": field.rank_lower, "water_rank_of": field.rank_of,
+                  **recent_facts(recent)})
+
+
 def build_facts(
-    crop: Crop,
+    crop: Crop | None,
     analysis_date: date,
     soil: SoilAssessment,
     model: SoilWaterResult | None,
@@ -81,17 +115,25 @@ def build_facts(
     sums: SeasonSums | None,
     soil_c: Soil | None = None,
     previous_crop: str | None = None,
+    field: FieldStateResult | None = None,
+    recent: RecentBalance | None = None,
 ) -> Facts:
-    phase = model.phase if model else crop.day_info(analysis_date).phase
+    """Fakty na datę analizy. `crop` = None – analiza bez uprawy: stan wody z modelu pokrycia referencyjnego
+    (`field`), brak faktów zależnych od uprawy (faza, stres, nawadnianie)."""
+    if crop is None:
+        model = None
+    phase = (model.phase if model else crop.day_info(analysis_date).phase) if crop else None
     v: dict[str, Any] = {
-        "crop": crop.id,
-        "crop_label": crop.label,
-        "crop_kind": crop.kind,
+        "has_crop": crop is not None,
+        "crop": crop.id if crop else None,
+        "crop_label": crop.label if crop else None,
+        "crop_kind": crop.kind if crop else None,
+        "irrigation_practice": crop.irrigation_practice if crop else None,
         "month": analysis_date.month,
         "phase": phase,
         "phase_label": model.phase_label if model else None,
         "sensitive": bool(model and model.sensitive),
-        "off_season": phase in OFF_SEASON_PHASES,
+        "off_season": phase in OFF_SEASON_PHASES if crop else True,
         "season_complete": bool(model and model.season_complete),
         "non_agricultural": soil.not_agricultural,
         "soil_category": soil.dominant_mineral,
@@ -103,6 +145,8 @@ def build_facts(
         "water_mm": model.water_mm if model and model.status == "ok" else None,
         "water_scope": model.scope if model else None,
         "water_rank_pct": _pct(model.rank_lower, model.rank_of) if model else None,
+        "water_rank_lower": model.rank_lower if model else None,
+        "water_rank_of": model.rank_of if model else None,
         "days_to_stress": model.days_to_stress if model else None,
         "risk": model.risk if model else None,
         "stress_days_season": model.stress_days_season if model and model.status == "ok" else None,
@@ -145,10 +189,26 @@ def build_facts(
     )
     sd, sm = v["stress_days_season"], v["stress_days_mean"]
     v["stress_ratio"] = round(sd / sm, 2) if sd is not None and sm else None
+    if crop is None and field is not None and field.status == "ok":  # stan działki (pokrycie referencyjne)
+        v.update(water_pct=field.water_pct, water_mm=field.water_mm, water_scope="profil",
+                 water_rank_pct=_pct(field.rank_lower, field.rank_of), water_rank_lower=field.rank_lower,
+                 water_rank_of=field.rank_of)
+    v["water_description"] = (model.description if model and model.status == "ok" else
+                              field.description if crop is None and field and field.status == "ok" else None)
+    v.update(recent_facts(recent))  # bilans z ostatnich 30 dni (status poza sezonem i bez uprawy)
+    v["et0_recent_mm_day"] = sums.et0_recent_mm_day if sums else None
     v["horizon_kind"] = model.horizon_kind if model else None
     v["in_season"] = phase in IN_SEASON_PHASES
     # silny stres wodny (D42): Dr > RAW w fazie wrażliwej (stres już jest) albo wysokie ryzyko w 7 dni
     v["strong_stress"] = bool(v["sensitive"] and (v["days_to_stress"] == 0 or v["risk"] == "wysokie"))
+    # stres wodny w ciągu 7 dni w fazie wrażliwej – tam, gdzie inne uprawy dostałyby plan nawadniania (D48)
+    d2s = v["days_to_stress"]
+    v["water_stress_7d"] = bool(v["sensitive"] and d2s is not None and d2s <= 7)
+    v["stress_when_txt"] = ("" if d2s is None else " – rośliny już odczuwają brak wody" if d2s == 0 else
+                            f" – rośliny odczują brak wody za ok. {d2s} dni")
+    v["no_irrigation_txt"] = no_irrigation_sentence(crop) if crop else None
+    v["irrigation_practice_note"] = (OPTIONAL_IRRIGATION_NOTE.format(crop=crop.label) if crop and
+                                     crop.irrigation_practice == "optional" else "")
     dev = v["balance_deviation_mm"]
     v["balance_vs_mean_txt"] = (
         None if v["balance_mm"] is None else "brak porównania z ostatnimi latami" if dev is None else
@@ -157,8 +217,10 @@ def build_facts(
     # płodozmian
     prev = previous_crop if previous_crop in CROPS else None
     v["previous_crop"] = prev
-    v["crop_label_lower"] = crop.label.lower()
+    v["crop_label_lower"] = crop.label.lower() if crop else None
     v["previous_crop_label"] = CROPS[prev].label.lower() if prev else None
+    if crop is None:
+        prev = None
     v["same_crop"] = None if prev is None else (prev == crop.id or (prev.startswith("rzepak") and crop.id.startswith("rzepak")))
     v["cereal_after_cereal"] = None if prev is None else (prev in CEREALS and crop.id in CEREALS)
     v["rotation_issue"] = (

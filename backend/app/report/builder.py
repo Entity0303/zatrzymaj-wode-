@@ -1,4 +1,5 @@
-"""Raport PDF „Paszport wodny działki” (SPEC 10.2) – WeasyPrint, A4 pionowo.
+"""Raport PDF „Paszport wodny działki” (SPEC 10.2) – WeasyPrint, A4 pionowo. Bez uprawy (A5b-1) – krótszy
+raport „Stan wodny działki”: gleba, zapas wody pod pokryciem referencyjnym FAO-56, bilans, retencja.
 
 Treść = wynik normalnej analizy (run_analysis) + mapa działki (ortofotomapa Geoportalu, WMS GetMap przycięta do
 obrysu z marginesem) + wykresy SVG (charts.py) + kod QR do analizy online (PUBLIC_URL z .env). Raport nie liczy
@@ -106,7 +107,10 @@ async def ortho_image(bbox: tuple[float, float, float, float], px: int = MAP_PX)
 
 
 def analysis_url(a: AnalysisResponse) -> str:
-    q = {"dzialka": a.parcel.id, "uprawa": a.crop, "data": a.analysis_date.isoformat()}
+    q = {"dzialka": a.parcel.id}
+    if a.crop:
+        q["uprawa"] = a.crop
+    q["data"] = a.analysis_date.isoformat()
     if a.previous_crop:
         q["przedplon"] = a.previous_crop
     return f"{settings.public_url.rstrip('/')}/?{urlencode(q)}"
@@ -122,7 +126,8 @@ def qr_svg(url: str) -> str:
 
 def filename(a: AnalysisResponse) -> str:
     safe = re.sub(r"[^0-9A-Za-z_.-]+", "-", a.parcel.id).strip("-")
-    return f"paszport-wodny-{safe}-{a.analysis_date.isoformat()}.pdf"
+    kind = "paszport-wodny" if a.crop else "stan-wodny-dzialki"
+    return f"{kind}-{safe}-{a.analysis_date.isoformat()}.pdf"
 
 
 def render_html(a: AnalysisResponse, ortho: str | None, generated: dt.datetime | None = None) -> str:
@@ -132,7 +137,12 @@ def render_html(a: AnalysisResponse, ortho: str | None, generated: dt.datetime |
     ctx = {
         "a": a,
         "generated": generated or dt.datetime.now(dt.timezone.utc),
-        "crop_label": CROPS[a.crop].label,
+        "title": "Paszport wodny działki" if a.crop else "Stan wodny działki",
+        "crop_label": CROPS[a.crop].label if a.crop else None,
+        "field": a.field_state,
+        "field_status": STATUS[a.field_state.status.level] if a.field_state else None,
+        "chart_field": Markup(charts.soil_water_chart(a.field_state) or "") if a.field_state else "",
+        "field_bar": Markup(charts.bar(a.field_state.soil_water_pct.value, "#2F80C9")) if a.field_state else "",
         "previous_crop_label": CROPS[a.previous_crop].label if a.previous_crop in CROPS else
         ("nie wiem" if a.previous_crop == "nie_wiem" else None),
         "status": STATUS[a.status.level],

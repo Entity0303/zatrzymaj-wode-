@@ -1,4 +1,4 @@
-# Reguły RETENCJI – kategoria pierwsza („retain water where it falls”).
+# Reguły RETENCJI – kategoria pierwsza. Ekoschematy tylko z listy ARiMR 2026 (D51). („retain water where it falls”).
 # Podstawa: docs/kowr/KOWR - Podstawy naukowe.pdf – retencja glebowa (międzyplony, resztki pożniwne,
 # ograniczenie intensywnej uprawy, materia organiczna) i krajobrazowa (oczka, mokradła, strefy buforowe,
 # zadrzewienia). Konsultacja z mentorem 21.11 (D40): mało i jasno, najpierw to, co bez pozwolenia.
@@ -113,6 +113,78 @@ rules:
     description: "Zadarnione międzyrzędzia i ściółka w rzędach (słoma, kora, zrębki) ograniczają parowanie i spływ po ulewie. Od {season_start_txt} bilans wody wynosi {balance_mm} mm ({balance_vs_mean_txt})."
     why:
       - "W uprawach wieloletnich okrywa gleby to najprostsza retencja glebowa."
+
+  # ── uprawy, których w Polsce się nie nawadnia (D48): przy stresie wodnym zamiast nawadniania ──
+  - id: retencja.bez_nawadniania_zatrzymaj_wode
+    category: retencja
+    priority: 99
+    confidence: srednia
+    timing: teraz
+    permit: none
+    when:
+      all:
+        - {fact: irrigation_practice, eq: not_practiced}
+        - {fact: water_stress_7d, eq: true}
+    title: "Zatrzymaj wodę w glebie – zamiast nawadniania"
+    description: "{no_irrigation_txt}. Nie ugniataj gleby ciężkim sprzętem i zostaw na polu resztki roślin – deszcz wsiąknie wtedy zamiast spłynąć. Po zbiorze od razu rozdrobnij słomę i wysiej międzyplon, żeby odbudować zapas wody na następny sezon."
+    why:
+      - "W strefie korzeni jest {water_pct}% wody dostępnej{stress_when_txt}."
+      - "Od {season_start_txt} bilans wody (opad − parowanie) wynosi {balance_mm} mm – {balance_vs_mean_txt}."
+
+  # ── analiza bez uprawy (A5b-1): retencja niezależna od uprawy, wg pory roku ──
+  - id: retencja.dzialka_jesien_zima
+    category: retencja
+    priority: 85
+    confidence: srednia
+    timing: teraz
+    permit: none
+    eco_scheme: E_USU
+    when:
+      all:
+        - {fact: has_crop, eq: false}
+        - {fact: month, in: [11, 12, 1, 2, 3]}
+        - {fact: water_pct, exists: true}
+    title: "Zatrzymaj wodę z jesienno-zimowych opadów i roztopów"
+    description: "W profilu gleby jest {water_pct}% wody dostępnej ({water_description}). Nie orz na zimę – zostaw resztki pożniwne, szorstką powierzchnię albo międzyplon ozimy: woda z deszczu i roztopów wsiąknie zamiast spłynąć."
+    why:
+      - "Jesień i zima to główny okres odbudowy zapasu wody w glebie."
+      - "Bilans wody z ostatnich 30 dni: {kbw30_mm} mm ({kbw30_vs_mean_txt})."
+
+  - id: retencja.dzialka_wiosna
+    category: retencja
+    priority: 85
+    confidence: srednia
+    timing: teraz
+    permit: none
+    eco_scheme: E_USU
+    when:
+      all:
+        - {fact: has_crop, eq: false}
+        - {fact: month, in: [4, 5, 6]}
+        - {fact: water_pct, exists: true}
+    title: "Ogranicz uprawki i nie zostawiaj gołej gleby"
+    description: "W profilu gleby jest {water_pct}% wody dostępnej ({water_description}). Rób jak najmniej przejazdów i nie odwracaj roli – każda uprawka przesusza wierzchnią warstwę; goła gleba traci wodę najszybciej."
+    why:
+      - "Ograniczenie intensywnej uprawy zmniejsza straty wody przez parowanie."
+      - "Bilans wody z ostatnich 30 dni: {kbw30_mm} mm ({kbw30_vs_mean_txt})."
+
+  - id: retencja.dzialka_lato_jesien
+    category: retencja
+    priority: 85
+    confidence: srednia
+    timing: teraz
+    permit: none
+    eco_scheme: E_MPW
+    when:
+      all:
+        - {fact: has_crop, eq: false}
+        - {fact: month, in: [7, 8, 9, 10]}
+        - {fact: water_pct, exists: true}
+    title: "Po zbiorze: międzyplon i słoma na polu"
+    description: "W profilu gleby jest {water_pct}% wody dostępnej ({water_description}). Po zbiorze zostaw rozdrobnioną słomę i wysiej międzyplon – okryta gleba mniej paruje i zatrzyma więcej wody z jesiennych opadów."
+    why:
+      - "Międzyplony i resztki pożniwne zwiększają próchnicę i infiltrację – to podstawowa metoda retencji glebowej."
+      - "Bilans wody z ostatnich 30 dni: {kbw30_mm} mm ({kbw30_vs_mean_txt})."
 
   # ── zależne od gleby ──
   - id: retencja.prochnica

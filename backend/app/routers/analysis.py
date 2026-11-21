@@ -25,15 +25,18 @@ from app.analysis.soil import to_contract as soil_to_contract
 from app.analysis.causes import build_causes
 from app.analysis.confidence import ConfidenceInputs, reliability
 from app.analysis.crops import CROPS, PHASE_LABELS
-from app.analysis.facts import build_facts
+from app.analysis import field_state as fs
+from app.analysis import soil_consistency
+from app.analysis.facts import build_facts, field_facts
 from app.analysis.recommendations import Evaluation, evaluate
-from app.analysis.scoring import overall_status
+from app.analysis.scoring import overall_status, reserve_status
 from app.analysis.soil_texture import enrich_soil
 from app.analysis.water_balance import (
     HorizonDay,
     SoilWaterResult,
     build_history,
     history_range,
+    recent_balance,
     season_sums,
     shift_years,
     soil_water_model,
@@ -487,9 +490,8 @@ def _hg_share(w, sums) -> float | None:
 
 
 def validate_params(crop: str | None, analysis_date: dt.date, previous_crop: str | None, today: dt.date) -> None:
-    if not crop:
-        raise HTTPException(status_code=422, detail={"message": "Wybierz uprawę – od niej zależy ocena wody w glebie."})
-    if crop not in CROPS:
+    """Uprawa opcjonalna (A5b-1): bez niej – „Stan działki”. Nieznana uprawa / zła data – 422."""
+    if crop and crop not in CROPS:
         raise HTTPException(status_code=422, detail={"message": f"Nieznana uprawa: {crop}."})
     if previous_crop and previous_crop != "nie_wiem" and previous_crop not in CROPS:
         raise HTTPException(status_code=422, detail={"message": f"Nieznana uprawa z poprzedniego roku: {previous_crop}."})
@@ -513,7 +515,8 @@ async def _run(parcel_id: str, crop: str | None, date: dt.date | None, previous_
     today = dt.date.today()
     analysis_date = date or today
     validate_params(crop, analysis_date, previous_crop, today)
-    crop_obj = get_crop(crop)
+    crop = crop or None
+    crop_obj = get_crop(crop) if crop else None
     steps: list[LoadingStep] = []
 
     # ── 1. działka (ULDK) ──
@@ -551,7 +554,7 @@ async def _run(parcel_id: str, crop: str | None, date: dt.date | None, previous_
         timed("KIEG / EGiB GUGiK", kieg.classes_for_parcel(p.id, p.geom_2180)),
         timed("Open-Meteo (prognoza)", _forecast_days(c.x, c.y)) if is_today else asyncio.sleep(0, result=(None, 0)),
         timed(soilgrids.SOURCE, soilgrids.texture_at(rp.x, rp.y)),
-        timed(soil_map.SOURCE, soil_map.soil_map_at(rp.x, rp.y)),
+        timed(soil_map.SOURCE, soil_map.soil_map_for_parcel(p.geom_2180)),
     )
     if isinstance(w_res, SourceError):  # bez pogody nic nie da się policzyć
         raise http_error(w_res)
@@ -569,7 +572,9 @@ async def _run(parcel_id: str, crop: str | None, date: dt.date | None, previous_
     kieg_note = err(kieg_res) or (kieg_res.note if kieg_res else None)
     steps.append(_step("egib", "Klasy bonitacyjne (EGiB)", state(kieg_res), note=kieg_note, ms=kieg_ms))
     steps.append(_step("soilgrids", "Frakcje i przepuszczalność gleby (SoilGrids)", state(sg_res), note=err(sg_res), ms=sg_ms))
-    sm_note = err(sm_res) or (None if sm_res is not None else "brak konturu w tym miejscu")
+    map_sum = None if isinstance(sm_res, SourceError) else soil_consistency.summarize_map(sm_res)
+    sm_rep = sm_res if isinstance(sm_res, SourceError) else map_sum.representative
+    sm_note = err(sm_res) or (None if sm_rep is not None else "brak konturu w tym miejscu")
     steps.append(_step("soil_map", "Mapa glebowo-rolnicza (GUGiK)", state(sm_res), note=sm_note, ms=sm_ms))
     if is_today:
         steps.append(_step("forecast", "Prognoza pogody (Open-Meteo)", state(fc_res), note=err(fc_res), ms=fc_ms))
@@ -581,45 +586,78 @@ async def _run(parcel_id: str, crop: str | None, date: dt.date | None, previous_
     # ── 3. obliczenia ──
     s = perf_counter()
     soil_a = assess_soil(iung_res, kieg_res)
-    soil_c, soil_lim = enrich_soil(soil_to_contract(soil_a), sg_res, sm_res)
+    soil_c, soil_lim = enrich_soil(soil_to_contract(soil_a), sg_res, sm_rep)
+    # zgodność źródeł gleby: mapa glebowo-rolnicza > IUNG > SoilGrids (D49) – kategoria i WOD do modelu
+    cons = soil_consistency.assess(soil_a, map_sum, soil_c.texture)
+    soil_consistency.apply(soil_a, cons)
+    soil_c = soil_c.model_copy(update={"consistency": cons.contract, "wod_mm": soil_a.wod_mm})
     wb = build_history(w, analysis_date, years=settings.history_years)
     sums = season_sums(w, analysis_date, years=settings.history_years)
+    recent = recent_balance(w, analysis_date, years=settings.history_years)
     forecast = None if fc_res is None or isinstance(fc_res, SourceError) else fc_res
     no_model = None
+    model = field = None
     if soil_a.not_agricultural or soil_a.wod_mm is None:
         no_model = soil_c.non_agricultural_note or "Brak danych o glebie (WOD) – modelu wody w glebie nie policzono."
-        model = None
     else:
-        model = soil_water_model(w, crop_obj, soil_a.wod_mm, analysis_date, forecast,
-                                 soil_category=soil_a.dominant_mineral, years=settings.history_years)
-    out = model_to_contract(model or _no_model_result(crop_obj, analysis_date), crop_obj, analysis_date, no_model_note=no_model)
-    steps.append(_step("balance", "Liczę bilans wody i wodę w glebie (FAO-56)", "done" if model else "error",
+        # stan działki (pokrycie referencyjne FAO-56, D50) – zawsze; model uprawy – gdy rolnik ją wybrał
+        field = fs.field_state_model(w, soil_a.wod_mm, analysis_date, forecast, years=settings.history_years)
+        if crop_obj:
+            model = soil_water_model(w, crop_obj, soil_a.wod_mm, analysis_date, forecast,
+                                     soil_category=soil_a.dominant_mineral, years=settings.history_years)
+    out = None
+    if crop_obj:
+        out = model_to_contract(model or _no_model_result(crop_obj, analysis_date), crop_obj, analysis_date,
+                                no_model_note=no_model)
+    ok_calc = bool(model) if crop_obj else bool(field and field.status == "ok")
+    steps.append(_step("balance", "Liczę bilans wody i wodę w glebie (FAO-56)", "done" if ok_calc else "error",
                        note=no_model, ms=int((perf_counter() - s) * 1000)))
 
     s = perf_counter()
     prev = previous_crop if previous_crop in CROPS else None
-    facts = build_facts(crop_obj, analysis_date, soil_a, model, wb, sums, soil_c=soil_c, previous_crop=prev)
+    facts = build_facts(crop_obj, analysis_date, soil_a, model, wb, sums, soil_c=soil_c, previous_crop=prev,
+                        field=field, recent=recent)
     status = overall_status(facts, soil_c)
     causes = [] if soil_a.not_agricultural else build_causes(facts)
-    evaluation = evaluate(facts) if model and not soil_a.not_agricultural else Evaluation([])
-    sm_status = None if isinstance(sm_res, SourceError) else ("ok" if sm_res is not None else "brak_konturu")
+    evaluation = evaluate(facts) if ok_calc and not soil_a.not_agricultural else Evaluation([])
+    field_c = None
+    if field is not None:
+        f_status = status if crop_obj is None else reserve_status(field_facts(field, recent), "bez_uprawy")
+        field_c = fs.to_contract(field, recent, f_status, analysis_date, w.source)
+    sm_status = None if isinstance(sm_res, SourceError) else ("ok" if sm_rep is not None else "brak_konturu")
     rel, _premises, _points = reliability(ConfidenceInputs(
         analysis_date=analysis_date, today=today, parcel_fetched=p.fetched_at.date(), weather_name=w.source,
         weather_resolution=w.resolution, weather_fallback=w_res.fallback_used, weather_notes=w_res.notes,
         weather_until=wb.data_until, forecast_ok=(None if not is_today else forecast is not None),
         forecast_error=err(fc_res), soil=soil_a, model=model, wb=wb,
-        hg_share_season=_hg_share(w, sums), extra_limitations=soil_lim,
+        hg_share_season=_hg_share(w, sums),
+        extra_limitations=soil_lim + (field.limitations if field and crop_obj is None else []),
         soilgrids="brak" if isinstance(sg_res, SourceError) else "ok", soilgrids_error=err(sg_res),
         soil_map=sm_status or "brak", soil_map_error=err(sm_res),
-        soil_map_year=sm_res.mapped_year if sm_status == "ok" else None,
+        soil_map_year=sm_rep.mapped_year if sm_status == "ok" else None,
         stale=list(stale_hits),
+        soil_conflict=cons.conflict,
+        soil_basis_label=soil_consistency.LABELS[cons.contract.basis] if cons.substituted and cons.contract else None,
     ))
-    history = wb.history.model_copy(update={"stress_days_by_year": out.stress_days_by_year})
+    history = wb.history.model_copy(update={"stress_days_by_year": out.stress_days_by_year if out else []})
     no_sat = SourceTag(kind="brak_danych", source="Sentinel-2 L2A")
+    if out:
+        sw_pct, sw_mm, risk7, soil_water = out.soil_water_pct, out.soil_water_mm, out.risk_7d, out.soil_water
+    else:  # bez uprawy – stan działki (pokrycie referencyjne); ryzyko stresu roślin nie dotyczy
+        if field is not None:
+            sw_pct, sw_mm, soil_water = fs.water_indicators(field, analysis_date)
+        else:
+            tag = SourceTag(kind="brak_danych", source=fs.FIELD_SOURCE)
+            sw_pct = Indicator(value=None, unit="%", status="no_data", note=no_model, source_tag=tag)
+            sw_mm = Indicator(value=None, unit="mm", status="no_data", note=no_model, source_tag=tag)
+            soil_water = SoilWaterState(scope="profil", depth_m=1.0, description=no_model or "brak danych")
+        risk7 = RiskIndicator(value=None, unit="dni", label="Nie dotyczy", status="no_data",
+                              note="wybierz uprawę, aby ocenić ryzyko stresu roślin na 7 dni",
+                              source_tag=SourceTag(kind="brak_danych", source=fs.FIELD_SOURCE))
     indicators = Indicators(
-        soil_water_pct=out.soil_water_pct,
-        soil_water_mm=out.soil_water_mm,
-        risk_7d=out.risk_7d,
+        soil_water_pct=sw_pct,
+        soil_water_mm=sw_mm,
+        risk_7d=risk7,
         crop_health=SatelliteIndicator(value=None, unit="pkt", status="no_data", note="zdjęcia satelitarne – w przygotowaniu", source_tag=no_sat),
         plant_moisture=SatelliteIndicator(value=None, unit="pkt", status="no_data", note="zdjęcia satelitarne – w przygotowaniu", source_tag=no_sat),
         water_balance_season=_balance_indicator(wb),
@@ -637,10 +675,12 @@ async def _run(parcel_id: str, crop: str | None, date: dt.date | None, previous_
         generated_at=dt.datetime.now(dt.timezone.utc).replace(microsecond=0),
         status=status,
         indicators=indicators,
-        crop_season=out.crop_season,
-        soil_water=out.soil_water,
-        irrigation=out.irrigation,
+        crop_season=out.crop_season if out else None,
+        soil_water=soil_water,
+        irrigation=out.irrigation if out else None,
         soil=soil_c,
+        field_state=field_c,
+        suggestions=None,  # A5b-2: ranking „Co tu posiać?”
         history=history,
         causes=causes,
         recommendations=evaluation.recommendations,
@@ -657,11 +697,13 @@ async def _run(parcel_id: str, crop: str | None, date: dt.date | None, previous_
 )
 async def get_analysis(
     parcel_id: str = Query(description="Pełny identyfikator działki ULDK (albo „obręb numer”)"),
-    crop: str | None = Query(None, description="Uprawa (15 upraw IUNG SMSR)"),
+    crop: str | None = Query(None, description="Uprawa (15 upraw IUNG SMSR); bez uprawy – „Stan działki”"),
     date: dt.date | None = Query(None, description="Data analizy (domyślnie dziś, maks. 10 lat wstecz)"),
     previous_crop: str | None = Query(None, description="Uprawa w poprzednim roku (15 upraw albo 'nie_wiem') – płodozmian"),
 ) -> AnalysisResponse:
     """Pełna analiza wodna działki: ULDK → równolegle pogoda 10 lat, gleba IUNG, klasy EGiB, SoilGrids, mapa
     glebowo-rolnicza, prognoza (dla dziś) → model wody w glebie → ocena → pewność → przyczyny → rekomendacje.
-    Awaria jednego źródła = brak danych i niższa pewność; 502 tylko bez działki (ULDK) albo bez pogody."""
+    Awaria jednego źródła = brak danych i niższa pewność; 502 tylko bez działki (ULDK) albo bez pogody.
+    Bez `crop` – stan działki (gleba, zapas wody pod pokryciem referencyjnym FAO-56, bilans opad − ET0),
+    `crop`, `crop_season`, `irrigation` = null."""
     return await run_analysis(parcel_id, crop, date, previous_crop)

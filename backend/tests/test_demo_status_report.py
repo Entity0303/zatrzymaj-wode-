@@ -175,7 +175,8 @@ def test_report_pdf_with_polish_text(client):
     assert ortho.called
     text = _pdf_text(r.content)
     for phrase in ("Paszport wodny działki", "Co mogę zrobić?", "Skąd te dane", "Gleba i teren", "Dlaczego?",
-                   "Wygenerowano", "Raport ma charakter pomocniczy", "Zboża ozime", "glina lekka pylasta", "Wody Polskie"):
+                   "Wygenerowano", "Raport ma charakter pomocniczy", "Zboża ozime", "glina lekka pylasta", "Zbóż w Polsce się nie nawadnia",
+                   "Stan działki"):
         assert phrase in text, phrase
     assert "ż" in text and "ą" in text and "ł" in text and "ę" in text  # polskie znaki w tekście PDF
     pages = len(PdfReader(io.BytesIO(r.content)).pages)
@@ -192,8 +193,8 @@ def test_report_pdf_without_orthophoto(client):
 
 @respx.mock
 def test_report_errors_like_analysis(client):
-    r = client.get("/api/report.pdf", params={"parcel_id": "x"})
-    assert r.status_code == 422 and "Wybierz uprawę" in r.json()["detail"]["message"]
+    r = client.get("/api/report.pdf", params={"parcel_id": "x", "crop": "banany"})
+    assert r.status_code == 422 and "Nieznana uprawa" in r.json()["detail"]["message"]
 
 
 @respx.mock

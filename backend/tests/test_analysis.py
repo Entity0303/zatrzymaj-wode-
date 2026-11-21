@@ -72,6 +72,11 @@ def facts(**kw) -> Facts:
         "previous_crop_label": None, "same_crop": None, "cereal_after_cereal": None, "rotation_issue": None,
         "rain_retention": None, "rain_retention_label": None, "ksat_mm_h": None, "sand_pct": None,
         "texture_label": None, "soil_species": None, "soil_complex_label": None,
+        # A5b-1 (praktyka nawadniania – tu „optional”, żeby testy silnika obejmowały wszystkie kategorie)
+        "has_crop": True, "irrigation_practice": "optional", "irrigation_practice_note": "", "water_stress_7d": False,
+        "stress_when_txt": "", "no_irrigation_txt": None, "water_description": None, "water_rank_lower": 5,
+        "water_rank_of": 10, "kbw30_mm": -20.0, "kbw30_percentile": 50.0, "kbw30_deviation_mm": -5.0,
+        "kbw30_mean_mm": -15.0, "kbw30_vs_mean_txt": "o 5 mm mniej niż zwykle", "et0_recent_mm_day": 4.0,
     }
     base.update(kw)
     return Facts(base)
@@ -100,7 +105,7 @@ def test_no_plant_stress_alarm_outside_sensitive_phases(phase):
                              balance_percentile=0.0, water_rank_pct=0.0), SOIL_OK)
     assert s.level == "risk"  # najwyżej „ryzyko” – nie „susza” roślin
     assert "zapas wody w glebie" in s.headline and "cierpią" not in s.headline
-    assert "ocena dotyczy zapasu wody w glebie" in s.summary
+    assert "ocena dotyczy zapasu wody w glebie" in s.summary or "oceniamy zapas wody w glebie" in s.summary
 
 
 def test_non_agricultural_no_score():
@@ -169,7 +174,7 @@ def test_causes_wet_season_precip_share_zero():
 
 def test_rules_load_and_validate():
     rules = load_rules()
-    assert 15 <= len(rules) <= 25
+    assert 15 <= len(rules) <= 35
     assert {r.category for r in rules} == set(CATEGORY_ORDER)
     assert all(r.all or r.any for r in rules)  # każda reguła ma warunek
     with pytest.raises(RuleError):
@@ -259,7 +264,9 @@ def test_analysis_iung_down_no_crash(client):
     r = client.get("/api/analysis", params=Q)
     assert r.status_code == 200, r.text
     b = r.json()
-    assert b["indicators"]["soil_capacity"]["value"] is None and b["status"]["level"] == "no_data"
+    # A5b-1 (D49): bez IUNG kategoria i WOD z mapy glebowo-rolniczej (glina lekka pylasta – kat. III)
+    assert b["indicators"]["soil_capacity"]["value"] == 186 and b["status"]["level"] != "no_data"
+    assert b["soil"]["consistency"]["basis"] == "mapa_glebowo_rolnicza"
     assert b["reliability"]["confidence"] == "ograniczona"
     assert next(s for s in b["steps"] if s["id"] == "soil")["state"] == "error"
 
@@ -294,7 +301,6 @@ def test_analysis_non_agricultural(client):
 @pytest.mark.parametrize(
     ("params", "msg"),
     [
-        ({"parcel_id": "x"}, "Wybierz uprawę"),
         ({"parcel_id": "x", "crop": "banany"}, "Nieznana uprawa"),
         ({"parcel_id": "x", "crop": "zboza_ozime", "date": "2999-01-01"}, "przyszłości"),
         ({"parcel_id": "x", "crop": "zboza_ozime", "date": "2001-01-01"}, "lat wstecz"),
