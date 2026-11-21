@@ -10,6 +10,7 @@ import type {
   Parcel,
   PointValue,
 } from './types'
+import type { PlaceSearchResponse } from './places.proposal'
 
 export class ApiError extends Error {
   status: number
@@ -47,6 +48,9 @@ async function post<T>(path: string, body: unknown): Promise<T> {
   return data as T
 }
 
+/** bez polskich znaków i wielkości liter – do porównań nazw */
+const fold = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ł/g, 'l').replace(/Ł/g, 'L').toLowerCase().trim()
+
 export const api = {
   parcelById: (id: string) => get<Parcel>('/api/parcel', { id }),
   parcelByPoint: (lon: number, lat: number) =>
@@ -69,6 +73,22 @@ export const api = {
   createInfraReport: (r: InfraReportIn) => post<InfraReport>('/api/infra-reports', r),
   /** POST /api/infra-reports/{id}/confirm – „Potwierdzam” */
   confirmInfraReport: (id: string) => post<InfraReport>(`/api/infra-reports/${encodeURIComponent(id)}/confirm`, {}),
+  /**
+   * GET /api/places?q= – miejsce (obręb / gmina) po nazwie. PROPOZYCJA kontraktu (api/places.proposal.ts).
+   * Tryb deweloperski + ?dane=przykladowe: mock z mocks/places.sample.json.
+   */
+  places: async (q: string, signal?: AbortSignal): Promise<PlaceSearchResponse> => {
+    if (import.meta.env.DEV && new URLSearchParams(window.location.search).get('dane') === 'przykladowe') {
+      const data = (await import('@/mocks/places.sample.json')).default as unknown as PlaceSearchResponse
+      const f = fold(q)
+      const places = data.places
+        .filter((p) => fold(p.name).startsWith(f))
+        .sort((a, b) => Number(fold(b.name) === f) - Number(fold(a.name) === f))
+      if (!places.length) throw new ApiError(404, { message: 'nie znaleziono miejsca' })
+      return { places, total: places.length }
+    }
+    return get<PlaceSearchResponse>('/api/places', { q }, signal)
+  },
   /** GET /api/report.pdf – te same parametry co analiza; odpowiedź to plik PDF */
   reportPdf: async (parcelId: string, crop: CropId, date: string): Promise<Blob> => {
     const params: Record<string, string> = { parcel_id: parcelId, crop, date }

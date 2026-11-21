@@ -674,4 +674,14 @@ export const EN: Record<string, string> = {
   'Zamknij działkę i wróć do mapy': 'Close the parcel and go back to the map',
   'Wróć do mapy': 'Back to map',
   'Przybliż mapę i kliknij swoje pole': 'Zoom in and click your field',
+  // wyszukiwanie miejsca po nazwie
+  'Wybierz miejsce – mapa się przybliży, potem kliknij swoje pole': 'Choose a place – the map zooms in, then click your field',
+  'Miejsca': 'Places',
+  'obręb': 'precinct',
+  'gmina': 'municipality',
+  'gm. {gmina}, pow. {powiat}, woj. {woj}': 'municipality {gmina}, county {powiat}, {woj}',
+  'Nie znaleziono miejsca „{q}”': 'No place found for “{q}”',
+  'Szukanie po samej nazwie jeszcze w budowie – wpisz nazwę z numerem działki, np. „{q} 123”': 'Searching by name alone is still under construction – type the name with a parcel number, e.g. “{q} 123”',
+  'Nie udało się wyszukać miejsca – spróbuj ponownie': 'Could not search for the place – try again',
+  '{name}: kliknij swoje pole na mapie': '{name}: click your field on the map',
 }

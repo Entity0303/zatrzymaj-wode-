@@ -1,6 +1,7 @@
-import { Loader2, Search, X } from 'lucide-react'
+import { Loader2, MapPin, Search, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type { Parcel } from '@/api/types'
+import type { Place } from '@/api/places.proposal'
 import { formatHa } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { useLang } from '@/lib/i18n'
@@ -16,6 +17,8 @@ export function SearchBar({
   onDismiss,
   selected,
   placeholder,
+  places = [],
+  onPickPlace,
   className,
 }: {
   loading: boolean
@@ -29,14 +32,19 @@ export function SearchBar({
   selected?: string | null
   /** krótszy tekst podpowiedzi (np. na ekranie powitalnym) */
   placeholder?: string
+  /** wyniki wyszukiwania miejsca po nazwie (obręb / gmina) */
+  places?: Place[]
+  onPickPlace?: (p: Place) => void
   className?: string
 }) {
   const { t } = useLang()
   const [q, setQ] = useState('')
   // podświetlona podpowiedź; resetuje się sama przy nowej liście kandydatów
-  const [hl, setHl] = useState<{ list: Parcel[]; i: number }>({ list: candidates, i: -1 })
-  const active = hl.list === candidates ? hl.i : -1
-  const setActive = (f: (a: number) => number) => setHl({ list: candidates, i: f(active) })
+  // lista w rozwijanym menu: kandydaci (działki) albo miejsca
+  const items: (Parcel | Place)[] = places.length ? places : candidates
+  const [hl, setHl] = useState<{ list: (Parcel | Place)[]; i: number }>({ list: items, i: -1 })
+  const active = hl.list === items ? hl.i : -1
+  const setActive = (f: (a: number) => number) => setHl({ list: items, i: f(active) })
   const inputRef = useRef<HTMLInputElement>(null)
   // nowa działka (z linku, przykładu, kliknięcia na mapie) = jej nazwa w polu; dalej można wpisać inną
   const [shown, setShown] = useState<string | null>(null)
@@ -44,7 +52,8 @@ export function SearchBar({
     setShown(selected)
     setQ(selected)
   }
-  const open = candidates.length > 0
+  const open = items.length > 0
+  const pickActive = () => (places.length ? onPickPlace?.(places[active]) : onPick(candidates[active]))
 
   // Start: kursor w wyszukiwarce (SPEC 13) – tylko na komputerze, na telefonie klawiatura zasłoniłaby mapę
   useEffect(() => {
@@ -57,7 +66,7 @@ export function SearchBar({
         role="search"
         onSubmit={(e) => {
           e.preventDefault()
-          if (open && active >= 0) onPick(candidates[active])
+          if (open && active >= 0) pickActive()
           else if (q.trim()) onSearch(q.trim())
         }}
         className="relative"
@@ -72,7 +81,7 @@ export function SearchBar({
             if (!open) return
             if (e.key === 'ArrowDown') {
               e.preventDefault()
-              setActive((a) => Math.min(a + 1, candidates.length - 1))
+              setActive((a) => Math.min(a + 1, items.length - 1))
             }
             if (e.key === 'ArrowUp') {
               e.preventDefault()
@@ -118,7 +127,37 @@ export function SearchBar({
         </p>
       )}
 
-      {open && (
+      {places.length > 0 && (
+        <div className="absolute inset-x-0 top-full z-10 mt-2 overflow-hidden rounded-xl bg-surface shadow-float">
+          <p className="border-b px-4 py-2 text-sm text-text-muted">{t('Wybierz miejsce – mapa się przybliży, potem kliknij swoje pole')}</p>
+          <ul role="listbox" aria-label={t('Miejsca')} className="max-h-[50vh] overflow-y-auto py-1">
+            {places.map((pl, i) => (
+              <li key={pl.id} role="option" aria-selected={i === active}>
+                <button
+                  type="button"
+                  onMouseEnter={() => setActive(() => i)}
+                  onClick={() => onPickPlace?.(pl)}
+                  className={cn('flex min-h-11 w-full items-center gap-3 px-4 py-2 text-left', i === active && 'bg-ok-soft')}
+                >
+                  <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-sage-soft text-brand">
+                    <MapPin className="size-4" aria-hidden />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-base leading-6 font-medium">
+                      {pl.name} <span className="text-sm font-normal text-text-muted">· {t(pl.kind === 'obreb' ? 'obręb' : 'gmina')}</span>
+                    </span>
+                    <span className="block truncate text-sm leading-5 text-text-muted">
+                      {t('gm. {gmina}, pow. {powiat}, woj. {woj}', { gmina: pl.gmina, powiat: pl.powiat, woj: pl.wojewodztwo })}
+                    </span>
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {open && !places.length && (
         <div className="absolute inset-x-0 top-full z-10 mt-2 overflow-hidden rounded-xl bg-surface shadow-float">
           <p className="border-b px-4 py-2 text-sm text-text-muted">
             {t('Znaleziono {n} działek – wybierz swoją', { n: total })}

@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom'
 import { ChevronDown, ChevronUp, LayoutPanelTop } from 'lucide-react'
 import L from 'leaflet'
 import { ApiError, api, describeError } from '@/api/client'
+import { isPlaceQuery, type Place } from '@/api/places.proposal'
 import type { CropId, Parcel, ParcelCandidates } from '@/api/types'
 import { OfflineBanner } from '@/components/OfflineBanner'
 import { SampleDataBanner } from '@/components/SampleDataBanner'
@@ -176,6 +177,60 @@ export default function Start() {
   }
 
   const searchByNumber = (q: string) => find(() => api.parcelById(q), 'number')
+
+  // ── miejsce po nazwie („Tczów”): lista obrębów/gmin → mapa przybliża → klik w pole ──────────
+  const [places, setPlaces] = useState<Place[]>([])
+  const [placeBusy, setPlaceBusy] = useState(false)
+  const [placeError, setPlaceError] = useState<string | null>(null)
+  const placeReq = useRef(0)
+
+  async function searchPlace(q: string) {
+    const id = ++placeReq.current
+    setPlaces([])
+    setPlaceError(null)
+    setPlaceBusy(true)
+    try {
+      const r = await api.places(q)
+      if (id !== placeReq.current) return
+      if (r.places.length === 1) pickPlace(r.places[0])
+      else setPlaces(r.places)
+    } catch (e) {
+      if (id !== placeReq.current) return
+      setPlaceError(
+        e instanceof ApiError && e.status === 404 && (e.detail as { message?: string } | null)?.message === 'nie znaleziono miejsca'
+          ? t('Nie znaleziono miejsca „{q}”', { q })
+          : e instanceof ApiError && (e.status === 404 || e.status === 501)
+            ? t('Szukanie po samej nazwie jeszcze w budowie – wpisz nazwę z numerem działki, np. „{q} 123”', { q })
+            : t('Nie udało się wyszukać miejsca – spróbuj ponownie'),
+      )
+    } finally {
+      if (id === placeReq.current) setPlaceBusy(false)
+    }
+  }
+
+  function pickPlace(pl: Place) {
+    setPlaces([])
+    setPlaceError(null)
+    const map = mapRef.current
+    if (!map) return
+    const b = L.latLngBounds([pl.bbox[1], pl.bbox[0]], [pl.bbox[3], pl.bbox[2]])
+    const opts = {
+      paddingTopLeft: [insets.left + 24, insets.top + 24] as [number, number],
+      paddingBottomRight: [insets.right + 24, insets.bottom + 24] as [number, number],
+      maxZoom: 15,
+    }
+    if (reducedMotion) map.fitBounds(b, { ...opts, animate: false })
+    else map.flyToBounds(b, { ...opts, duration: 1 })
+    showToast(t('{name}: kliknij swoje pole na mapie', { name: pl.name }))
+  }
+
+  /** jedno pole wyszukiwania, 3 rodzaje zapytań: identyfikator / „obręb numer” → działka, sama nazwa → miejsce */
+  const onSearch = (q: string) => {
+    if (isPlaceQuery(q)) return searchPlace(q)
+    setPlaces([])
+    setPlaceError(null)
+    searchByNumber(q)
+  }
   const searchByPoint = (lon: number, lat: number) => {
     setPendingPoint([lon, lat])
     find(() => api.parcelByPoint(lon, lat), 'point')
@@ -415,9 +470,12 @@ export default function Start() {
     ? new Date(forecast.teraz.czas).toLocaleString(locale(), { dateStyle: 'short', timeStyle: 'short' })
     : null
 
+  // jeden licznik – nowy komunikat nie znika przez licznik poprzedniego
+  const toastTimer = useRef<number | undefined>(undefined)
   function showToast(text: string) {
     setToast(text)
-    setTimeout(() => setToast(null), 2500)
+    window.clearTimeout(toastTimer.current)
+    toastTimer.current = window.setTimeout(() => setToast(null), 2500)
   }
 
   const legend = layerByKey(layer)
@@ -481,15 +539,19 @@ export default function Start() {
 
   const searchBar = (
     <SearchBar
-      loading={search.phase === 'loading'}
-      error={search.phase === 'error' ? t(search.error.title, search.error.vars) : null}
+      loading={search.phase === 'loading' || placeBusy}
+      error={placeError ?? (search.phase === 'error' ? t(search.error.title, search.error.vars) : null)}
+      places={places}
+      onPickPlace={pickPlace}
       candidates={candidates}
       total={search.phase === 'candidates' ? search.total : candidates.length}
-      onSearch={searchByNumber}
+      onSearch={onSearch}
       onPick={pickCandidate}
       selected={parcel ? `${parcel.obreb} ${parcel.numer}` : null}
       placeholder={isMobile ? t('Numer działki') : undefined}
       onDismiss={() => {
+        setPlaces([])
+        setPlaceError(null)
         if (candidates.length) {
           setCandidates([])
           setSearch({ phase: 'idle' })
