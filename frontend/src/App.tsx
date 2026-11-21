@@ -1,277 +1,176 @@
-import type { LatLngBoundsExpression, LeafletMouseEvent } from 'leaflet'
-import L from 'leaflet'
-import { useEffect, useMemo, useState } from 'react'
-import {
-  GeoJSON,
-  LayersControl,
-  MapContainer,
-  TileLayer,
-  WMSTileLayer,
-  useMap,
-  useMapEvents,
-} from 'react-leaflet'
-import { ApiError, api, type Parcel, type Soil } from './api'
+import { Layers } from 'lucide-react'
+import { useRef, useState, type TouchEvent } from 'react'
+import { ApiError, api, describeError, type Candidates, type Parcel } from '@/api'
+import { ParcelMap, type BaseMap } from '@/components/ParcelMap'
+import { PanelHeader, ParcelPanelBody, type PanelState } from '@/components/ParcelPanel'
+import { SideNav } from '@/components/SideNav'
+import { TopBar } from '@/components/TopBar'
+import { todayIso } from '@/lib/dates'
+import { cn } from '@/lib/utils'
 
-const POLAND_CENTER: [number, number] = [52.07, 19.48]
-const todayIso = () => new Date().toISOString().slice(0, 10)
-const minDateIso = () => {
-  const d = new Date()
-  d.setFullYear(d.getFullYear() - 10)
-  return d.toISOString().slice(0, 10)
-}
+const EMPTY: PanelState = { loading: false, error: null, parcel: null, candidates: [], totalCandidates: 0 }
 
-const SOIL_COLORS: Record<number, string> = {
-  1: 'bg-yellow-300',
-  2: 'bg-orange-400',
-  3: 'bg-orange-600',
-  4: 'bg-red-700',
-  5: 'bg-stone-500',
-}
-
-function FitToParcel({ parcel }: { parcel: Parcel | null }) {
-  const map = useMap()
-  useEffect(() => {
-    if (!parcel) return
-    const bounds = L.geoJSON(parcel.geometry as GeoJSON.GeoJsonObject).getBounds()
-    map.fitBounds(bounds as LatLngBoundsExpression, { padding: [60, 60], maxZoom: 17 })
-  }, [parcel, map])
-  return null
-}
-
-function ClickToSelect({ onPick }: { onPick: (lon: number, lat: number) => void }) {
-  useMapEvents({ click: (e: LeafletMouseEvent) => onPick(e.latlng.lng, e.latlng.lat) })
-  return null
+const GEO_ERRORS: Record<number, string> = {
+  1: 'Nie masz zgody na lokalizację. Zezwól na nią w ustawieniach przeglądarki.',
+  2: 'Nie udało się ustalić położenia. Spróbuj na zewnątrz lub wpisz numer działki.',
+  3: 'Ustalanie położenia trwa zbyt długo. Spróbuj ponownie.',
 }
 
 export default function App() {
-  const [query, setQuery] = useState('')
+  const [state, setState] = useState<PanelState>(EMPTY)
   const [asOf, setAsOf] = useState(todayIso())
-  const [parcel, setParcel] = useState<Parcel | null>(null)
-  const [candidates, setCandidates] = useState<Parcel[]>([])
-  const [soil, setSoil] = useState<Soil | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [baseMap, setBaseMap] = useState<BaseMap>('orto')
+  const [pendingPoint, setPendingPoint] = useState<[number, number] | null>(null)
+  const [userPoint, setUserPoint] = useState<[number, number] | null>(null)
+  const [locating, setLocating] = useState(false)
+  const [sheetOpen, setSheetOpen] = useState(true)
+  const reqId = useRef(0)
+  const touchY = useRef<number | null>(null)
 
-  async function select(p: Parcel) {
-    setParcel(p)
-    setCandidates([])
-    setSoil(null)
+  async function find(fn: () => Promise<Parcel>, kind: 'number' | 'point') {
+    const id = ++reqId.current
+    setState((s) => ({ ...s, loading: true, error: null, candidates: [], totalCandidates: 0 }))
+    setSheetOpen(true)
     try {
-      setSoil(await api.soil(p.id))
+      const parcel = await fn()
+      if (id !== reqId.current) return
+      setState({ ...EMPTY, parcel })
     } catch (e) {
-      setError(e instanceof Error ? `Gleba: ${e.message}` : 'Błąd danych glebowych')
-    }
-  }
-
-  async function run(fn: () => Promise<Parcel>) {
-    setLoading(true)
-    setError(null)
-    try {
-      await select(await fn())
-    } catch (e) {
+      if (id !== reqId.current) return
       if (e instanceof ApiError && e.status === 409) {
-        const list = (e.detail as { candidates?: Parcel[] })?.candidates ?? []
-        setCandidates(list)
-        setError('Znaleziono kilka działek – wybierz właściwą z listy.')
+        const d = e.detail as Candidates
+        setState({ ...EMPTY, candidates: d.candidates ?? [], totalCandidates: d.total ?? d.candidates?.length ?? 0 })
       } else {
-        setError(e instanceof Error ? e.message : 'Nieznany błąd')
+        setState((s) => ({ ...s, loading: false, error: describeError(e, kind) }))
       }
     } finally {
-      setLoading(false)
+      if (id === reqId.current) setPendingPoint(null)
     }
   }
 
-  function locateMe() {
-    if (!navigator.geolocation) return setError('Przeglądarka nie udostępnia lokalizacji.')
+  const searchByNumber = (q: string) => find(() => api.parcelById(q), 'number')
+
+  function pickPoint(lon: number, lat: number) {
+    setPendingPoint([lon, lat])
+    find(() => api.parcelByPoint(lon, lat), 'point')
+  }
+
+  function selectCandidate(p: Parcel) {
+    reqId.current++
+    setState({ ...EMPTY, parcel: p })
+  }
+
+  function locate() {
+    if (!navigator.geolocation) {
+      setState((s) => ({ ...s, error: 'Ta przeglądarka nie udostępnia lokalizacji.' }))
+      return
+    }
+    if (!window.isSecureContext) {
+      setState((s) => ({
+        ...s,
+        error: 'Lokalizacja działa tylko przez bezpieczne połączenie (https) lub na tym komputerze (localhost).',
+      }))
+      return
+    }
+    setLocating(true)
     navigator.geolocation.getCurrentPosition(
-      (pos) => run(() => api.parcelByPoint(pos.coords.longitude, pos.coords.latitude)),
-      () => setError('Nie udało się pobrać lokalizacji.'),
-      { enableHighAccuracy: true, timeout: 10000 },
+      (pos) => {
+        setLocating(false)
+        const { longitude, latitude } = pos.coords
+        setUserPoint([longitude, latitude])
+        pickPoint(longitude, latitude)
+      },
+      (err) => {
+        setLocating(false)
+        setSheetOpen(true)
+        setState((s) => ({ ...s, error: GEO_ERRORS[err.code] ?? 'Nie udało się pobrać lokalizacji.' }))
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 },
     )
   }
 
-  const parcelKey = useMemo(() => parcel?.id ?? 'none', [parcel])
+  // gest przesunięcia panelu na telefonie
+  const onTouchStart = (e: TouchEvent) => (touchY.current = e.touches[0].clientY)
+  const onTouchEnd = (e: TouchEvent) => {
+    if (touchY.current === null) return
+    const dy = e.changedTouches[0].clientY - touchY.current
+    if (dy > 40) setSheetOpen(false)
+    if (dy < -40) setSheetOpen(true)
+    touchY.current = null
+  }
 
   return (
-    <div className="flex h-full flex-col bg-stone-50 text-stone-900">
-      <header className="flex flex-wrap items-center gap-3 border-b border-stone-200 bg-white px-4 py-3">
-        <div className="mr-2 text-lg font-semibold text-emerald-700">💧 Zatrzymaj wodę</div>
-        <form
-          className="flex min-w-[260px] flex-1 gap-2"
-          onSubmit={(e) => {
-            e.preventDefault()
-            if (query.trim()) run(() => api.parcelById(query.trim()))
-          }}
-        >
-          <input
-            className="flex-1 rounded-lg border border-stone-300 px-3 py-2 focus:border-emerald-600 focus:outline-none"
-            placeholder="Numer działki, np. 143203_2.0027.112/11 albo „Szczytno 112/11”"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
+    <div className="relative h-dvh w-full overflow-hidden">
+      <div className="absolute inset-0 md:left-[88px]">
+        <ParcelMap
+          baseMap={baseMap}
+          parcel={state.parcel}
+          candidates={state.candidates}
+          pendingPoint={pendingPoint}
+          userPoint={userPoint}
+          onPick={pickPoint}
+          onSelectCandidate={selectCandidate}
+        />
+      </div>
+
+      <SideNav />
+      <TopBar
+        loading={state.loading}
+        locating={locating}
+        asOf={asOf}
+        onAsOfChange={setAsOf}
+        onSearch={searchByNumber}
+        onLocate={locate}
+      />
+
+      {/* przełącznik podkładu mapy */}
+      <div className="absolute top-[124px] right-2 z-[1000] flex items-center gap-1 rounded-full border bg-card/95 p-1 shadow-md md:top-auto md:right-auto md:bottom-6 md:left-[104px]">
+        <Layers className="mx-1.5 hidden size-4 text-muted-foreground md:block" />
+        {(
+          [
+            ['orto', 'Ortofotomapa'],
+            ['osm', 'Mapa'],
+          ] as const
+        ).map(([key, label]) => (
           <button
-            className="rounded-lg bg-emerald-700 px-4 py-2 font-medium text-white hover:bg-emerald-800 disabled:opacity-50"
-            disabled={loading}
-          >
-            Szukaj
-          </button>
-        </form>
-        <button
-          className="rounded-lg border border-stone-300 px-3 py-2 hover:bg-stone-100"
-          onClick={locateMe}
-          title="Znajdź działkę, na której stoisz"
-        >
-          📍 Jestem na polu
-        </button>
-        <label className="flex items-center gap-2 text-sm">
-          Data analizy
-          <input
-            type="date"
-            className="rounded-lg border border-stone-300 px-2 py-1.5"
-            value={asOf}
-            min={minDateIso()}
-            max={todayIso()}
-            onChange={(e) => setAsOf(e.target.value)}
-          />
-        </label>
-      </header>
-
-      <main className="relative flex min-h-0 flex-1 flex-col md:flex-row">
-        <div className="relative min-h-[50vh] flex-1">
-          <MapContainer center={POLAND_CENTER} zoom={6} className="h-full w-full">
-            <LayersControl position="topright">
-              <LayersControl.BaseLayer checked name="Ortofotomapa (Geoportal)">
-                <WMSTileLayer
-                  url="https://mapy.geoportal.gov.pl/wss/service/PZGIK/ORTO/WMS/StandardResolution"
-                  params={{ layers: 'Raster', format: 'image/jpeg', transparent: false }}
-                  attribution="© GUGiK – geoportal.gov.pl"
-                  maxZoom={19}
-                />
-              </LayersControl.BaseLayer>
-              <LayersControl.BaseLayer name="Mapa (OpenStreetMap)">
-                <TileLayer
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                  attribution="© OpenStreetMap"
-                  maxZoom={19}
-                />
-              </LayersControl.BaseLayer>
-              <LayersControl.Overlay name="Gleby – podatność na suszę (IUNG)">
-                <WMSTileLayer
-                  url="https://sgeo.iung.pl/geoserver/Susza/wms"
-                  params={{ layers: 'Susza:katgl_landuse2024', format: 'image/png', transparent: true }}
-                  opacity={0.55}
-                  attribution="© IUNG-PIB"
-                />
-              </LayersControl.Overlay>
-              <LayersControl.Overlay name="Rowy, cieki, zbiorniki (BDOT10k)">
-                <WMSTileLayer
-                  url="https://mapy.geoportal.gov.pl/wss/service/pub/guest/kompozycja_BDOT10k_WMS/MapServer/WMSServer"
-                  params={{ layers: 'row,rz,kan,WPow', format: 'image/png', transparent: true }}
-                  attribution="© GUGiK – BDOT10k"
-                />
-              </LayersControl.Overlay>
-            </LayersControl>
-            {parcel && (
-              <GeoJSON
-                key={parcelKey}
-                data={parcel.geometry as GeoJSON.GeoJsonObject}
-                style={{ color: '#facc15', weight: 3, fillOpacity: 0.08 }}
-              />
+            key={key}
+            type="button"
+            onClick={() => setBaseMap(key)}
+            aria-pressed={baseMap === key}
+            className={cn(
+              'rounded-full px-3 py-1.5 text-xs font-medium transition-colors',
+              baseMap === key ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted',
             )}
-            <FitToParcel parcel={parcel} />
-            <ClickToSelect onPick={(lon, lat) => run(() => api.parcelByPoint(lon, lat))} />
-          </MapContainer>
-          {loading && (
-            <div className="absolute left-1/2 top-4 z-[1000] -translate-x-1/2 rounded-full bg-white px-4 py-2 text-sm shadow">
-              Szukam działki…
-            </div>
-          )}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* panel działki: na telefonie wysuwany od dołu, na komputerze karta po prawej */}
+      <aside
+        aria-label="Panel działki"
+        className={cn(
+          'fixed inset-x-0 bottom-0 z-[1060] flex max-h-[46dvh] flex-col rounded-t-3xl border bg-card shadow-[0_-8px_30px_rgb(0_0_0/0.15)] transition-transform duration-300',
+          sheetOpen ? 'translate-y-0' : 'translate-y-[calc(100%-5.25rem)]',
+          'md:absolute md:inset-x-auto md:top-[92px] md:right-4 md:bottom-auto md:max-h-[calc(100%-110px)] md:w-[380px] md:translate-y-0 md:rounded-2xl md:shadow-xl',
+        )}
+      >
+        <button
+          type="button"
+          className="flex w-full flex-col items-stretch gap-2 px-5 pt-2 pb-3 text-left md:pointer-events-none md:pt-5"
+          onClick={() => setSheetOpen((o) => !o)}
+          onTouchStart={onTouchStart}
+          onTouchEnd={onTouchEnd}
+          aria-expanded={sheetOpen}
+        >
+          <span className="mx-auto h-1.5 w-10 rounded-full bg-muted-foreground/30 md:hidden" />
+          <PanelHeader {...state} />
+        </button>
+        <div className="min-h-0 overflow-y-auto px-5 pb-5">
+          <ParcelPanelBody {...state} asOf={asOf} onSelectCandidate={selectCandidate} />
         </div>
-
-        <aside className="w-full overflow-y-auto border-l border-stone-200 bg-white p-4 md:w-96">
-          {error && (
-            <div className="mb-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
-              {error}
-            </div>
-          )}
-
-          {candidates.length > 0 && (
-            <ul className="mb-4 space-y-2">
-              {candidates.map((c) => (
-                <li key={c.id}>
-                  <button
-                    className="w-full rounded-lg border border-stone-200 p-2 text-left text-sm hover:bg-stone-50"
-                    onClick={() => select(c)}
-                  >
-                    <div className="font-medium">{c.id}</div>
-                    <div className="text-stone-500">
-                      {c.commune}, obręb {c.region}, {c.county}
-                    </div>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-
-          {!parcel && candidates.length === 0 && (
-            <div className="space-y-2 text-sm text-stone-600">
-              <p className="text-base font-medium text-stone-800">Jak zacząć?</p>
-              <p>Wpisz numer działki, kliknij swoje pole na mapie albo użyj „📍 Jestem na polu”.</p>
-            </div>
-          )}
-
-          {parcel && (
-            <div className="space-y-4">
-              <section>
-                <h2 className="text-lg font-semibold">Działka {parcel.number}</h2>
-                <p className="text-sm text-stone-600">
-                  {parcel.commune}, obręb {parcel.region} · {parcel.county}, woj. {parcel.voivodeship}
-                </p>
-                <p className="mt-1 text-sm">
-                  Powierzchnia: <b>{parcel.area_ha.toFixed(2)} ha</b>
-                </p>
-                <p className="mt-1 break-all text-xs text-stone-400">{parcel.id}</p>
-              </section>
-
-              <section className="rounded-xl border border-stone-200 p-3">
-                <h3 className="mb-2 font-medium">Gleba</h3>
-                {!soil && <p className="text-sm text-stone-500">Pobieram dane glebowe…</p>}
-                {soil && (
-                  <>
-                    {soil.agricultural_share < 0.5 && (
-                      <p className="mb-2 rounded bg-amber-50 p-2 text-sm text-amber-800">
-                        Uwaga: większość działki nie jest gruntem rolnym mineralnym ({soil.dominant_label}).
-                      </p>
-                    )}
-                    <ul className="space-y-1 text-sm">
-                      {soil.shares.map((s) => (
-                        <li key={s.code} className="flex items-center gap-2">
-                          <span className={`inline-block h-3 w-3 rounded-sm ${SOIL_COLORS[s.code] ?? 'bg-stone-300'}`} />
-                          <span className="flex-1">{s.label}</span>
-                          <span className="tabular-nums text-stone-500">{Math.round(s.share * 100)}%</span>
-                        </li>
-                      ))}
-                    </ul>
-                    {soil.wod_mm !== null && (
-                      <p className="mt-2 text-sm">
-                        Woda dostępna dla roślin (WOD): <b>~{Math.round(soil.wod_mm)} mm</b>
-                      </p>
-                    )}
-                    <p className="mt-2 text-xs text-stone-400">Źródło: {soil.source}</p>
-                  </>
-                )}
-              </section>
-
-              <section className="rounded-xl border border-dashed border-stone-300 p-3 text-sm text-stone-500">
-                Ocena sytuacji wodnej na dzień <b>{asOf}</b> – w budowie (pogoda, model wody w glebie, teren,
-                rekomendacje).
-              </section>
-
-              <p className="text-xs text-stone-400">Źródło granic: {parcel.source}</p>
-            </div>
-          )}
-        </aside>
-      </main>
+      </aside>
     </div>
   )
 }

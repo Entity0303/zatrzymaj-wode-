@@ -25,9 +25,13 @@ async def close_client() -> None:
 
 
 class SourceError(Exception):
-    """Błąd zewnętrznego źródła danych (niedostępne, zła odpowiedź, brak wyników)."""
+    """Błąd zewnętrznego źródła danych (niedostępne lub zła odpowiedź) -> HTTP 502."""
 
     def __init__(self, source: str, message: str):
         super().__init__(f"{source}: {message}")
         self.source = source
         self.message = message
+
+
+class NotFoundError(SourceError):
+    """Źródło odpowiedziało poprawnie, ale nie ma szukanego obiektu -> HTTP 404."""

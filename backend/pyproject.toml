@@ -8,6 +8,9 @@ requires-python = ">=3.12"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+# testy „na żywo” (sieć) pomijane domyślnie; uruchom: pytest -m live
+addopts = "-m 'not live'"
+markers = ["live: test korzysta z prawdziwych usług w internecie"]
 
 [tool.ruff]
 line-length = 100

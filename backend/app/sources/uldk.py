@@ -1,19 +1,36 @@
-"""ULDK GUGiK — Usługa Lokalizacji Działek Katastralnych.
+"""ULDK GUGiK — Usługa Lokalizacji Działek Katastralnych (https://uldk.gugik.gov.pl/).
 
-Odpowiedź tekstowa: pierwsza linia to kod (>=0 OK, -1 brak wyników),
+Zapytania:
+- GetParcelById      – pełny identyfikator, np. 143203_2.0027.112/11
+- GetParcelByIdOrNr  – „obręb numer”, np. „Szczytno 112/11” (może zwrócić kilka działek)
+- GetParcelByXY      – punkt, xy=lon,lat,4326
+
+Odpowiedź tekstowa: pierwsza linia to kod (>= 0 OK – zwykle liczba rekordów, -1 brak wyników),
 kolejne linie to rekordy z polami rozdzielonymi '|', w kolejności z parametru `result`.
+WKT może mieć prefiks 'SRID=2180;'. Geometria w EPSG:2180 jako (wschód, północ).
 """
 
-from dataclasses import dataclass
+import re
+import time
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
 
+import httpx
 from shapely.geometry.base import BaseGeometry
 
 from app.config import settings
 from app.geo import parse_wkt, to_wgs84
-from app.http import SourceError, get_client
+from app.http import NotFoundError, SourceError, get_client
 
 SOURCE = "ULDK GUGiK"
+SOURCE_URL = "https://uldk.gugik.gov.pl/"
 _RESULT_FIELDS = ["geom_wkt", "id", "voivodeship", "county", "commune", "region", "parcel"]
+# pełny identyfikator: TERYT gminy (6 cyfr) _ typ (1 cyfra) . obręb (4 cyfry) . numer
+_FULL_ID = re.compile(r"^\d{6}_\d\.\d{4}\.\S+$")
+
+_CACHE_TTL_S = 24 * 3600
+_CACHE_MAX = 512
+_cache: dict[tuple, tuple[float, list["Parcel"]]] = {}
 
 
 @dataclass
@@ -25,6 +42,7 @@ class Parcel:
     region: str
     number: str
     geom_2180: BaseGeometry
+    fetched_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     @property
     def teryt_commune(self) -> str:
@@ -33,6 +51,7 @@ class Parcel:
 
     @property
     def area_ha(self) -> float:
+        """Powierzchnia z geometrii w PL-1992 (metry) – nie jest to powierzchnia ewidencyjna."""
         return round(self.geom_2180.area / 10_000, 4)
 
     @property
@@ -40,23 +59,40 @@ class Parcel:
         return to_wgs84(self.geom_2180)
 
 
+def is_full_id(text: str) -> bool:
+    return bool(_FULL_ID.match(text.strip()))
+
+
+def normalize_query(text: str) -> str:
+    """'Szczytno, 112/11' / 'Szczytno  112/11' -> 'Szczytno 112/11'."""
+    return re.sub(r"[\s,;]+", " ", text).strip()
+
+
 def parse_response(text: str) -> list[Parcel]:
     lines = [ln.strip() for ln in text.strip().splitlines() if ln.strip()]
     if not lines:
-        raise SourceError(SOURCE, "pusta odpowiedź")
-    head = lines[0].split()[0]
+        raise SourceError(SOURCE, "pusta odpowiedź usługi")
+    head, _, rest = lines[0].partition(" ")
     try:
         code = int(head)
     except ValueError as exc:
-        raise SourceError(SOURCE, f"nieoczekiwana odpowiedź: {lines[0][:80]}") from exc
+        raise SourceError(SOURCE, f"nieoczekiwana odpowiedź usługi: {lines[0][:80]}") from exc
     if code < 0:
-        raise SourceError(SOURCE, "nie znaleziono działki")
+        hint = rest.strip()
+        msg = "nie znaleziono działki"
+        if hint and "brak wyników" not in hint:
+            msg += f" ({hint})"
+        raise NotFoundError(SOURCE, msg)
     parcels = []
     for line in lines[1:]:
         parts = line.split("|")
         if len(parts) < len(_RESULT_FIELDS):
             continue
-        rec = dict(zip(_RESULT_FIELDS, parts))
+        rec = dict(zip(_RESULT_FIELDS, (p.strip() for p in parts)))
+        try:
+            geom = parse_wkt(rec["geom_wkt"])
+        except Exception as exc:  # noqa: BLE001
+            raise SourceError(SOURCE, f"nieprawidłowa geometria działki {rec['id']}") from exc
         parcels.append(
             Parcel(
                 id=rec["id"],
@@ -65,31 +101,62 @@ def parse_response(text: str) -> list[Parcel]:
                 commune=rec["commune"],
                 region=rec["region"],
                 number=rec["parcel"],
-                geom_2180=parse_wkt(rec["geom_wkt"]),
+                geom_2180=geom,
             )
         )
     if not parcels:
-        raise SourceError(SOURCE, "nie znaleziono działki")
+        raise NotFoundError(SOURCE, "nie znaleziono działki")
     return parcels
+
+
+async def _get(params: dict) -> str:
+    """GET z timeoutem i jedną ponowną próbą przy błędzie połączenia."""
+    timeout = httpx.Timeout(settings.uldk_timeout_s)
+    last_exc: Exception | None = None
+    for _ in range(2):
+        try:
+            resp = await get_client().get(settings.uldk_url, params=params, timeout=timeout)
+        except httpx.TimeoutException as exc:
+            raise SourceError(
+                SOURCE, f"usługa nie odpowiada (przekroczono {settings.uldk_timeout_s:.0f} s)"
+            ) from exc
+        except httpx.TransportError as exc:
+            last_exc = exc
+            continue
+        if resp.status_code >= 400:
+            raise SourceError(SOURCE, f"usługa zwróciła błąd HTTP {resp.status_code}")
+        return resp.text
+    raise SourceError(
+        SOURCE, f"brak połączenia z usługą ({last_exc.__class__.__name__})"
+    ) from last_exc
 
 
 async def _query(params: dict) -> list[Parcel]:
     params = {**params, "result": ",".join(_RESULT_FIELDS), "srid": "2180"}
-    try:
-        resp = await get_client().get(settings.uldk_url, params=params)
-        resp.raise_for_status()
-    except Exception as exc:  # noqa: BLE001
-        raise SourceError(SOURCE, f"usługa niedostępna ({exc.__class__.__name__})") from exc
-    return parse_response(resp.text)
+    key = tuple(sorted(params.items()))
+    hit = _cache.get(key)
+    if hit and time.monotonic() - hit[0] < _CACHE_TTL_S:
+        return hit[1]
+    parcels = parse_response(await _get(params))
+    if len(_cache) >= _CACHE_MAX:
+        _cache.pop(next(iter(_cache)))
+    _cache[key] = (time.monotonic(), parcels)
+    return parcels
 
 
-async def by_id(parcel_id: str) -> list[Parcel]:
+def clear_cache() -> None:
+    _cache.clear()
+
+
+async def by_id(query: str) -> list[Parcel]:
     """Pełny identyfikator (np. 143203_2.0027.112/11) albo 'obręb numer' (np. 'Szczytno 112/11')."""
-    parcel_id = parcel_id.strip()
-    request = "GetParcelById" if "." in parcel_id and "_" in parcel_id else "GetParcelByIdOrNr"
-    return await _query({"request": request, "id": parcel_id})
+    query = normalize_query(query)
+    if not query:
+        raise NotFoundError(SOURCE, "pusty numer działki")
+    request = "GetParcelById" if is_full_id(query) else "GetParcelByIdOrNr"
+    return await _query({"request": request, "id": query})
 
 
 async def by_point(lon: float, lat: float) -> Parcel:
-    parcels = await _query({"request": "GetParcelByXY", "xy": f"{lon},{lat},4326"})
+    parcels = await _query({"request": "GetParcelByXY", "xy": f"{lon:.7f},{lat:.7f},4326"})
     return parcels[0]

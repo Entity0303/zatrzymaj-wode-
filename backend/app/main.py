@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.geo import geojson
-from app.http import SourceError, close_client
+from app.http import NotFoundError, SourceError, close_client
 from app.sources import iung, nasa_power, uldk
 
 
@@ -32,40 +32,55 @@ app.add_middleware(
 
 
 def _source_error(exc: SourceError) -> HTTPException:
-    status = 404 if "nie znaleziono" in exc.message else 502
+    status = 404 if isinstance(exc, NotFoundError) else 502
     return HTTPException(status_code=status, detail={"source": exc.source, "message": exc.message})
+
+
+MAX_CANDIDATES = 30
 
 
 def _parcel_out(p: uldk.Parcel) -> dict:
     return {
         "id": p.id,
-        "voivodeship": p.voivodeship,
-        "county": p.county,
-        "commune": p.commune,
-        "region": p.region,
-        "number": p.number,
-        "teryt_commune": p.teryt_commune,
-        "area_ha": p.area_ha,
-        "geometry": geojson(p.geom_4326),
-        "source": uldk.SOURCE,
+        "wojewodztwo": p.voivodeship,
+        "powiat": p.county,
+        "gmina": p.commune,
+        "obreb": p.region,
+        "numer": p.number,
+        "teryt_gminy": p.teryt_commune,
+        "powierzchnia_ha": p.area_ha,
+        "geometria": geojson(p.geom_4326),
+        "zrodlo": {
+            "nazwa": uldk.SOURCE,
+            "url": uldk.SOURCE_URL,
+            "pobrano": p.fetched_at.isoformat(timespec="seconds"),
+            "uwagi": "Powierzchnia policzona z geometrii (EPSG:2180), "
+            "może nieznacznie różnić się od powierzchni ewidencyjnej.",
+        },
     }
 
 
 async def _resolve_parcel(parcel_id: str | None, lon: float | None, lat: float | None) -> uldk.Parcel:
-    if parcel_id:
+    if parcel_id and parcel_id.strip():
         parcels = await uldk.by_id(parcel_id)
         if len(parcels) > 1:
             raise HTTPException(
                 status_code=409,
                 detail={
-                    "message": "Znaleziono kilka działek – wybierz właściwą.",
-                    "candidates": [_parcel_out(p) for p in parcels[:20]],
+                    "message": f"Znaleziono {len(parcels)} działek o tym numerze – wybierz właściwą.",
+                    "total": len(parcels),
+                    "candidates": [_parcel_out(p) for p in parcels[:MAX_CANDIDATES]],
                 },
             )
         return parcels[0]
     if lon is not None and lat is not None:
+        if not (14.0 <= lon <= 24.2 and 49.0 <= lat <= 55.0):
+            raise HTTPException(status_code=404, detail={
+                "source": uldk.SOURCE, "message": "Wskazany punkt leży poza Polską."})
         return await uldk.by_point(lon, lat)
-    raise HTTPException(status_code=422, detail="Podaj identyfikator działki albo współrzędne (lon, lat).")
+    raise HTTPException(
+        status_code=422, detail={"message": "Podaj numer działki albo współrzędne (lon, lat)."}
+    )
 
 
 @app.get("/api/health")

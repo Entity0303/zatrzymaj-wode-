@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     cors_origins: list[str] = ["http://localhost:5173"]
 
     uldk_url: str = "https://uldk.gugik.gov.pl/"
+    uldk_timeout_s: float = 10.0
     iung_wms_url: str = "https://sgeo.iung.pl/geoserver/Susza/wms"
     iung_soil_layer: str = "Susza:katgl_landuse2024"
     nasa_power_url: str = "https://power.larc.nasa.gov/api/temporal/daily/point"
