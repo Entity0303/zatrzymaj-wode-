@@ -9284,7 +9284,7 @@
       },
       {
         "kind": "woda",
-        "level": "warn",
+        "level": "info",
         "text": "Co zrobić z wodą: zatrzymaj wodę z jesienno-zimowych opadów i roztopów; sprawdź rów przy miejscu odpływu – zastawka zatrzyma wodę; do rozważenia: małe oczko przy odpływie.",
         "numbers": {
           "dzialania": 3

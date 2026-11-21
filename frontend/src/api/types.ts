@@ -632,10 +632,12 @@ export type CropSuggestions = {
 export type VerdictKind = 'gleba' | 'opady' | 'teren' | 'uprawy' | 'woda' | 'uprawa_wybrana'
 /** ok #5BB37F / warn #E8B931 / bad #C8453B */
 export type VerdictLevel = 'ok' | 'warn' | 'bad'
+/** pozycja „woda” ma level 'info' (lista działań, bez oceny; kolor #2F80C9, ikona kropli) */
+export type VerdictStatementLevel = VerdictLevel | 'info'
 
 export type VerdictStatement = {
   kind: VerdictKind
-  level: VerdictLevel
+  level: VerdictStatementLevel
   /** 1–2 proste zdania z liczbami */
   text: string
   numbers?: Record<string, number | string | null>

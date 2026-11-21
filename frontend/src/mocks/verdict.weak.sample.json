@@ -47,7 +47,7 @@
       },
       {
         "kind": "woda",
-        "level": "bad",
+        "level": "info",
         "text": "Co zrobić z wodą: zatrzymaj wodę z jesienno-zimowych opadów i roztopów; zwiększaj próchnicę – lekka gleba trzyma mało wody.",
         "numbers": {
           "dzialania": 2
@@ -133,7 +133,7 @@
     "side_m": 100.0,
     "area_ha": 1.0,
     "reason": "ULDK GUGiK: usługa chwilowo ogranicza ruch (przekierowanie) – spróbuj za chwilę (ponowna próba za 49 s)",
-    "note": "Obszar przybliżony – brak granic działki z ULDK. Analiza dla kwadratu 1 ha wokół wskazanego punktu.",
+    "note": "Obszar przybliżony – brak dokładnych granic działki. Analiza dla kwadratu 1 ha wokół wskazanego punktu.",
     "voivodeship_note": "Województwo przybliżone (najbliższy środek województwa): wielkopolskie."
   }
 }

@@ -497,11 +497,13 @@ class CropSuggestions(Contract):
 
 VerdictKind = Literal["gleba", "opady", "teren", "uprawy", "woda", "uprawa_wybrana"]
 VerdictLevel = Literal["ok", "warn", "bad"]
+VerdictStatementLevel = Literal["ok", "warn", "bad", "info"]
 
 
 class VerdictStatement(Contract):
     kind: VerdictKind
-    level: VerdictLevel = Field(description="ok #5BB37F / warn #E8B931 / bad #C8453B")
+    level: VerdictStatementLevel = Field(
+        description="ok #5BB37F / warn #E8B931 / bad #C8453B; info #2F80C9 – pozycja „woda” (lista działań, bez oceny)")
     text: str = Field(description="1–2 proste zdania z liczbami (szablony rules/verdict.yaml)")
     numbers: dict[str, float | int | str | None] = Field(default_factory=dict, description="Liczby użyte w zdaniu")
 
@@ -531,7 +533,7 @@ class ApproximateArea(Contract):
     side_m: float = Field(description="Bok kwadratu, m (100 m = 1 ha)")
     area_ha: float
     reason: str = Field(description="Dlaczego obszar przybliżony, np. 'ULDK GUGiK: usługa chwilowo ogranicza ruch'")
-    note: str = Field(description="'Obszar przybliżony – brak granic działki z ULDK'")
+    note: str = Field(description="'Obszar przybliżony – brak dokładnych granic działki…'")
     voivodeship_note: str | None = Field(None, description="Jak ustalono województwo (do plonów GUS)")
 
 
