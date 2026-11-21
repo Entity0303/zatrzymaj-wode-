@@ -84,7 +84,7 @@ Katalog `.ai/` to wspólna pamięć między sesjami i osobami. Zasady szczegół
 - **Osoba A (Dominik) = `backend/`**, **osoba B (Mefju) = `frontend/`**.
 - **Kontrakt API** = `backend/app/schemas/` + `frontend/src/api/types.ts`. Zmiany tylko po uzgodnieniu i **w obu miejscach naraz**. Przykład odpowiedzi analizy: `frontend/src/mocks/analysis.sample.json` – test `backend/tests/test_contract.py` sprawdza go modelem Pydantic (`extra="forbid"`) i czy każde pole jest w `types.ts`.
 - **1 komponent / warstwa / sekcja = 1 plik.**
-- Każde zadanie na **osobnej gałęzi** (`a/...` lub `b/...`) i **Pull Request** – nigdy push na `main`.
+- Każda osoba ma **jedną długą gałąź** (A: `a/backend`, B: `b/frontend`). Kolejne zadania to commity na tej gałęzi. **Merge do `main` tylko przy kamieniach milowych:** 1) pełne `/api/analysis`, 2) satelita + teren, 3) wersja końcowa. Druga osoba może pobrać zmiany kontraktu przez `git merge origin/a/backend` (lub `origin/b/frontend`).
 - Pliki wspólne (`backend/app/main.py`, `frontend/src/App.tsx`, `frontend/package.json`, `backend/requirements.txt`, `docker-compose.yml`, `CLAUDE.md`) zmieniane tylko w **osobnym małym commicie**.
 - Claude Code **nie używa przeglądarki bez wyraźnej prośby**. Weryfikacja: `pytest` (backend, bez sieci; testy na żywo tylko `pytest -m live`) i `npm run build` (frontend).
 
@@ -114,7 +114,7 @@ frontend/src/
 ## Zasady pracy
 
 - To jest działający prototyp na hackathon, nie produkt komercyjny. NIE twórz: polityki prywatności, regulaminu, banera cookies, zgód RODO, logowania/rejestracji, kont użytkowników, panelu admina ani stron typu „O nas”/„Kontakt”. Każdy widoczny element ma działać na prawdziwych danych i służyć ścieżce: Szukaj działki → Zobacz pole → Zrozum stan → Rekomendacje → Raport.
-- Każda zmiana: testy (`pytest` dla backendu, `npm run build` dla frontendu) muszą przechodzić, potem commit z opisem po polsku na gałęzi zadania i Pull Request (patrz „Praca zespołowa”).
+- Każda zmiana: testy (`pytest` dla backendu, `npm run build` dla frontendu) muszą przechodzić, potem commit z opisem po polsku na swojej długiej gałęzi (`a/backend` / `b/frontend`) i push tej gałęzi (patrz „Praca zespołowa”).
 - Kod źródeł danych w `backend/app/sources/<źródło>.py`, obliczenia w `backend/app/analysis/`, endpointy w `backend/app/routers/`, kontrakty w `backend/app/schemas/`.
 - UI po polsku, prostym językiem dla rolnika.
 - Nie publikujemy niczego na serwerze bez zgody właściciela repo.

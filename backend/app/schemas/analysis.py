@@ -109,6 +109,34 @@ class OverallStatus(Contract):
     summary: str = Field(description="Jedno zdanie z liczbami")
 
 
+# ── Gleba (IUNG + EGiB) ─────────────────────────────────────────────────────────────────────
+
+NonAgriculturalReason = Literal["las", "woda", "zabudowa", "drogi", "gleby_organiczne"]
+"""Dlaczego ocena suszy rolniczej nie ma zastosowania (kody IUNG 11, 12, 13, 14, 5 łącznie > 50%)."""
+
+
+class SoilShareItem(Contract):
+    code: int = Field(description="Kod IUNG: 1–4 kategorie podatności, 5 organiczne, 11 las, 12 woda, 13 zabudowa, 14 drogi/nieużytki")
+    label: str
+    share: float = Field(ge=0, le=1)
+
+
+class Soil(Contract):
+    """Gleba działki (SPEC 7.A „ile wody zmieści gleba”, 15.1 „to nie jest grunt rolny”, 15.3)."""
+
+    dominant_code: int | None
+    dominant_label: str | None
+    shares: list[SoilShareItem] = Field(description="Udziały kodów IUNG w obrysie, od największego")
+    agricultural_share: float | None = Field(None, ge=0, le=1, description="Udział gleb mineralnych użytków rolnych (kody 1–4)")
+    wod_mm: float | None = Field(None, description="Woda dostępna dla roślin (WOD), średnia ważona dla części mineralnej")
+    classes: list[str] | None = Field(None, description="Klasy bonitacyjne EGiB, np. ['RIIIa', 'PsIII'] – tylko informacyjnie")
+    classes_note: str | None = Field(None, description="Powód braku klas, np. 'Powiat nie udostępnia klas…'")
+    non_agricultural: bool = False
+    non_agricultural_reason: NonAgriculturalReason | None = None
+    non_agricultural_note: str | None = Field(None, description="Gotowy komunikat dla rolnika (SPEC 15.1)")
+    source_tag: SourceTag
+
+
 # ── B. Na tle 10 lat ────────────────────────────────────────────────────────────────────────
 
 
@@ -138,6 +166,20 @@ class MonthlyPrecip(Contract):
     mean_mm: float | None
 
 
+class BalanceRank(Contract):
+    """Pozycja bieżącego bilansu na tle lat porównawczych."""
+
+    lower_years: int = Field(ge=0, description="W ilu latach porównawczych bilans był NIŻSZY niż teraz (0 = najgorszy)")
+    of_years: int = Field(ge=0, description="Z ilu lat porównawczych (lata z niepełnymi danymi pominięte)")
+
+
+class DrySpell(Contract):
+    """Najdłuższy okres bez opadu (opad < 1 mm) w bieżącym sezonie."""
+
+    days: int = Field(ge=0)
+    end_date: dt.date | None = Field(None, description="Ostatni dzień tego okresu")
+
+
 class History(Contract):
     period_start: dt.date
     period_end: dt.date
@@ -147,6 +189,71 @@ class History(Contract):
     stress_days_by_year: list[YearStress]
     monthly_precip: list[MonthlyPrecip]
     summary: str | None = Field(None, description="Np. 'W 6 z 10 ostatnich lat w maju–lipcu brakowało wody.'")
+    balance_deviation_mm: float | None = Field(None, description="Bieżący bilans − średnia z lat porównawczych, mm")
+    balance_rank: BalanceRank | None = None
+    longest_dry_spell: DrySpell | None = None
+    band_years: list[int] = Field(default_factory=list, description="Lata użyte w paśmie porównawczym")
+    source_tag: SourceTag
+
+
+# ── Uprawa, stan wody, nawadnianie (A3b) ────────────────────────────────────────────────────
+
+CropPhase = Literal[
+    "przed_siewem",
+    "wschody_jesienne",
+    "spoczynek_zimowy",
+    "poczatkowa",
+    "rozwoj",
+    "pelnia",
+    "dojrzewanie",
+    "po_zbiorze",
+]
+"""Faza uprawy w dacie analizy. Wrażliwe na niedobór (stres, nawadnianie): poczatkowa, rozwoj, pelnia."""
+
+IrrigationStatus = Literal["zalecane", "niepotrzebne", "nieuzasadnione_w_fazie", "brak_danych"]
+
+
+class CropSeason(Contract):
+    phase: CropPhase
+    phase_label: str = Field(description="Np. 'pełnia rozwoju', 'po zbiorze'")
+    season_year: int = Field(description="Rok sezonu, którego dotyczą dni stresu")
+    season_start: dt.date = Field(description="Siew / wznowienie wegetacji")
+    harvest: dt.date = Field(description="Typowy termin zbioru w Polsce (koniec sezonu modelu)")
+    day_of_season: int | None = Field(None, description="Dzień sezonu w dacie analizy (1 = siew / wznowienie)")
+    sensitive: bool = Field(description="Faza wrażliwa na niedobór wody – liczymy stres, możliwe zalecenie nawadniania")
+    root_depth_m: float | None = Field(None, description="Głębokość korzeni w modelu w dacie analizy")
+
+
+class SeasonSummary(Contract):
+    """Podsumowanie zakończonego sezonu uprawy."""
+
+    year: int
+    stress_days: int | None
+    mean_prev_stress_days: float | None = Field(None, description="Średnia z 10 poprzednich sezonów")
+
+
+class SoilWaterState(Contract):
+    """Stan wody w glebie w dacie analizy – także poza sezonem (dane do rekomendacji jesienno-zimowych)."""
+
+    scope: Literal["strefa_korzeni", "profil"] = Field(
+        description="strefa_korzeni – w fazach uprawy; profil – ok. 1 m, poza sezonem (goła gleba / spoczynek)"
+    )
+    depth_m: float
+    description: str = Field(description="Np. 'poza sezonem – gleba odbudowuje zapas wody'")
+    rank: BalanceRank | None = Field(
+        None, description="Ten sam dzień w 10 poprzednich latach: w ilu latach było MNIEJ wody niż teraz, z ilu"
+    )
+    last_season: SeasonSummary | None = Field(None, description="Zakończony sezon (po zbiorze / przed siewem)")
+
+
+class IrrigationPlan(Contract):
+    status: IrrigationStatus
+    message: str = Field(description="Np. '25 mm teraz, powtórz za ok. 5 dni'")
+    dose_mm: float | None = Field(None, le=35, description="Dawka jednorazowa zależna od gleby, nigdy > 35 mm")
+    first_date: dt.date | None = None
+    interval_days: int | None = Field(None, description="Co ile dni powtarzać, by utrzymać wodę powyżej progu stresu")
+    total_7d_mm: float | None = Field(None, description="Łączny niedobór do uzupełnienia w 7 dniach")
+    doses_7d: int | None = None
     source_tag: SourceTag
 
 
@@ -184,6 +291,8 @@ class Recommendation(Contract):
     confidence: Confidence
     location: dict[str, Any] | None = Field(None, description="GeoJSON geometria miejsca (EPSG:4326) – „Pokaż na mapie”")
     rule_id: str | None = Field(None, description="Id reguły z analysis/rules/*.yaml")
+    priority: int = Field(0, description="Ważność w obrębie kategorii (większa = ważniejsza)")
+    in_panel: bool = Field(False, description="Pokazać w panelu działki (maks. 3: po jednej z kategorii); reszta – paszport")
 
 
 # ── E. Wiarygodność ─────────────────────────────────────────────────────────────────────────
@@ -233,6 +342,10 @@ class AnalysisResponse(Contract):
     generated_at: dt.datetime
     status: OverallStatus
     indicators: Indicators
+    crop_season: CropSeason
+    soil_water: SoilWaterState
+    irrigation: IrrigationPlan
+    soil: Soil
     history: History
     causes: list[Cause] = Field(description="Od największego udziału")
     recommendations: list[Recommendation] = Field(description="retencja → agrotechnika → nawadnianie")

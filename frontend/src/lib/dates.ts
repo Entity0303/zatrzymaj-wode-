@@ -1,3 +1,5 @@
+import { locale } from './i18n'
+
 /** Data w strefie lokalnej jako RRRR-MM-DD (toISOString dałby datę UTC). */
 export function isoDate(d: Date): string {
   const p = (n: number) => String(n).padStart(2, '0')
@@ -14,5 +16,5 @@ export function minAnalysisIso(): string {
 }
 
 export function formatDateTimePl(iso: string): string {
-  return new Date(iso).toLocaleString('pl-PL', { dateStyle: 'medium', timeStyle: 'short' })
+  return new Date(iso).toLocaleString(locale(), { dateStyle: 'medium', timeStyle: 'short' })
 }

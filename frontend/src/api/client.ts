@@ -1,5 +1,15 @@
 /** Klient API: zapytania do backendu i tłumaczenie błędów na prosty polski. Typy: ./types.ts */
-import type { AnalysisResponse, CropId, Forecast, Parcel } from './types'
+import type {
+  AnalysisResponse,
+  CropId,
+  Forecast,
+  InfraReport,
+  InfraReportIn,
+  LayerKey,
+  LayerResponse,
+  Parcel,
+  PointValue,
+} from './types'
 
 export class ApiError extends Error {
   status: number
@@ -25,6 +35,18 @@ async function get<T>(path: string, params: Record<string, string | number>, sig
   return body as T
 }
 
+async function post<T>(path: string, body: unknown): Promise<T> {
+  let res: Response
+  try {
+    res = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+  } catch {
+    throw new ApiError(0, null, 'Brak połączenia z serwerem aplikacji.')
+  }
+  const data = await res.json().catch(() => null)
+  if (!res.ok) throw new ApiError(res.status, data?.detail ?? data)
+  return data as T
+}
+
 export const api = {
   parcelById: (id: string) => get<Parcel>('/api/parcel', { id }),
   parcelByPoint: (lon: number, lat: number) =>
@@ -34,9 +56,44 @@ export const api = {
   /** GET /api/analysis – backend zwraca na razie 501 „w budowie” (kontrakt: types.ts AnalysisResponse) */
   analysis: (parcelId: string, crop: CropId, date: string, signal?: AbortSignal) =>
     get<AnalysisResponse>('/api/analysis', { parcel_id: parcelId, crop, date }, signal),
+  /** GET /api/layers/{layer} – warstwa przycięta do obrysu działki (raster PNG + bbox, GeoJSON) */
+  layer: (layer: LayerKey, parcelId: string, date: string, signal?: AbortSignal) =>
+    get<LayerResponse>(`/api/layers/${layer}`, { parcel_id: parcelId, date }, signal),
+  /** GET /api/layers/{layer}/point – wartość warstwy w klikniętym punkcie (SPEC 5.4) */
+  layerPoint: (layer: LayerKey, lon: number, lat: number, date: string) =>
+    get<PointValue>(`/api/layers/${layer}/point`, { lon: lon.toFixed(7), lat: lat.toFixed(7), date }),
+  /** GET /api/infra-reports – zgłoszenia rowów/zbiorników w prostokącie [lon_min, lat_min, lon_max, lat_max] */
+  infraReports: (b: [number, number, number, number], signal?: AbortSignal) =>
+    get<InfraReport[]>('/api/infra-reports', { lon_min: b[0], lat_min: b[1], lon_max: b[2], lat_max: b[3] }, signal),
+  /** POST /api/infra-reports – nowe zgłoszenie (SPEC 11) */
+  createInfraReport: (r: InfraReportIn) => post<InfraReport>('/api/infra-reports', r),
+  /** POST /api/infra-reports/{id}/confirm – „Potwierdzam” */
+  confirmInfraReport: (id: string) => post<InfraReport>(`/api/infra-reports/${encodeURIComponent(id)}/confirm`, {}),
+  /** GET /api/report.pdf – te same parametry co analiza; odpowiedź to plik PDF */
+  reportPdf: async (parcelId: string, crop: CropId, date: string): Promise<Blob> => {
+    const params: Record<string, string> = { parcel_id: parcelId, crop, date }
+    let res: Response
+    try {
+      res = await fetch(`/api/report.pdf?${new URLSearchParams(params)}`)
+    } catch {
+      throw new ApiError(0, null, 'Brak połączenia z serwerem aplikacji.')
+    }
+    if (!res.ok) {
+      const body = await res.json().catch(() => null)
+      throw new ApiError(res.status, body?.detail ?? body)
+    }
+    return res.blob()
+  },
 }
 
-export type ErrorInfo = { title: string; message: string; stillWorks?: string; retryable: boolean }
+/** Teksty po polsku (klucze tłumaczeń) – tłumaczy je ErrorNotice; {zmienne} w `vars`. */
+export type ErrorInfo = {
+  title: string
+  message: string
+  stillWorks?: string
+  retryable: boolean
+  vars?: Record<string, string | number>
+}
 
 /** Tłumaczy błąd API na komunikat dla rolnika (SPEC 14 ErrorNotice: co nie zadziałało, co działa dalej). */
 export function describeError(e: unknown, kind: 'number' | 'point'): ErrorInfo {
@@ -69,10 +126,37 @@ export function describeError(e: unknown, kind: 'number' | 'point'): ErrorInfo {
   }
   if (e.status === 502)
     return {
-      title: `Usługa ${detail?.source ?? 'zewnętrzna'} nie odpowiada`,
-      message: `Nie udało się pobrać danych działki (${detail?.message ?? 'błąd usługi'}).`,
+      title: 'Usługa {source} nie odpowiada',
+      message: 'Nie udało się pobrać danych działki ({detail}).',
       stillWorks,
       retryable: true,
+      vars: { source: detail?.source ?? 'zewnętrzna', detail: detail?.message ?? 'błąd usługi' },
     }
-  return { title: 'Błąd serwera', message: `Serwer zwrócił błąd ${e.status}.`, stillWorks, retryable: true }
+  return { title: 'Błąd serwera', message: 'Serwer zwrócił błąd {status}.', stillWorks, retryable: true, vars: { status: e.status } }
+}
+
+/** Błąd GET /api/analysis po polsku – mapa, dane działki i prognoza działają dalej. */
+export function describeAnalysisError(e: unknown): ErrorInfo {
+  const stillWorks = 'Mapa, granice działki i prognoza pogody działają dalej.'
+  if (!(e instanceof ApiError))
+    return { title: 'Nie udało się policzyć oceny', message: 'Wystąpił nieoczekiwany błąd.', stillWorks, retryable: true }
+  const detail = e.detail as { source?: string; message?: string } | null
+  if (e.status === 0)
+    return { title: 'Brak połączenia', message: 'Nie można połączyć się z serwerem aplikacji. Sprawdź internet.', retryable: true }
+  if (e.status === 501)
+    return {
+      title: 'Ocena sytuacji wodnej jest jeszcze w budowie',
+      message: 'Serwer nie liczy jeszcze analizy działki.',
+      stillWorks,
+      retryable: false,
+    }
+  if (e.status === 502 || e.status === 504)
+    return {
+      title: 'Usługa {source} nie odpowiada',
+      message: detail?.message ?? 'Nie udało się pobrać danych do analizy.',
+      stillWorks,
+      retryable: true,
+      vars: { source: detail?.source ?? 'zewnętrzna' },
+    }
+  return { title: 'Błąd serwera', message: 'Serwer zwrócił błąd {status}.', stillWorks, retryable: true, vars: { status: e.status } }
 }

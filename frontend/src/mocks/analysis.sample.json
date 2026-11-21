@@ -1,224 +1,1585 @@
 {
   "parcel": {
-    "id": "143203_2.0027.112/11",
-    "wojewodztwo": "mazowieckie",
-    "powiat": "powiat warszawski zachodni",
-    "gmina": "Kampinos",
-    "obreb": "Szczytno",
-    "numer": "112/11",
-    "teryt_gminy": "1432032",
-    "powierzchnia_ha": 5.01,
+    "id": "201305_2.0038.6/1",
+    "wojewodztwo": "podlaskie",
+    "powiat": "powiat wysokomazowiecki",
+    "gmina": "Kobylin-Borzymy",
+    "obreb": "Wnory-Wandy",
+    "numer": "6/1",
+    "teryt_gminy": "2013052",
+    "powierzchnia_ha": 0.5822,
     "geometria": {
       "type": "Polygon",
-      "coordinates": [[[20.6195, 52.3298], [20.6232, 52.3298], [20.6232, 52.3321], [20.6195, 52.3321], [20.6195, 52.3298]]]
+      "coordinates": [
+        [
+          [
+            22.601865633605076,
+            53.050016629547535
+          ],
+          [
+            22.59995910187174,
+            53.05040815615558
+          ],
+          [
+            22.599914863840056,
+            53.049992247465354
+          ],
+          [
+            22.601730846600116,
+            53.049632999782865
+          ],
+          [
+            22.601807306031464,
+            53.04981427142785
+          ],
+          [
+            22.601865633605076,
+            53.050016629547535
+          ]
+        ]
+      ]
     },
     "zrodlo": {
-      "nazwa": "DANE PRZYKŁADOWE",
+      "nazwa": "ULDK GUGiK",
       "url": "https://uldk.gugik.gov.pl/",
-      "pobrano": "2026-06-15T10:00:00+00:00",
-      "uwagi": "Obiekt przykładowy do pracy nad UI – nie pochodzi z analizy."
+      "pobrano": "2026-11-21T16:17:35+00:00",
+      "uwagi": "ZAPIS ODPOWIEDZI /api/analysis dla 201305_2.0038.6/1, zboża ozime, 2018-06-10 (wygenerowano 2026-11-21). Plik służy tylko do pracy nad UI (?dane=przykladowe) – UI zawsze pokazuje napis „DANE PRZYKŁADOWE”."
     }
   },
   "crop": "zboza_ozime",
-  "analysis_date": "2026-06-15",
+  "analysis_date": "2018-06-10",
   "historical": true,
-  "generated_at": "2026-06-15T10:00:12+00:00",
+  "generated_at": "2026-11-21T16:17:39Z",
   "status": {
-    "level": "warn",
-    "score": 54,
-    "headline": "Uwaga – rośnie ryzyko suszy",
-    "summary": "Gleba zmieści mało wody, a od marca spadło o 84 mm mniej niż zwykle."
+    "level": "danger",
+    "score": 8,
+    "headline": "Susza – rośliny cierpią z braku wody",
+    "summary": "Gleba ma 17% wody dostępnej w strefie korzeni, a od 1 marca bilans wody wynosi −111 mm – o 90 mm mniej niż zwykle. Rośliny już odczuwają brak wody."
   },
   "indicators": {
     "soil_water_pct": {
-      "value": 38,
+      "value": 17.0,
       "unit": "%",
-      "label": null,
-      "status": "warn",
-      "note": null,
-      "source_tag": { "kind": "szacunek_modelu", "date": "2026-06-15", "source": "Model wody w glebie FAO-56" }
+      "label": "pełnia rozwoju",
+      "status": "risk",
+      "note": "pełnia rozwoju – rośliny odczuwają brak wody (strefa korzeni 1 m)",
+      "source_tag": {
+        "kind": "szacunek_modelu",
+        "date": "2018-06-09",
+        "source": "Model wody w glebie FAO-56"
+      }
     },
     "soil_water_mm": {
-      "value": 57,
-      "unit": "mm",
-      "label": null,
-      "status": "warn",
-      "note": null,
-      "source_tag": { "kind": "szacunek_modelu", "date": "2026-06-15", "source": "Model wody w glebie FAO-56" }
-    },
-    "risk_7d": {
-      "value": 6,
-      "unit": "dni",
-      "label": "Średnie",
-      "status": "warn",
-      "note": "stres za ok. 6 dni",
-      "days_to_stress": 6,
-      "source_tag": { "kind": "prognoza", "date": "2026-06-15", "source": "Open-Meteo" }
-    },
-    "crop_health": {
-      "value": 68,
-      "unit": "pkt",
-      "label": "Dobra",
-      "status": "ok",
-      "note": null,
-      "index_value": 0.62,
-      "source_tag": { "kind": "satelita", "date": "2026-06-12", "source": "Sentinel-2 L2A" }
-    },
-    "plant_moisture": {
-      "value": 41,
-      "unit": "pkt",
-      "label": "Umiarkowana",
-      "status": "warn",
-      "note": null,
-      "index_value": 0.08,
-      "source_tag": { "kind": "satelita", "date": "2026-06-12", "source": "Sentinel-2 L2A" }
-    },
-    "water_balance_season": {
-      "value": -84,
+      "value": 27.7,
       "unit": "mm",
       "label": null,
       "status": "risk",
-      "note": "względem średniej z 10 lat",
-      "source_tag": { "kind": "obliczenia", "date": "2026-06-14", "source": "NASA POWER" }
+      "note": "woda dostępna dla roślin, strefa korzeni 1 m",
+      "source_tag": {
+        "kind": "szacunek_modelu",
+        "date": "2018-06-09",
+        "source": "Model wody w glebie FAO-56"
+      }
+    },
+    "risk_7d": {
+      "value": 0.0,
+      "unit": "dni",
+      "label": "Wysokie",
+      "status": "risk",
+      "note": "rośliny już odczuwają brak wody (scenariusz typowej pogody)",
+      "source_tag": {
+        "kind": "szacunek_modelu",
+        "date": "2018-06-10",
+        "source": "scenariusz typowej pogody (10 lat)"
+      },
+      "days_to_stress": 0
+    },
+    "crop_health": {
+      "value": null,
+      "unit": "pkt",
+      "label": null,
+      "status": "no_data",
+      "note": "zdjęcia satelitarne – w przygotowaniu",
+      "source_tag": {
+        "kind": "brak_danych",
+        "date": null,
+        "source": "Sentinel-2 L2A"
+      },
+      "index_value": null
+    },
+    "plant_moisture": {
+      "value": null,
+      "unit": "pkt",
+      "label": null,
+      "status": "no_data",
+      "note": "zdjęcia satelitarne – w przygotowaniu",
+      "source_tag": {
+        "kind": "brak_danych",
+        "date": null,
+        "source": "Sentinel-2 L2A"
+      },
+      "index_value": null
+    },
+    "water_balance_season": {
+      "value": -110.6,
+      "unit": "mm",
+      "label": null,
+      "status": "risk",
+      "note": "o 90 mm mniej niż zwykle (średnia 10 lat -20 mm), od 01.03",
+      "source_tag": {
+        "kind": "obliczenia",
+        "date": "2018-06-09",
+        "source": "NASA POWER"
+      }
     },
     "soil_capacity": {
-      "value": 149,
+      "value": 166.0,
       "unit": "mm",
-      "label": "Kat. II – podatna na suszę",
-      "status": "warn",
-      "note": null,
-      "source_tag": { "kind": "pomiar", "date": null, "source": "IUNG-PIB SMSR" }
+      "label": "Kat. III – średnio podatna na suszę",
+      "status": "ok",
+      "note": "woda dostępna dla roślin (WOD) – 100% działki to gleby mineralne użytków rolnych; klasy bonitacyjne EGiB: RIIIb, RIVa, RIVb",
+      "source_tag": {
+        "kind": "pomiar",
+        "date": null,
+        "source": "IUNG-PIB"
+      }
+    }
+  },
+  "crop_season": {
+    "phase": "pelnia",
+    "phase_label": "pełnia rozwoju",
+    "season_year": 2018,
+    "season_start": "2018-03-01",
+    "harvest": "2018-07-20",
+    "day_of_season": 102,
+    "sensitive": true,
+    "root_depth_m": 1.0
+  },
+  "soil_water": {
+    "scope": "strefa_korzeni",
+    "depth_m": 1.0,
+    "description": "pełnia rozwoju – rośliny odczuwają brak wody",
+    "rank": {
+      "lower_years": 0,
+      "of_years": 10
+    },
+    "last_season": null
+  },
+  "irrigation": {
+    "status": "zalecane",
+    "message": "27,5 mm teraz, powtórz za ok. 2 dni (w 7 dniach 3 dawki, niedobór ok. 70 mm)",
+    "dose_mm": 27.5,
+    "first_date": "2018-06-10",
+    "interval_days": 2,
+    "total_7d_mm": 70.0,
+    "doses_7d": 3,
+    "source_tag": {
+      "kind": "szacunek_modelu",
+      "date": "2018-06-10",
+      "source": "scenariusz typowej pogody (10 lat)"
+    }
+  },
+  "soil": {
+    "dominant_code": 3,
+    "dominant_label": "Kategoria III – średnio podatna na suszę",
+    "shares": [
+      {
+        "code": 3,
+        "label": "Kategoria III – średnio podatna na suszę",
+        "share": 0.75
+      },
+      {
+        "code": 1,
+        "label": "Kategoria I – bardzo podatna na suszę",
+        "share": 0.25
+      }
+    ],
+    "agricultural_share": 1.0,
+    "wod_mm": 166.2,
+    "classes": [
+      "RIIIb",
+      "RIVa",
+      "RIVb"
+    ],
+    "classes_note": null,
+    "non_agricultural": false,
+    "non_agricultural_reason": null,
+    "non_agricultural_note": null,
+    "source_tag": {
+      "kind": "pomiar",
+      "date": null,
+      "source": "IUNG-PIB"
     }
   },
   "history": {
-    "period_start": "2016-01-01",
-    "period_end": "2026-06-14",
-    "season_start": "2026-03-01",
+    "period_start": "2006-08-01",
+    "period_end": "2018-06-09",
+    "season_start": "2018-03-01",
     "balance_cumulative": [
-      { "date": "2026-03-31", "value": 12 },
-      { "date": "2026-04-30", "value": -18 },
-      { "date": "2026-05-31", "value": -71 },
-      { "date": "2026-06-14", "value": -112 }
+      {
+        "date": "2018-03-01",
+        "value": 0.7
+      },
+      {
+        "date": "2018-03-02",
+        "value": 0.5
+      },
+      {
+        "date": "2018-03-03",
+        "value": 0.5
+      },
+      {
+        "date": "2018-03-04",
+        "value": 0.2
+      },
+      {
+        "date": "2018-03-05",
+        "value": -0.2
+      },
+      {
+        "date": "2018-03-06",
+        "value": -0.5
+      },
+      {
+        "date": "2018-03-07",
+        "value": 0.9
+      },
+      {
+        "date": "2018-03-08",
+        "value": 0.8
+      },
+      {
+        "date": "2018-03-09",
+        "value": 2.1
+      },
+      {
+        "date": "2018-03-10",
+        "value": 2.6
+      },
+      {
+        "date": "2018-03-11",
+        "value": 4.0
+      },
+      {
+        "date": "2018-03-12",
+        "value": 4.1
+      },
+      {
+        "date": "2018-03-13",
+        "value": 4.0
+      },
+      {
+        "date": "2018-03-14",
+        "value": 4.0
+      },
+      {
+        "date": "2018-03-15",
+        "value": 3.2
+      },
+      {
+        "date": "2018-03-16",
+        "value": 2.7
+      },
+      {
+        "date": "2018-03-17",
+        "value": 1.7
+      },
+      {
+        "date": "2018-03-18",
+        "value": 0.7
+      },
+      {
+        "date": "2018-03-19",
+        "value": -0.3
+      },
+      {
+        "date": "2018-03-20",
+        "value": -1.1
+      },
+      {
+        "date": "2018-03-21",
+        "value": -2.0
+      },
+      {
+        "date": "2018-03-22",
+        "value": -1.9
+      },
+      {
+        "date": "2018-03-23",
+        "value": -2.5
+      },
+      {
+        "date": "2018-03-24",
+        "value": -3.6
+      },
+      {
+        "date": "2018-03-25",
+        "value": -4.9
+      },
+      {
+        "date": "2018-03-26",
+        "value": -5.7
+      },
+      {
+        "date": "2018-03-27",
+        "value": -6.1
+      },
+      {
+        "date": "2018-03-28",
+        "value": -6.9
+      },
+      {
+        "date": "2018-03-29",
+        "value": -1.4
+      },
+      {
+        "date": "2018-03-30",
+        "value": -2.2
+      },
+      {
+        "date": "2018-03-31",
+        "value": 3.0
+      },
+      {
+        "date": "2018-04-01",
+        "value": 32.7
+      },
+      {
+        "date": "2018-04-02",
+        "value": 38.9
+      },
+      {
+        "date": "2018-04-03",
+        "value": 38.4
+      },
+      {
+        "date": "2018-04-04",
+        "value": 36.6
+      },
+      {
+        "date": "2018-04-05",
+        "value": 34.8
+      },
+      {
+        "date": "2018-04-06",
+        "value": 33.2
+      },
+      {
+        "date": "2018-04-07",
+        "value": 31.2
+      },
+      {
+        "date": "2018-04-08",
+        "value": 29.1
+      },
+      {
+        "date": "2018-04-09",
+        "value": 26.6
+      },
+      {
+        "date": "2018-04-10",
+        "value": 24.1
+      },
+      {
+        "date": "2018-04-11",
+        "value": 28.4
+      },
+      {
+        "date": "2018-04-12",
+        "value": 26.5
+      },
+      {
+        "date": "2018-04-13",
+        "value": 24.4
+      },
+      {
+        "date": "2018-04-14",
+        "value": 22.7
+      },
+      {
+        "date": "2018-04-15",
+        "value": 20.5
+      },
+      {
+        "date": "2018-04-16",
+        "value": 19.5
+      },
+      {
+        "date": "2018-04-17",
+        "value": 20.7
+      },
+      {
+        "date": "2018-04-18",
+        "value": 18.8
+      },
+      {
+        "date": "2018-04-19",
+        "value": 16.2
+      },
+      {
+        "date": "2018-04-20",
+        "value": 13.4
+      },
+      {
+        "date": "2018-04-21",
+        "value": 10.2
+      },
+      {
+        "date": "2018-04-22",
+        "value": 7.4
+      },
+      {
+        "date": "2018-04-23",
+        "value": 5.3
+      },
+      {
+        "date": "2018-04-24",
+        "value": 4.2
+      },
+      {
+        "date": "2018-04-25",
+        "value": 5.5
+      },
+      {
+        "date": "2018-04-26",
+        "value": 4.7
+      },
+      {
+        "date": "2018-04-27",
+        "value": 3.2
+      },
+      {
+        "date": "2018-04-28",
+        "value": 0.6
+      },
+      {
+        "date": "2018-04-29",
+        "value": 1.3
+      },
+      {
+        "date": "2018-04-30",
+        "value": -0.8
+      },
+      {
+        "date": "2018-05-01",
+        "value": -2.2
+      },
+      {
+        "date": "2018-05-02",
+        "value": -5.5
+      },
+      {
+        "date": "2018-05-03",
+        "value": -9.2
+      },
+      {
+        "date": "2018-05-04",
+        "value": -12.4
+      },
+      {
+        "date": "2018-05-05",
+        "value": -15.7
+      },
+      {
+        "date": "2018-05-06",
+        "value": -19.1
+      },
+      {
+        "date": "2018-05-07",
+        "value": -22.8
+      },
+      {
+        "date": "2018-05-08",
+        "value": -26.8
+      },
+      {
+        "date": "2018-05-09",
+        "value": -30.3
+      },
+      {
+        "date": "2018-05-10",
+        "value": -33.3
+      },
+      {
+        "date": "2018-05-11",
+        "value": -37.4
+      },
+      {
+        "date": "2018-05-12",
+        "value": -41.5
+      },
+      {
+        "date": "2018-05-13",
+        "value": -45.3
+      },
+      {
+        "date": "2018-05-14",
+        "value": -46.2
+      },
+      {
+        "date": "2018-05-15",
+        "value": -48.5
+      },
+      {
+        "date": "2018-05-16",
+        "value": -43.4
+      },
+      {
+        "date": "2018-05-17",
+        "value": -36.3
+      },
+      {
+        "date": "2018-05-18",
+        "value": -36.1
+      },
+      {
+        "date": "2018-05-19",
+        "value": -38.3
+      },
+      {
+        "date": "2018-05-20",
+        "value": -42.1
+      },
+      {
+        "date": "2018-05-21",
+        "value": -45.7
+      },
+      {
+        "date": "2018-05-22",
+        "value": -45.5
+      },
+      {
+        "date": "2018-05-23",
+        "value": -48.6
+      },
+      {
+        "date": "2018-05-24",
+        "value": -52.5
+      },
+      {
+        "date": "2018-05-25",
+        "value": -54.2
+      },
+      {
+        "date": "2018-05-26",
+        "value": -53.1
+      },
+      {
+        "date": "2018-05-27",
+        "value": -57.7
+      },
+      {
+        "date": "2018-05-28",
+        "value": -62.7
+      },
+      {
+        "date": "2018-05-29",
+        "value": -67.8
+      },
+      {
+        "date": "2018-05-30",
+        "value": -73.2
+      },
+      {
+        "date": "2018-05-31",
+        "value": -78.5
+      },
+      {
+        "date": "2018-06-01",
+        "value": -83.7
+      },
+      {
+        "date": "2018-06-02",
+        "value": -81.6
+      },
+      {
+        "date": "2018-06-03",
+        "value": -84.0
+      },
+      {
+        "date": "2018-06-04",
+        "value": -88.8
+      },
+      {
+        "date": "2018-06-05",
+        "value": -92.3
+      },
+      {
+        "date": "2018-06-06",
+        "value": -96.3
+      },
+      {
+        "date": "2018-06-07",
+        "value": -100.6
+      },
+      {
+        "date": "2018-06-08",
+        "value": -105.5
+      },
+      {
+        "date": "2018-06-09",
+        "value": -110.6
+      }
     ],
     "balance_band": [
-      { "date": "2026-03-31", "min": -10, "max": 38, "mean": 15 },
-      { "date": "2026-04-30", "min": -45, "max": 30, "mean": -2 },
-      { "date": "2026-05-31", "min": -98, "max": 22, "mean": -21 },
-      { "date": "2026-06-14", "min": -130, "max": 10, "mean": -28 }
+      {
+        "date": "2018-03-01",
+        "min": -0.5,
+        "max": 11.1,
+        "mean": 2.3
+      },
+      {
+        "date": "2018-03-02",
+        "min": -0.9,
+        "max": 13.9,
+        "mean": 3.2
+      },
+      {
+        "date": "2018-03-03",
+        "min": -1.3,
+        "max": 14.1,
+        "mean": 2.9
+      },
+      {
+        "date": "2018-03-04",
+        "min": -2.2,
+        "max": 14.3,
+        "mean": 3.2
+      },
+      {
+        "date": "2018-03-05",
+        "min": -3.1,
+        "max": 14.5,
+        "mean": 3.0
+      },
+      {
+        "date": "2018-03-06",
+        "min": -4.0,
+        "max": 17.0,
+        "mean": 4.3
+      },
+      {
+        "date": "2018-03-07",
+        "min": -4.9,
+        "max": 17.2,
+        "mean": 4.4
+      },
+      {
+        "date": "2018-03-08",
+        "min": -5.6,
+        "max": 17.3,
+        "mean": 4.8
+      },
+      {
+        "date": "2018-03-09",
+        "min": -5.5,
+        "max": 17.6,
+        "mean": 4.6
+      },
+      {
+        "date": "2018-03-10",
+        "min": -5.2,
+        "max": 18.5,
+        "mean": 5.1
+      },
+      {
+        "date": "2018-03-11",
+        "min": -6.4,
+        "max": 21.9,
+        "mean": 6.3
+      },
+      {
+        "date": "2018-03-12",
+        "min": -7.5,
+        "max": 22.2,
+        "mean": 6.9
+      },
+      {
+        "date": "2018-03-13",
+        "min": -9.0,
+        "max": 24.4,
+        "mean": 7.0
+      },
+      {
+        "date": "2018-03-14",
+        "min": -10.2,
+        "max": 25.1,
+        "mean": 6.8
+      },
+      {
+        "date": "2018-03-15",
+        "min": -6.9,
+        "max": 26.4,
+        "mean": 7.1
+      },
+      {
+        "date": "2018-03-16",
+        "min": -6.0,
+        "max": 26.3,
+        "mean": 6.7
+      },
+      {
+        "date": "2018-03-17",
+        "min": -6.7,
+        "max": 27.7,
+        "mean": 7.8
+      },
+      {
+        "date": "2018-03-18",
+        "min": -3.6,
+        "max": 30.0,
+        "mean": 9.5
+      },
+      {
+        "date": "2018-03-19",
+        "min": -3.1,
+        "max": 30.1,
+        "mean": 10.8
+      },
+      {
+        "date": "2018-03-20",
+        "min": -3.9,
+        "max": 30.8,
+        "mean": 10.7
+      },
+      {
+        "date": "2018-03-21",
+        "min": -3.4,
+        "max": 32.1,
+        "mean": 11.2
+      },
+      {
+        "date": "2018-03-22",
+        "min": -4.3,
+        "max": 34.4,
+        "mean": 11.7
+      },
+      {
+        "date": "2018-03-23",
+        "min": -5.5,
+        "max": 36.8,
+        "mean": 11.8
+      },
+      {
+        "date": "2018-03-24",
+        "min": -7.0,
+        "max": 44.7,
+        "mean": 12.4
+      },
+      {
+        "date": "2018-03-25",
+        "min": -8.3,
+        "max": 45.0,
+        "mean": 12.8
+      },
+      {
+        "date": "2018-03-26",
+        "min": -9.5,
+        "max": 44.1,
+        "mean": 12.8
+      },
+      {
+        "date": "2018-03-27",
+        "min": -11.0,
+        "max": 44.4,
+        "mean": 12.1
+      },
+      {
+        "date": "2018-03-28",
+        "min": -12.6,
+        "max": 46.3,
+        "mean": 12.3
+      },
+      {
+        "date": "2018-03-29",
+        "min": -12.1,
+        "max": 47.2,
+        "mean": 13.2
+      },
+      {
+        "date": "2018-03-30",
+        "min": -10.0,
+        "max": 47.5,
+        "mean": 13.8
+      },
+      {
+        "date": "2018-03-31",
+        "min": -6.3,
+        "max": 46.0,
+        "mean": 15.2
+      },
+      {
+        "date": "2018-04-01",
+        "min": -5.1,
+        "max": 44.9,
+        "mean": 16.2
+      },
+      {
+        "date": "2018-04-02",
+        "min": -3.2,
+        "max": 43.1,
+        "mean": 15.4
+      },
+      {
+        "date": "2018-04-03",
+        "min": -4.8,
+        "max": 41.0,
+        "mean": 15.3
+      },
+      {
+        "date": "2018-04-04",
+        "min": -1.5,
+        "max": 38.9,
+        "mean": 16.2
+      },
+      {
+        "date": "2018-04-05",
+        "min": -3.7,
+        "max": 42.1,
+        "mean": 16.1
+      },
+      {
+        "date": "2018-04-06",
+        "min": -5.1,
+        "max": 41.6,
+        "mean": 17.4
+      },
+      {
+        "date": "2018-04-07",
+        "min": -5.5,
+        "max": 40.2,
+        "mean": 16.6
+      },
+      {
+        "date": "2018-04-08",
+        "min": -6.0,
+        "max": 41.3,
+        "mean": 16.4
+      },
+      {
+        "date": "2018-04-09",
+        "min": -6.4,
+        "max": 39.7,
+        "mean": 15.9
+      },
+      {
+        "date": "2018-04-10",
+        "min": -8.2,
+        "max": 40.2,
+        "mean": 15.0
+      },
+      {
+        "date": "2018-04-11",
+        "min": -10.6,
+        "max": 43.5,
+        "mean": 15.7
+      },
+      {
+        "date": "2018-04-12",
+        "min": -11.8,
+        "max": 47.3,
+        "mean": 17.0
+      },
+      {
+        "date": "2018-04-13",
+        "min": -12.1,
+        "max": 46.4,
+        "mean": 18.8
+      },
+      {
+        "date": "2018-04-14",
+        "min": -12.3,
+        "max": 44.2,
+        "mean": 18.9
+      },
+      {
+        "date": "2018-04-15",
+        "min": -4.7,
+        "max": 42.3,
+        "mean": 19.3
+      },
+      {
+        "date": "2018-04-16",
+        "min": -0.2,
+        "max": 40.8,
+        "mean": 19.8
+      },
+      {
+        "date": "2018-04-17",
+        "min": -2.4,
+        "max": 44.8,
+        "mean": 18.7
+      },
+      {
+        "date": "2018-04-18",
+        "min": -5.1,
+        "max": 44.7,
+        "mean": 17.0
+      },
+      {
+        "date": "2018-04-19",
+        "min": -6.6,
+        "max": 47.8,
+        "mean": 17.4
+      },
+      {
+        "date": "2018-04-20",
+        "min": -9.0,
+        "max": 52.1,
+        "mean": 16.5
+      },
+      {
+        "date": "2018-04-21",
+        "min": -10.2,
+        "max": 50.1,
+        "mean": 15.1
+      },
+      {
+        "date": "2018-04-22",
+        "min": -6.8,
+        "max": 47.5,
+        "mean": 13.7
+      },
+      {
+        "date": "2018-04-23",
+        "min": -8.7,
+        "max": 44.6,
+        "mean": 11.7
+      },
+      {
+        "date": "2018-04-24",
+        "min": -11.2,
+        "max": 41.7,
+        "mean": 9.7
+      },
+      {
+        "date": "2018-04-25",
+        "min": -14.5,
+        "max": 38.6,
+        "mean": 7.6
+      },
+      {
+        "date": "2018-04-26",
+        "min": -16.0,
+        "max": 35.4,
+        "mean": 6.8
+      },
+      {
+        "date": "2018-04-27",
+        "min": -12.7,
+        "max": 35.4,
+        "mean": 6.4
+      },
+      {
+        "date": "2018-04-28",
+        "min": -14.3,
+        "max": 53.8,
+        "mean": 7.7
+      },
+      {
+        "date": "2018-04-29",
+        "min": -17.0,
+        "max": 54.2,
+        "mean": 7.3
+      },
+      {
+        "date": "2018-04-30",
+        "min": -21.2,
+        "max": 52.3,
+        "mean": 5.7
+      },
+      {
+        "date": "2018-05-01",
+        "min": -24.9,
+        "max": 49.8,
+        "mean": 5.4
+      },
+      {
+        "date": "2018-05-02",
+        "min": -28.6,
+        "max": 47.9,
+        "mean": 4.8
+      },
+      {
+        "date": "2018-05-03",
+        "min": -32.4,
+        "max": 49.6,
+        "mean": 7.0
+      },
+      {
+        "date": "2018-05-04",
+        "min": -36.0,
+        "max": 58.7,
+        "mean": 6.5
+      },
+      {
+        "date": "2018-05-05",
+        "min": -38.5,
+        "max": 58.8,
+        "mean": 4.7
+      },
+      {
+        "date": "2018-05-06",
+        "min": -35.1,
+        "max": 57.5,
+        "mean": 6.3
+      },
+      {
+        "date": "2018-05-07",
+        "min": -34.4,
+        "max": 77.6,
+        "mean": 7.9
+      },
+      {
+        "date": "2018-05-08",
+        "min": -37.5,
+        "max": 79.7,
+        "mean": 6.5
+      },
+      {
+        "date": "2018-05-09",
+        "min": -38.0,
+        "max": 78.6,
+        "mean": 4.0
+      },
+      {
+        "date": "2018-05-10",
+        "min": -38.6,
+        "max": 78.6,
+        "mean": 3.0
+      },
+      {
+        "date": "2018-05-11",
+        "min": -38.0,
+        "max": 77.3,
+        "mean": 1.9
+      },
+      {
+        "date": "2018-05-12",
+        "min": -36.1,
+        "max": 74.3,
+        "mean": 1.4
+      },
+      {
+        "date": "2018-05-13",
+        "min": -39.1,
+        "max": 71.3,
+        "mean": 1.5
+      },
+      {
+        "date": "2018-05-14",
+        "min": -42.0,
+        "max": 67.7,
+        "mean": 1.1
+      },
+      {
+        "date": "2018-05-15",
+        "min": -44.9,
+        "max": 65.7,
+        "mean": 0.7
+      },
+      {
+        "date": "2018-05-16",
+        "min": -39.2,
+        "max": 62.4,
+        "mean": 2.8
+      },
+      {
+        "date": "2018-05-17",
+        "min": -39.7,
+        "max": 58.8,
+        "mean": 4.2
+      },
+      {
+        "date": "2018-05-18",
+        "min": -42.9,
+        "max": 55.5,
+        "mean": 3.5
+      },
+      {
+        "date": "2018-05-19",
+        "min": -44.4,
+        "max": 51.2,
+        "mean": 1.4
+      },
+      {
+        "date": "2018-05-20",
+        "min": -48.4,
+        "max": 46.9,
+        "mean": 2.6
+      },
+      {
+        "date": "2018-05-21",
+        "min": -47.8,
+        "max": 42.9,
+        "mean": 1.2
+      },
+      {
+        "date": "2018-05-22",
+        "min": -42.4,
+        "max": 39.3,
+        "mean": -0.5
+      },
+      {
+        "date": "2018-05-23",
+        "min": -42.3,
+        "max": 35.5,
+        "mean": -2.1
+      },
+      {
+        "date": "2018-05-24",
+        "min": -45.3,
+        "max": 38.8,
+        "mean": -3.0
+      },
+      {
+        "date": "2018-05-25",
+        "min": -49.2,
+        "max": 41.0,
+        "mean": -2.2
+      },
+      {
+        "date": "2018-05-26",
+        "min": -53.5,
+        "max": 39.3,
+        "mean": -3.8
+      },
+      {
+        "date": "2018-05-27",
+        "min": -53.2,
+        "max": 45.7,
+        "mean": -3.3
+      },
+      {
+        "date": "2018-05-28",
+        "min": -53.3,
+        "max": 45.3,
+        "mean": -4.8
+      },
+      {
+        "date": "2018-05-29",
+        "min": -50.2,
+        "max": 42.2,
+        "mean": -5.1
+      },
+      {
+        "date": "2018-05-30",
+        "min": -51.7,
+        "max": 41.3,
+        "mean": -6.6
+      },
+      {
+        "date": "2018-05-31",
+        "min": -54.0,
+        "max": 44.7,
+        "mean": -6.7
+      },
+      {
+        "date": "2018-06-01",
+        "min": -38.5,
+        "max": 45.5,
+        "mean": -6.0
+      },
+      {
+        "date": "2018-06-02",
+        "min": -38.0,
+        "max": 46.9,
+        "mean": -6.0
+      },
+      {
+        "date": "2018-06-03",
+        "min": -39.4,
+        "max": 48.3,
+        "mean": -7.9
+      },
+      {
+        "date": "2018-06-04",
+        "min": -43.3,
+        "max": 49.0,
+        "mean": -9.4
+      },
+      {
+        "date": "2018-06-05",
+        "min": -48.1,
+        "max": 50.5,
+        "mean": -12.3
+      },
+      {
+        "date": "2018-06-06",
+        "min": -51.6,
+        "max": 49.3,
+        "mean": -15.3
+      },
+      {
+        "date": "2018-06-07",
+        "min": -55.7,
+        "max": 47.5,
+        "mean": -16.9
+      },
+      {
+        "date": "2018-06-08",
+        "min": -60.4,
+        "max": 51.4,
+        "mean": -19.8
+      },
+      {
+        "date": "2018-06-09",
+        "min": -64.8,
+        "max": 54.2,
+        "mean": -20.2
+      }
     ],
     "stress_days_by_year": [
-      { "year": 2016, "stress_days": 12, "is_current": false },
-      { "year": 2017, "stress_days": 3, "is_current": false },
-      { "year": 2018, "stress_days": 41, "is_current": false },
-      { "year": 2019, "stress_days": 27, "is_current": false },
-      { "year": 2020, "stress_days": 9, "is_current": false },
-      { "year": 2021, "stress_days": 6, "is_current": false },
-      { "year": 2022, "stress_days": 19, "is_current": false },
-      { "year": 2023, "stress_days": 15, "is_current": false },
-      { "year": 2024, "stress_days": 22, "is_current": false },
-      { "year": 2025, "stress_days": 11, "is_current": false },
-      { "year": 2026, "stress_days": 4, "is_current": true }
+      {
+        "year": 2018,
+        "stress_days": 21,
+        "is_current": true
+      },
+      {
+        "year": 2017,
+        "stress_days": 5,
+        "is_current": false
+      },
+      {
+        "year": 2016,
+        "stress_days": 3,
+        "is_current": false
+      },
+      {
+        "year": 2015,
+        "stress_days": 0,
+        "is_current": false
+      },
+      {
+        "year": 2014,
+        "stress_days": 0,
+        "is_current": false
+      },
+      {
+        "year": 2013,
+        "stress_days": 0,
+        "is_current": false
+      },
+      {
+        "year": 2012,
+        "stress_days": 0,
+        "is_current": false
+      },
+      {
+        "year": 2011,
+        "stress_days": 4,
+        "is_current": false
+      },
+      {
+        "year": 2010,
+        "stress_days": 0,
+        "is_current": false
+      },
+      {
+        "year": 2009,
+        "stress_days": 19,
+        "is_current": false
+      },
+      {
+        "year": 2008,
+        "stress_days": 4,
+        "is_current": false
+      }
     ],
     "monthly_precip": [
-      { "month": 3, "current_mm": 21, "mean_mm": 34 },
-      { "month": 4, "current_mm": 18, "mean_mm": 37 },
-      { "month": 5, "current_mm": 39, "mean_mm": 58 },
-      { "month": 6, "current_mm": 12, "mean_mm": 66 }
+      {
+        "month": 3,
+        "current_mm": 25.4,
+        "mean_mm": 42.7
+      },
+      {
+        "month": 4,
+        "current_mm": 59.2,
+        "mean_mm": 47.0
+      },
+      {
+        "month": 5,
+        "current_mm": 37.9,
+        "mean_mm": 78.0
+      },
+      {
+        "month": 6,
+        "current_mm": 7.0,
+        "mean_mm": 19.4
+      }
     ],
-    "summary": "W 6 z 10 ostatnich lat w maju–lipcu brakowało wody. Najgorszy był 2018 (41 dni stresu).",
-    "source_tag": { "kind": "obliczenia", "date": "2026-06-14", "source": "NASA POWER" }
+    "summary": "Od 1 marca do 9 czerwca 2018 bilans wody (opad − parowanie) wynosi −111 mm. Średnio w tym okresie w latach 2008–2017: −20 mm – o 90 mm mniej niż zwykle. Niższy bilans był w 0 z 10 lat.",
+    "balance_deviation_mm": -90.5,
+    "balance_rank": {
+      "lower_years": 0,
+      "of_years": 10
+    },
+    "longest_dry_spell": {
+      "days": 17,
+      "end_date": "2018-03-28"
+    },
+    "band_years": [
+      2017,
+      2016,
+      2015,
+      2014,
+      2013,
+      2012,
+      2011,
+      2010,
+      2009,
+      2008
+    ],
+    "source_tag": {
+      "kind": "obliczenia",
+      "date": "2018-06-09",
+      "source": "NASA POWER"
+    }
   },
   "causes": [
     {
       "factor": "opady",
       "title": "Mało opadów",
-      "share": 0.45,
-      "description": "od marca 90 mm, zwykle 195 mm",
-      "source_tag": { "kind": "obliczenia", "date": "2026-06-14", "source": "NASA POWER" }
+      "share": 0.36,
+      "description": "od 1 marca spadło 130 mm, zwykle 187 mm",
+      "source_tag": {
+        "kind": "obliczenia",
+        "date": null,
+        "source": "NASA POWER"
+      }
     },
     {
       "factor": "gleba",
       "title": "Gleba",
-      "share": 0.3,
-      "description": "kat. II, zmieści ok. 149 mm wody – mało",
-      "source_tag": { "kind": "pomiar", "date": null, "source": "IUNG-PIB SMSR" }
+      "share": 0.24,
+      "description": "kat. III, zmieści ok. 166 mm wody – średnio dużo",
+      "source_tag": {
+        "kind": "pomiar",
+        "date": null,
+        "source": "IUNG-PIB"
+      }
     },
     {
       "factor": "uprawa",
       "title": "Wymagania uprawy",
-      "share": 0.25,
-      "description": "zboża ozime w fazie kłoszenia potrzebują najwięcej wody",
-      "source_tag": { "kind": "szacunek_modelu", "date": "2026-06-15", "source": "FAO-56 Kc" }
+      "share": 0.21,
+      "description": "zboża ozime – pełnia rozwoju, zużycie wody ok. 5,1 mm dziennie (Kc 1,15)",
+      "source_tag": {
+        "kind": "szacunek_modelu",
+        "date": null,
+        "source": "FAO-56 (Kc)"
+      }
+    },
+    {
+      "factor": "parowanie",
+      "title": "Duże parowanie",
+      "share": 0.19,
+      "description": "parowanie od 1 marca: 240 mm, zwykle 207 mm",
+      "source_tag": {
+        "kind": "obliczenia",
+        "date": null,
+        "source": "NASA POWER, ET0 FAO-56"
+      }
+    },
+    {
+      "factor": "teren",
+      "title": "Teren i spływ",
+      "share": 0.0,
+      "description": "brak danych (analiza terenu w przygotowaniu)",
+      "source_tag": {
+        "kind": "brak_danych",
+        "date": null,
+        "source": "NMT GUGiK"
+      }
     }
   ],
   "recommendations": [
     {
-      "id": "ret-oczko-01",
-      "category": "retencja",
-      "title": "Oczko wodne w zagłębieniu przy południowej granicy",
-      "description": "Zbiera się tam woda z ok. 1,2 ha – ok. 600 m² wystarczy, by ją zatrzymać.",
-      "why": "Najniższy punkt działki leży 2,1 m poniżej najwyższego; woda spływa na południe.",
-      "inputs": [
-        { "name": "Powierzchnia zlewni zagłębienia", "value": 1.2, "unit": "ha", "source": "NMT GUGiK", "date": null },
-        { "name": "Różnica wysokości", "value": 2.1, "unit": "m", "source": "NMT GUGiK", "date": null }
-      ],
-      "confidence": "srednia",
-      "location": { "type": "Point", "coordinates": [20.6212, 52.3301] },
-      "rule_id": "retencja.zaglebienie"
-    },
-    {
-      "id": "agro-miedzyplon-01",
+      "id": "agrotechnika.odmiany_odporne",
       "category": "agrotechnika",
-      "title": "Międzyplon po żniwach",
-      "description": "Więcej próchnicy – gleba zmieści więcej wody w kolejnych latach.",
-      "why": "Gleba kat. II zmieści ok. 149 mm wody; w 6 z 10 lat brakowało wody w maju–lipcu.",
+      "title": "Wybierz odmiany odporne na suszę",
+      "description": "W tym sezonie było 21 dni stresu wodnego, średnio w ostatnich 10 latach 3,5. Odmiany tolerujące suszę lub wcześniejsze zmniejszą straty.",
+      "why": "Stres wodny w sezonie był co najmniej półtora raza częstszy niż zwykle. Dane: stress_ratio: 6, dni stresu wodnego w sezonie: 21 dni.",
       "inputs": [
-        { "name": "Woda dostępna w glebie (WOD)", "value": 149, "unit": "mm", "source": "IUNG-PIB SMSR", "date": null },
-        { "name": "Lata z niedoborem (maj–lipiec)", "value": 6, "unit": "z 10", "source": "NASA POWER", "date": "2026-06-14" }
-      ],
-      "confidence": "wysoka",
-      "location": null,
-      "rule_id": "agrotechnika.miedzyplon"
-    },
-    {
-      "id": "naw-termin-01",
-      "category": "nawadnianie",
-      "title": "Nawadnianie w ciągu 5–7 dni",
-      "description": "Dawka ok. 20 mm, jeśli nie spadnie deszcz.",
-      "why": "Woda w glebie 38%; prognoza na 7 dni: opad 3 mm, parowanie 31 mm.",
-      "inputs": [
-        { "name": "Woda w glebie", "value": 38, "unit": "%", "source": "Model FAO-56", "date": "2026-06-15" },
-        { "name": "Bilans prognozy 7 dni", "value": -28, "unit": "mm", "source": "Open-Meteo", "date": "2026-06-15" }
+        {
+          "name": "stress_ratio",
+          "value": 6.0,
+          "unit": null,
+          "source": "analiza",
+          "date": null
+        },
+        {
+          "name": "Dni stresu wodnego w sezonie",
+          "value": 21.0,
+          "unit": "dni",
+          "source": "Model wody w glebie FAO-56",
+          "date": null
+        }
       ],
       "confidence": "srednia",
       "location": null,
-      "rule_id": "nawadnianie.termin"
+      "rule_id": "agrotechnika.odmiany_odporne",
+      "priority": 55,
+      "in_panel": true
+    },
+    {
+      "id": "nawadnianie.plan_dawek",
+      "category": "nawadnianie",
+      "title": "Nawadnianie teraz",
+      "description": "27,5 mm teraz, powtórz za ok. 2 dni (w 7 dniach 3 dawki, niedobór ok. 70 mm).",
+      "why": "Rośliny w fazie wrażliwej zaczną odczuwać brak wody w ciągu 7 dni albo już go odczuwają; dawka dobrana do gleby kat. III.",
+      "inputs": [],
+      "confidence": "ograniczona",
+      "location": null,
+      "rule_id": "nawadnianie.plan_dawek",
+      "priority": 100,
+      "in_panel": true
     }
   ],
   "reliability": {
     "confidence": "srednia",
-    "reason": "Model i zdjęcie satelitarne zgadzają się, ale pogoda jest uśredniona dla dużego obszaru.",
+    "reason": "Ograniczenia: brak zdjęć satelitarnych (kondycja roślin – w przygotowaniu); brak analizy terenu (spadki, spływ – w przygotowaniu); pogoda uśredniona dla obszaru ok. 50 km.",
     "sources": [
-      { "name": "ULDK GUGiK", "used_for": "granice działki", "data_date": "2026-06-15", "resolution": null, "status": "ok", "note": null },
-      { "name": "NASA POWER", "used_for": "pogoda z 10 lat", "data_date": "2026-06-14", "resolution": "ok. 50 km", "status": "ok", "note": null },
-      { "name": "Open-Meteo", "used_for": "prognoza 7 dni", "data_date": "2026-06-15", "resolution": "kilka km", "status": "ok", "note": null },
-      { "name": "IUNG-PIB SMSR", "used_for": "kategoria gleby", "data_date": null, "resolution": null, "status": "ok", "note": null },
-      { "name": "Sentinel-2 L2A", "used_for": "kondycja i wilgotność roślin", "data_date": "2026-06-12", "resolution": "10 m", "status": "ok", "note": null },
-      { "name": "NMT GUGiK", "used_for": "teren i spływ", "data_date": null, "resolution": "1 m", "status": "czesciowo", "note": "część punktów bez odpowiedzi" }
+      {
+        "name": "ULDK GUGiK",
+        "used_for": "granice i powierzchnia działki",
+        "data_date": "2026-11-21",
+        "resolution": null,
+        "status": "ok",
+        "note": null
+      },
+      {
+        "name": "NASA POWER",
+        "used_for": "pogoda z 10 lat, bilans wody, parowanie (ET0)",
+        "data_date": "2018-06-09",
+        "resolution": "ok. 50 km",
+        "status": "ok",
+        "note": null
+      },
+      {
+        "name": "IUNG-PIB",
+        "used_for": "kategoria gleby, ile wody zmieści gleba",
+        "data_date": null,
+        "resolution": "siatka 5 m",
+        "status": "ok",
+        "note": null
+      },
+      {
+        "name": "EGiB (KIEG)",
+        "used_for": "klasy bonitacyjne (informacyjnie)",
+        "data_date": "2026-11-21",
+        "resolution": null,
+        "status": "ok",
+        "note": null
+      },
+      {
+        "name": "Sentinel-2 L2A",
+        "used_for": "kondycja i wilgotność roślin",
+        "data_date": null,
+        "resolution": "10 m",
+        "status": "brak",
+        "note": "w przygotowaniu"
+      },
+      {
+        "name": "NMT GUGiK",
+        "used_for": "teren i spływ wody",
+        "data_date": null,
+        "resolution": "1 m",
+        "status": "brak",
+        "note": "w przygotowaniu"
+      },
+      {
+        "name": "BDOT10k",
+        "used_for": "rowy, cieki i zbiorniki w okolicy",
+        "data_date": null,
+        "resolution": null,
+        "status": "brak",
+        "note": "w przygotowaniu"
+      }
     ],
-    "completeness": { "available": 5, "total": 6 },
+    "completeness": {
+      "available": 3,
+      "total": 6
+    },
     "limitations": [
-      "Pogoda uśredniona dla obszaru ok. 50 km",
-      "Ostatnie bezchmurne zdjęcie: 3 dni przed datą analizy",
-      "Klasy bonitacyjne niedostępne w tym powiecie"
+      "Pogoda uśredniona dla obszaru ok. 50 km (NASA POWER).",
+      "WOD to wartość typowa dla kategorii gleby (środek przedziału IUNG), nie pomiar na tej działce.",
+      "Brak zdjęć satelitarnych – kondycja i wilgotność roślin w przygotowaniu.",
+      "Brak analizy terenu – spływ wody przyjęty w uproszczeniu (20% opadu powyżej 20 mm na dobę).",
+      "Model wody w glebie FAO-56 z parametrami tabelarycznymi upraw – nie uwzględnia odmiany, nawożenia ani poziomu wód gruntowych.",
+      "Kategorie podatności IUNG opisują tylko gleby mineralne użytków rolnych."
     ]
   },
   "steps": [
-    { "id": "parcel", "label": "Szukam działki", "state": "done", "note": null, "duration_ms": 310 },
-    { "id": "weather", "label": "Pobieram pogodę z 10 lat", "state": "done", "note": null, "duration_ms": 1620 },
-    { "id": "soil", "label": "Sprawdzam glebę", "state": "done", "note": null, "duration_ms": 820 },
-    { "id": "terrain", "label": "Analizuję teren", "state": "done", "note": "częściowe dane", "duration_ms": 2540 },
-    { "id": "satellite", "label": "Zdjęcia satelitarne", "state": "done", "note": null, "duration_ms": 4100 },
-    { "id": "balance", "label": "Liczę bilans wody", "state": "done", "note": null, "duration_ms": 120 }
+    {
+      "id": "parcel",
+      "label": "Szukam działki (ULDK GUGiK)",
+      "state": "done",
+      "note": null,
+      "duration_ms": 239
+    },
+    {
+      "id": "weather",
+      "label": "Pobieram pogodę z 10 lat (NASA POWER)",
+      "state": "done",
+      "note": null,
+      "duration_ms": 1709
+    },
+    {
+      "id": "soil",
+      "label": "Sprawdzam glebę (IUNG-PIB)",
+      "state": "done",
+      "note": null,
+      "duration_ms": 379
+    },
+    {
+      "id": "egib",
+      "label": "Klasy bonitacyjne (EGiB)",
+      "state": "done",
+      "note": null,
+      "duration_ms": 3691
+    },
+    {
+      "id": "forecast",
+      "label": "Prognoza pogody",
+      "state": "done",
+      "note": "data historyczna – scenariusz typowej pogody",
+      "duration_ms": 0
+    },
+    {
+      "id": "satellite",
+      "label": "Zdjęcia satelitarne",
+      "state": "pending",
+      "note": "w przygotowaniu – brak danych",
+      "duration_ms": null
+    },
+    {
+      "id": "terrain",
+      "label": "Analizuję teren",
+      "state": "pending",
+      "note": "w przygotowaniu – brak danych",
+      "duration_ms": null
+    },
+    {
+      "id": "balance",
+      "label": "Liczę bilans wody i wodę w glebie (FAO-56)",
+      "state": "done",
+      "note": null,
+      "duration_ms": 24
+    },
+    {
+      "id": "scoring",
+      "label": "Ocena, pewność, przyczyny i rekomendacje",
+      "state": "done",
+      "note": null,
+      "duration_ms": 38
+    },
+    {
+      "id": "total",
+      "label": "Cała analiza",
+      "state": "done",
+      "note": null,
+      "duration_ms": 4003
+    }
   ]
 }

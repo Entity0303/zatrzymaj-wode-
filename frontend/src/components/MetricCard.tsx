@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 import { SourceTag, type SourceKind } from '@/components/SourceTag'
+import { useLang } from '@/lib/i18n'
 
 type Tone = 'water' | 'brand' | 'earth' | 'warn' | 'danger' | 'muted'
 
@@ -10,7 +11,7 @@ const TONE: Record<Tone, string> = {
   water: 'bg-water-soft text-water',
   brand: 'bg-ok-soft text-brand',
   earth: 'bg-surface-2 text-earth',
-  warn: 'bg-warn-soft text-[#8a6a00]',
+  warn: 'bg-warn-soft text-[#875a12]',
   danger: 'bg-danger-soft text-danger',
   muted: 'bg-surface-2 text-text-muted',
 }
@@ -24,6 +25,7 @@ export function MetricCard({
   title,
   value,
   unit,
+  valuePrefix,
   tone = 'brand',
   source,
   sourceDate,
@@ -37,6 +39,8 @@ export function MetricCard({
   title: string
   value: string | null
   unit?: string
+  /** np. strzałka ↓ przy ujemnym bilansie (ref-style) */
+  valuePrefix?: ReactNode
   tone?: Tone
   source: SourceKind
   sourceDate?: string
@@ -47,20 +51,21 @@ export function MetricCard({
   children?: ReactNode
   className?: string
 }) {
+  const { t } = useLang()
   const noData = value === null && !loading
   return (
     <div
       className={cn(
-        'flex min-w-0 flex-col gap-2 rounded-xl border bg-surface p-3.5 shadow-card',
+        'flex min-w-0 flex-col gap-2 rounded-xl border bg-surface p-3.5',
         noData && 'hatch-nodata',
         className,
       )}
     >
       <div className="flex items-center gap-2">
-        <span className={cn('flex size-8 shrink-0 items-center justify-center rounded-lg', noData ? TONE.muted : TONE[tone])}>
+        <span className={cn('flex size-8 shrink-0 items-center justify-center rounded-full', noData ? TONE.muted : TONE[tone])}>
           <Icon className="size-[18px]" aria-hidden />
         </span>
-        <span className="min-w-0 text-sm leading-5 font-medium">{title}</span>
+        <span className="min-w-0 text-sm leading-5 font-medium">{t(title)}</span>
       </div>
       {loading ? (
         <div className="space-y-2">
@@ -69,13 +74,14 @@ export function MetricCard({
         </div>
       ) : noData ? (
         <div>
-          <p className="text-2xl leading-8 font-semibold text-text-muted">—</p>
-          <p className="text-sm leading-5 text-text-muted">{noDataText}</p>
+          <p className="text-2xl leading-8 font-semibold text-text-muted" aria-hidden>—</p>
+          <p className="text-sm leading-5 text-text-muted">{t(noDataText)}</p>
         </div>
       ) : (
-        <p className="tabular text-[32px] leading-10 font-semibold">
+        <p className="tabular flex items-baseline gap-1 text-[32px] leading-10 font-semibold">
+          {valuePrefix}
           {value}
-          {unit && <span className="ml-1 text-base font-medium text-text-muted">{unit}</span>}
+          {unit && <span className="text-base font-medium text-text-muted">{unit}</span>}
         </p>
       )}
       {!loading && children}

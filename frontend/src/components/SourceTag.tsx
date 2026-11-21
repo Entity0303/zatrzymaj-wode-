@@ -1,6 +1,7 @@
 import { Calculator, CircleDashed, Cpu, Ruler, Satellite, TrendingUp, type LucideIcon } from 'lucide-react'
 import type { SourceKind } from '@/api/types'
 import { cn } from '@/lib/utils'
+import { useLang } from '@/lib/i18n'
 
 /** Etykiety pochodzenia liczb (SPEC 15.2) – obowiązkowe przy każdej liczbie. */
 export type { SourceKind }
@@ -27,20 +28,21 @@ export function SourceTag({
   title?: string
   className?: string
 }) {
+  const { t } = useLang()
   const k = KINDS[kind]
   const Icon = k.icon
   return (
     <span
       title={title}
       className={cn(
-        'inline-flex max-w-full items-center gap-1 rounded-full px-2 py-0.5 text-xs leading-4 font-medium',
+        'inline-flex max-w-full items-start gap-1 rounded-[10px] px-2 py-0.5 text-xs leading-4 font-medium',
         k.cls,
         className,
       )}
     >
-      <Icon className="size-3 shrink-0" aria-hidden />
-      <span className="truncate">
-        {k.label}
+      <Icon className="mt-0.5 size-3 shrink-0" aria-hidden />
+      <span className="min-w-0 [overflow-wrap:anywhere]">
+        {t(k.label)}
         {date ? ` · ${date}` : ''}
       </span>
     </span>

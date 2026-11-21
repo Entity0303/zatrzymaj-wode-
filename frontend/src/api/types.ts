@@ -143,6 +143,102 @@ export type OverallStatus = {
   summary: string
 }
 
+/** Faza uprawy w dacie analizy. Wrażliwe na niedobór (stres, nawadnianie): poczatkowa, rozwoj, pelnia */
+export type CropPhase =
+  | 'przed_siewem'
+  | 'wschody_jesienne'
+  | 'spoczynek_zimowy'
+  | 'poczatkowa'
+  | 'rozwoj'
+  | 'pelnia'
+  | 'dojrzewanie'
+  | 'po_zbiorze'
+
+export type IrrigationStatus = 'zalecane' | 'niepotrzebne' | 'nieuzasadnione_w_fazie' | 'brak_danych'
+
+export type CropSeason = {
+  phase: CropPhase
+  /** np. 'pełnia rozwoju', 'po zbiorze' */
+  phase_label: string
+  season_year: number
+  /** siew / wznowienie wegetacji */
+  season_start: ISODate
+  /** typowy termin zbioru w Polsce */
+  harvest: ISODate
+  /** dzień sezonu w dacie analizy (1 = siew / wznowienie) */
+  day_of_season?: number | null
+  /** faza wrażliwa na niedobór – liczymy stres, możliwe zalecenie nawadniania */
+  sensitive: boolean
+  root_depth_m?: number | null
+}
+
+/** Podsumowanie zakończonego sezonu uprawy */
+export type SeasonSummary = {
+  year: number
+  stress_days: number | null
+  /** średnia z 10 poprzednich sezonów */
+  mean_prev_stress_days?: number | null
+}
+
+/** Stan wody w glebie w dacie analizy – także poza sezonem */
+export type SoilWaterState = {
+  /** strefa_korzeni – w fazach uprawy; profil (~1 m) – poza sezonem */
+  scope: 'strefa_korzeni' | 'profil'
+  depth_m: number
+  /** np. 'poza sezonem – gleba odbudowuje zapas wody' */
+  description: string
+  /** ten sam dzień w 10 poprzednich latach: w ilu latach było MNIEJ wody niż teraz, z ilu */
+  rank?: BalanceRank | null
+  /** zakończony sezon (po zbiorze / przed siewem) */
+  last_season?: SeasonSummary | null
+}
+
+export type IrrigationPlan = {
+  status: IrrigationStatus
+  /** np. '25 mm teraz, powtórz za ok. 5 dni' */
+  message: string
+  /** dawka jednorazowa zależna od gleby, nigdy > 35 mm */
+  dose_mm?: number | null
+  first_date?: ISODate | null
+  /** co ile dni powtarzać */
+  interval_days?: number | null
+  /** łączny niedobór do uzupełnienia w 7 dniach */
+  total_7d_mm?: number | null
+  doses_7d?: number | null
+  source_tag: SourceTag
+}
+
+/** Dlaczego ocena suszy rolniczej nie ma zastosowania (kody IUNG 11, 12, 13, 14, 5 łącznie > 50%) */
+export type NonAgriculturalReason = 'las' | 'woda' | 'zabudowa' | 'drogi' | 'gleby_organiczne'
+
+export type SoilShareItem = {
+  /** kod IUNG: 1–4 kategorie podatności, 5 organiczne, 11 las, 12 woda, 13 zabudowa, 14 drogi/nieużytki */
+  code: number
+  label: string
+  /** 0–1 */
+  share: number
+}
+
+/** Gleba działki (SPEC 7.A, 15.1 „to nie jest grunt rolny”, 15.3) */
+export type Soil = {
+  dominant_code: number | null
+  dominant_label: string | null
+  shares: SoilShareItem[]
+  /** udział gleb mineralnych użytków rolnych (kody 1–4), 0–1 */
+  agricultural_share?: number | null
+  /** woda dostępna dla roślin (WOD), mm */
+  wod_mm?: number | null
+  /** klasy bonitacyjne EGiB – tylko informacyjnie */
+  classes?: string[] | null
+  /** powód braku klas */
+  classes_note?: string | null
+  non_agricultural?: boolean
+  non_agricultural_reason?: NonAgriculturalReason | null
+  /** gotowy komunikat dla rolnika */
+  non_agricultural_note?: string | null
+  source_tag: SourceTag
+}
+
 export type SeriesPoint = { date: ISODate; value: number | null }
 
 export type BandPoint = { date: ISODate; min: number | null; max: number | null; mean: number | null }
@@ -150,6 +246,17 @@ export type BandPoint = { date: ISODate; min: number | null; max: number | null;
 export type YearStress = { year: number; stress_days: number | null; is_current?: boolean }
 
 export type MonthlyPrecip = { month: number; current_mm: number | null; mean_mm: number | null }
+
+/** Pozycja bieżącego bilansu na tle lat porównawczych */
+export type BalanceRank = {
+  /** w ilu latach bilans był NIŻSZY niż teraz (0 = najgorszy) */
+  lower_years: number
+  /** z ilu lat porównawczych */
+  of_years: number
+}
+
+/** Najdłuższy okres bez opadu (opad < 1 mm) w bieżącym sezonie */
+export type DrySpell = { days: number; end_date?: ISODate | null }
 
 export type History = {
   period_start: ISODate
@@ -160,6 +267,12 @@ export type History = {
   stress_days_by_year: YearStress[]
   monthly_precip: MonthlyPrecip[]
   summary?: string | null
+  /** bieżący bilans − średnia z lat porównawczych, mm */
+  balance_deviation_mm?: number | null
+  balance_rank?: BalanceRank | null
+  longest_dry_spell?: DrySpell | null
+  /** lata użyte w paśmie porównawczym */
+  band_years?: number[]
   source_tag: SourceTag
 }
 
@@ -191,6 +304,10 @@ export type Recommendation = {
   /** GeoJSON geometria miejsca (EPSG:4326) – „Pokaż na mapie” */
   location?: GeoJSON.Geometry | null
   rule_id?: string | null
+  /** ważność w obrębie kategorii (większa = ważniejsza) */
+  priority?: number
+  /** pokazać w panelu działki (maks. 3: po jednej z kategorii); reszta – paszport */
+  in_panel?: boolean
 }
 
 export type SourceStatus = {
@@ -228,6 +345,10 @@ export type AnalysisResponse = {
   generated_at: ISODateTime
   status: OverallStatus
   indicators: Indicators
+  crop_season: CropSeason
+  soil_water: SoilWaterState
+  irrigation: IrrigationPlan
+  soil: Soil
   history: History
   causes: Cause[]
   recommendations: Recommendation[]

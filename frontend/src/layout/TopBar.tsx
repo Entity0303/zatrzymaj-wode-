@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { DateField } from '@/components/DateField'
+import { LanguageToggle } from '@/components/LanguageToggle'
 import { LayerPills } from '@/features/map/LayerPills'
 import type { LayerKey } from '@/features/map/layers'
 import { ViewToggle } from '@/features/map/ViewToggle'
@@ -38,6 +39,7 @@ export function TopBar({
         <div className="pointer-events-auto flex items-start gap-2 px-3">
           {search}
           <LocateButton locating={locating} onClick={onLocate} iconOnly />
+          <LanguageToggle compact />
         </div>
         <LayerPills value={layer} onChange={onLayerChange} className="pointer-events-auto px-3 pb-2" />
       </div>
@@ -47,8 +49,12 @@ export function TopBar({
       <div className="flex items-start gap-3 [&>*]:pointer-events-auto">
         {search}
         <LocateButton locating={locating} onClick={onLocate} />
-        <div className="ml-auto">{weather}</div>
-        <DateField value={asOf} onChange={onAsOfChange} />
+        {/* pogoda · data · język – jedna biała pigułka z liniami podziału (ref-desktop) */}
+        <div className="ml-auto flex h-12 shrink-0 items-center divide-x divide-line rounded-full bg-surface pr-1 shadow-float">
+          {weather}
+          <DateField value={asOf} onChange={onAsOfChange} bare />
+          <LanguageToggle bare className="pl-2" />
+        </div>
       </div>
       <div className="flex max-w-full items-center gap-3 [&>*]:pointer-events-auto">
         <LayerPills value={layer} onChange={onLayerChange} className="min-w-0 py-1" />

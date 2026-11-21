@@ -74,3 +74,95 @@ Wpis: data · decyzja · uzasadnienie · konsekwencje. Zmieniany w osobnym mały
 ### D18 · 2026-11-21 · Budżet czasu pobierania pogody
 **Uzasadnienie:** limit 30 s na całą analizę. NASA POWER zwykle ~1,6–1,9 s za 10 lat.
 **Konsekwencje:** NASA POWER: 9 s na próbę + 1 ponowna próba (sieć/timeout/5xx; 429 bez ponawiania); archiwum Open-Meteo: 10 s, bez ponawiania. Cache 6 h, klucz – współrzędne zaokrąglone do 0,1° (rozdzielczość źródła ~50 km) + zakres dat.
+
+### D19 · 2026-11-21 · Gleba IUNG: WCS GetCoverage `text/plain` jako metoda główna, GetFeatureInfo jako zapas
+**Uzasadnienie:** rozważono GetMap PNG + zliczanie pikseli wg kolorów legendy. Odrzucone: wymaga dekodowania PNG (nowa zależność – Pillow), legenda jest typu „ramp” (przy przeskalowaniu możliwe kolory pośrednie), kody 19 i 99 mają ten sam kolor. GeoServer IUNG udostępnia WCS 2.0.1 z formatem `text/plain` – **surowe kody** wszystkich komórek 5 m w bbox działki w ~0,3 s, bez kolorów i bez nowych bibliotek. GetFeatureInfo (≤ 16 punktów) to tylko próbkowanie, więc zostaje zapasem.
+**Konsekwencje:** osie WCS w konwencji PL-1992: `SUBSET=x(północ)`, `SUBSET=y(wschód)`, wiersz 0 = północ (sprawdzone 6/6 z GetFeatureInfo). Liczymy komórki ze środkiem w obrysie; powyżej 250 tys. komórek – `SCALEFACTOR`. Metoda zapasowa obniża pewność i jest opisana w ograniczeniach.
+
+### D20 · 2026-11-21 · Reprezentatywna WOD kategorii IUNG
+**Uzasadnienie:** IUNG podaje przedziały WOD; do średniej ważonej potrzebna jedna wartość na kategorię. II i III – środek przedziału (148,7 i 186,2 mm); I i IV mają przedział otwarty – granica ∓ połowa szerokości sąsiedniej kategorii (I: 127,5 − 21,2 = 106,3 mm; IV: 202,5 + 16,25 = 218,8 mm).
+**Konsekwencje:** ograniczenie „WOD to wartość typowa dla kategorii gleby, nie pomiar na tej działce”. Kategoria → status karty: I = ryzyko, II = uwaga, III–IV = dobrze.
+
+### D21 · 2026-11-21 · „To nie jest grunt rolny”: kody 5, 11–14 łącznie > 50% działki
+**Uzasadnienie:** SPEC 15.1. Lasy, wody, zabudowa, drogi/nieużytki nie są użytkami rolnymi; gleby organiczne (5) nie mają kategorii podatności IUNG, więc WOD nie da się ocenić.
+**Konsekwencje:** `soil_capacity` = „Nie dotyczy” (value null) z komunikatem; dokładnie 50% – jeszcze grunt rolny. Przykłady: 160703 (las 100%), 143203 (las 51% + zabudowa 14%), 302114 (woda 100%).
+
+### D22 · 2026-11-21 · Klasy EGiB z KIEG: tylko nasza działka, brak = normalny stan
+**Uzasadnienie:** odpowiedź KIEG dotyczy działki w punkcie – punkt przy granicy może trafić w sąsiada. Wiele powiatów nie publikuje klas.
+**Konsekwencje:** zapytanie w środku działki + 3 punktach, bierzemy tylko wiersze z „Identyfikator działki” = nasza działka; klasy z „Oznaczenie konturu”. Brak klas → notka „Powiat nie udostępnia klas…”, bez obniżania pewności (D4). Nie odczytujemy „Grupy rejestrowej” ani pól o właścicielach.
+
+### D23 · 2026-11-21 · Parametry upraw: FAO-56 tab. 11/12/22 + kalendarz PL; założenia tam, gdzie FAO-56 milczy
+**Uzasadnienie:** jedno spójne, cytowalne źródło dla Kc, faz, Zr i p. Tab. 11 opisuje kalendarze innych klimatów, więc długości faz dopasowano do terminów w Polsce (zadanie A3): ozime i rzepak ozimy – wegetacja od 1 III; zboża jare – siew 8 IV (środek 1–15 IV); kukurydza – 1 V; ziemniak – 20 IV; burak – 1 IV; wieloletnie – 1 IV–31 X; rzepak jesień – od 20 VIII.
+**Założenia (brak w tabelach FAO-56 lub w zadaniu):** kukurydza na kiszonkę – Kc_end 0,50 i faza dojrzewania 30 dni; rzepak jesień – Kc_mid 0,80, bez fazy dojrzewania (do ok. 28 XI); tytoń – wszystkie parametry przez analogię (brak w tab. 12/22); strączkowe – siew 15 IV; warzywa – start 20 IV, fazy 20/30/50/20, Zr 0,5 m, p 0,4; krzewy owocowe, truskawki – fazy dopasowane do 1 IV–31 X; chmiel – faza dojrzewania wydłużona do 31 X.
+**Konsekwencje:** `analysis/crops.py`, źródło każdej wartości w komentarzu; korzenie od startu sezonu mają głębokość maksymalną (bez modelu wzrostu korzeni – uproszczenie, zawyża TAW na początku sezonu upraw jarych).
+
+### D24 · 2026-11-21 · Kc_mid i Kc_end bez korekty klimatycznej (FAO-56 równ. 62)
+**Uzasadnienie:** wartości tab. 12 są dla RHmin ≈ 45% i u2 ≈ 2 m/s – warunki zbliżone do Polski latem; korekta wymaga wysokości roślin i dziennego RHmin, a zmienia Kc zwykle o < 0,05.
+**Konsekwencje:** prostszy model; możliwa korekta przy kalibracji do IUNG SMSR.
+
+### D25 · 2026-11-21 · TAW z WOD IUNG skalowanej do głębokości korzeni; RAW = p · TAW
+**Uzasadnienie:** WOD z IUNG traktujemy jako wodę dostępną w profilu ok. 1 m. Korzenie płytsze – proporcjonalnie mniej (ziemniak 0,5 m → 50% WOD), głębsze – bez zwiększania (pod 1 m brak danych o glebie).
+**Konsekwencje:** `taw_from_wod()`; p z tab. 22 bez korekty na ETc (FAO-56 dopuszcza p + 0,04·(5 − ETc)) – do rozważenia przy kalibracji.
+
+### D26 · 2026-11-21 · Opad efektywny: spływ 20% części opadu powyżej 20 mm/dzień
+**Uzasadnienie:** prosty, zachowawczy wzór bez danych o terenie (A3). Parametry `runoff_threshold` i `runoff_fraction` są argumentami modelu – nadpisze je analiza terenu z NMT (spadki).
+**Konsekwencje:** nadmiar wody ponad pojemność polową = przesiąkanie (Dr ≥ 0), raportowane jako `percolation_mm`.
+
+### D27 · 2026-11-21 · Ryzyko 7 dni i „stres za X dni”
+**Uzasadnienie:** rolnik potrzebuje odpowiedzi „kiedy rośliny zaczną cierpieć”. Horyzont 16 dni = zasięg prognozy Open-Meteo.
+**Konsekwencje:** data analizy = dziś → prognoza Open-Meteo (opad, ET0), `source_tag = prognoza`; data historyczna (lub brak prognozy) → scenariusz typowej pogody: mediana opadu i ET0 z tych samych dni w 10 poprzednich latach, `source_tag = szacunek_modelu`. Luka opóźnienia NASA POWER (2–4 dni przed datą analizy) uzupełniana danymi Open-Meteo `past_days=7`, a gdy ich brak – scenariuszem (ograniczenie w odpowiedzi). Klasy: **wysokie** – RAW przekroczone już lub w ≤ 3 dni; **średnie** – 4–7 dni; **niskie** – później albo wcale w horyzoncie. Status „danger” (Susza), gdy stres trwa i Ks < 0,5.
+
+### D28 · 2026-11-21 · Zapas wody na start sezonu *(reset na start sezonu – zastąpiony ciągłym bilansem D30; okna 1 XI / 1 VII obowiązują)*
+**Uzasadnienie:** po suchej zimie profil nie jest pełny. Bez danych o wilgotności gleby przyjmujemy pojemność polową, zmniejszoną o deficyt bilansu P − ET0 w oknie przed sezonem: Dr0 = min(TAW, |bilans|), gdy bilans ujemny (mm za mm – proporcjonalnie do TAW).
+**Konsekwencje:** okno od 1 XI roku poprzedniego do startu (siew/wegetacja wiosenna); dla siewu letnio-jesiennego (rzepak jesień) od 1 VII – okno od listopada objęłoby całe lato poprzedniej uprawy. Zakres pobieranej pogody rozszerzony do 1 XI (rok sezonu − 11) – okno najstarszego sezonu porównawczego. Brak danych w oknie (> 20%) → start z pełnym profilem + ograniczenie.
+
+### D29 · 2026-11-21 · Nawadnianie i stan poza sezonem *(dawka i stan poza sezonem – zastąpione przez D33, D34)*
+**Uzasadnienie:** zalecenie tylko wtedy, gdy model pokazuje stres teraz lub w ciągu 7 dni; dawka liczona, nie zgadywana.
+**Konsekwencje:** dawka = ubytek do pojemności polowej w dniu przekroczenia RAW, zaokrąglona do 5 mm (min. 5 mm); powyżej 40 mm dopisek „w praktyce w N dawkach po ok. 30–35 mm”. Rekomendacja w formacie kontraktu (`category = nawadnianie`, dane wejściowe, pewność: średnia przy prognozie, ograniczona przy scenariuszu). Przed sezonem uprawy – brak wskaźników „na dziś” i brak dni stresu; po sezonie – tylko podsumowanie dni stresu zakończonego sezonu na tle 10 lat.
+
+### D30 · 2026-11-21 · Ciągły bilans wody przez cały rok, dwie warstwy w profilu 1 m (zastępuje w D28 „reset” na start sezonu)
+**Uzasadnienie:** reset zapasu przy siewie ukrywał suche wiosny i nie pozwalał podać stanu wody poza sezonem. Siew zmienia tylko Kc i głębokość korzeni.
+**Metoda:** profil 1 m (WOD z IUNG, D25) = strefa czynna 0..Zr(t) + warstwa dolna Zr(t)..1 m. Zr(t): goła gleba Ze = 0,12 m (FAO-56 rozdz. 7: 0,10–0,15 m); uprawy – liniowo od siewu (Ze; oziminy po zimie 0,3 m) do Zr max na końcu fazy rozwoju; wieloletnie – stale Zr max. Zmiana Zr przenosi plaster wody między warstwami przy równym względnym ubytku. Opad efektywny → strefa czynna → nadmiar do warstwy dolnej → dalej przesiąkanie (zimowa odbudowa). Ewapotranspiracja z strefy czynnej: uprawa Ks·Kc·ET0; **goła gleba (przed siewem, po zbiorze): Kc 0,35 × Kr**, Kr wg FAO-56 równ. 74 z TEW = WOD·Ze i REW = min(9 mm, TEW/2) (tab. 19: REW 8–10 mm) – parowanie ustaje, gdy wierzchnia warstwa przeschnie; spoczynek zimowy (oziminy, wieloletnie): Kc 0,4 (tab. 12, pszenica ozima z zamarzniętą glebą).
+**Okno i stan początkowy:** od 1 XI roku poprzedzającego sezon (rzepak jesień: od 1 VII roku sezonu) do dnia przed analizą; dla daty przed startem sezonu – sezon poprzedni (stan liczony dalej bez przerwy). Na początku okna profil pomniejszony o deficyt bilansu P − ET0 z 92 dni przed oknem (stan po lecie), równy względny ubytek w obu warstwach. Zakres pobieranej pogody: od 1 VIII (rok − 12).
+
+### D31 · 2026-11-21 · Terminy zbioru i kalendarz upraw w Polsce
+**Terminy (zadanie A3b):** zboża ozime ok. 20 VII, jare ok. 5 VIII, rzepak ozimy ok. 15 VII, kukurydza na ziarno ok. 10 X, na kiszonkę ok. 15 IX, ziemniak ok. 15 IX, burak ok. 20 X. **Założenia:** strączkowe 10 VIII, warzywa gruntowe 31 VIII, tytoń 15 IX, rzepak jesień – koniec okresu jesiennego 30 XI, wieloletnie – 31 X; siew jesienny ozimin: pszenica 25 IX, rzepak 25 VIII (typowe terminy agrotechniczne).
+**Konsekwencje:** proporcje faz z FAO-56 tab. 11 przeskalowane do okresu start–zbiór (`Crop.phases`). Oziminy: od siewu jesiennego do 31 X „wschody jesienne” (należą do następnego sezonu), od 1 XI do końca II „spoczynek zimowy”.
+
+### D32 · 2026-11-21 · Dni stresu tylko w fazach wrażliwych; dojrzewanie nie liczone
+**Uzasadnienie:** niedobór wody najsilniej obniża plon w fazie początkowej, rozwoju i pełni (kwitnienie, nalewanie); w dojrzewaniu wrażliwość plonu jest najmniejsza (współczynniki Ky, FAO-33 Doorenbos i Kassam). Waga 0 zamiast ułamkowej – prostszy i czytelniejszy komunikat dla rolnika, bez pozornej precyzji.
+**Konsekwencje:** stres = faza wrażliwa i ubytek strefy korzeni > RAW. W dojrzewaniu, po zbiorze, przed siewem, we wschodach jesiennych i spoczynku: brak alarmu (`risk_7d` „Nie dotyczy”) i brak nawadniania – „Nawadnianie nieuzasadnione w tej fazie uprawy”.
+
+### D33 · 2026-11-21 · Realistyczne nawadnianie (zastępuje dawkę „do pojemności polowej” z D29)
+**Uzasadnienie:** jednorazowo gleba lekka przyjmie mniej wody niż ciężka; dawki 100+ mm są nierealne.
+**Konsekwencje:** dawka jednorazowa = środek przedziału dla dominującej kategorii gleby IUNG: I 17,5 mm, II 22,5 mm, III 27,5 mm, IV 32,5 mm (brak kategorii → 22,5 mm); nigdy > 35 mm. Harmonogram z symulacji 7 dni (prognoza / scenariusz): dawka, gdy ubytek strefy korzeni > RAW, nie częściej niż co 2 dni; częstotliwość = odstęp między dawkami (albo dawka / średnie (ETc − opad efektywny), 2–14 dni); łączny niedobór = największa nadwyżka ubytku nad RAW w 7 dniach bez nawadniania (Ks = 1), zaokrąglona do 5 mm. Komunikat np. „27,5 mm teraz, powtórz za ok. 2 dni (w 7 dniach 3 dawki, niedobór ok. 70 mm)”.
+
+### D34 · 2026-11-21 · Stan wody w glebie na każdą datę
+**Uzasadnienie:** dane do rekomendacji jesienno-zimowych (retencja, międzyplony) i odpowiedź „jak teraz jest z wodą” także w listopadzie.
+**Konsekwencje:** w fazach uprawy (początkowa…dojrzewanie) – strefa korzeni; poza nimi – cały profil ok. 1 m. Opis: < 50% → „niedobór wody po suchym lecie” (VIII–XII) / „po suchym okresie”; zapas rośnie (> 1 mm w 30 dni) → „gleba odbudowuje zapas wody”; ≥ 90% → „zapas wody w glebie odbudowany”; inaczej „zapas wody w normie”. Porównanie z tym samym dniem w 10 poprzednich latach (ciągły bilans każdego roku): w ilu latach było mniej wody. Podsumowanie zakończonego sezonu (dni stresu vs średnia 10 lat) jako informacja dodatkowa.
+
+### D35 · 2026-11-21 · Ogólny stan wodny: wskaźnik 0–100, wagi i progi
+**Składowe (0–100):** woda – % wody dostępnej (strefa korzeni w fazach uprawy, profil ~1 m poza nimi); ryzyko – dni do stresu: 0 → 0 pkt, ≤ 3 → 25, ≤ 7 → 50, ≤ 16 → 75, brak stresu w horyzoncie → 100 (tylko fazy wrażliwe); historia – średnia z „% lat z niższym bilansem wody od 1 III” i „% lat z mniejszym zapasem wody tego dnia”.
+**Wagi:** fazy wrażliwe – woda 0,45, ryzyko 0,35, historia 0,20; pozostałe fazy – woda 0,65, historia 0,35. Brak składowej → wagi pozostałych przeskalowane; brak wody w glebie → `no_data`.
+**Progi:** ≥ 70 ok, ≥ 50 warn, ≥ 30 risk, < 30 danger. Poza fazami wrażliwymi (dojrzewanie, po zbiorze, przed siewem, wschody jesienne, spoczynek) najwyżej **risk** i nagłówki o zapasie wody w glebie („Uwaga – mniejszy zapas wody w glebie niż zwykle”) – bez alarmu o stresie roślin. Grunt nierolny → `no_data` z komunikatem z sekcji `soil`.
+**Uzasadnienie:** woda w glebie najlepiej oddaje stan na dziś; ryzyko – to, co stanie się za chwilę; historia – czy to normalne dla tego miejsca. Wagi do kalibracji z IUNG SMSR.
+
+### D36 · 2026-11-21 · Pewność wyniku – punkty za przesłanki
+**Metoda:** start 100 pkt, odejmowanie: brak satelity 15, brak terenu 10, pogoda NASA (~50 km) 10 albo źródło zapasowe 15, opóźnienie pogody > 3 dni 5, luka uzupełniona scenariuszem 10, > 10% dni Hargreavesa 10, brak prognozy (dziś) 10, data historyczna (ryzyko ze scenariusza) 5, brak gleby 35, gleba metodą punktową 10, część działki poza mapą IUNG 10, < 80% gleb rolnych mineralnych 5. Progi: ≥ 75 wysoka, ≥ 50 średnia, < 50 ograniczona. Bez zdjęć satelitarnych lub analizy terenu – najwyżej „średnia”.
+**Konsekwencje:** `reason` = 3 najważniejsze przesłanki; źródła ze statusem ok / częściowo / brak (Sentinel-2, NMT, BDOT10k – „brak, w przygotowaniu”); kompletność bez EGiB (tylko informacyjnie); ograniczenia = z modułów + stałe (bez powtórzeń).
+
+### D37 · 2026-11-21 · Przyczyny i ich udziały
+**Wagi surowe:** opady – (średnia − opad)/średnia, gdy opad poniżej średniej z 10 lat; parowanie – (ET0 − średnia)/średnia, gdy powyżej; gleba – kat. I 0,50, II 0,35, III 0,20, IV 0,10; uprawa – 0,15 × Kc w fazach wrażliwych, 0,05 poza nimi (po pierwszym przeglądzie zmniejszone z 0,3, by uprawa nie przesłaniała niedoboru opadów); teren – brak danych, udział 0.
+**Konsekwencje:** udziały = wagi / suma (zaokrąglone, suma dokładnie 100%), od największego; teren zawsze na końcu jako „brak danych (analiza terenu w przygotowaniu)”.
+
+### D38 · 2026-11-21 · Silnik reguł rekomendacji (YAML)
+**Uzasadnienie:** wymóg KOWR – żadnych gotowych tekstów bez danych; reguły czytelne i edytowalne bez zmiany kodu.
+**Konsekwencje:** `analysis/rules/{retencja,agrotechnika,nawadnianie}.yaml`, 19 reguł; każda ma warunek (walidacja przy wczytaniu), fakt bez danych = warunek fałszywy, szablon z brakującym faktem = reguła pominięta; „Dlaczego?” i `inputs` z faktów, które uruchomiły regułę. Reguły wymagające terenu / wód w okolicy (oczko w zagłębieniu, zastawka, pas buforowy na stoku, mokradło) mają `requires` i są wyłączone do A6/A7. Kolejność: retencja → agrotechnika → nawadnianie, w grupie wg `priority`; `in_panel` – najważniejsza z każdej grupy (maks. 3). Kierunki działań wg listy z zadania A4 („Podstawy naukowe” KOWR) – treść dokumentu KOWR nie była czytana w tej sesji; do weryfikacji merytorycznej.
+
+### D39 · 2026-11-21 · Pełne /api/analysis: czas, błędy, kroki
+**Konsekwencje:** łączny budżet 27 s (zapas do 30 s): ULDK z własnym limitem, potem źródła równolegle z limitem = pozostały budżet. **502 tylko gdy brak działki (ULDK) albo pogody** (NASA POWER i archiwum Open-Meteo); awaria IUNG / KIEG / prognozy → brak danych w danej części, niższa pewność, krok `error`. 422: brak uprawy („Wybierz uprawę…”), nieznana uprawa, data z przyszłości lub starsza niż 10 lat. `steps` – każdy krok ze stanem i czasem (satelita i teren: `pending`, „w przygotowaniu”), ostatni krok `total` = czas całej analizy. Pomiar live: 1,2–2,5 s.
+
+### D40 · 2026-11-21 · Przełącznik języka PL | EN (domyślnie polski) – zmienia D9
+**Uzasadnienie:** prośba osoby B – interfejs ma być czytelny także dla osób nieznających polskiego (np. jury, goście). Polski zostaje językiem domyślnym, więc rolnik nic nie musi przełączać.
+**Konsekwencje:** własny mały moduł `frontend/src/lib/i18n.ts` (bez nowej zależności): kluczem tłumaczenia jest tekst polski (`t('Szukam działki')`, zmienne `{n}`), słownik `lib/i18n.en.ts`, brak wpisu = tekst polski. Wybór zapamiętany w przeglądarce (`zw.lang.v1`), przełącznik w górnym pasku. Liczby i daty w formacie języka. Teksty z backendu (komunikaty błędów, rekomendacje, opisy) zostają po polsku, dopóki backend nie obsłuży języka – wyjątek: opisy pogody Open-Meteo i teksty mocka są w słowniku. Nowy tekst w UI = nowy wpis w `i18n.en.ts`.
+*(pierwotnie D30, potem D35 na gałęzi `b/frontend`; numer zmieniany przy scaleniach z `a/backend`, gdzie D30 i D35 zajęła osoba A)*

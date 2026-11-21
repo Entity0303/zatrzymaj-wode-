@@ -13,7 +13,14 @@ class Settings(BaseSettings):
     uldk_url: str = "https://uldk.gugik.gov.pl/"
     uldk_timeout_s: float = 10.0
     iung_wms_url: str = "https://sgeo.iung.pl/geoserver/Susza/wms"
+    iung_wcs_url: str = "https://sgeo.iung.pl/geoserver/Susza/wcs"
     iung_soil_layer: str = "Susza:katgl_landuse2024"
+    iung_coverage_id: str = "Susza__katgl_landuse2024"
+    iung_timeout_s: float = 8.0
+    # powyżej tylu komórek 5 m prosimy WCS o mniejszą rozdzielczość (SCALEFACTOR)
+    iung_wcs_max_cells: int = 250_000
+    kieg_url: str = "https://integracja.gugik.gov.pl/cgi-bin/KrajowaIntegracjaEwidencjiGruntow"
+    kieg_timeout_s: float = 8.0
     nasa_power_url: str = "https://power.larc.nasa.gov/api/temporal/daily/point"
     # na próbę; przy 1 ponownej próbie + zapasowym Open-Meteo całość mieści się w limicie 30 s
     nasa_power_timeout_s: float = 9.0
@@ -21,8 +28,8 @@ class Settings(BaseSettings):
     open_meteo_archive_timeout_s: float = 10.0
     open_meteo_forecast_url: str = "https://api.open-meteo.com/v1/forecast"
 
-    # ile punktów w obrysie działki sprawdzamy w mapie gleb IUNG
-    soil_sample_points: int = 9
+    # ile punktów w obrysie działki sprawdza zapasowa metoda IUNG (GetFeatureInfo)
+    soil_sample_points: int = 16
     # ile lat wstecz pobieramy dane pogodowe
     history_years: int = 10
 

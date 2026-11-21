@@ -1,0 +1,88 @@
+# Reguły AGROTECHNIKI (zmiany w uprawie) – kategoria druga w kolejności.
+rules:
+  - id: agrotechnika.ograniczenie_parowania
+    category: agrotechnika
+    priority: 70
+    confidence: srednia
+    when:
+      all:
+        - {fact: sensitive, eq: true}
+        - {fact: crop, in: [kukurydza_ziarno, kukurydza_kiszonka, burak_cukrowy, ziemniak, warzywa, tyton]}
+      any:
+        - {fact: water_pct, lt: 60}
+        - {fact: days_to_stress, lte: 7}
+    title: "Ogranicz parowanie z międzyrzędzi"
+    description: "Płytkie spulchnienie międzyrzędzi po deszczu przerywa podsiąkanie wody do powierzchni i ogranicza jej parowanie. W strefie korzeni jest {water_pct}% wody dostępnej."
+    why:
+      - "Uprawa rzędowa w fazie wrażliwej, a zapas wody maleje."
+
+  - id: agrotechnika.mulczowanie
+    category: agrotechnika
+    priority: 65
+    confidence: srednia
+    when:
+      all:
+        - {fact: sensitive, eq: true}
+        - {fact: crop, in: [warzywa, truskawki, krzewy_owocowe, drzewa_owocowe]}
+        - {fact: water_pct, lt: 70}
+    title: "Ściółkuj glebę wokół roślin"
+    description: "Mulcz ze słomy, kory lub agrowłókniny ogranicza parowanie i nagrzewanie gleby. W strefie korzeni jest {water_pct}% wody dostępnej."
+    why:
+      - "Uprawa ogrodnicza w fazie wrażliwej przy malejącym zapasie wody."
+
+  - id: agrotechnika.wczesny_siew
+    category: agrotechnika
+    priority: 75
+    confidence: srednia
+    when:
+      all:
+        - {fact: phase, in: [przed_siewem]}
+        - {fact: crop_kind, eq: jara}
+      any:
+        - {fact: water_pct, lt: 70}
+        - {fact: balance_percentile, lt: 30}
+    title: "Siej możliwie wcześnie w terminie optymalnym"
+    description: "Wczesny siew pozwala roślinom wykorzystać zimowy zapas wody, zanim przyjdą letnie niedobory. Teraz profil ma {water_pct}% wody dostępnej."
+    why:
+      - "Zapas wody przed siewem jest mniejszy niż zwykle lub sezon zapowiada się sucho."
+
+  - id: agrotechnika.odmiany_odporne
+    category: agrotechnika
+    priority: 55
+    confidence: srednia
+    when:
+      all:
+        - {fact: stress_ratio, gte: 1.5}
+        - {fact: stress_days_season, gte: 10}
+    title: "Wybierz odmiany odporne na suszę"
+    description: "W tym sezonie było {stress_days_season} dni stresu wodnego, średnio w ostatnich 10 latach {stress_days_mean}. Odmiany tolerujące suszę lub wcześniejsze zmniejszą straty."
+    why:
+      - "Stres wodny w sezonie był co najmniej półtora raza częstszy niż zwykle."
+
+  - id: agrotechnika.uprawy_mniej_wymagajace
+    category: agrotechnika
+    priority: 45
+    confidence: ograniczona
+    when:
+      all:
+        - {fact: soil_category, eq: 1}
+        - {fact: crop, in: [kukurydza_ziarno, kukurydza_kiszonka, burak_cukrowy, ziemniak]}
+    title: "Rozważ uprawy o mniejszych wymaganiach wodnych"
+    description: "Gleba kat. I zmieści tylko ok. {wod_mm} mm wody – {crop_label} potrzebuje jej dużo w lipcu i sierpniu. Na takich glebach mniej ryzykowne są zboża ozime i rośliny o krótszym okresie wegetacji."
+    why:
+      - "Uprawa o dużym zapotrzebowaniu na wodę na glebie bardzo podatnej na suszę."
+
+  - id: agrotechnika.zachowaj_wilgoc_przed_siewem_ozimin
+    category: agrotechnika
+    priority: 60
+    confidence: srednia
+    when:
+      all:
+        - {fact: phase, in: [po_zbiorze, wschody_jesienne]}
+        - {fact: month, in: [8, 9, 10]}
+        - {fact: crop_kind, in: [ozima, jesienna]}
+        - {fact: water_pct, lt: 50}
+    title: "Uprawa przedsiewna płytko, z wałowaniem"
+    description: "W profilu jest tylko {water_pct}% wody dostępnej. Płytka uprawa i wałowanie po siewie zachowają wilgoć potrzebną do wschodów."
+    why:
+      - "Mały zapas wody w okresie siewu ozimin."

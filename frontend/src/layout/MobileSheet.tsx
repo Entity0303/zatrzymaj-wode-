@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { cn } from '@/lib/utils'
+import { useLang } from '@/lib/i18n'
 
 export type Snap = 'collapsed' | 'half' | 'full'
 
@@ -35,6 +36,7 @@ export function MobileSheet({
   header: ReactNode
   children: ReactNode
 }) {
+  const { t } = useLang()
   const heights = snapHeights(areaHeight, collapsedHeight, topReserved)
   const [drag, setDrag] = useState<number | null>(null) // aktualna widoczna wysokość podczas przeciągania
   const start = useRef<{ y: number; h: number; moved: boolean } | null>(null)
@@ -74,7 +76,7 @@ export function MobileSheet({
 
   return (
     <section
-      aria-label="Panel działki"
+      aria-label={t('Panel działki')}
       className={cn(
         'absolute inset-x-0 bottom-0 z-[1100] flex flex-col rounded-t-[20px] border-t bg-surface shadow-[0_-6px_24px_rgba(30,42,35,.16)]',
         drag === null && 'transition-transform duration-200 ease-out',
@@ -92,7 +94,7 @@ export function MobileSheet({
           type="button"
           data-sheet-handle
           onClick={next}
-          aria-label={`Panel: ${LABEL[snap]}. Zmień położenie`}
+          aria-label={t('Panel: {pos}. Zmień położenie', { pos: t(LABEL[snap]) })}
           className="mx-auto flex h-6 w-full items-center justify-center"
         >
           <span className="h-1.5 w-11 rounded-full bg-nodata" />

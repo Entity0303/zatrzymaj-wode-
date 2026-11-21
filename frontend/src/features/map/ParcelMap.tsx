@@ -12,11 +12,13 @@ import {
   useMap,
   useMapEvents,
 } from 'react-leaflet'
-import type { Parcel } from '@/api/types'
+import type { LayerResponse, Parcel } from '@/api/types'
 import type { Status } from '@/theme/status'
 import { parcelBounds, type MapInsets } from './geo'
 import { layerByKey, type LayerKey } from './layers'
 import { ParcelLabel } from './ParcelLabel'
+import { InfraPins } from '@/features/infra-reports/InfraPins'
+import { useLang } from '@/lib/i18n'
 
 export type BaseMap = 'orto' | 'osm'
 
@@ -83,7 +85,7 @@ const numberIcon = (n: number) =>
     className: '',
     iconSize: [32, 32],
     iconAnchor: [16, 16],
-    html: `<div style="width:32px;height:32px;border-radius:9999px;background:#2F6B47;border:2px solid #fff;color:#fff;font:600 14px/28px 'Inter Variable',system-ui,sans-serif;text-align:center;box-shadow:0 2px 8px rgb(30 42 35/.35)">${n}</div>`,
+    html: `<div style="width:32px;height:32px;border-radius:9999px;background:#2E5B3F;border:2px solid #fff;color:#fff;font:600 14px/28px 'Inter Variable',system-ui,sans-serif;text-align:center;box-shadow:0 2px 8px rgb(30 42 35/.35)">${n}</div>`,
   })
 
 const anchorIcon = L.divIcon({ className: '', iconSize: [0, 0] })
@@ -91,6 +93,8 @@ const anchorIcon = L.divIcon({ className: '', iconSize: [0, 0] })
 type Props = {
   baseMap: BaseMap
   layer: LayerKey
+  /** dane aktywnej warstwy (null = brak / w budowie) */
+  layerData?: LayerResponse | null
   analysisDate: string
   parcel: Parcel | null
   parcelStatus: Status
@@ -104,12 +108,17 @@ type Props = {
   onMoveEnd: (lon: number, lat: number) => void
   onSelectCandidate: (p: Parcel) => void
   onClosePopup: () => void
+  /** miejsce rekomendacji („Pokaż na mapie”) */
+  highlight?: GeoJSON.Geometry | null
+  /** zgłoszenia rowów/zbiorników wokół działki; zmiana `infraRefresh` = ponowne pobranie */
+  infraRefresh?: number
 }
 
 export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
   {
     baseMap,
     layer,
+    layerData,
     analysisDate,
     parcel,
     parcelStatus,
@@ -123,11 +132,21 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
     onMoveEnd,
     onSelectCandidate,
     onClosePopup,
+    highlight,
+    infraRefresh = 0,
   },
   ref,
 ) {
+  const { t } = useLang()
   const ActiveOverlay = layerByKey(layer).Overlay
   const labelPos = useMemo(() => (parcel ? parcelBounds(parcel).getCenter() : null), [parcel])
+  // obszar zgłoszeń: działka + ok. 1,5 km dookoła
+  const infraBox = useMemo<[number, number, number, number] | null>(() => {
+    if (!parcel) return null
+    const b = parcelBounds(parcel).pad(0)
+    const d = 0.015
+    return [b.getWest() - d, b.getSouth() - d, b.getEast() + d, b.getNorth() + d]
+  }, [parcel])
   return (
     <MapContainer
       ref={ref}
@@ -161,6 +180,10 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
 
       {parcel && (
         <>
+          {/* aktywna warstwa danych przycięta do obrysu (features/map/layers/*) – pod białym obrysem */}
+          {ActiveOverlay && layerData && layerData.parcel_id === parcel.id && (
+            <ActiveOverlay parcel={parcel} analysisDate={analysisDate} data={layerData} />
+          )}
           {/* delikatna poświata pod białym obrysem 3 px (SPEC 5.1) */}
           <GeoJSON
             key={`${parcel.id}-halo`}
@@ -174,8 +197,6 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
             interactive={false}
             style={{ color: '#FFFFFF', weight: 3, opacity: 1, fillColor: '#FFFFFF', fillOpacity: 0.12 }}
           />
-          {/* aktywna warstwa danych przycięta do obrysu (features/map/layers/*) */}
-          {ActiveOverlay && <ActiveOverlay parcel={parcel} analysisDate={analysisDate} />}
           {labelPos && (
             <Marker position={labelPos} icon={anchorIcon} interactive={false} keyboard={false}>
               <Tooltip permanent direction="center" className="parcel-label" opacity={1}>
@@ -191,11 +212,11 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
           key={c.id}
           position={parcelBounds(c).getCenter()}
           icon={numberIcon(i + 1)}
-          title={`${i + 1}. Działka ${c.numer}, obręb ${c.obreb}, gm. ${c.gmina}`}
+          title={`${i + 1}. ${t('Działka {numer}', { numer: c.numer })}, ${t('obręb {obreb}, gm. {gmina}', { obreb: c.obreb, gmina: c.gmina })}`}
           eventHandlers={{ click: () => onSelectCandidate(c) }}
         >
           <Tooltip direction="top" offset={[0, -16]}>
-            {i + 1}. Działka {c.numer} – obręb {c.obreb}, gm. {c.gmina}
+            {i + 1}. {t('Działka {numer}', { numer: c.numer })} – {t('obręb {obreb}, gm. {gmina}', { obreb: c.obreb, gmina: c.gmina })}
           </Tooltip>
         </Marker>
       ))}
@@ -205,7 +226,7 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
           center={[pendingPoint[1], pendingPoint[0]]}
           radius={8}
           interactive={false}
-          pathOptions={{ color: '#FFFFFF', weight: 3, fillColor: '#2F6B47', fillOpacity: 1 }}
+          pathOptions={{ color: '#FFFFFF', weight: 3, fillColor: '#2E5B3F', fillOpacity: 1 }}
         />
       )}
       {userPoint && (
@@ -216,7 +237,7 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
           pathOptions={{ color: '#FFFFFF', weight: 3, fillColor: '#2F80C9', fillOpacity: 1 }}
         >
           <Tooltip direction="top" offset={[0, -8]}>
-            Jesteś tutaj
+            {t('Jesteś tutaj')}
           </Tooltip>
         </CircleMarker>
       )}
@@ -226,6 +247,20 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
           <span className="text-sm">{insidePopup.text}</span>
         </Popup>
       )}
+
+      {highlight && (
+        <GeoJSON
+          key={JSON.stringify(highlight).slice(0, 200)}
+          data={highlight}
+          interactive={false}
+          style={{ color: '#E2A23B', weight: 4, opacity: 1, fillColor: '#E2A23B', fillOpacity: 0.35 }}
+          pointToLayer={(_, latlng) =>
+            L.circleMarker(latlng, { radius: 12, color: '#FFFFFF', weight: 3, fillColor: '#E2A23B', fillOpacity: 1 })
+          }
+        />
+      )}
+
+      <InfraPins bbox={infraBox} refresh={infraRefresh} />
 
       <FitTo parcel={parcel} candidates={candidates} insets={insets} reducedMotion={reducedMotion} />
       <Events onClick={onMapClick} onMoveEnd={onMoveEnd} />

@@ -8,6 +8,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
+import { useLang } from '@/lib/i18n'
 
 const geoportalUrl = (id: string) =>
   `https://mapy.geoportal.gov.pl/imap/Imgp_2.html?identifyParcel=${encodeURIComponent(id)}`
@@ -24,6 +25,7 @@ export function ParcelActions({
   onToggleSave: () => void
   onCopied: () => void
 }) {
+  const { t } = useLang()
   return (
     <>
         <Tooltip>
@@ -31,20 +33,20 @@ export function ParcelActions({
             <button
               type="button"
               aria-pressed={saved}
-              aria-label={saved ? 'Usuń z moich działek' : 'Zapisz działkę'}
+              aria-label={saved ? t('Usuń z moich działek') : t('Zapisz działkę')}
               onClick={onToggleSave}
               className="flex size-11 items-center justify-center rounded-full text-text-muted hover:bg-surface-2"
             >
               <Star className={cn('size-5', saved && 'fill-warn text-warn')} aria-hidden />
             </button>
           </TooltipTrigger>
-          <TooltipContent>{saved ? 'Zapisana w tej przeglądarce' : 'Zapisz działkę'}</TooltipContent>
+          <TooltipContent>{saved ? t('Zapisana w tej przeglądarce') : t('Zapisz działkę')}</TooltipContent>
         </Tooltip>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              aria-label="Więcej opcji"
+              aria-label={t('Więcej opcji')}
               className="flex size-11 items-center justify-center rounded-full text-text-muted hover:bg-surface-2"
             >
               <MoreHorizontal className="size-5" aria-hidden />
@@ -57,12 +59,12 @@ export function ParcelActions({
                 navigator.clipboard?.writeText(parcel.id).then(onCopied, () => undefined)
               }}
             >
-              <Copy className="size-4" /> Kopiuj identyfikator
+              <Copy className="size-4" /> {t('Kopiuj identyfikator')}
               <span className="ml-auto max-w-24 truncate text-xs text-text-muted">{parcel.id}</span>
             </DropdownMenuItem>
             <DropdownMenuItem asChild className="min-h-11 text-sm">
               <a href={geoportalUrl(parcel.id)} target="_blank" rel="noreferrer">
-                <ExternalLink className="size-4" /> Otwórz w Geoportalu
+                <ExternalLink className="size-4" /> {t('Otwórz w Geoportalu')}
               </a>
             </DropdownMenuItem>
           </DropdownMenuContent>

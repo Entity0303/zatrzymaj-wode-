@@ -1,21 +1,31 @@
-import { FileDown } from 'lucide-react'
-import type { AnalysisResponse, CropId } from '@/api/types'
+import { BookOpenText, FileDown, Link2, Loader2, Waves } from 'lucide-react'
+import type { ErrorInfo } from '@/api/client'
+import type { CropId } from '@/api/types'
 import { EmptyState } from '@/components/EmptyState'
 import { ErrorNotice } from '@/components/ErrorNotice'
 import { FieldIllustration } from '@/components/FieldIllustration'
 import { LoadingSteps, type Step } from '@/components/LoadingSteps'
 import { SourceTag } from '@/components/SourceTag'
 import { Button } from '@/components/ui/button'
+import { WaveDivider } from '@/components/WaveDivider'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { formatDatePl } from '@/lib/format'
+import { AnalysisLoading } from './AnalysisLoading'
 import { CropField } from './CropField'
+import { CropSeasonCard } from './CropSeasonCard'
+import { IrrigationCard } from './IrrigationCard'
 import { KeyMetrics as Metrics } from './KeyMetrics'
+import { NonAgriculturalCard } from './NonAgriculturalCard'
 import { PanelEmpty } from './PanelEmpty'
 import { ParcelHeader } from './ParcelHeader'
 import { SectionTitle } from './SectionTitle'
+import { SoilCard } from './SoilCard'
+import { SoilWaterCard } from './SoilWaterCard'
 import { StatusCard } from './StatusCard'
-import type { ForecastState, SearchPhase } from './types'
+import type { AnalysisRun, ForecastState, SearchPhase } from './types'
 import { WhatToDo } from './WhatToDo'
+import { useLang } from '@/lib/i18n'
+import { useSettings } from '@/lib/storage'
 
 /** Panel działki (SPEC 6) – prawa karta na komputerze, treść szuflady na telefonie. */
 export function ParcelPanel({
@@ -24,7 +34,8 @@ export function ParcelPanel({
   onCropChange,
   asOf,
   forecastState,
-  analysis = null,
+  run = { phase: 'idle' },
+  onRetryAnalysis,
   saved,
   onToggleSave,
   onCopied,
@@ -32,14 +43,20 @@ export function ParcelPanel({
   onFocusSearch,
   onLocate,
   hideHeader,
+  report,
+  onCopyLink,
+  onOpenPassport,
+  onShowOnMap,
+  onReportInfra,
 }: {
   state: SearchPhase
   crop: CropId | null
   onCropChange: (c: CropId) => void
   asOf: string
   forecastState: ForecastState
-  /** wynik /api/analysis (null = jeszcze nie liczona) */
-  analysis?: AnalysisResponse | null
+  /** przebieg analizy (useAnalysis) */
+  run?: AnalysisRun
+  onRetryAnalysis?: () => void
   saved: boolean
   onToggleSave: () => void
   onCopied: () => void
@@ -48,7 +65,19 @@ export function ParcelPanel({
   onLocate: () => void
   /** na telefonie nagłówek jest w zwiniętej części szuflady */
   hideHeader?: boolean
+  /** pobieranie raportu PDF (useReportDownload) */
+  report?: { download: () => void; busy: boolean; error: ErrorInfo | null }
+  /** kopiuje link z działką, uprawą i datą */
+  onCopyLink?: () => void
+  /** otwiera paszport wodny (gdy jest wynik analizy) */
+  onOpenPassport?: () => void
+  /** podświetla miejsce rekomendacji na mapie */
+  onShowOnMap?: (g: GeoJSON.Geometry) => void
+  /** zgłoszenie stanu rowu / zbiornika w okolicy (SPEC 11) */
+  onReportInfra?: () => void
 }) {
+  const { t } = useLang()
+  const [settings] = useSettings()
   if (state.phase === 'idle') return <PanelEmpty onFocusSearch={onFocusSearch} onLocate={onLocate} />
 
   if (state.phase === 'loading')
@@ -56,7 +85,10 @@ export function ParcelPanel({
       <div className="space-y-4">
         <LoadingSteps
           steps={[
-            { label: state.kind === 'point' ? 'Szukam działki w tym miejscu (ULDK GUGiK)' : 'Szukam działki w ewidencji (ULDK GUGiK)', state: 'active' },
+            {
+              label: state.kind === 'point' ? 'Szukam działki w tym miejscu (ULDK GUGiK)' : 'Szukam działki w ewidencji (ULDK GUGiK)',
+              state: 'active',
+            },
           ]}
         />
         <Metrics loading />
@@ -75,12 +107,14 @@ export function ParcelPanel({
     return (
       <EmptyState
         illustration={<FieldIllustration className="w-32" />}
-        title={`Znaleziono ${state.total} działek`}
+        title={t('Znaleziono {n} działek', { n: state.total })}
         description="Ten numer jest w kilku miejscach. Wybierz swoją działkę z listy pod wyszukiwarką albo kliknij numer na mapie."
       />
     )
 
   const { parcel } = state
+  const analysis = run.phase === 'done' ? run.analysis : null
+  const nonAgri = !!analysis?.soil.non_agricultural
   const steps: Step[] = analysis
     ? analysis.steps.map((s) => ({ label: s.label, state: s.state, note: s.note ?? undefined }))
     : [
@@ -97,57 +131,124 @@ export function ParcelPanel({
     { label: 'Bilans wody', state: 'pending', note: 'w budowie' },
   ]
 
-  return (
-    <div className="space-y-5">
+  const header = (
+    <>
       {!hideHeader && <ParcelHeader parcel={parcel} saved={saved} onToggleSave={onToggleSave} onCopied={onCopied} />}
       <CropField crop={crop} onChange={onCropChange} />
-      <StatusCard crop={crop} analysis={analysis} />
+    </>
+  )
+
+  // ekran ładowania analizy: mapa już pokazuje działkę, w panelu kroki i szkielety (SPEC 15.1)
+  if (run.phase === 'loading' && crop)
+    return (
+      <div className="space-y-5">
+        {header}
+        <AnalysisLoading key={run.key} steps={run.steps} crop={crop} asOf={asOf} />
+      </div>
+    )
+
+  return (
+    <div className="space-y-5">
+      {header}
+      {run.phase === 'error' && (
+        <ErrorNotice {...run.error} onRetry={run.error.retryable ? onRetryAnalysis : undefined} />
+      )}
+      {/* SPEC 15.1: grunt nierolny – zamiast oceny suszy komunikat, bez wskaźników i zaleceń */}
+      {nonAgri ? <NonAgriculturalCard soil={analysis!.soil} /> : <StatusCard crop={crop} analysis={analysis} onOpen={analysis ? onOpenPassport : undefined} />}
+      {analysis && !nonAgri && <CropSeasonCard season={analysis.crop_season} analysisDate={analysis.analysis_date} />}
       {crop && (
-        <details className="group rounded-xl border bg-surface p-3.5">
+        <details open={settings.mode === 'doradca' || undefined} className="group rounded-xl border bg-surface p-3.5">
           <summary className="flex min-h-6 cursor-pointer list-none items-center justify-between text-sm font-medium">
-            Postęp analizy
-            <span className="text-text-muted group-open:hidden">pokaż</span>
-            <span className="hidden text-text-muted group-open:inline">ukryj</span>
+            {t('Postęp analizy')}
+            <span className="text-text-muted group-open:hidden">{t('pokaż')}</span>
+            <span className="hidden text-text-muted group-open:inline">{t('ukryj')}</span>
           </summary>
           <LoadingSteps steps={steps} className="mt-3" />
         </details>
       )}
-      <section className="space-y-3">
-        <SectionTitle>Kluczowe wskaźniki</SectionTitle>
-        <Metrics analysis={analysis} />
-      </section>
-      <section className="space-y-3">
-        <SectionTitle>Co zrobić?</SectionTitle>
-        <WhatToDo analysis={analysis} />
-      </section>
+      {!nonAgri && (
+        <>
+          <WaveDivider />
+          <section className="space-y-3">
+            <SectionTitle>{t('Kluczowe wskaźniki')}</SectionTitle>
+            <Metrics analysis={analysis} />
+            {analysis && <SoilWaterCard state={analysis.soil_water} />}
+          </section>
+          <WaveDivider />
+          <section className="space-y-3">
+            <SectionTitle>{t('Co zrobić?')}</SectionTitle>
+            <WhatToDo analysis={analysis} onShowOnMap={onShowOnMap} />
+            {analysis && <IrrigationCard plan={analysis.irrigation} />}
+          </section>
+        </>
+      )}
+      {analysis && <WaveDivider />}
+      {analysis && (
+        <section className="space-y-3">
+          <SectionTitle>{t('Gleba')}</SectionTitle>
+          <SoilCard soil={analysis.soil} />
+        </section>
+      )}
       <div className="space-y-2">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span tabIndex={0} className="block">
-              <Button
-                disabled
-                className="pointer-events-none h-12 w-full rounded-md bg-brand-dark text-base font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
-              >
-                <FileDown className="size-5" /> Pobierz raport
-              </Button>
-            </span>
-          </TooltipTrigger>
-          <TooltipContent>Raport PDF – w budowie (najpierw analiza)</TooltipContent>
-        </Tooltip>
-        <p className="text-center">
-          <span className="text-sm text-text-muted" aria-disabled>
-            Zobacz pełny paszport wodny <span className="text-xs">(wkrótce)</span>
-          </span>
-        </p>
+        {report?.error && <ErrorNotice {...report.error} onRetry={report.error.retryable ? report.download : undefined} />}
+        {analysis && report ? (
+          <Button
+            onClick={report.download}
+            disabled={report.busy}
+            className="h-12 w-full rounded-md bg-brand-dark text-base font-semibold text-white hover:bg-brand"
+          >
+            {report.busy ? <Loader2 className="size-5 animate-spin" /> : <FileDown className="size-5" />}
+            {t(report.busy ? 'Przygotowuję raport…' : 'Pobierz raport PDF')}
+          </Button>
+        ) : (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span tabIndex={0} className="block">
+                <Button
+                  disabled
+                  className="pointer-events-none h-12 w-full rounded-md bg-brand-dark text-base font-semibold text-white disabled:opacity-60"
+                >
+                  <FileDown className="size-5" /> {t('Pobierz raport PDF')}
+                </Button>
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>{t(crop ? 'Raport powstaje z gotowej analizy' : 'Najpierw wybierz uprawę – raport powstaje z analizy')}</TooltipContent>
+          </Tooltip>
+        )}
+        {onCopyLink && (
+          <Button variant="outline" onClick={onCopyLink} className="h-11 w-full rounded-md bg-surface text-base font-medium">
+            <Link2 className="size-5 text-brand" /> {t('Kopiuj link do tej analizy')}
+          </Button>
+        )}
+        {analysis && onOpenPassport ? (
+          <Button
+            variant="outline"
+            onClick={onOpenPassport}
+            className="h-11 w-full rounded-md border-sage bg-sage-soft text-base font-semibold text-brand-dark hover:bg-ok-soft"
+          >
+            <BookOpenText className="size-5" /> {t('Zobacz pełny paszport wodny')}
+          </Button>
+        ) : (
+          <p className="text-center text-sm text-text-muted">{t('Pełny paszport wodny pojawi się po analizie')}</p>
+        )}
       </div>
+      {onReportInfra && (
+        <button
+          type="button"
+          onClick={onReportInfra}
+          className="flex min-h-11 w-full items-center justify-center gap-2 rounded-md text-sm font-medium text-brand hover:bg-sage-soft"
+        >
+          <Waves className="size-4" aria-hidden /> {t('Zgłoś stan rowu lub zbiornika w okolicy')}
+        </button>
+      )}
       <footer className="border-t pt-3 text-xs leading-4 text-text-muted">
-        Dane:{' '}
+        {t('Dane:')}{' '}
         {analysis
           ? analysis.reliability.sources.filter((s) => s.status !== 'brak').map((s) => s.name).join(', ')
           : `GUGiK (ULDK)${forecastState === 'ok' ? ', Open-Meteo' : ''}`}{' '}
-        · stan na {formatDatePl(asOf)}
+        · {t('stan na')} {formatDatePl(asOf)}
         <div className="mt-1.5">
-          <SourceTag kind="pomiar" title="Granice i powierzchnia z ewidencji (ULDK GUGiK)" /> granice i powierzchnia
+          <SourceTag kind="pomiar" title={t('Granice i powierzchnia z ewidencji (ULDK GUGiK)')} /> {t('granice i powierzchnia')}
         </div>
       </footer>
     </div>

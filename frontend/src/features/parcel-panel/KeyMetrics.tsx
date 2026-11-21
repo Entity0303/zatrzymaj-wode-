@@ -1,8 +1,9 @@
-import { ChartNoAxesCombined, Droplets, Gauge, Leaf } from 'lucide-react'
+import { ArrowDown, ArrowUp, ChartNoAxesCombined, Droplets, Gauge, Leaf } from 'lucide-react'
 import { MetricCard } from '@/components/MetricCard'
 import { ScoreRing } from '@/components/ScoreRing'
 import type { AnalysisResponse, Indicator } from '@/api/types'
 import { formatDatePl, formatNum, formatSigned } from '@/lib/format'
+import { useLang } from '@/lib/i18n'
 
 /** Wartość wskaźnika jako tekst; null = brak danych (karta pokaże kreskowanie). */
 const num = (i: Indicator, digits = 0, signed = false) =>
@@ -15,11 +16,11 @@ export function KeyMetrics({ loading, analysis }: { loading?: boolean; analysis?
   return (
     <div className="grid grid-cols-2 gap-3">
       <MetricCard icon={Droplets} title="Woda w glebie" value={null} unit="%" tone="water" source="szacunek_modelu" loading={loading}>
-        <div className="h-2 rounded-full bg-surface-2" aria-hidden />
+        <div className="h-1.5 rounded-full bg-surface-2" aria-hidden />
       </MetricCard>
       <MetricCard icon={Gauge} title="Ryzyko na 7 dni" value={null} tone="warn" source="prognoza" loading={loading} />
       <MetricCard icon={Leaf} title="Kondycja upraw" value={null} tone="brand" source="satelita" loading={loading}>
-        {!loading && <ScoreRing value={null} size={48} stroke={5} className="self-start" />}
+        {!loading && <ScoreRing value={null} size={56} stroke={6} className="self-start" />}
       </MetricCard>
       <MetricCard
         icon={ChartNoAxesCombined}
@@ -35,9 +36,11 @@ export function KeyMetrics({ loading, analysis }: { loading?: boolean; analysis?
 }
 
 function AnalysisMetrics({ analysis }: { analysis: AnalysisResponse }) {
+  const { t } = useLang()
   const { soil_water_pct: water, risk_7d: risk, crop_health: health, water_balance_season: balance } = analysis.indicators
   return (
-    <div className="grid grid-cols-2 gap-3">
+    <div className="space-y-2">
+      <div className="grid grid-cols-2 gap-3">
       <MetricCard
         icon={Droplets}
         title="Woda w glebie"
@@ -48,30 +51,33 @@ function AnalysisMetrics({ analysis }: { analysis: AnalysisResponse }) {
         sourceDate={tagDate(water)}
       >
         {water.value !== null && (
-          <div className="h-2 overflow-hidden rounded-full bg-surface-2" aria-hidden>
-            <div className="h-full rounded-full bg-water" style={{ width: `${Math.max(0, Math.min(100, water.value))}%` }} />
-          </div>
+          <>
+            <div className="h-1.5 overflow-hidden rounded-full bg-surface-2" aria-hidden>
+              <div className="h-full rounded-full bg-water" style={{ width: `${Math.max(0, Math.min(100, water.value))}%` }} />
+            </div>
+            <p className="text-sm leading-5 text-text-muted">{t('jak bak: tyle zapasu wody mają rośliny')}</p>
+          </>
         )}
       </MetricCard>
       <MetricCard
         icon={Gauge}
         title="Ryzyko na 7 dni"
-        value={risk.value === null && !risk.label ? null : (risk.label ?? num(risk))}
+        value={risk.value === null && !risk.label ? null : risk.label ? t(risk.label) : num(risk)}
         tone="warn"
         source={risk.source_tag.kind}
         sourceDate={tagDate(risk)}
       >
-        {risk.note && <p className="text-sm leading-5 text-text-muted">{risk.note}</p>}
+        {risk.note && <p className="text-sm leading-5 text-text-muted">{t(risk.note)}</p>}
       </MetricCard>
       <MetricCard
         icon={Leaf}
         title="Kondycja upraw"
-        value={health.value === null ? null : (health.label ?? num(health))}
+        value={health.value === null ? null : health.label ? t(health.label) : num(health)}
         tone="brand"
         source={health.source_tag.kind}
         sourceDate={tagDate(health)}
       >
-        <ScoreRing value={health.value} size={48} stroke={5} className="self-start" />
+        <ScoreRing value={health.value} size={56} stroke={6} className="self-start" />
       </MetricCard>
       <MetricCard
         icon={ChartNoAxesCombined}
@@ -79,11 +85,20 @@ function AnalysisMetrics({ analysis }: { analysis: AnalysisResponse }) {
         value={num(balance, 0, true)}
         unit={balance.unit ?? 'mm'}
         tone={balance.value !== null && balance.value < 0 ? 'danger' : 'water'}
+        valuePrefix={
+          balance.value === null || balance.value === 0 ? undefined : balance.value < 0 ? (
+            <ArrowDown className="size-6 self-center text-danger" strokeWidth={2.25} aria-hidden />
+          ) : (
+            <ArrowUp className="size-6 self-center text-water" strokeWidth={2.25} aria-hidden />
+          )
+        }
         source={balance.source_tag.kind}
         sourceDate={tagDate(balance)}
       >
-        {balance.note && <p className="text-sm leading-5 text-text-muted">{balance.note}</p>}
+        {balance.note && <p className="text-sm leading-5 text-text-muted">{t(balance.note)}</p>}
       </MetricCard>
+      </div>
+      <p className="text-xs leading-4 text-text-muted">{t('1 mm wody = 1 litr na każdy metr kwadratowy pola.')}</p>
     </div>
   )
 }

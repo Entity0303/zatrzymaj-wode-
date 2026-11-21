@@ -3,6 +3,7 @@ import { useState, type CSSProperties } from 'react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import type { BaseMap } from './ParcelMap'
+import { useLang } from '@/lib/i18n'
 
 // MapControls: pionowa grupa białych kwadratowych przycisków 44 px (SPEC 5.2, 14)
 
@@ -59,19 +60,20 @@ export function MapControls({
   className?: string
   style?: CSSProperties
 }) {
+  const { t } = useLang()
   const [baseOpen, setBaseOpen] = useState(false)
   return (
     <div className={cn('flex flex-col items-start gap-2', className)} style={style}>
       {/* mały przycisk podkładu mapy (SPEC 5.1) */}
       <div className="relative">
-        <div className="overflow-hidden rounded-md border shadow-float">
-          <CtrlButton icon={Layers2} label="Podkład mapy" onClick={() => setBaseOpen((o) => !o)} pressed={baseOpen} />
+        <div className="overflow-hidden rounded-md shadow-float">
+          <CtrlButton icon={Layers2} label={t('Podkład mapy')} onClick={() => setBaseOpen((o) => !o)} pressed={baseOpen} />
         </div>
         {baseOpen && (
           <div
             role="radiogroup"
-            aria-label="Podkład mapy"
-            className="absolute bottom-0 left-full z-10 ml-2 flex w-44 flex-col gap-1 rounded-xl border bg-surface p-1.5 shadow-float max-md:top-0 max-md:right-full max-md:bottom-auto max-md:left-auto max-md:mr-2 max-md:ml-0"
+            aria-label={t('Podkład mapy')}
+            className="absolute bottom-0 left-full z-10 ml-2 flex w-44 flex-col gap-1 rounded-xl bg-surface p-1.5 shadow-float max-md:top-0 max-md:right-full max-md:bottom-auto max-md:left-auto max-md:mr-2 max-md:ml-0"
           >
             {(
               [
@@ -93,17 +95,17 @@ export function MapControls({
                   baseMap === k ? 'bg-ok-soft text-brand' : 'hover:bg-surface-2',
                 )}
               >
-                {label}
+                {t(label)}
               </button>
             ))}
           </div>
         )}
       </div>
-      <div className="flex flex-col divide-y overflow-hidden rounded-md border shadow-float">
-        <CtrlButton icon={Plus} label="Przybliż" onClick={onZoomIn} />
-        <CtrlButton icon={Minus} label="Oddal" onClick={onZoomOut} />
-        <CtrlButton icon={Crosshair} label="Wróć do mojej działki" onClick={onBackToParcel} disabled={!canGoBack} />
-        <CtrlButton icon={LocateFixed} label="Moja lokalizacja" onClick={onLocate} />
+      <div className="flex flex-col divide-y divide-line overflow-hidden rounded-md shadow-float">
+        <CtrlButton icon={Plus} label={t('Przybliż')} onClick={onZoomIn} />
+        <CtrlButton icon={Minus} label={t('Oddal')} onClick={onZoomOut} />
+        <CtrlButton icon={Crosshair} label={t('Wróć do mojej działki')} onClick={onBackToParcel} disabled={!canGoBack} />
+        <CtrlButton icon={LocateFixed} label={t('Moja lokalizacja')} onClick={onLocate} />
       </div>
     </div>
   )

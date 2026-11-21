@@ -1,37 +1,44 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import '@fontsource-variable/inter';
+@import '@fontsource-variable/fraunces';
 @import 'leaflet/dist/leaflet.css';
 
 @custom-variant dark (&:is(.dark *));
 
-/* ── Tokeny „Zatrzymaj wodę” – design/SPEC_UI.md, sekcja 2 ───────────────────────────────── */
+/* ── Tokeny WodoSkop – design/SPEC_UI.md, sekcja 2 ───────────────────────────────── */
 @theme {
-  /* 2.2 Paleta */
-  --color-brand: #2f6b47;
-  --color-brand-dark: #1f4d33;
-  --color-ok: #5bb37f;
-  --color-ok-soft: #e6f4ea;
-  --color-bg: #f8f6f1;
-  --color-surface: #ffffff;
-  --color-surface-2: #efebe3;
+  /* 2.2 Paleta – wersja „otwarte pole”: szałwia, leśna zieleń, kremowe tło, bursztyn słońca, grafit */
+  --color-brand: #2e5b3f; /* leśna zieleń */
+  --color-brand-dark: #1f4230;
+  --color-sage: #9db896; /* szałwia */
+  --color-sage-soft: #e8efe2;
+  --color-ok: #5f9f63;
+  --color-ok-soft: #e6efdf;
+  --color-amber: #e2a23b; /* bursztyn słońca – akcenty */
+  --color-amber-soft: #fcf0d8;
+  --color-bg: #faf6ec; /* krem */
+  --color-surface: #fffdf8; /* ciepła biel */
+  --color-surface-2: #f1ebdd;
   --color-earth: #8b6b4a;
-  --color-water: #2f80c9;
-  --color-water-soft: #e3f0fb;
-  --color-warn: #e8b931;
-  --color-warn-soft: #fdf4d8;
-  --color-risk: #e07b39;
-  --color-danger: #c8453b;
-  --color-danger-soft: #fbe7e5;
-  --color-text: #1e2a23;
-  --color-text-muted: #5f6b64;
-  --color-line: #e3ded4;
-  --color-nodata: #b8bdb9;
-  --color-nodata-soft: #f1f2f1;
-  --color-legend: #1e2a23;
+  --color-water: #2f7fc1;
+  --color-water-soft: #e3effa;
+  --color-warn: #e2a23b;
+  --color-warn-soft: #fcf0d8;
+  --color-risk: #d9773a;
+  --color-danger: #c0473c;
+  --color-danger-soft: #f9e6e2;
+  --color-text: #2b302c; /* grafit, bez czystej czerni */
+  --color-text-muted: #5e655f;
+  --color-line: #e6dfcf;
+  --color-nodata: #b8bdb5;
+  --color-nodata-soft: #f2f1ec;
+  --color-legend: #26302a;
 
   /* 2.3 Typografia */
   --font-sans: 'Inter Variable', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  /* nagłówki: ciepły szeryf (liczby i dane zostają w Inter) */
+  --font-display: 'Fraunces Variable', 'Fraunces', Georgia, 'Times New Roman', serif;
 
   /* 2.4 Kształty: karty 16 px, przyciski i pola 12 px, pigułki 9999 px */
   --radius-sm: 8px;
@@ -41,8 +48,8 @@
   --radius-2xl: 16px;
 
   /* 2.4 Cienie */
-  --shadow-card: 0 1px 2px rgba(30, 42, 35, 0.06), 0 4px 16px rgba(30, 42, 35, 0.06);
-  --shadow-float: 0 2px 4px rgba(30, 42, 35, 0.08), 0 8px 24px rgba(30, 42, 35, 0.14);
+  --shadow-card: 0 1px 2px rgba(43, 48, 44, 0.05), 0 6px 20px rgba(46, 91, 63, 0.07);
+  --shadow-float: 0 2px 6px rgba(43, 48, 44, 0.07), 0 10px 28px rgba(46, 91, 63, 0.13);
 
   /* 2.4 Animacje 150–250 ms */
   --default-transition-duration: 200ms;
@@ -51,24 +58,24 @@
 /* Tokeny shadcn/ui zmapowane na paletę projektu */
 :root {
   --radius: 12px;
-  --background: #f8f6f1;
-  --foreground: #1e2a23;
-  --card: #ffffff;
-  --card-foreground: #1e2a23;
-  --popover: #ffffff;
-  --popover-foreground: #1e2a23;
-  --primary: #2f6b47;
+  --background: #faf6ec;
+  --foreground: #2b302c;
+  --card: #fffdf8;
+  --card-foreground: #2b302c;
+  --popover: #fffdf8;
+  --popover-foreground: #2b302c;
+  --primary: #2e5b3f;
   --primary-foreground: #ffffff;
-  --secondary: #efebe3;
-  --secondary-foreground: #1e2a23;
-  --muted: #efebe3;
-  --muted-foreground: #5f6b64;
-  --accent: #e6f4ea;
-  --accent-foreground: #1f4d33;
-  --destructive: #c8453b;
-  --border: #e3ded4;
-  --input: #e3ded4;
-  --ring: #2f6b47;
+  --secondary: #f1ebdd;
+  --secondary-foreground: #2b302c;
+  --muted: #f1ebdd;
+  --muted-foreground: #5e655f;
+  --accent: #e6efdf;
+  --accent-foreground: #1f4230;
+  --destructive: #c0473c;
+  --border: #e6dfcf;
+  --input: #e6dfcf;
+  --ring: #2e5b3f;
 }
 
 @theme inline {
@@ -116,6 +123,13 @@
   }
 }
 
+/* nagłówki – ciepły szeryf Fraunces (prośba o „przyjazny, ugruntowany” krój nagłówków) */
+@utility font-display {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  letter-spacing: -0.01em;
+}
+
 @utility tabular {
   font-variant-numeric: tabular-nums;
 }
@@ -140,7 +154,7 @@
 /* ── Leaflet ─────────────────────────────────────────────────────────────────────────────── */
 .leaflet-container {
   font-family: inherit;
-  background: #dfe6dc;
+  background: #e4eadb;
   cursor: crosshair;
 }
 .leaflet-control-attribution {
