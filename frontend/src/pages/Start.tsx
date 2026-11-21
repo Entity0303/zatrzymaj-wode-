@@ -375,8 +375,9 @@ export default function Start() {
             onLayerChange={setLayer}
           />
 
-          {mock && (
-            <div className="pointer-events-none absolute inset-x-0 bottom-3 z-[1450] flex justify-center px-3 md:top-[76px] md:bottom-auto">
+          {/* telefon: przy pełnej szufladzie napis zasłaniałby nagłówek działki */}
+          {mock && !(isMobile && snap === 'full') && (
+            <div className="pointer-events-none absolute top-[116px] right-16 left-3 z-[1450] flex justify-start md:inset-x-0 md:top-[76px] md:justify-center md:px-3">
               <SampleDataBanner />
             </div>
           )}
