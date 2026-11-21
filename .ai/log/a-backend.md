@@ -4,6 +4,16 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-22 04:30 · `a/backend` · A5e: raport krótszy i czytelniejszy + „co planuję posiać”
+**Co:** (bez zapytań do GUGiK – backend w DEMO_OFFLINE, testy na mockach)
+- **Wybór rolnika** (D77): `planned_crops` 1–3 w analizie i PDF (GET/POST); `suggestions.choice` (kategoria, plony t/ha i t, słaby rok, ryzyko, płodozmian, jedno zdanie „dlaczego” bez liczb), `choice_summary`, `alternatives` (lepsza / podobna, „Po pszenicy ozimej rzepak i rzepik – dobry przedplon.”), `not_recommended` (jeden powód), `top_ids`.
+- **Raport** (D78): `report_type` short (5 stron) / full (8–9): Werdykt · Co tu posiać? · Woda na działce (słupki 10 lat + zdanie, „Dlaczego?”, opad) · Co zrobić z wodą (4 karty, jedno „najważniejsze”) · Gleba, teren i skąd dane (5 ograniczeń); full + wszystkie uprawy i szczegóły techniczne. Prosty język („spadło minus wyparowało”, „Dane pogodowe do …”).
+- **Jedna liczba** (D78): mm bilansów zaokrąglone w obliczeniach, odchylenie = różnica zaokrąglonych (koniec −154 vs −153); `history.summary` prostym zdaniem (YAML), dawny tekst w `history.details`; `seasonal_balance_by_year` (11), `seasonal_balance_mean_mm`, `seasonal_balance_label`, `weather_data_until`.
+- **Jeden stan wody** (D79): przed siewem / po zbiorze status = stan działki, woda w glebie = profil, `irrigation = null`, reguły nawadniania tylko `in_season`; werdykt „…uprawy nie ma w polu”. Ziemniak `optional` (D76).
+- Przykłady: `reports/examples/{dobra,slaba}-short.pdf`, `-short-wybor.pdf` (pszenica ozima, rok temu pszenica), `-full.pdf` + PNG wszystkich stron short.
+**Pliki:** `backend/app/analysis/{choice.py (nowy), water_balance.py, facts.py, verdict.py, scoring.py, rules/{choice.yaml, history_text.yaml (nowe), nawadnianie.yaml, verdict.yaml}}`, `data/crops/crops.csv`, `routers/{analysis,reports}.py`, `schemas/analysis.py`, `report/{builder.py, charts.py, report.css, templates/report.html}`, testy (`test_a5e.py` nowy; dopasowane: `test_a5b`, `test_a5b2`, `test_a5b2b`, `test_a6`, `test_demo_status_report`, `test_weather_history`, `test_contract`); frontend: `api/types.ts`, `mocks/analysis.choice.sample.json`.
+**Kontrakt:** TAK (addytywnie) – `contract-changes.md`, wpis A5e „Dla Mefju”.
+
 ## 2026-11-22 02:20 · `a/backend` · A5c: wyszukiwanie (`/api/search`), działka z kliknięcia, własny obrys pola
 **Co:**
 - **Geokoder (test na żywo, D73):** ULDK 302, UUG „blocked for abuse”, **PRNG GUGiK WFS działa** (źródło główne), Nominatim działa (rezerwa + odwrotne geokodowanie). Odkrycia o PRNG: literał z polskim znakiem nie dopasowuje się – wzorzec LIKE z `.`; serwer odrzuca szybkie serie połączeń – odstęp 1,2 s + ponowienie.
