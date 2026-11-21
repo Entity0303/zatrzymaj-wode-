@@ -1,0 +1,18 @@
+crop_id,n,spadek_sredni_pct,spadek_trend_pct,spadek_2015_pct,spadek_2018_pct,spadek_2019_pct,spadek_max_pct,ky_crops,ky_proponowane,uwagi
+ziemniak,48,21.1,17.2,25.5,12.2,25.4,39.5,1.1,1.19,Ky zweryfikowane w FAO-33 – zostaje; punkt kalibracji
+kukurydza_ziarno,48,21.1,16.3,32.8,13.4,17.1,48.6,1.25,1.17,Ky zweryfikowane w FAO-33 – zostaje; punkt kalibracji
+kukurydza_kiszonka,48,14.2,13.3,22.1,8.0,12.6,36.1,1.0,1.12,
+straczkowe,48,15.0,9.4,15.8,12.8,16.3,39.5,1.15,1.06,Ky zweryfikowane w FAO-33 – zostaje; punkt kalibracji
+lubin,48,15.0,9.4,15.8,12.8,16.3,39.5,1.0,1.06,
+owies,48,16.6,8.6,11.2,22.0,16.5,36.3,1.15,1.04,
+warzywa,48,5.1,7.9,6.3,2.1,6.8,25.0,0.95,1.03,
+jeczmien_ozimy,48,16.8,7.1,13.1,21.9,15.5,42.1,0.9,1.02,
+jeczmien_jary,48,16.8,7.1,13.1,21.9,15.5,42.1,1.1,1.02,
+burak_cukrowy,48,8.7,6.7,13.5,3.5,9.2,51.4,0.9,1.01,Ky zweryfikowane w FAO-33 – zostaje; punkt kalibracji
+pszenzyto_ozime,48,16.2,6.4,13.6,20.7,14.3,28.1,0.9,1.01,
+zyto,48,15.7,5.9,12.1,20.9,14.0,33.1,0.8,1.0,
+pszenica_ozima,48,13.5,4.4,8.8,18.8,12.8,28.9,1.0,0.97,Ky zweryfikowane w FAO-33 – zostaje; punkt kalibracji
+rzepak,48,12.3,3.2,9.0,16.7,11.2,36.5,1.0,0.95,
+drzewa_owocowe,32,20.3,-1.5,,9.5,31.1,68.4,0.9,,"nie do kalibracji: spadki 2019 głównie od przymrozków wiosennych, nie od suszy; brak 2016 w serii"
+krzewy_owocowe,0,,,,,,,,,brak lat suchych w serii GUS
+truskawki,0,,,,,,,,,brak lat suchych w serii GUS
