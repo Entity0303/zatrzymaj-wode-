@@ -10,6 +10,7 @@ import { formatDatePl, formatHa } from '@/lib/format'
 import { useLang } from '@/lib/i18n'
 import { NonAgriculturalCard } from '@/features/parcel-panel/NonAgriculturalCard'
 import { SoilCard } from '@/features/parcel-panel/SoilCard'
+import { TerrainCard } from '@/features/parcel-panel/TerrainCard'
 import { SectionA } from './SectionA'
 import { SectionB } from './SectionB'
 import { SectionC } from './SectionC'
@@ -130,6 +131,7 @@ export function Passport({
         <>
           <NonAgriculturalCard soil={analysis.soil} />
           <SoilCard soil={analysis.soil} />
+          <TerrainCard terrain={analysis.terrain} note={analysis.terrain_note} />
           <WaveDivider />
           <SectionE analysis={analysis} />
         </>

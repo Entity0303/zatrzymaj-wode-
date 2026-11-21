@@ -1,0 +1,251 @@
+{
+ "piasek-zyto": {
+  "id": "piasek-zyto",
+  "scenariusz": "Piasek – „nie siej pszenicy, siej żyto”",
+  "region": "mazowieckie, Kurpie",
+  "lon": 21.459,
+  "lat": 53.2205,
+  "iung": 1,
+  "iung_s": 0.36,
+  "gleba": {
+   "KOMPLEKS": "5",
+   "TYPPODTYP": "Dz",
+   "PODLOZE1": "pgl",
+   "PODLOZE2": "Null",
+   "AKTUALNOSC": "01.01.1978"
+  },
+  "gleba_s": 0.16,
+  "teren": "błąd: HTTP 302: https://services.gugik.gov.pl/nmt/?request=GetHByPointList&list=597701.6+663968.9%2C597701.6+664018.9%2C597701.6+664068.",
+  "orto_s": 0.6,
+  "orto": "out/piasek-zyto_orto.jpg",
+  "imgw": [
+   [
+    "DOBRYLAS",
+    "opad",
+    25.91
+   ],
+   [
+    "ROZOGI",
+    "opad",
+    30.58
+   ],
+   [
+    "MARIANOWO II",
+    "klimat",
+    43.08
+   ]
+  ]
+ },
+ "czarnoziem-pszenica": {
+  "id": "czarnoziem-pszenica",
+  "scenariusz": "Najlepsza gleba – pszenica, susza mimo dobrej gleby",
+  "region": "lubelskie, Grzęda Horodelska (czarnoziemy)",
+  "lon": 23.865,
+  "lat": 50.82,
+  "iung": 4,
+  "iung_s": 0.35,
+  "gleba": {
+   "KOMPLEKS": "1",
+   "TYPPODTYP": "Cz",
+   "PODLOZE1": "li",
+   "PODLOZE2": "Null",
+   "AKTUALNOSC": "Null"
+  },
+  "gleba_s": 3.23,
+  "teren": "błąd: HTTP 302: https://services.gugik.gov.pl/nmt/?request=GetHByPointList&list=339253.0+842358.3%2C339253.0+842408.3%2C339253.0+842458.",
+  "orto_s": 1.76,
+  "orto": "out/czarnoziem-pszenica_orto.jpg",
+  "imgw": [
+   [
+    "STRZYŻÓW",
+    "klimat",
+    12.18
+   ],
+   [
+    "ZAMOŚĆ",
+    "synop",
+    48.32
+   ]
+  ]
+ },
+ "kujawy-susza": {
+  "id": "kujawy-susza",
+  "scenariusz": "Dobra gleba, mało deszczu – Kujawy (najsuchszy region PL)",
+  "region": "kujawsko-pomorskie, k. Inowrocławia",
+  "lon": 18.24,
+  "lat": 52.73,
+  "iung": 3,
+  "iung_s": 0.35,
+  "gleba": {
+   "KOMPLEKS": "1",
+   "TYPPODTYP": "D",
+   "PODLOZE1": "glp",
+   "PODLOZE2": "Null",
+   "AKTUALNOSC": "22.12.1969"
+  },
+  "gleba_s": 0.15,
+  "teren": "błąd: HTTP 302: https://services.gugik.gov.pl/nmt/?request=GetHByPointList&list=540603.4+448544.3%2C540603.4+448594.3%2C540603.4+448644.",
+  "orto_s": 0.62,
+  "orto": "out/kujawy-susza_orto.jpg",
+  "imgw": [
+   [
+    "KOŁUDA WIELKA",
+    "klimat",
+    6.17
+   ],
+   [
+    "PAKOŚĆ",
+    "opad",
+    12.57
+   ],
+   [
+    "TORUŃ",
+    "synop",
+    42.1
+   ]
+  ]
+ },
+ "less-erozja": {
+  "id": "less-erozja",
+  "scenariusz": "Lessowy stok – erozja, pas buforowy w poprzek spływu",
+  "region": "lubelskie, Płaskowyż Nałęczowski",
+  "lon": 22.17,
+  "lat": 51.3155,
+  "iung": 3,
+  "iung_s": 0.38,
+  "gleba": {
+   "KOMPLEKS": "2",
+   "TYPPODTYP": "Bw",
+   "PODLOZE1": "l",
+   "PODLOZE2": "Null",
+   "AKTUALNOSC": "Null"
+  },
+  "gleba_s": 0.14,
+  "teren": "błąd: HTTP 302: https://services.gugik.gov.pl/nmt/?request=GetHByPointList&list=387825.4+720684.8%2C387825.4+720734.8%2C387825.4+720784.",
+  "orto_s": 1.06,
+  "orto": "out/less-erozja_orto.jpg",
+  "imgw": [
+   [
+    "PUŁAWY",
+    "klimat",
+    17.82
+   ],
+   [
+    "LUBLIN-RADAWIEC",
+    "synop",
+    19.02
+   ]
+  ]
+ },
+ "pojezierze-oczko": {
+  "id": "pojezierze-oczko",
+  "scenariusz": "Zagłębienia bez odpływu – oczko wodne w dołku",
+  "region": "warmińsko-mazurskie, Pojezierze Mrągowskie",
+  "lon": 21.387,
+  "lat": 53.8709,
+  "iung": 4,
+  "iung_s": 0.36,
+  "gleba": {
+   "KOMPLEKS": "3",
+   "TYPPODTYP": "B",
+   "PODLOZE1": "gs",
+   "PODLOZE2": "Null",
+   "AKTUALNOSC": "23.10.2019"
+  },
+  "gleba_s": 0.15,
+  "teren": "błąd: HTTP 302: https://services.gugik.gov.pl/nmt/?request=GetHByPointList&list=669856.9+656739.6%2C669856.9+656789.6%2C669856.9+656839.",
+  "orto_s": 0.73,
+  "orto": "out/pojezierze-oczko_orto.jpg",
+  "imgw": [
+   [
+    "MIKOŁAJKI",
+    "synop",
+    16.11
+   ],
+   [
+    "KĘTRZYN",
+    "synop",
+    21.87
+   ],
+   [
+    "ROZOGI",
+    "opad",
+    42.2
+   ]
+  ]
+ },
+ "zulawy-mady": {
+  "id": "zulawy-mady",
+  "scenariusz": "Żuławy – ciężkie mady, płasko, nadmiar wody / melioracja",
+  "region": "pomorskie, Żuławy Wiślane",
+  "lon": 19.03,
+  "lat": 54.16,
+  "iung": 3,
+  "iung_s": 0.35,
+  "gleba": {
+   "KOMPLEKS": "3",
+   "TYPPODTYP": "F",
+   "PODLOZE1": "Null",
+   "PODLOZE2": "Null",
+   "AKTUALNOSC": "Null"
+  },
+  "gleba_s": 0.17,
+  "teren": "błąd: HTTP 302: https://services.gugik.gov.pl/nmt/?request=GetHByPointList&list=699372.9+501808.3%2C699372.9+501858.3%2C699372.9+501908.",
+  "orto_s": 0.52,
+  "orto": "out/zulawy-mady_orto.jpg",
+  "imgw": [
+   [
+    "GDAŃSK-ŚWIBNO",
+    "synop",
+    20.28
+   ],
+   [
+    "RADOSTOWO",
+    "klimat",
+    26.46
+   ],
+   [
+    "ELBLĄG-MILEJEWO",
+    "synop",
+    34.15
+   ]
+  ]
+ },
+ "pogorze-stok": {
+  "id": "pogorze-stok",
+  "scenariusz": "Stok na Pogórzu – spływ, sucha górka, retencja",
+  "region": "podkarpackie, Pogórze Dynowskie",
+  "lon": 22.3,
+  "lat": 49.84,
+  "iung": 3,
+  "iung_s": 0.32,
+  "gleba": {
+   "KOMPLEKS": "2",
+   "TYPPODTYP": "Dd",
+   "PODLOZE1": "płz",
+   "PODLOZE2": "Null",
+   "AKTUALNOSC": "01.01.1974"
+  },
+  "gleba_s": 0.14,
+  "teren": "błąd: HTTP 302: https://services.gugik.gov.pl/nmt/?request=GetHByPointList&list=224257.5+737042.1%2C224257.5+737092.1%2C224257.5+737142.",
+  "orto_s": 1.93,
+  "orto": "out/pogorze-stok_orto.jpg",
+  "imgw": [
+   [
+    "DYNÓW",
+    "klimat",
+    4.69
+   ],
+   [
+    "ŻARNOWA",
+    "opad",
+    34.92
+   ],
+   [
+    "RZESZÓW-JASIONKA",
+    "synop",
+    35.31
+   ]
+  ]
+ }
+}

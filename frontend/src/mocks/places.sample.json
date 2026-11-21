@@ -1,0 +1,32 @@
+{
+  "_uwaga": "MOCK do pracy nad UI wyszukiwania miejsc (GET /api/places – propozycja B). Nazwy i gminy prawdziwe, bbox PRZYBLIŻONE (wokół działek testowych), nie z ULDK. Tylko tryb deweloperski z ?dane=przykladowe.",
+  "places": [
+    {
+      "id": "143203_2.0027",
+      "name": "Szczytno",
+      "kind": "obreb",
+      "gmina": "Kampinos",
+      "powiat": "warszawski zachodni",
+      "wojewodztwo": "mazowieckie",
+      "bbox": [20.43, 52.255, 20.47, 52.275]
+    },
+    {
+      "id": "201305_2.0038",
+      "name": "Wnory-Wandy",
+      "kind": "obreb",
+      "gmina": "Kobylin-Borzymy",
+      "powiat": "wysokomazowiecki",
+      "wojewodztwo": "podlaskie",
+      "bbox": [22.585, 53.04, 22.615, 53.06]
+    },
+    {
+      "id": "2817_1",
+      "name": "Szczytno",
+      "kind": "gmina",
+      "gmina": "Szczytno",
+      "powiat": "szczycieński",
+      "wojewodztwo": "warmińsko-mazurskie",
+      "bbox": [20.9, 53.5, 21.1, 53.62]
+    }
+  ]
+}

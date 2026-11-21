@@ -14,6 +14,8 @@ from app.main import app
 from app.schemas.analysis import AnalysisResponse
 
 SAMPLE = Path(__file__).resolve().parents[2] / "frontend" / "src" / "mocks" / "analysis.sample.json"
+SAMPLE_NO_CROP = SAMPLE.with_name("analysis.no-crop.sample.json")
+SAMPLE_HISTORY = SAMPLE.with_name("analysis.no-crop-history.sample.json")
 TYPES_TS = Path(__file__).resolve().parents[2] / "frontend" / "src" / "api" / "types.ts"
 
 
@@ -24,9 +26,19 @@ def client():
 
 
 @pytest.mark.skipif(not SAMPLE.exists(), reason="brak katalogu frontend/ obok backend/")
-def test_frontend_sample_matches_contract():
-    data = json.loads(SAMPLE.read_text(encoding="utf-8"))
+@pytest.mark.parametrize("sample", [SAMPLE, SAMPLE_NO_CROP, SAMPLE_HISTORY], ids=["z_uprawa", "bez_uprawy", "z_historia"])
+def test_frontend_sample_matches_contract(sample):
+    data = json.loads(sample.read_text(encoding="utf-8"))
     a = AnalysisResponse.model_validate(data)
+    if sample == SAMPLE_HISTORY:  # A5b-2a: ranking z historią pola i podaną powierzchnią
+        assert a.crop_history == ["pszenica_ozima", "rzepak"] and a.cultivated_area_ha == 0.5
+        rank = {i.crop_id: i for g in a.suggestions.groups for i in g.items}
+        assert rank["rzepak"].category == "odradzane" and rank["rzepak"].rotation.status == "naruszenie"
+        assert not a.suggestions.area.estimated
+    if sample != SAMPLE:
+        assert a.suggestions is not None and {g.key for g in a.suggestions.groups} <= {"polowe", "wieloletnie"}
+    if sample == SAMPLE_NO_CROP:  # A5b-1: odpowiedź bez uprawy
+        assert a.crop is None and a.crop_season is None and a.irrigation is None and a.field_state is not None
     # zasady z kontraktu
     cats = [r.category for r in a.recommendations]
     order = ["retencja", "agrotechnika", "nawadnianie"]
@@ -36,6 +48,25 @@ def test_frontend_sample_matches_contract():
 
 
 @pytest.mark.skipif(not TYPES_TS.exists(), reason="brak katalogu frontend/ obok backend/")
+@pytest.mark.skipif(not SAMPLE.exists(), reason="brak katalogu frontend/ obok backend/")
+@pytest.mark.parametrize("layer", ["teren", "splyw"])
+def test_layer_samples_match_contract(layer):
+    """A6: przykłady warstw mapy (mocks/layers.*.sample.json) – LayerResponse + properties kind/color/label."""
+    from app.schemas.layers import LayerResponse
+
+    data = json.loads(SAMPLE.with_name(f"layers.{layer}.sample.json").read_text(encoding="utf-8"))
+    r = LayerResponse.model_validate(data)
+    assert r.layer == layer and r.features["type"] == "FeatureCollection" and r.features["features"]
+    for f in r.features["features"]:
+        assert {"kind", "color", "label"} <= set(f["properties"])
+
+
+@pytest.mark.skipif(not SAMPLE.exists(), reason="brak katalogu frontend/ obok backend/")
+def test_samples_have_terrain_section():
+    a = AnalysisResponse.model_validate(json.loads(SAMPLE.read_text(encoding="utf-8")))
+    assert a.terrain is not None and len(a.terrain.zones) == 4
+
+
 def test_ts_types_name_every_contract_field():
     """Każde pole modeli odpowiedzi analizy występuje w types.ts (prosta kontrola rozjazdu)."""
     ts = TYPES_TS.read_text(encoding="utf-8")
@@ -59,11 +90,11 @@ def test_ts_types_name_every_contract_field():
     walk(AnalysisResponse)
 
 
-def test_analysis_endpoint_requires_crop(client):
-    # pełne /api/analysis (A4) – scenariusze z mockami źródeł w test_analysis.py; tu bez sieci
-    r = client.get("/api/analysis", params={"parcel_id": "143203_2.0027.112/11"})
-    assert r.status_code == 422
-    assert "Wybierz uprawę" in r.json()["detail"]["message"]
+def test_analysis_crop_is_optional(client):
+    # A5b-1: bez uprawy – „Stan działki” (scenariusze z mockami źródeł w test_a5b.py); tu bez sieci – tylko OpenAPI
+    params = client.get("/openapi.json").json()["paths"]["/api/analysis"]["get"]["parameters"]
+    crop = next(p for p in params if p["name"] == "crop")
+    assert crop["required"] is False
 
 
 def test_analysis_rejects_unknown_crop(client):
@@ -90,3 +121,20 @@ def test_openapi_exposes_contract(client):
     schemas = client.get("/openapi.json").json()["components"]["schemas"]
     for name in ("AnalysisResponse", "Indicators", "Recommendation", "Reliability", "Parcel", "Forecast"):
         assert name in schemas
+
+
+SAMPLE_WEAK_VERDICT = SAMPLE.with_name("verdict.weak.sample.json")
+
+
+@pytest.mark.skipif(not SAMPLE_WEAK_VERDICT.exists(), reason="brak katalogu frontend/ obok backend/")
+def test_verdict_samples_match_contract():
+    """A5b-2b: werdykt dobrej (201305, w analysis.sample.json) i słabej działki (piasek, obszar przybliżony)."""
+    from app.schemas.analysis import ApproximateArea, Verdict
+
+    good = AnalysisResponse.model_validate(json.loads(SAMPLE.read_text(encoding="utf-8"))).verdict
+    assert good is not None and good.level in ("ok", "warn") and not good.crops_bad
+    weak = json.loads(SAMPLE_WEAK_VERDICT.read_text(encoding="utf-8"))
+    v = Verdict.model_validate(weak["verdict"])
+    ApproximateArea.model_validate(weak["approximate_area"])
+    assert v.level == "bad" and {"pszenica_ozima", "rzepak"} <= {c.crop_id for c in v.crops_bad}
+    assert "zyto" in {c.crop_id for c in v.crops_good}

@@ -40,14 +40,18 @@ pdf_router = APIRouter(prefix="/api", tags=["raporty"])
                            404: {"description": "Nie znaleziono działki"}, 422: {"description": "Brak uprawy / zła data"},
                            502: {"description": "Brak działki lub pogody"}})
 async def get_report_pdf_now(
-    parcel_id: str = Query(description="Pełny identyfikator działki ULDK"),
+    parcel_id: str | None = Query(None, description="Pełny identyfikator działki ULDK"),
+    lon: float | None = Query(None, description="Punkt na mapie – zamiast parcel_id (obszar przybliżony, gdy brak działki)"),
+    lat: float | None = Query(None, description="Punkt na mapie – zamiast parcel_id"),
     crop: str | None = Query(None, description="Uprawa (15 upraw IUNG SMSR)"),
     date: dt.date | None = Query(None, description="Data analizy (domyślnie dziś)"),
     previous_crop: str | None = Query(None, description="Uprawa w poprzednim roku albo 'nie_wiem'"),
+    crop_history: str | None = Query(None, description="Historia pola: 1–3 uprawy po przecinku (pierwsza = rok temu)"),
+    cultivated_area_ha: float | None = Query(None, description="Powierzchnia uprawy, ha"),
 ) -> Response:
     """Liczy analizę (jak GET /api/analysis) i zwraca „Paszport wodny działki” w PDF (A4, do druku)."""
     t0 = perf_counter()
-    a = await run_analysis(parcel_id, crop, date, previous_crop)
+    a = await run_analysis(parcel_id, crop, date, previous_crop, crop_history, cultivated_area_ha, lon, lat)
     pdf = await build_pdf(a)
     return Response(pdf, media_type="application/pdf", headers={
         "Content-Disposition": f'attachment; filename="{filename(a)}"',

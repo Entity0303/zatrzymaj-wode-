@@ -1,0 +1,26 @@
+{
+ "201305_2.0038.6/1": {
+  "lon": 22.60106,
+  "lat": 53.04997,
+  "opis": "podlaskie (demo: susza 2018 / mokry 2021)",
+  "zrodlo": "obrys z research/terrain/out (C1)"
+ },
+ "061704_2.0011.383/2": {
+  "lon": 22.85019,
+  "lat": 51.05008,
+  "opis": "lubelskie (demo: kukurydza)",
+  "zrodlo": "obrys z research/terrain/out (C1)"
+ },
+ "040703_5.0020.76": {
+  "lon": 18.34985,
+  "lat": 52.84825,
+  "opis": "kujawsko-pomorskie (C1)",
+  "zrodlo": "obrys z research/terrain/out (C1)"
+ },
+ "121601_5.0002.770": {
+  "lon": 20.93914,
+  "lat": 49.72948,
+  "opis": "małopolskie – stok (C1)",
+  "zrodlo": "obrys z research/terrain/out (C1)"
+ }
+}

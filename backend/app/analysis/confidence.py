@@ -30,6 +30,8 @@ PENALTY = {
     "satelita_brak": 15,
     "teren_brak": 10,
     "frakcje_brak": 5,  # brak SoilGrids – bez przepuszczalności i uziarnienia
+    "gleba_konflikt": 10,
+    "obszar_przyblizony": 15,  # brak granic działki z ULDK – kwadrat 1 ha wokół punktu (D69)  # źródła gleby różnią się (mapa glebowo-rolnicza / IUNG / SoilGrids, D49)
 }
 LEVELS: list[tuple[int, Confidence]] = [(75, "wysoka"), (50, "srednia"), (0, "ograniczona")]
 CONSTANT_LIMITATIONS = [
@@ -71,6 +73,12 @@ class ConfidenceInputs:
     soil_map_error: str | None = None
     soil_map_year: int | None = None
     stale: list[StaleHit] = field(default_factory=list)
+    soil_conflict: bool = False
+    approximate: bool = False
+    terrain_error: str | None = None  # A6: powód braku analizy terenu
+    terrain_saved: bool = False  # teren z zapisanego wyniku (NMT nie odpowiadał)
+    terrain_limitations: list[str] = field(default_factory=list)
+    soil_basis_label: str | None = None  # źródło kategorii gleby, gdy inne niż IUNG
 
 
 def premises(i: ConfidenceInputs) -> list[Premise]:
@@ -82,7 +90,8 @@ def premises(i: ConfidenceInputs) -> list[Premise]:
     if not i.satellite:
         add("satelita_brak", "brak zdjęć satelitarnych (kondycja roślin – w przygotowaniu)")
     if not i.terrain:
-        add("teren_brak", "brak analizy terenu (spadki, spływ – w przygotowaniu)")
+        add("teren_brak", "brak analizy terenu (NMT GUGiK nie odpowiada)" if i.terrain_error
+            else "brak analizy terenu (spadki, spływ)")
     if i.weather_name:
         if i.weather_fallback:
             add("pogoda_zapasowa", f"pogoda ze źródła zapasowego ({i.weather_name})")
@@ -98,10 +107,15 @@ def premises(i: ConfidenceInputs) -> list[Premise]:
         add("prognoza_brak", "brak prognozy pogody – ryzyko ze scenariusza typowej pogody")
     if i.forecast_ok is None and i.model and i.model.horizon_kind == "scenariusz":
         add("data_historyczna", "data historyczna – ryzyko na 7 dni ze scenariusza typowej pogody")
+    if i.approximate:
+        add("obszar_przyblizony", "obszar przybliżony – brak dokładnych granic działki")
+    if i.soil_conflict:
+        add("gleba_konflikt", "źródła gleby różnią się – sprawdź glebę na polu")
     if i.soilgrids == "brak":
         add("frakcje_brak", "brak frakcji gleby (SoilGrids)")
     if i.soil.method is None:
-        add("gleba_brak", "brak danych o glebie (IUNG)")
+        add("gleba_brak", "brak danych o glebie (IUNG)" + (f" – kategoria wg: {i.soil_basis_label.lower()}"
+                                                           if i.soil_basis_label else ""))
     else:
         if i.soil.method == "punkty":
             add("gleba_punkty", "gleba sprawdzona w punktach (metoda zapasowa)")
@@ -122,7 +136,12 @@ def level(points: int, capped: bool, stale: bool = False) -> Confidence:
 
 
 def stale_text(h: StaleHit) -> str:
-    local = h.stored_at.astimezone()
+    try:
+        from zoneinfo import ZoneInfo
+
+        local = h.stored_at.astimezone(ZoneInfo("Europe/Warsaw"))  # kontener działa w UTC
+    except Exception:  # noqa: BLE001
+        local = h.stored_at.astimezone()
     return f"{h.source}: dane z cache z dnia {local:%d.%m.%Y %H:%M} (źródło nie odpowiadało)"
 
 
@@ -169,7 +188,7 @@ def reliability(i: ConfidenceInputs) -> tuple[Reliability, list[Premise], int]:
         ))
     if i.soil_map is not None:
         sources.append(SourceStatus(
-            name="Mapa glebowo-rolnicza (GUGiK)", used_for="kompleks i gatunek gleby (informacyjnie)", data_date=None,
+            name="Mapa glebowo-rolnicza (GUGiK)", used_for="kompleks i gatunek gleby, zgodność z IUNG", data_date=None,
             resolution="1:5000", status="ok" if i.soil_map == "ok" else "brak",
             note=(f"mapa z ok. {i.soil_map_year} r." if i.soil_map_year else None) if i.soil_map == "ok" else
             (i.soil_map_error or "brak konturu w tym miejscu"),
@@ -182,8 +201,10 @@ def reliability(i: ConfidenceInputs) -> tuple[Reliability, list[Premise], int]:
     sources += [
         SourceStatus(name="Sentinel-2 L2A", used_for="kondycja i wilgotność roślin", data_date=None, resolution="10 m",
                      status="brak", note="w przygotowaniu"),
-        SourceStatus(name="NMT GUGiK", used_for="teren i spływ wody", data_date=None, resolution="1 m",
-                     status="brak", note="w przygotowaniu"),
+        SourceStatus(name="NMT GUGiK", used_for="teren i spływ wody", data_date=None, resolution="1 m (siatka 3–15 m)",
+                     status=("czesciowo" if i.terrain_saved else "ok") if i.terrain else "brak",
+                     note=("zapisany wynik analizy z 21.11.2026" if i.terrain_saved else None) if i.terrain
+                     else (i.terrain_error or "brak danych")),
         SourceStatus(name="BDOT10k", used_for="rowy, cieki i zbiorniki w okolicy", data_date=None,
                      status="brak", note="w przygotowaniu"),
     ]
@@ -191,6 +212,9 @@ def reliability(i: ConfidenceInputs) -> tuple[Reliability, list[Premise], int]:
     completeness = Completeness(available=sum(s.status != "brak" for s in core), total=len(core))
 
     lim = [stale_text(h) + "." for h in i.stale] + list(i.weather_notes)
+    if i.approximate:
+        lim.insert(0, "Obszar przybliżony – brak dokładnych granic działki: gleba i teren dla kwadratu 1 ha wokół punktu, "
+                      "województwo (plony GUS) przybliżone.")
     if i.weather_name and not i.weather_fallback:
         lim.insert(0, f"Pogoda uśredniona dla obszaru {i.weather_resolution} ({i.weather_name}).")
     if i.wb:
@@ -202,6 +226,10 @@ def reliability(i: ConfidenceInputs) -> tuple[Reliability, list[Premise], int]:
         lim.append("Brak zdjęć satelitarnych – kondycja i wilgotność roślin w przygotowaniu.")
     if not i.terrain:
         lim.append("Brak analizy terenu – spływ wody przyjęty w uproszczeniu (20% opadu powyżej 20 mm na dobę).")
+    else:
+        lim += i.terrain_limitations
+        lim.append("Teren nie zmienia modelu wody w glebie – spływ w bilansie nadal uproszczony (20% opadu powyżej "
+                   "20 mm na dobę); strefy terenu opisują, gdzie na działce jest sucho, a gdzie mokro.")
     for c in CONSTANT_LIMITATIONS:  # bez powtórzeń treści już zgłoszonej przez moduły (np. gleba)
         if not ("gleby mineralne" in c and any("gleby mineralne" in x for x in lim)):
             lim.append(c)

@@ -1,0 +1,139 @@
+{
+  "_opis": "A5b-2b: werdykt słabej działki (piasek kat. I, Puszcza Notecka, analiza po punkcie – obszar przybliżony). Przykład dla karty „Werdykt”.",
+  "verdict": {
+    "headline": "Słaba, sucha działka – siej rośliny odporne na suszę",
+    "level": "bad",
+    "statements": [
+      {
+        "kind": "gleba",
+        "level": "bad",
+        "text": "Ziemia słaba – piasek słabogliniasty, mało trzyma wody (ok. 106 mm wody dostępnej dla roślin).",
+        "numbers": {
+          "wod_mm": 106,
+          "grupa": "lekka",
+          "srednia_kategoria": 1.0,
+          "zrodlo": "mapa glebowo-rolnicza"
+        }
+      },
+      {
+        "kind": "opady",
+        "level": "bad",
+        "text": "Opady za niskie wiosną – w 7 z 10 lat w maju–czerwcu brakowało wody; średnio 633 mm opadów na rok (346 mm od kwietnia do września). Dla porównania: średnio w Polsce ok. 600 mm na rok.",
+        "numbers": {
+          "year_mm": 633,
+          "season_mm": 346,
+          "deficit_years": 7,
+          "years": 10,
+          "first": 2016,
+          "last": 2025,
+          "norma_mm": 600
+        }
+      },
+      {
+        "kind": "teren",
+        "level": "warn",
+        "text": "Brak danych o ukształtowaniu terenu – nie wiemy, gdzie na działce jest sucho, a gdzie mokro.",
+        "numbers": {}
+      },
+      {
+        "kind": "uprawy",
+        "level": "bad",
+        "text": "Tu nie siej pszenicy ozimej, rzepaku, jęczmienia jarego i jęczmienia ozimego – za mało wody na tej glebie. Najlepiej wypadają tu łubin i żyto, ale w suche lata i one tracą.",
+        "numbers": {
+          "polecane": 0,
+          "odradzane": 11,
+          "mozliwe": 3
+        }
+      },
+      {
+        "kind": "woda",
+        "level": "info",
+        "text": "Co zrobić z wodą: zatrzymaj wodę z jesienno-zimowych opadów i roztopów; zwiększaj próchnicę – lekka gleba trzyma mało wody.",
+        "numbers": {
+          "dzialania": 2
+        }
+      }
+    ],
+    "crops_good": [
+      {
+        "crop_id": "lubin",
+        "label": "Łubin",
+        "reason": null
+      },
+      {
+        "crop_id": "zyto",
+        "label": "Żyto",
+        "reason": null
+      }
+    ],
+    "crops_bad": [
+      {
+        "crop_id": "pszenica_ozima",
+        "label": "Pszenica ozima",
+        "reason": "za mało wody na tej glebie"
+      },
+      {
+        "crop_id": "rzepak",
+        "label": "Rzepak i rzepik",
+        "reason": "za mało wody na tej glebie"
+      },
+      {
+        "crop_id": "kukurydza_ziarno",
+        "label": "Kukurydza na ziarno",
+        "reason": "susza zbyt często zabiera ponad 20% plonu"
+      },
+      {
+        "crop_id": "jeczmien_jary",
+        "label": "Jęczmień jary",
+        "reason": "za mało wody na tej glebie"
+      },
+      {
+        "crop_id": "jeczmien_ozimy",
+        "label": "Jęczmień ozimy",
+        "reason": "za mało wody na tej glebie"
+      },
+      {
+        "crop_id": "pszenzyto_ozime",
+        "label": "Pszenżyto ozime",
+        "reason": "susza zbyt często zabiera ponad 20% plonu"
+      },
+      {
+        "crop_id": "burak_cukrowy",
+        "label": "Burak cukrowy",
+        "reason": "za mało wody na tej glebie"
+      },
+      {
+        "crop_id": "owies",
+        "label": "Owies",
+        "reason": "susza zbyt często zabiera ponad 20% plonu"
+      },
+      {
+        "crop_id": "kukurydza_kiszonka",
+        "label": "Kukurydza na kiszonkę",
+        "reason": "susza zbyt często zabiera ponad 20% plonu"
+      },
+      {
+        "crop_id": "straczkowe",
+        "label": "Rośliny strączkowe",
+        "reason": "susza zbyt często zabiera ponad 20% plonu"
+      },
+      {
+        "crop_id": "warzywa",
+        "label": "Warzywa gruntowe",
+        "reason": "za mało wody na tej glebie"
+      }
+    ],
+    "note": "Zdania policzone z danych tej działki (gleba, pogoda z 10 lat, teren, symulacja upraw) według stałych szablonów – bez modelu językowego; te same dane dają te same zdania."
+  },
+  "approximate_area": {
+    "center": [
+      16.26,
+      52.685
+    ],
+    "side_m": 100.0,
+    "area_ha": 1.0,
+    "reason": "ULDK GUGiK: usługa chwilowo ogranicza ruch (przekierowanie) – spróbuj za chwilę (ponowna próba za 49 s)",
+    "note": "Obszar przybliżony – brak dokładnych granic działki. Analiza dla kwadratu 1 ha wokół wskazanego punktu.",
+    "voivodeship_note": "Województwo przybliżone (najbliższy środek województwa): wielkopolskie."
+  }
+}

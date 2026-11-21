@@ -1,0 +1,371 @@
+{
+ "201305_2.0038.6/1": {
+  "stations": [
+   [
+    "BURZYN",
+    "opad",
+    27.24
+   ]
+  ],
+  "nearest_km": 27.24,
+  "stations_note": "stacje ≤ 30 km",
+  "fetch_s": {
+   "stations_note": "stacje ≤ 30 km",
+   "era5_land": "niedostępne: brak w cache, pobieranie wyłączone: era5land_201305_2.0038.6-1.json",
+   "nasa_power": null
+  },
+  "combine_s": 0.04,
+  "nasa_power_vs_imgw_rok_pct": 15.7,
+  "era5_land_vs_imgw_rok_pct": null,
+  "nasa_power_vs_imgw_IV-IX_pct": 21.6,
+  "era5_land_vs_imgw_IV-IX_pct": null,
+  "2018_IV-IX": {
+   "imgw_idw": 329.0,
+   "nasa_power": 396.0
+  },
+  "2021_IV-IX": {
+   "imgw_idw": 518.0,
+   "nasa_power": 548.0
+  },
+  "2018_rok": {
+   "imgw_idw": 532.0,
+   "nasa_power": 627.0
+  },
+  "2021_rok": {
+   "imgw_idw": 708.0,
+   "nasa_power": 774.0
+  },
+  "n_days_diff_ge_20mm": 18,
+  "corr_daily_IV-IX": {
+   "imgw~nasa": 0.59
+  },
+  "agreement_2018-06-10": {
+   "ostatnie_30_dni": {
+    "od": "2018-05-12",
+    "do": "2018-06-10",
+    "sumy_mm": {
+     "imgw_idw": 38.2,
+     "nasa_power": 41.5
+    },
+    "rozrzut": 0.083,
+    "ocena": "zgodne"
+   },
+   "sezon": {
+    "od": "2018-04-01",
+    "do": "2018-06-10",
+    "sumy_mm": {
+     "imgw_idw": 81.9,
+     "nasa_power": 104.1
+    },
+    "rozrzut": 0.239,
+    "ocena": "różnią się"
+   }
+  },
+  "agreement_2021-07-15": {
+   "ostatnie_30_dni": {
+    "od": "2021-06-16",
+    "do": "2021-07-15",
+    "sumy_mm": {
+     "imgw_idw": 181.0,
+     "nasa_power": 112.3
+    },
+    "rozrzut": 0.468,
+    "ocena": "mocno się różnią"
+   },
+   "sezon": {
+    "od": "2021-04-01",
+    "do": "2021-07-15",
+    "sumy_mm": {
+     "imgw_idw": 327.9,
+     "nasa_power": 285.6
+    },
+    "rozrzut": 0.138,
+    "ocena": "zgodne"
+   }
+  },
+  "sentence_2018-06-10": "Źródła różnią się: od 1 kwietnia od 82 do 104 mm – przyjmujemy pomiar ze stacji IMGW."
+ },
+ "061704_2.0011.383/2": {
+  "stations": [
+   [
+    "LUBLIN-RADAWIEC",
+    "synop",
+    36.89
+   ],
+   [
+    "ZAMOŚĆ",
+    "synop",
+    46.38
+   ]
+  ],
+  "nearest_km": 36.89,
+  "stations_note": "brak stacji ≤ 30 km – użyto stacji do 50 km (niższa pewność)",
+  "fetch_s": {
+   "stations_note": "brak stacji ≤ 30 km – użyto stacji do 50 km (niższa pewność)",
+   "era5_land": "niedostępne: brak w cache, pobieranie wyłączone: era5land_061704_2.0011.383-2.json",
+   "nasa_power": null
+  },
+  "combine_s": 0.07,
+  "nasa_power_vs_imgw_rok_pct": 17.8,
+  "era5_land_vs_imgw_rok_pct": null,
+  "nasa_power_vs_imgw_IV-IX_pct": 15.3,
+  "era5_land_vs_imgw_IV-IX_pct": null,
+  "2018_IV-IX": {
+   "imgw_idw": 297.0,
+   "nasa_power": 379.0
+  },
+  "2021_IV-IX": {
+   "imgw_idw": 494.0,
+   "nasa_power": 482.0
+  },
+  "2018_rok": {
+   "imgw_idw": 464.0,
+   "nasa_power": 602.0
+  },
+  "2021_rok": {
+   "imgw_idw": 634.0,
+   "nasa_power": 700.0
+  },
+  "n_days_diff_ge_20mm": 10,
+  "corr_daily_IV-IX": {
+   "imgw~nasa": 0.64
+  },
+  "agreement_2018-06-10": {
+   "ostatnie_30_dni": {
+    "od": "2018-05-12",
+    "do": "2018-06-10",
+    "sumy_mm": {
+     "imgw_idw": 46.4,
+     "nasa_power": 45.6
+    },
+    "rozrzut": 0.017,
+    "ocena": "zgodne"
+   },
+   "sezon": {
+    "od": "2018-04-01",
+    "do": "2018-06-10",
+    "sumy_mm": {
+     "imgw_idw": 86.9,
+     "nasa_power": 94.0
+    },
+    "rozrzut": 0.078,
+    "ocena": "zgodne"
+   }
+  },
+  "agreement_2021-07-15": {
+   "ostatnie_30_dni": {
+    "od": "2021-06-16",
+    "do": "2021-07-15",
+    "sumy_mm": {
+     "imgw_idw": 109.5,
+     "nasa_power": 72.4
+    },
+    "rozrzut": 0.408,
+    "ocena": "mocno się różnią"
+   },
+   "sezon": {
+    "od": "2021-04-01",
+    "do": "2021-07-15",
+    "sumy_mm": {
+     "imgw_idw": 244.5,
+     "nasa_power": 249.4
+    },
+    "rozrzut": 0.02,
+    "ocena": "zgodne"
+   }
+  },
+  "sentence_2018-06-10": "Stacje IMGW i modele pogody są zgodne: od 1 kwietnia spadło ok. 90 mm."
+ },
+ "040703_5.0020.76": {
+  "stations": [
+   [
+    "PAKOŚĆ",
+    "opad",
+    18.12
+   ],
+   [
+    "KOŁUDA WIELKA",
+    "klimat",
+    18.41
+   ],
+   [
+    "TORUŃ",
+    "synop",
+    27.11
+   ]
+  ],
+  "nearest_km": 18.12,
+  "stations_note": "stacje ≤ 30 km",
+  "fetch_s": {
+   "stations_note": "stacje ≤ 30 km",
+   "era5_land": "niedostępne: brak w cache, pobieranie wyłączone: era5land_040703_5.0020.76.json",
+   "nasa_power": null
+  },
+  "combine_s": 0.07,
+  "nasa_power_vs_imgw_rok_pct": 23.2,
+  "era5_land_vs_imgw_rok_pct": null,
+  "nasa_power_vs_imgw_IV-IX_pct": 16.5,
+  "era5_land_vs_imgw_IV-IX_pct": null,
+  "2018_IV-IX": {
+   "imgw_idw": 240.0,
+   "nasa_power": 265.0
+  },
+  "2021_IV-IX": {
+   "imgw_idw": 352.0,
+   "nasa_power": 454.0
+  },
+  "2018_rok": {
+   "imgw_idw": 405.0,
+   "nasa_power": 484.0
+  },
+  "2021_rok": {
+   "imgw_idw": 533.0,
+   "nasa_power": 699.0
+  },
+  "n_days_diff_ge_20mm": 8,
+  "corr_daily_IV-IX": {
+   "imgw~nasa": 0.68
+  },
+  "agreement_2018-06-10": {
+   "ostatnie_30_dni": {
+    "od": "2018-05-12",
+    "do": "2018-06-10",
+    "sumy_mm": {
+     "imgw_idw": 22.0,
+     "nasa_power": 37.7
+    },
+    "rozrzut": 0.526,
+    "ocena": "mocno się różnią"
+   },
+   "sezon": {
+    "od": "2018-04-01",
+    "do": "2018-06-10",
+    "sumy_mm": {
+     "imgw_idw": 51.1,
+     "nasa_power": 92.4
+    },
+    "rozrzut": 0.576,
+    "ocena": "mocno się różnią"
+   }
+  },
+  "agreement_2021-07-15": {
+   "ostatnie_30_dni": {
+    "od": "2021-06-16",
+    "do": "2021-07-15",
+    "sumy_mm": {
+     "imgw_idw": 63.3,
+     "nasa_power": 108.9
+    },
+    "rozrzut": 0.53,
+    "ocena": "mocno się różnią"
+   },
+   "sezon": {
+    "od": "2021-04-01",
+    "do": "2021-07-15",
+    "sumy_mm": {
+     "imgw_idw": 206.5,
+     "nasa_power": 278.9
+    },
+    "rozrzut": 0.299,
+    "ocena": "różnią się"
+   }
+  },
+  "sentence_2018-06-10": "Źródła mocno się różnią (51–92 mm od 1 kwietnia) – możliwe lokalne burze; sprawdź deszczomierz na polu."
+ },
+ "121601_5.0002.770": {
+  "stations": [
+   [
+    "JASTRZĘBIA",
+    "klimat",
+    7.03
+   ],
+   [
+    "GORLICE",
+    "opad",
+    18.61
+   ],
+   [
+    "NOWY SĄCZ",
+    "synop",
+    21.31
+   ]
+  ],
+  "nearest_km": 7.03,
+  "stations_note": "stacje ≤ 30 km",
+  "fetch_s": {
+   "stations_note": "stacje ≤ 30 km",
+   "era5_land": "niedostępne: brak w cache, pobieranie wyłączone: era5land_121601_5.0002.770.json",
+   "nasa_power": null
+  },
+  "combine_s": 0.07,
+  "nasa_power_vs_imgw_rok_pct": -3.1,
+  "era5_land_vs_imgw_rok_pct": null,
+  "nasa_power_vs_imgw_IV-IX_pct": -6.4,
+  "era5_land_vs_imgw_IV-IX_pct": null,
+  "2018_IV-IX": {
+   "imgw_idw": 443.0,
+   "nasa_power": 413.0
+  },
+  "2021_IV-IX": {
+   "imgw_idw": 704.0,
+   "nasa_power": 604.0
+  },
+  "2018_rok": {
+   "imgw_idw": 643.0,
+   "nasa_power": 647.0
+  },
+  "2021_rok": {
+   "imgw_idw": 956.0,
+   "nasa_power": 872.0
+  },
+  "n_days_diff_ge_20mm": 22,
+  "corr_daily_IV-IX": {
+   "imgw~nasa": 0.62
+  },
+  "agreement_2018-06-10": {
+   "ostatnie_30_dni": {
+    "od": "2018-05-12",
+    "do": "2018-06-10",
+    "sumy_mm": {
+     "imgw_idw": 64.5,
+     "nasa_power": 65.0
+    },
+    "rozrzut": 0.008,
+    "ocena": "zgodne"
+   },
+   "sezon": {
+    "od": "2018-04-01",
+    "do": "2018-06-10",
+    "sumy_mm": {
+     "imgw_idw": 105.7,
+     "nasa_power": 118.6
+    },
+    "rozrzut": 0.116,
+    "ocena": "zgodne"
+   }
+  },
+  "agreement_2021-07-15": {
+   "ostatnie_30_dni": {
+    "od": "2021-06-16",
+    "do": "2021-07-15",
+    "sumy_mm": {
+     "imgw_idw": 146.1,
+     "nasa_power": 102.2
+    },
+    "rozrzut": 0.354,
+    "ocena": "mocno się różnią"
+   },
+   "sezon": {
+    "od": "2021-04-01",
+    "do": "2021-07-15",
+    "sumy_mm": {
+     "imgw_idw": 346.1,
+     "nasa_power": 310.8
+    },
+    "rozrzut": 0.107,
+    "ocena": "zgodne"
+   }
+  },
+  "sentence_2018-06-10": "Stacje IMGW i modele pogody są zgodne: od 1 kwietnia spadło ok. 112 mm."
+ }
+}

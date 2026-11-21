@@ -15,8 +15,10 @@ Kalendarz dnia (`day_info`) obejmuje cały rok: przed siewem i po zbiorze – go
 spoczynek zimowy poza 1 IV–31 X. Korzenie rosną liniowo od startu do końca fazy rozwoju (D30).
 """
 
+import csv
 from dataclasses import dataclass, field
 from datetime import date
+from pathlib import Path
 
 ZE_M = 0.12  # warstwa parowania gołej gleby / korzenie po siewie (FAO-56 rozdz. 7: Ze 0,10–0,15 m)
 ZR_DORMANT_M = 0.30  # korzenie ozimin przed zimą (ZAŁOŻENIE, D30)
@@ -63,6 +65,23 @@ class Crop:
     kind: str  # "jara" | "ozima" | "jesienna" | "wieloletnia"
     source: str
     autumn_sowing: tuple[int, int] | None = None  # ozime: siew jesienny następnego sezonu
+    irrigation_practice: str = "optional"  # "not_practiced" | "optional" | "common" (D48)
+    # ── ranking „Co tu posiać?” i płodozmian (crops.csv, A5b-2a) ──
+    group_id: str = ""  # uprawa IUNG SMSR, której modelem wody liczymy gatunek
+    in_backend: bool = True  # jedna z 15 upraw kontraktu (CropId)
+    in_ranking: bool = False
+    ky_total: float = 1.0  # FAO-33: 1 − Ya/Ym = Ky · (1 − ETa/ETc)
+    ky_phases: dict = field(default_factory=dict, hash=False, compare=False)  # faza → Ky (gdy znane)
+    sensitivity: str = "srednia"  # wrażliwość na suszę: niska / srednia / wysoka
+    min_break_years: int = 0  # ile lat przerwy w uprawie po sobie
+    bad_previous: tuple[str, ...] = ()
+    good_previous: tuple[str, ...] = ()
+    soils_ok_iung: frozenset = frozenset()
+    soils_ok_complex: frozenset = frozenset()
+    soils_bad_iung: frozenset = frozenset()
+    soils_bad_complex: frozenset = frozenset()
+    estimated: tuple[str, ...] = ()  # parametry szacunkowe (np. Ky) – niższa pewność w rankingu
+    _info: dict = field(default_factory=dict, init=False, repr=False, hash=False, compare=False)
     phases: tuple[int, int, int, int] = field(init=False)
 
     def __post_init__(self) -> None:
@@ -122,6 +141,13 @@ class Crop:
         return d.year if d >= date(d.year, *self.start) else d.year - 1
 
     def day_info(self, d: date) -> DayInfo:
+        """Kalendarz dnia – z pamięcią (ranking liczy 17 upraw × 10 sezonów dzień po dniu)."""
+        hit = self._info.get(d)
+        if hit is None:
+            hit = self._info[d] = self._day_info(d)
+        return hit
+
+    def _day_info(self, d: date) -> DayInfo:
         y = d.year
         s, h = self.season(y)
         if s <= d <= h:
@@ -154,73 +180,102 @@ class Crop:
         return DayInfo("spoczynek_zimowy", KC_DORMANT, self.root_depth_m, False, False, y, None)
 
 
-# fmt: off
-CROPS: dict[str, Crop] = {c.id: c for c in [
-    # Pszenica ozima. Kc: tab. 12 „Wheat, Winter” (regeneracja wiosenna 0,7; mid 1,15; end 0,25–0,4 → 0,3).
-    # Proporcje faz: tab. 11 pszenica ozima 20/60/50/30. Zr: tab. 22 Wheat 1,5–1,8 → 1,5; p 0,55.
-    # Wegetacja od 1 III, zbiór ok. 20 VII, siew jesienny ok. 25 IX (D31).
-    Crop("zboza_ozime", "Zboża ozime", 0.70, 1.15, 0.30, (20, 60, 50, 30), 1.5, 0.55, (3, 1), (7, 20), "ozima",
-         "FAO-56 tab. 12, 11, 22 – pszenica ozima; kalendarz PL", autumn_sowing=(9, 25)),
-    # Zboża jare. Kc: tab. 12 „Wheat, Spring”/„Barley” 0,3 / 1,15 / 0,25. Faza: tab. 11 20/25/60/30.
-    # Zr: tab. 22 Barley 1,0–1,5 → 1,2; p 0,55. Siew ok. 8 IV (1–15 IV), zbiór ok. 5 VIII.
-    Crop("zboza_jare", "Zboża jare", 0.30, 1.15, 0.25, (20, 25, 60, 30), 1.2, 0.55, (4, 8), (8, 5), "jara",
-         "FAO-56 tab. 12, 11, 22 – zboża jare; kalendarz PL"),
-    # Kukurydza na ziarno. Kc: tab. 12 „Maize, Field (grain)” 0,3 / 1,20 / 0,35. Fazy: tab. 11 30/40/50/50.
-    # Zr: tab. 22 Maize 1,0–1,7 → 1,2; p 0,55. Siew ok. 1 V, zbiór ok. 10 X.
-    Crop("kukurydza_ziarno", "Kukurydza na ziarno", 0.30, 1.20, 0.35, (30, 40, 50, 50), 1.2, 0.55, (5, 1), (10, 10), "jara",
-         "FAO-56 tab. 12, 11, 22 – kukurydza na ziarno; kalendarz PL"),
-    # Kukurydza na kiszonkę. Kc_ini/mid jak ziarno; ZAŁOŻENIE Kc_end 0,50 i krótsza faza dojrzewania (30).
-    # Siew ok. 1 V, zbiór ok. 15 IX.
-    Crop("kukurydza_kiszonka", "Kukurydza na kiszonkę", 0.30, 1.20, 0.50, (30, 40, 50, 30), 1.2, 0.55, (5, 1), (9, 15), "jara",
-         "FAO-56 tab. 12, 11, 22 – kukurydza; Kc_end i faza dojrzewania – założenie"),
-    # Rzepak ozimy (wegetacja wiosenna). Kc: tab. 12 „Rapeseed, Canola” 0,35 / 1,0–1,15 → 1,10 / 0,35.
-    # Fazy: tab. 11 20/35/55/35. Zr: tab. 22 1,0–1,5 → 1,2; p 0,6. Od 1 III, zbiór ok. 15 VII, siew ok. 25 VIII.
-    Crop("rzepak", "Rzepak i rzepik", 0.35, 1.10, 0.35, (20, 35, 55, 35), 1.2, 0.60, (3, 1), (7, 15), "ozima",
-         "FAO-56 tab. 12, 11, 22 – rzepak ozimy; kalendarz PL", autumn_sowing=(8, 25)),
-    # Rzepak – okres jesienny (siew ok. 20 VIII do spoczynku ok. 30 XI). ZAŁOŻENIE: Kc_mid 0,80 (rozeta),
-    # Kc_end = Kc_mid, proporcje faz 25/45/32/1.
-    Crop("rzepak_jesien", "Rzepak i rzepik (jesień)", 0.35, 0.80, 0.80, (25, 45, 32, 1), 1.0, 0.60, (8, 20), (11, 30), "jesienna",
-         "FAO-56 tab. 12, 22 – rzepak; Kc_mid i fazy jesienne – założenie"),
-    # Ziemniak. Kc: tab. 12 „Potato” 0,5 / 1,15 / 0,75. Fazy: tab. 11 „Europe” 25/30/45/30.
-    # Zr: tab. 22 0,4–0,6 → 0,5; p 0,35. Sadzenie ok. 20 IV, zbiór ok. 15 IX.
-    Crop("ziemniak", "Ziemniak", 0.50, 1.15, 0.75, (25, 30, 45, 30), 0.5, 0.35, (4, 20), (9, 15), "jara",
-         "FAO-56 tab. 12, 11, 22 – ziemniak; kalendarz PL"),
-    # Burak cukrowy. Kc: tab. 12 0,35 / 1,20 / 0,70. Fazy: tab. 11 25/35/90/40. Zr: tab. 22 0,7–1,2 → 1,0; p 0,55.
-    # Siew ok. 1 IV, zbiór ok. 20 X.
-    Crop("burak_cukrowy", "Burak cukrowy", 0.35, 1.20, 0.70, (25, 35, 90, 40), 1.0, 0.55, (4, 1), (10, 20), "jara",
-         "FAO-56 tab. 12, 11, 22 – burak cukrowy; kalendarz PL"),
-    # Rośliny strączkowe. Kc: tab. 12 „Beans, dry” 0,4 / 1,15 / 0,35. Fazy: tab. 11 20/30/40/20.
-    # Zr: tab. 22 0,6–0,9 → 0,7; p 0,45. ZAŁOŻENIE: siew 15 IV, zbiór 10 VIII.
-    Crop("straczkowe", "Rośliny strączkowe", 0.40, 1.15, 0.35, (20, 30, 40, 20), 0.7, 0.45, (4, 15), (8, 10), "jara",
-         "FAO-56 tab. 12, 11, 22 – fasola na suche nasiona; terminy – założenie"),
-    # Warzywa gruntowe. Kc: tab. 12 „Small Vegetables” 0,7 / 1,05 / 0,95. ZAŁOŻENIE: fazy 20/30/50/20,
-    # Zr 0,5 m, p 0,4, start 20 IV, koniec 31 VIII.
-    Crop("warzywa", "Warzywa gruntowe", 0.70, 1.05, 0.95, (20, 30, 50, 20), 0.5, 0.40, (4, 20), (8, 31), "jara",
-         "FAO-56 tab. 12 (small vegetables), 22; fazy i terminy – założenie"),
-    # Drzewa owocowe. Kc: tab. 12 jabłoń/wiśnia/grusza bez okrywy 0,45 / 0,95 / 0,70. Fazy: tab. 11 20/70/90/30.
-    # Zr: tab. 22 1,0–2,0 → 1,5; p 0,5. Sezon 1 IV–31 X, poza nim spoczynek.
-    Crop("drzewa_owocowe", "Drzewa owocowe", 0.45, 0.95, 0.70, (20, 70, 90, 30), 1.5, 0.50, (4, 1), (10, 31), "wieloletnia",
-         "FAO-56 tab. 12, 11, 22 – jabłoń/wiśnia/grusza; sezon 1 IV–31 X"),
-    # Krzewy owocowe. Kc: tab. 12 „Berries (bushes)” 0,30 / 1,05 / 0,50. ZAŁOŻENIE fazy 20/50/110/34.
-    # Zr: tab. 22 0,6–1,2 → 0,8; p 0,5.
-    Crop("krzewy_owocowe", "Krzewy owocowe", 0.30, 1.05, 0.50, (20, 50, 110, 34), 0.8, 0.50, (4, 1), (10, 31), "wieloletnia",
-         "FAO-56 tab. 12, 22 – krzewy jagodowe; fazy – założenie"),
-    # Truskawki. Kc: tab. 12 0,40 / 0,85 / 0,75. ZAŁOŻENIE fazy 20/40/120/34. Zr: tab. 22 0,2–0,3 → 0,3; p 0,2.
-    Crop("truskawki", "Truskawki", 0.40, 0.85, 0.75, (20, 40, 120, 34), 0.3, 0.20, (4, 1), (10, 31), "wieloletnia",
-         "FAO-56 tab. 12, 22 – truskawka; fazy – założenie"),
-    # Chmiel. Kc: tab. 12 „Hops” 0,3 / 1,05 / 0,85. Fazy: tab. 11 25/40/80/10, dojrzewanie wydłużone (ZAŁOŻENIE).
-    # Zr: tab. 22 1,0–1,2 → 1,0; p 0,5.
-    Crop("chmiel", "Chmiel", 0.30, 1.05, 0.85, (25, 40, 80, 69), 1.0, 0.50, (4, 1), (10, 31), "wieloletnia",
-         "FAO-56 tab. 12, 11, 22 – chmiel; sezon 1 IV–31 X"),
-    # Tytoń. ZAŁOŻENIE: brak w tab. 12 i 22 – Kc 0,4 / 1,05 / 0,80, fazy 20/35/45/30, Zr 0,8 m, p 0,5,
-    # wysadzanie 15 V, zbiór 15 IX.
-    Crop("tyton", "Tytoń", 0.40, 1.05, 0.80, (20, 35, 45, 30), 0.8, 0.50, (5, 15), (9, 15), "jara",
-         "Założenie – tytoń nie występuje w tab. 12/22 FAO-56"),
-]}
-# fmt: on
+# ── Konfiguracja upraw: JEDNO ŹRÓDŁO PRAWDY = app/data/crops/crops.csv (A5b-2a, D60) ─────────
+# Plik osoby C (research/data/crops.csv, gałąź c/research) + dwie kolumny backendu: `root_depth_m` (jedna wartość
+# z zakresu FAO-56 tab. 22 używana w modelu) i `typ` (jara / ozima / jesienna / wieloletnia).
+# CROPS – 15 upraw IUNG SMSR (kontrakt CropId: wybór rolnika, analiza); ALL_CROPS – dodatkowo 7 gatunków do
+# rankingu „Co tu posiać?” (pszenica ozima, żyto, pszenżyto, jęczmienie, owies, łubin) liczonych modelem wody
+# swojej grupy (`group_id`) z własnymi terminami, Ky i wymaganiami glebowymi.
+CROPS_CSV = Path(__file__).parents[1] / "data" / "crops" / "crops.csv"
+_ROMAN = {"I": 1, "II": 2, "III": 3, "IV": 4}
+# Ky potwierdzone w tabeli FAO-33 (research/data/README.md); pozostałe – szacunek (niższa pewność w rankingu)
+KY_VERIFIED = {"zboza_ozime", "pszenica_ozima", "kukurydza_ziarno", "ziemniak", "burak_cukrowy", "straczkowe"}
+
+
+def _md(text: str) -> tuple[int, int]:
+    m, d = text.split("-")
+    return int(m), int(d)
+
+
+def _ids(text: str) -> tuple[str, ...]:
+    return tuple(x.strip() for x in (text or "").split(";") if x.strip())
+
+
+def _soils(text: str) -> tuple[frozenset[int], frozenset[str]]:
+    """'iung:II,III;kompleksy:1,2' → ({2, 3}, {'1', '2'})."""
+    iung: set[int] = set()
+    komp: set[str] = set()
+    for part in (text or "").split(";"):
+        key, _, vals = part.partition(":")
+        items = [v.strip() for v in vals.split(",") if v.strip()]
+        if key.strip() == "iung":
+            iung |= {_ROMAN[v] for v in items}
+        elif key.strip() == "kompleksy":
+            komp |= set(items)
+    return frozenset(iung), frozenset(komp)
+
+
+def _ky_phases(text: str) -> dict[str, float]:
+    names = {"ini": "poczatkowa", "dev": "rozwoj", "mid": "pelnia", "late": "dojrzewanie"}
+    out = {}
+    for part in (text or "").split(";"):
+        k, _, v = part.partition(":")
+        if k.strip() in names and v.strip():
+            out[names[k.strip()]] = float(v)
+    return out
+
+
+def _load(path: Path = CROPS_CSV) -> dict[str, Crop]:
+    out: dict[str, Crop] = {}
+    with open(path, encoding="utf-8", newline="") as fh:
+        for r in csv.DictReader(fh):
+            kind = r["typ"]
+            ok_i, ok_k = _soils(r["gleby_odpowiednie"])
+            bad_i, bad_k = _soils(r["gleby_nieodpowiednie"])
+            out[r["crop_id"]] = Crop(
+                id=r["crop_id"], label=r["name_pl"], kc_ini=float(r["kc_ini"]), kc_mid=float(r["kc_mid"]),
+                kc_end=float(r["kc_end"]),
+                base_phases=tuple(int(r[k]) for k in ("faza_ini_dni", "faza_dev_dni", "faza_mid_dni", "faza_late_dni")),
+                root_depth_m=float(r["root_depth_m"]), p=float(r["p_depletion"]), start=_md(r["start_wegetacji"]),
+                harvest=_md(r["typowy_zbior"]), kind=kind, source=r["zrodla"],
+                autumn_sowing=_md(r["typowy_siew"]) if kind == "ozima" else None,
+                irrigation_practice=r["irrigation_practice"], group_id=r["group_id"],
+                in_backend=bool(r["backend_id"]), in_ranking=r["in_ranking"] == "tak", ky_total=float(r["ky_total"]),
+                ky_phases=_ky_phases(r["ky_fazy"]), sensitivity=r["wrazliwosc_na_susze"],
+                min_break_years=int(r["min_przerwa_lat"]), bad_previous=_ids(r["zle_przedplony"]),
+                good_previous=_ids(r["dobre_przedplony"]), soils_ok_iung=ok_i, soils_ok_complex=ok_k,
+                soils_bad_iung=bad_i, soils_bad_complex=bad_k,
+                estimated=() if r["crop_id"] in KY_VERIFIED else ("Ky",),
+            )
+    return out
+
+
+ALL_CROPS: dict[str, Crop] = _load()
+CROPS: dict[str, Crop] = {k: c for k, c in ALL_CROPS.items() if c.in_backend}
+RANKING_CROPS: tuple[Crop, ...] = tuple(c for c in ALL_CROPS.values() if c.in_ranking)
+CEREAL_GROUPS = {"zboza_ozime", "zboza_jare"}
+
+# ── Praktyka nawadniania w Polsce (D48, D60) – kolumna `irrigation_practice` w crops.csv ────
+# not_practiced – w Polsce się nie nawadnia: zero o nawadnianiu, w zamian zatrzymanie wody w glebie;
+# optional – nawadnia się rzadko: bez dawek, najwyżej informacja o niedoborze wody w sezonie (D64);
+# common – nawadnianie to typowa praktyka: plan dawek.
+IRRIGATION_PRACTICE: dict[str, str] = {c.id: c.irrigation_practice for c in CROPS.values()}
+# dopełniacz do zdania „… w Polsce się nie nawadnia” (wymóg A5b-1)
+NOT_IRRIGATED_GENITIVE = {"zboza_ozime": "Zbóż", "zboza_jare": "Zbóż", "rzepak": "Rzepaku",
+                          "rzepak_jesien": "Rzepaku", "straczkowe": "Roślin strączkowych",
+                          "burak_cukrowy": "Buraków cukrowych"}
+
+
+def no_irrigation_sentence(crop: "Crop") -> str | None:
+    """„Zbóż w Polsce się nie nawadnia – liczy się zatrzymanie wody w glebie” (tylko not_practiced)."""
+    if crop.irrigation_practice != "not_practiced":
+        return None
+    who = NOT_IRRIGATED_GENITIVE.get(crop.id) or NOT_IRRIGATED_GENITIVE.get(crop.group_id, crop.label)
+    return f"{who} w Polsce się nie nawadnia – liczy się zatrzymanie wody w glebie"
 
 
 def get_crop(crop_id: str) -> Crop:
+    """Uprawa do analizy (15 upraw kontraktu); gatunki rankingu – przez ALL_CROPS."""
     try:
         return CROPS[crop_id]
     except KeyError as exc:

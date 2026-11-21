@@ -80,6 +80,7 @@ const HISTORY_MAX = 50
 
 /** Zapamiętuje wynik analizy (ta sama działka + uprawa + data = jeden wpis, najnowszy na górze). */
 export function rememberAnalysis(a: AnalysisResponse) {
+  if (!a.crop) return // A5b-1: analiza bez uprawy („Stan działki”) – historia na razie tylko z uprawą
   const rec: AnalysisRecord = {
     parcel_id: a.parcel.id,
     numer: a.parcel.numer,
@@ -103,3 +104,13 @@ export function rememberAnalysis(a: AnalysisResponse) {
 export const useHistory = () => useStored<AnalysisRecord[]>(HISTORY_KEY, [])
 
 export const SAVED_KEY = 'zw.saved-parcels.v1'
+
+// ── widok: co jest rozwinięte (mniej rzeczy naraz na ekranie) ─────────────────────────────────
+export type UiPrefs = { cards: boolean; legend: boolean; details: boolean; panel: boolean }
+export const UI_KEY = 'zw.ui.v1'
+export const DEFAULT_UI: UiPrefs = { cards: false, legend: false, details: false, panel: false }
+export const useUiPrefs = () => {
+  const [u, set] = useStored<UiPrefs>(UI_KEY, DEFAULT_UI)
+  const ui = { ...DEFAULT_UI, ...u }
+  return [ui, (patch: Partial<UiPrefs>) => set({ ...ui, ...patch })] as const
+}
