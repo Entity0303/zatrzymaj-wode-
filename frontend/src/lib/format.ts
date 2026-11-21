@@ -24,5 +24,8 @@ export const weekdayShort = (iso: string) =>
 export const formatDayMonth = (iso: string) =>
   new Date(`${iso}T12:00:00`).toLocaleDateString(locale(), { day: '2-digit', month: '2-digit' })
 
+/** Dzień i miesiąc słownie: „1 marca” (pl) / „1 March” (en). */
+export const formatDayLong = (iso: string) => new Date(`${iso}T12:00:00`).toLocaleDateString(locale(), { day: 'numeric', month: 'long' })
+
 /** Udział 0–1 jako procent: 0,4 -> „40%”. */
 export const formatShare = (v: number) => `${Math.round(v * 100)}%`

@@ -4,15 +4,25 @@ import type { AnalysisResponse } from '@/api/types'
 import { DashboardCard as Card } from '@/components/DashboardCard'
 import { NoDataNote as NoData } from '@/components/NoDataNote'
 import { SourceTag } from '@/components/SourceTag'
-import { formatSigned } from '@/lib/format'
+import { formatDayLong, formatNum, formatSigned } from '@/lib/format'
 import { useLang } from '@/lib/i18n'
 
 const W = 220
 const H = 56
 
+/** Ostatnia niepusta wartość serii. */
+function last<T>(arr: T[], get: (x: T) => number | null | undefined): number | null {
+  for (let i = arr.length - 1; i >= 0; i--) {
+    const v = get(arr[i])
+    if (v != null) return v
+  }
+  return null
+}
+
 /**
- * Bilans wody (SPEC 4.5): mała linia sezonu (niebieska) na tle pasma 10 lat i średniej,
- * podpis „X mm względem średniej”. Własny SVG – lekki, bez osi.
+ * Bilans wody (SPEC 4.5): podpisany, CZYJ to bilans („Działka 6/1”), ta sama liczba co w paszporcie –
+ * „od 1 marca: −192 mm (suchy sezon)” – i wyjaśnienie prostymi słowami („221 mm mniej wody niż średnio
+ * w ostatnich 10 latach”); mała linia sezonu na tle pasma 10 lat. Grunt nierolny – karty nie ma.
  */
 export function BalanceCard({ analysis }: { analysis: AnalysisResponse | null }) {
   const { t } = useLang()
@@ -49,8 +59,25 @@ export function BalanceCard({ analysis }: { analysis: AnalysisResponse | null })
       </Card>
     )
   const dev = h.balance_deviation_mm
+  const now = last(h.balance_cumulative, (p) => p.value)
+  const rank = h.balance_rank
+  const season =
+    rank && rank.of_years > 0
+      ? rank.lower_years <= Math.floor(rank.of_years * 0.3)
+        ? 'suchy sezon'
+        : rank.of_years - rank.lower_years <= Math.floor(rank.of_years * 0.3)
+          ? 'wilgotny sezon'
+          : 'zwykły sezon'
+      : null
+  const whose = analysis.parcel.source === 'approximate' ? t('Obszar przybliżony') : t('Działka {numer}', { numer: analysis.parcel.numer })
   return (
-    <Card icon={ChartNoAxesCombined} title="Bilans wody">
+    <Card icon={ChartNoAxesCombined} title="Bilans wody" aside={<span className="text-xs text-text-muted">{whose}</span>}>
+      {now != null && (
+        <p className="text-sm leading-5">
+          {t('od {d}:', { d: formatDayLong(h.season_start) })} <b className="tabular">{formatSigned(now, 0)} mm</b>
+          {season && <span className="text-text-muted"> ({t(season)})</span>}
+        </p>
+      )}
       <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="h-14 w-full" role="img" aria-label={t('Bilans wody w sezonie na tle 10 lat')}>
         {geom.area && <polygon points={geom.area} fill="var(--color-sage)" opacity=".35" />}
         {geom.zero != null && <line x1="0" x2={W} y1={geom.zero} y2={geom.zero} stroke="var(--color-text-muted)" strokeOpacity=".35" strokeWidth="1" vectorEffect="non-scaling-stroke" />}
@@ -59,10 +86,13 @@ export function BalanceCard({ analysis }: { analysis: AnalysisResponse | null })
       </svg>
       <p className="mt-auto flex flex-wrap items-center gap-x-1.5 text-sm leading-5">
         {dev != null ? (
-          <>
-            <b className={`tabular ${dev < 0 ? 'text-danger' : 'text-water'}`}>{formatSigned(dev, 0)} mm</b>{' '}
-            <span className="text-text-muted">{t('względem średniej z 10 lat')}</span>
-          </>
+          <span>
+            {Math.round(dev) === 0
+              ? t('Tyle wody, ile średnio w ostatnich 10 latach')
+              : t(dev < 0 ? '{n} mm mniej wody niż średnio w ostatnich 10 latach' : '{n} mm więcej wody niż średnio w ostatnich 10 latach', {
+                  n: formatNum(Math.abs(dev), 0),
+                })}
+          </span>
         ) : (
           <span className="text-text-muted">{t('Średnia z 10 lat: brak danych')}</span>
         )}

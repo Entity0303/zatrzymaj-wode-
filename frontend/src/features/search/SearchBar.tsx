@@ -1,5 +1,5 @@
 import { Loader2, MapPin, Search, SquareDashed, TriangleAlert, X } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { api } from '@/api/client'
 import type { Parcel, SearchResponse, SearchResult } from '@/api/types'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -24,8 +24,11 @@ export function SearchBar({
   onDismiss,
   selected,
   placeholder,
+  trailing,
   className,
 }: {
+  /** przycisk w prawej części pola (np. „Moja lokalizacja”) */
+  trailing?: ReactNode
   /** trwa wczytywanie działki (po wyborze) */
   loading: boolean
   error: string | null
@@ -173,7 +176,8 @@ export function SearchBar({
           autoComplete="off"
           placeholder={placeholder ?? t('Numer działki albo miejscowość, np. Szczytno 112/11 lub Tczów')}
           className={cn(
-            'h-12 w-full rounded-full border border-transparent bg-surface pr-12 pl-12 text-base shadow-float outline-none placeholder:text-sm placeholder:text-text-muted/80',
+            'h-12 w-full rounded-full border border-transparent bg-surface pl-12 text-base shadow-float outline-none placeholder:text-sm placeholder:text-text-muted/80',
+            trailing ? 'pr-[5.5rem]' : 'pr-12',
             'focus-visible:border-brand focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-brand',
             error && 'border-danger/60',
           )}
@@ -195,6 +199,7 @@ export function SearchBar({
               <X className="size-5" />
             </button>
           ) : null}
+          {trailing}
         </span>
       </form>
 

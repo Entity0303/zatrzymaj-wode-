@@ -24,6 +24,8 @@ export function WeatherWidget({
 }) {
   const { t } = useLang()
   const now = forecast?.teraz
+  // brak pogody – element znika (mniej komunikatów o błędach na ekranie)
+  if (!now && (error || !loading)) return null
   const label = now
     ? t('Pogoda teraz {where}: {temp}, {opis}. Źródło: Open-Meteo.', {
         where,
@@ -48,9 +50,7 @@ export function WeatherWidget({
               <Skeleton className="size-6 rounded-full bg-surface-2" />
               <Skeleton className="h-4 w-20 bg-surface-2" />
             </>
-          ) : error || !now ? (
-            <span className="text-sm text-text-muted">{t('Pogoda niedostępna')}</span>
-          ) : (
+          ) : !now ? null : (
             <>
               <WeatherIcon icon={now.ikona} night={!now.dzien} className="size-6" />
               <span className="tabular text-base font-semibold">

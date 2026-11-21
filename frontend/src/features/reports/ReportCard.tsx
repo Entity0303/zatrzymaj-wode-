@@ -38,7 +38,7 @@ export function ReportCard({ report, onRemove, onCopied }: { report: AnalysisRec
         <ScoreRing value={report.score} size={64} stroke={7} color={s.ring.color} track={s.ring.track} />
         <div className="min-w-0 flex-1 space-y-1">
           <StatusBadge status={report.level} size="sm" />
-          <h2 className="font-display text-xl leading-7 font-semibold">{t('Działka {numer}', { numer: report.numer })}</h2>
+          <h2 className="font-name text-xl leading-7 font-semibold">{t('Działka {numer}', { numer: report.numer })}</h2>
           <p className="text-sm leading-5 text-text-muted">
             {cropLabel(report.crop)} · {t('analiza na {date}', { date: formatDatePl(report.date) })}
             {report.historical && <> · {t('analiza historyczna')}</>}

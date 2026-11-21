@@ -22,7 +22,10 @@ export function VerdictCard({
   compact,
   limit,
   hideCrops,
+  bare,
 }: {
+  /** bez nagłówka i ramki – same zdania (nagłówek pokazuje RiskSummary nad zakładkami) */
+  bare?: boolean
   verdict: Verdict
   compact?: boolean
   /** ile zdań pokazać od razu (reszta pod „Pokaż wszystko”) */
@@ -40,14 +43,20 @@ export function VerdictCard({
   const good = verdict.crops_good ?? []
   const bad = verdict.crops_bad ?? []
   return (
-    <section aria-label={t('Werdykt działki')} className="overflow-hidden rounded-xl border" style={{ borderColor: head.color }}>
-      <header className="flex items-start gap-3 px-4 pt-4 pb-3" style={{ background: head.soft }}>
-        <HeadIcon className="mt-0.5 size-7 shrink-0" style={{ color: head.color }} aria-hidden />
-        <div className="min-w-0">
-          <p className="text-xs font-semibold tracking-wider text-text-muted uppercase">{t('Werdykt')}</p>
-          <h3 className="font-display text-xl leading-7 font-semibold">{t(verdict.headline)}</h3>
-        </div>
-      </header>
+    <section
+      aria-label={t('Werdykt działki')}
+      className={bare ? 'rounded-xl border bg-surface' : 'overflow-hidden rounded-xl border'}
+      style={bare ? undefined : { borderColor: head.color }}
+    >
+      {!bare && (
+        <header className="flex items-start gap-3 px-4 pt-4 pb-3" style={{ background: head.soft }}>
+          <HeadIcon className="mt-0.5 size-7 shrink-0" style={{ color: head.color }} aria-hidden />
+          <div className="min-w-0">
+            <p className="text-xs font-semibold tracking-wider text-text-muted uppercase">{t('Werdykt')}</p>
+            <h3 className="font-display text-xl leading-7 font-semibold">{t(verdict.headline)}</h3>
+          </div>
+        </header>
+      )}
 
       <ul className="space-y-2.5 px-4 py-3">
         {shown.map((s, i) => {
@@ -118,7 +127,7 @@ export function VerdictCard({
         </div>
       )}
 
-      {verdict.note && !compact && <p className="border-t px-4 py-2.5 text-xs leading-4 text-text-muted">{t(verdict.note)}</p>}
+      {verdict.note && !compact && !bare && <p className="border-t px-4 py-2.5 text-xs leading-4 text-text-muted">{t(verdict.note)}</p>}
     </section>
   )
 }

@@ -3,6 +3,8 @@ import type { Parcel } from '@/api/types'
 import { ErrorNotice } from '@/components/ErrorNotice'
 import { useLang } from '@/lib/i18n'
 import { FieldOverview, type RefineProps } from './FieldOverview'
+import { NonAgriculturalCard } from './NonAgriculturalCard'
+import { RiskSummary } from './RiskSummary'
 import { useParcelTitle } from './parcelTitle'
 import type { AnalysisRun } from './types'
 
@@ -70,10 +72,16 @@ export function ParcelSummary({
 
       {run.phase === 'error' && <ErrorNotice {...run.error} onRetry={run.error.retryable ? onRetryAnalysis : undefined} />}
 
-      {analysis && <FieldOverview analysis={analysis} refine={refine} />}
+      {analysis?.soil.non_agricultural && <NonAgriculturalCard soil={analysis.soil} onPickOther={onClose} />}
+      {analysis && !analysis.soil.non_agricultural && (
+        <>
+          <RiskSummary analysis={analysis} />
+          <FieldOverview analysis={analysis} refine={refine} />
+        </>
+      )}
 
       <div className="flex gap-2">
-        {analysis && onOpenPassport && (
+        {analysis && !analysis.soil.non_agricultural && onOpenPassport && (
           <button
             type="button"
             onClick={onOpenPassport}

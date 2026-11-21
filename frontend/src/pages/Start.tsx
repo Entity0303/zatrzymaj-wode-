@@ -1,7 +1,7 @@
 import type { Map as LeafletMap } from 'leaflet'
-import { Suspense, lazy, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, cloneElement, lazy, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { ChevronDown, ChevronUp, LayoutPanelTop } from 'lucide-react'
+import { ChevronUp } from 'lucide-react'
 import L from 'leaflet'
 import { ApiError, api, describeError } from '@/api/client'
 import type { CropId, Parcel, ParcelCandidates, SearchResult } from '@/api/types'
@@ -30,8 +30,8 @@ import { SearchBar } from '@/features/search/SearchBar'
 import { useForecast } from '@/features/weather/useForecast'
 import { WeatherWidget } from '@/features/weather/WeatherWidget'
 import { DateField } from '@/components/DateField'
-import { BottomCards } from '@/layout/BottomCards'
-import { BottomCardsStack } from '@/layout/BottomCardsStack'
+import { LayerMenu } from '@/features/map/LayerMenu'
+import { FarmDrawer } from '@/layout/FarmDrawer'
 import { BottomTabs } from '@/layout/BottomTabs'
 import { MobileSheet, snapHeights, type Snap } from '@/layout/MobileSheet'
 import { Sidebar } from '@/layout/Sidebar'
@@ -59,12 +59,6 @@ const SHEET_COLLAPSED = 156
 
 const SHEET_TOP = 116 // pod wyszukiwarką i pigułkami warstw
 
-// Komputer/tablet: dolny pasek kart i odstępy 16 px (SPEC 2.4, 4.5)
-const CARDS_H = 166
-
-
-// karty schowane: przycisk „Pogoda, gospodarstwo…” 44 px w lewym dolnym rogu
-const TOGGLE_H = 44
 
 const round1 = (v: number) => Math.round(v * 10) / 10
 
@@ -152,13 +146,11 @@ export default function Start() {
     return () => ro.disconnect()
   }, [])
 
-  // komputer/tablet: dolny pasek kart tylko na życzenie (mniej rzeczy naraz na ekranie)
-  const cardsShown = !isMobile && ui.cards
   // komputer: przy wybranej działce domyślnie mała karta podsumowania, pełny panel na życzenie
   const summaryOnly = !isMobile && !ui.panel && search.phase === 'parcel' && !passportOpen && !infra
-  const FLOAT_BOTTOM = cardsShown ? 16 + CARDS_H + 24 : 16 // dół panelu i legendy
-  const CONTROLS_BOTTOM = cardsShown ? FLOAT_BOTTOM + 28 : 16 + TOGGLE_H + 36 // kontrolki nad skalą mapy
-  const MAP_BOTTOM_DESKTOP = cardsShown ? 16 + CARDS_H + 2 : 16 + TOGGLE_H + 4 // skala i atrybucje
+  // „Moje gospodarstwo” pływa nad mapą (nie zajmuje pasa na dole) – panel sięga do dołu z marginesem 16 px
+  const FLOAT_BOTTOM = 16
+  const MAP_BOTTOM_DESKTOP = 0 // atrybucja w prawym dolnym rogu, pod kontrolkami
   const sheetVisible = snapHeights(areaH, SHEET_COLLAPSED, SHEET_TOP)[snap]
   const insets: MapInsets = isMobile
     ? { top: 120, right: 64, bottom: SHEET_COLLAPSED + 130, left: 8 }
@@ -561,6 +553,23 @@ export default function Start() {
     onClose: backToExplore,
   }
 
+  // warstwy bez danych z serwera (dziś 501) – wyszarzone w menu „wkrótce”
+  const layerMenu = (side: 'top' | 'bottom') => (
+    <LayerMenu
+      value={layer}
+      onChange={setLayer}
+      view={view}
+      onViewChange={(v) => {
+        setView(v)
+        // w 3D najciekawszy jest teren
+        if (v === '3d' && (layer === 'kondycja' || layer === 'wilgotnosc')) setLayer('teren')
+      }}
+      unavailable={['kondycja', 'wilgotnosc', 'gleba']}
+      canUse3d={!!parcel}
+      side={side}
+    />
+  )
+
   // przeglądanie mapy: dopóki nie wybrano działki – sama mapa (pola uprawne podświetlone) i mały pasek
   const intro = !parcel && !infra
 
@@ -702,22 +711,12 @@ export default function Start() {
             </Suspense>
           )}
           <TopBar
-            onBack={backToExplore}
             isMobile={isMobile}
-            search={searchBar}
+            search={cloneElement(searchBar, { trailing: <LocateButton locating={locating} onClick={locate} inField /> })}
             weather={weather()}
-            locating={locating}
-            onLocate={locate}
             asOf={asOf}
             onAsOfChange={setAsOf}
-            layer={layer}
-            onLayerChange={setLayer}
-            view={view}
-            onViewChange={(v) => {
-              setView(v)
-              // w 3D najciekawszy jest teren
-              if (v === '3d' && (layer === 'kondycja' || layer === 'wilgotnosc')) setLayer('teren')
-            }}
+            layerButton={isMobile ? layerMenu('bottom') : undefined}
           />
 
           {/* telefon: przy pełnej szufladzie napis zasłaniałby nagłówek działki */}
@@ -736,8 +735,7 @@ export default function Start() {
           {/* ── kontrolki mapy: komputer – lewy dolny róg; telefon – po prawej (SPEC 5.2, 12) ── */}
           {view === '2d' && (
           <MapControls
-            className={isMobile ? 'absolute top-[120px] right-3 z-[1000]' : 'absolute left-4 z-[1000]'}
-            style={isMobile ? undefined : { bottom: CONTROLS_BOTTOM }}
+            className={isMobile ? 'absolute top-[120px] right-3 z-[1000]' : 'absolute right-[372px] bottom-8 z-[1000] xl:right-[412px]'}
             onZoomIn={() => mapRef.current?.zoomIn()}
             onZoomOut={() => mapRef.current?.zoomOut()}
             onBackToParcel={backToParcel}
@@ -750,21 +748,46 @@ export default function Start() {
 
           {/* ── legenda aktywnej warstwy (SPEC 5.3) ── */}
           {/* telefon: tylko przy zwiniętej szufladzie – wyżej zasłaniałaby działkę na małym kawałku mapy */}
-          {(!isMobile || snap === 'collapsed') && (
+          {isMobile && snap === 'collapsed' && (
             <LegendCard
               title={legend.label}
               legend={legend.legend}
               status={legendStatus}
-              compact={isMobile}
-              collapsed={!isMobile && !ui.legend}
-              onToggle={isMobile ? undefined : () => setUi({ legend: !ui.legend })}
-              className={
-                isMobile
-                  ? 'absolute left-3 z-[1000] w-56'
-                  : 'absolute right-[372px] z-[1000] xl:right-[412px]'
-              }
-              style={{ bottom: isMobile ? sheetVisible + 32 : FLOAT_BOTTOM }}
+              compact
+              className="absolute left-3 z-[1000] w-56"
+              style={{ bottom: sheetVisible + 32 }}
             />
+          )}
+          {!isMobile && (
+            <div className="absolute bottom-4 left-4 z-[1300] flex flex-col items-start gap-2">
+              {!ui.cards && (
+                <LegendCard
+                  title={legend.label}
+                  legend={legend.legend}
+                  status={legendStatus}
+                  collapsed={!ui.legend}
+                  onToggle={() => setUi({ legend: !ui.legend })}
+                />
+              )}
+              <div className="relative flex items-center gap-2">
+                {layerMenu('top')}
+                <FarmDrawer
+                  open={ui.cards}
+                  onToggle={() => setUi({ cards: !ui.cards })}
+                  panelStyle={{ width: `min(960px, calc(100vw - ${(isDesktop ? 412 : 372) + 140}px))` }}
+                  saved={saved}
+                  analysis={analysis}
+                  asOf={asOf}
+                  onAsOfChange={setAsOf}
+                  forecast={forecast}
+                  forecastLoading={forecastState === 'loading'}
+                  forecastError={forecastState === 'error'}
+                  where={where}
+                  historical={historical}
+                  updated={updated}
+                />
+              </div>
+            </div>
           )}
 
           {/* ── prawy panel działki: 380 px komputer, 340 px tablet (SPEC 4.4, 12) ── */}
@@ -818,45 +841,6 @@ export default function Start() {
             </aside>
           )}
 
-          {/* ── dolny pasek 5 kart (SPEC 4.5) ── */}
-          {!isMobile && !cardsShown && (
-            <button
-              type="button"
-              onClick={() => setUi({ cards: true })}
-              aria-expanded={false}
-              className="absolute bottom-4 left-4 z-[1000] flex items-center gap-2 rounded-full bg-surface px-4 text-sm font-medium shadow-float hover:bg-sage-soft"
-              style={{ height: TOGGLE_H }}
-            >
-              <LayoutPanelTop className="size-4 text-brand" aria-hidden />
-              {t('Pogoda, gospodarstwo, oś czasu')}
-              <ChevronUp className="size-4 text-text-muted" aria-hidden />
-            </button>
-          )}
-          {cardsShown && (
-            <div className="absolute inset-x-4 bottom-4 z-[1000]" style={{ height: CARDS_H }}>
-              <button
-                type="button"
-                onClick={() => setUi({ cards: false })}
-                aria-expanded
-                className="absolute top-2 right-2 z-10 flex h-8 items-center gap-1 rounded-full bg-surface-2 px-2.5 text-sm font-medium hover:bg-sage-soft"
-              >
-                <ChevronDown className="size-4 text-text-muted" aria-hidden /> {t('Ukryj')}
-              </button>
-              <BottomCards
-                saved={saved}
-                analysis={analysis}
-                asOf={asOf}
-                onAsOfChange={setAsOf}
-                forecast={forecast}
-                forecastLoading={forecastState === 'loading'}
-                forecastError={forecastState === 'error'}
-                where={where}
-                historical={historical}
-                updated={updated}
-              />
-            </div>
-          )}
-
           {/* ── szuflada od dołu (telefon) ── */}
           {isMobile && (
             <MobileSheet
@@ -899,11 +883,14 @@ export default function Start() {
                   {weather(true)}
                 </div>
                 <ParcelPanel {...panelProps} hideHeader />
-                <BottomCardsStack
+                <FarmDrawer
+                  inline
+                  open={ui.cards}
+                  onToggle={() => setUi({ cards: !ui.cards })}
                   saved={saved}
-                analysis={analysis}
-                asOf={asOf}
-                onAsOfChange={setAsOf}
+                  analysis={analysis}
+                  asOf={asOf}
+                  onAsOfChange={setAsOf}
                   forecast={forecast}
                   forecastLoading={forecastState === 'loading'}
                   forecastError={forecastState === 'error'}

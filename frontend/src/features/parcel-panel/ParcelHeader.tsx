@@ -1,4 +1,4 @@
-import { Leaf, X } from 'lucide-react'
+import { Info, Leaf, X } from 'lucide-react'
 import type { Parcel } from '@/api/types'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { formatHa, shortCounty } from '@/lib/format'
@@ -29,15 +29,20 @@ export function ParcelHeader({
         <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-ok-soft text-brand">
           <Leaf className="size-5" aria-hidden />
         </span>
-        <h2 className="font-display min-w-0 flex-1 text-2xl leading-8 font-semibold break-words">{title}</h2>
+        <h2 className="font-name min-w-0 flex-1 text-2xl leading-8 font-semibold break-words">{title}</h2>
         <Tooltip>
           <TooltipTrigger asChild>
-            <span tabIndex={0} className="tabular shrink-0 text-base leading-6 font-medium text-text-muted">
+            <span tabIndex={0} className="tabular flex shrink-0 items-center gap-1 text-base leading-6 font-medium text-text-muted">
               {formatHa(parcel.powierzchnia_ha)} ha
+              {approx && <Info className="size-4 text-amber" aria-label={t('Obszar przybliżony')} />}
             </span>
           </TooltipTrigger>
           <TooltipContent>
-            {t(approx ? 'Kwadrat wokół wskazanego punktu – brak granic działki' : 'Pomiar – policzone z granic działki w ewidencji (ULDK GUGiK)')}
+            {t(
+              approx
+                ? 'Obszar przybliżony – brak dokładnych granic działki. Liczymy kwadrat wokół wskazanego punktu.'
+                : 'Pomiar – policzone z granic działki w ewidencji (ULDK GUGiK)',
+            )}
           </TooltipContent>
         </Tooltip>
         {onClose && (

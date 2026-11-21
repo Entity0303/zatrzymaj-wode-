@@ -10,7 +10,8 @@ import { WaveDivider } from '@/components/WaveDivider'
 import { formatDatePl } from '@/lib/format'
 import { irrigationPracticed, irrigationShown } from '@/lib/crops'
 import { AnalysisLoading } from './AnalysisLoading'
-import { ApproxBanner, FieldOverview, type RefineProps } from './FieldOverview'
+import { FieldOverview, type RefineProps } from './FieldOverview'
+import { RiskSummary } from './RiskSummary'
 import { CropSeasonCard } from './CropSeasonCard'
 import { IrrigationCard } from './IrrigationCard'
 import { KeyMetrics as Metrics } from './KeyMetrics'
@@ -157,14 +158,13 @@ export function ParcelPanel({
         <ErrorNotice {...run.error} onRetry={run.error.retryable ? onRetryAnalysis : undefined} />
       )}
       {/* SPEC 15.1: grunt nierolny – zamiast oceny suszy komunikat, bez wskaźników i zaleceń */}
-      {nonAgri && analysis && (
+      {nonAgri && analysis && <NonAgriculturalCard soil={analysis.soil} onPickOther={onClose} />}
+      {!nonAgri && analysis && (
         <>
-          {analysis.approximate_area && <ApproxBanner />}
-          <NonAgriculturalCard soil={analysis.soil} />
-          <SoilCard soil={analysis.soil} />
+          <RiskSummary analysis={analysis} />
+          <FieldOverview analysis={analysis} refine={refine} showNow={!crop} />
         </>
       )}
-      {!nonAgri && analysis && <FieldOverview analysis={analysis} refine={refine} showNow={!crop} />}
       {!nonAgri && analysis && crop && (
         <>
           <WaveDivider />
