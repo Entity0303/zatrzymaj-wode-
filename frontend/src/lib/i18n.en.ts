@@ -638,4 +638,16 @@ export const EN: Record<string, string> = {
   'Zgłoś stan rowu lub zbiornika w okolicy': 'Report a ditch or reservoir nearby',
   'Kliknij na mapie miejsce rowu lub zbiornika': 'Click the place of the ditch or reservoir on the map',
   'Anuluj': 'Cancel',
+  // przykłady jednym klikiem
+  'Zobacz przykład': 'See an example',
+  'Jeden klik – pełna analiza prawdziwej działki.': 'One click – a full analysis of a real parcel.',
+  'Susza 2018': 'Drought 2018',
+  'Wilgotniejszy 2021': 'Wetter 2021',
+  'Kukurydza dziś': 'Maize today',
+  'To nie jest pole': 'This is not a field',
+  'Zboża ozime w lipcu suchego roku – Podlasie': 'Winter cereals in July of a dry year – Podlasie',
+  'To samo pole trzy lata później – porównaj z 2018': 'The same field three years later – compare with 2018',
+  'Stan wody w glebie na dziś i co robić teraz': 'Soil water today and what to do now',
+  'Działka w większości leśna – aplikacja mówi to wprost': 'A mostly forested parcel – the app says so plainly',
+  'Albo znajdź swoją działkę': 'Or find your parcel',
 }
