@@ -123,9 +123,11 @@ def parse_response(payload: dict) -> Forecast:
         raise SourceError(SOURCE, "nieoczekiwany format odpowiedzi") from exc
 
 
-async def fetch(lon: float, lat: float, days: int = 16) -> Forecast:
+async def fetch(lon: float, lat: float, days: int = 16, past_days: int = 0) -> Forecast:
+    """Prognoza na `days` dni od dziś; `past_days` > 0 dokłada ostatnie dni z modelu (uzupełnienie
+    opóźnienia NASA POWER w modelu wody w glebie)."""
     # zaokrąglenie do ~1 km: lepsze trafienia w cache, a rozdzielczość modelu i tak jest większa
-    key = (round(lon, 2), round(lat, 2), days)
+    key = (round(lon, 2), round(lat, 2), days, past_days)
     hit = _cache.get(key)
     if hit is not None:
         return hit
@@ -138,6 +140,8 @@ async def fetch(lon: float, lat: float, days: int = 16) -> Forecast:
         "timezone": "Europe/Warsaw",
         "forecast_days": str(days),
     }
+    if past_days:
+        params["past_days"] = str(past_days)
     try:
         resp = await get_client().get(
             settings.open_meteo_forecast_url, params=params, timeout=httpx.Timeout(10.0)

@@ -4,6 +4,36 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-21 16:21 · `a/backend` · A3: uprawy i model wody w glebie FAO-56 (+ sekcja gleby w kontrakcie)
+**Co:**
+- Kontrakt (osobny commit 0f7b511): sekcja `soil` w `AnalysisResponse` (dominująca, udziały IUNG, WOD, klasy EGiB + powód braku, `non_agricultural` + powód + komunikat); `analysis/soil.to_contract()`.
+- `CLAUDE.md` (osobny commit ff22747): jedna długa gałąź na osobę, merge do `main` przy kamieniach milowych.
+- `analysis/crops.py`: 15 upraw – Kc ini/mid/end (FAO-56 tab. 12), fazy (tab. 11, dopasowane do PL), Zr i p (tab. 22), start sezonu PL; Kc wg faz (rys. 25), nazwy faz; założenia oznaczone w komentarzach (kiszonka, rzepak jesień, tytoń, terminy strączkowych/warzyw, fazy wieloletnich).
+- `analysis/water_balance.py`: model „wiadra” FAO-56 – TAW = WOD × min(Zr, 1 m), RAW = p·TAW; zapas na start z bilansu P − ET0 przed sezonem (1 XI, dla siewu letniego 1 VII); Ks (równ. 84), spływ 20% opadu > 20 mm, przesiąkanie; dni stresu w sezonie i w tych samych dniach 10 poprzednich lat; luka opóźnienia NASA uzupełniana Open-Meteo `past_days` (albo scenariuszem); horyzont 16 dni: prognoza (dziś) / mediana 10 lat (data historyczna); ryzyko niskie/średnie/wysokie (≤ 3 / 4–7 / > 7 dni); nawadnianie (dawka do pojemności polowej, co 5 mm, podpowiedź podziału > 40 mm); przed sezonem – brak, po sezonie – tylko podsumowanie; `to_contract_indicators()` → `soil_water_pct`, `soil_water_mm`, `risk_7d`, `stress_days_by_year`, rekomendacja „nawadnianie”. `history_range` od 1 XI (rok − 11).
+- `sources/weather_openmeteo.fetch(..., past_days=)`.
+- `routers/analysis.py`: TYMCZASOWY `GET /api/dev/water?parcel_id=&crop=&date=` (ULDK → pogoda, IUNG, KIEG, prognoza równolegle; grunt nierolny → bez modelu).
+- Testy: `tests/test_water_model.py` (25 + live); A1 – nowy początek zakresu danych.
+- Live (dev/water):
+
+| działka | uprawa | data | woda % | mm | dni stresu | ten rok vs śr. 10 lat | ryzyko 7 dni | nawadnianie | czas |
+|---|---|---|---|---|---|---|---|---|---|
+| 201305 | zboża ozime | 2018-07-15 | 36 | 60 | 52 | 52 vs 19,3 | wysokie (stres trwa) | 105 mm od razu | 2,0 s |
+| 201305 | zboża ozime | 2021-07-15 | 44 | 74 | 13 | 13 vs 24,1 | wysokie (stres trwa) | 95 mm od razu | 1,5 s |
+| 201305 | zboża ozime | 2026-11-21 | – | – | 70 | 70 vs 44,7 | po sezonie | – | 1,5 s |
+| 201305 | kukurydza | 2018-07-15 | 73 | 122 | 0 | 0 vs 0,6 | niskie (stres za ok. 15 dni) | niepotrzebne | 0,01 s |
+| 201305 | kukurydza | 2021-07-15 | 84 | 140 | 0 | 0 vs 0,6 | niskie | niepotrzebne | 0,01 s |
+| 201305 | kukurydza | 2026-11-21 | – | – | 79 | 79 vs 44,4 | po sezonie | – | 0,01 s |
+| 061704 | zboża ozime | 2018-07-15 | 31 | 63 | 48 | 48 vs 12,8 | wysokie (stres trwa) | 140 mm od razu | 5,5 s |
+| 061704 | zboża ozime | 2021-07-15 | 39 | 80 | 3 | 3 vs 17,6 | wysokie (stres trwa) | 125 mm od razu | 1,6 s |
+| 061704 | zboża ozime | 2026-11-21 | – | – | 75 | 75 vs 39,8 | po sezonie | – | 0,7 s |
+| 061704 | kukurydza | 2018-07-15 | 84 | 170 | 0 | 0 vs 0,0 | niskie | niepotrzebne | 0,01 s |
+| 061704 | kukurydza | 2021-07-15 | 75 | 152 | 0 | 0 vs 0,0 | niskie | niepotrzebne | 0,01 s |
+| 061704 | kukurydza | 2026-11-21 | – | – | 82 | 82 vs 49,7 | po sezonie | – | 0,01 s |
+
+  Ścieżka z prognozą (dziś, rzepak jesień – w sezonie): `horizon_kind = prognoza`, 2 dni luki NASA uzupełnione z Open-Meteo, 100% wody (jesień).
+**Pliki:** `backend/app/analysis/{crops,water_balance,soil}.py`, `backend/app/sources/weather_openmeteo.py`, `backend/app/routers/analysis.py`, `backend/tests/{test_water_model,test_weather_history}.py`; kontrakt: `backend/app/schemas/analysis.py`, `frontend/src/api/types.ts`, `frontend/src/mocks/analysis.sample.json`.
+**Kontrakt API:** TAK – sekcja `soil` (osobny commit, wpis w `contract-changes.md`).
+
 ## 2026-11-21 16:06 · `a/gleba` · A2: gleba IUNG + klasy EGiB (+ rozszerzenie kontraktu)
 **Co:**
 - Kontrakt (osobny commit 9838d55): `History` + `balance_deviation_mm`, `balance_rank {lower_years, of_years}`, `longest_dry_spell {days, end_date}`, `band_years`; `build_history` je wypełnia (commit 3597440).

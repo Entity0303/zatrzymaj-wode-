@@ -11,7 +11,15 @@ tylko informacyjnie (D4) – ich brak nie obniża pewności.
 
 from dataclasses import dataclass, field
 
-from app.schemas.analysis import Indicator, SourceStatus, SourceTag, StatusLevel
+from app.schemas.analysis import (
+    Indicator,
+    NonAgriculturalReason,
+    Soil,
+    SoilShareItem,
+    SourceStatus,
+    SourceTag,
+    StatusLevel,
+)
 from app.core.http import SourceError
 from app.sources import iung, kieg
 from app.sources.iung import CODES, MINERAL, SoilResult
@@ -20,6 +28,9 @@ from app.sources.iung import CODES, MINERAL, SoilResult
 CATEGORY_STATUS: dict[int, StatusLevel] = {1: "risk", 2: "warn", 3: "ok", 4: "ok"}
 CATEGORY_SHORT = {1: "Kat. I – bardzo podatna na suszę", 2: "Kat. II – podatna na suszę",
                   3: "Kat. III – średnio podatna na suszę", 4: "Kat. IV – mało podatna na suszę"}
+NON_AGRI_REASON: dict[int, NonAgriculturalReason] = {
+    5: "gleby_organiczne", 11: "las", 12: "woda", 13: "zabudowa", 14: "drogi",
+}
 NON_AGRI_TEXT = {
     5: "gleby organiczne (torfy, mursze) – kategorie podatności IUNG ich nie obejmują",
     11: "las lub zadrzewienie",
@@ -50,6 +61,8 @@ class SoilAssessment:
     land_use: list[str] | None = None
     not_agricultural: bool = False
     not_agricultural_reason: str | None = None
+    not_agricultural_code: int | None = None
+    classes_note: str | None = None
     sources: list[SourceStatus] = field(default_factory=list)  # kontrakt: reliability.sources
     limitations: list[str] = field(default_factory=list)  # kontrakt: reliability.limitations
     degrades_confidence: bool = False
@@ -144,6 +157,7 @@ def _from_iung(r: SoilResult) -> SoilAssessment:
         cells=r.total + r.nodata,
         not_agricultural=non_agri is not None,
         not_agricultural_reason=NON_AGRI_TEXT.get(non_agri) if non_agri is not None else None,
+        not_agricultural_code=non_agri,
         sources=[
             SourceStatus(
                 name=iung.SOURCE_SHORT,
@@ -166,8 +180,10 @@ def _add_kieg(out: SoilAssessment, k: "kieg.KiegResult | SourceError | None") ->
         out.sources.append(SourceStatus(name="EGiB (KIEG)", used_for="klasy bonitacyjne (informacyjnie)",
                                         data_date=None, status="brak", note=k.message))
         out.limitations.append("Klasy bonitacyjne niedostępne (usługa KIEG nie odpowiada) – to tylko informacja dodatkowa.")
+        out.classes_note = "Usługa KIEG nie odpowiada – klasy bonitacyjne niedostępne."
         return
     out.classes, out.land_use = k.classes, k.land_use
+    out.classes_note = k.note
     out.sources.append(SourceStatus(
         name="EGiB (KIEG)", used_for="klasy bonitacyjne (informacyjnie)", data_date=k.published,
         status="ok" if k.available else "brak", note=k.note))
@@ -176,3 +192,21 @@ def _add_kieg(out: SoilAssessment, k: "kieg.KiegResult | SourceError | None") ->
         out.soil_capacity.note = (out.soil_capacity.note + "; " if out.soil_capacity.note else "") + f"klasy bonitacyjne EGiB: {cls}"
     else:
         out.limitations.append("Klasy bonitacyjne niedostępne w tym powiecie (EGiB) – to tylko informacja dodatkowa.")
+
+
+def to_contract(a: SoilAssessment) -> Soil:
+    """Sekcja `soil` kontraktu /api/analysis."""
+    reason = NON_AGRI_REASON.get(a.not_agricultural_code) if a.not_agricultural_code is not None else None
+    return Soil(
+        dominant_code=a.dominant_code,
+        dominant_label=a.dominant_label,
+        shares=[SoilShareItem(code=s.code, label=s.label, share=s.share) for s in a.shares],
+        agricultural_share=a.agricultural_share,
+        wod_mm=a.wod_mm,
+        classes=a.classes,
+        classes_note=None if a.classes else a.classes_note,
+        non_agricultural=a.not_agricultural,
+        non_agricultural_reason=reason,
+        non_agricultural_note=a.soil_capacity.note if a.not_agricultural else None,
+        source_tag=a.soil_capacity.source_tag if a.method else SourceTag(kind="brak_danych", source=iung.SOURCE_SHORT),
+    )
