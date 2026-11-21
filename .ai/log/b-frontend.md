@@ -4,6 +4,11 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-21 · `b/frontend` · B3: linki do analizy i raport PDF (uwagi mentora, część 1)
+**Co:** stan w adresie `?dzialka=&uprawa=&data=` (`lib/deepLink.ts`): otwarcie linku od razu wyszukuje działkę (przy kilku wynikach – lista, uprawa przypisana po wyborze) i liczy analizę; adres w pasku aktualizowany na bieżąco (`replaceState`, inne parametry np. `?dane=przykladowe` zostają); zła uprawa / data spoza 10 lat w linku są ignorowane. Przycisk „Kopiuj link do tej analizy” w panelu (gdy brak schowka – podpowiedź, by skopiować adres z paska). „Pobierz raport PDF” → `GET /api/report.pdf?parcel_id=&crop=&date=` (te same parametry co analiza; aktywny po gotowej analizie, także „Raport” w szufladzie telefonu); błędy po polsku z tym, co działa dalej (404/501 → „Raport PDF jest jeszcze w budowie”). `przedplon` – czekam na nazwę pola w kontrakcie, nie zgadujemy.
+**Pliki:** `frontend/src/lib/deepLink.ts`, `frontend/src/features/reports/useReportDownload.ts`, `frontend/src/api/client.ts` (`reportPdf`), `frontend/src/pages/Start.tsx`, `frontend/src/features/parcel-panel/{ParcelPanel,MobileSheetHeader}.tsx`, `frontend/src/lib/i18n.en.ts`.
+**Kontrakt API:** nie (`/api/report.pdf` zwraca plik; endpoint po stronie A – dziś 404).
+
 ## 2026-11-21 · `b/frontend` · B2: nowe pola kontraktu w panelu
 **Co:** panel działki pokazuje pola A3b i sekcję gleby: `CropSeasonCard` (faza, dzień sezonu, pasek start → zbiór, korzenie, wrażliwość), `SoilWaterCard` (zakres strefa korzeni / profil, opis, „tego dnia mniej wody było w N z 10 lat” z paskiem lat, podsumowanie zakończonego sezonu), `IrrigationCard` (status, dawka, pierwsza dawka, co ile dni, suma 7 dni – na końcu „Co zrobić?”), `SoilCard` (kategoria IUNG, WOD mm, udziały kategorii, klasy bonitacyjne / powód braku), `NonAgriculturalCard` („To nie jest grunt rolny” zamiast karty stanu; wtedy bez wskaźników i zaleceń). Kolory kodów IUNG w `theme/soil.ts` (wspólne z legendą). ~48 tekstów EN. Weryfikacja: `npm run build`, `oxlint`; w przeglądarce nie sprawdzane.
 **Pliki:** `frontend/src/features/parcel-panel/{CropSeasonCard,SoilWaterCard,IrrigationCard,SoilCard,NonAgriculturalCard,ParcelPanel}.tsx`, `frontend/src/theme/soil.ts`, `frontend/src/features/map/layers/Soil.tsx`, `frontend/src/lib/{format,i18n.en}.ts`.

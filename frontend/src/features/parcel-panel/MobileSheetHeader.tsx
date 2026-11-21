@@ -1,4 +1,4 @@
-import { FileDown, Leaf } from 'lucide-react'
+import { FileDown, Leaf, Loader2 } from 'lucide-react'
 import type { Parcel, StatusLevel } from '@/api/types'
 import { StatusBadge } from '@/components/StatusBadge'
 import { formatHa, shortCounty } from '@/lib/format'
@@ -14,8 +14,13 @@ export function MobileSheetHeader({
   onToggleSave,
   onCopied,
   status = 'no_data',
+  onReport,
+  reportBusy,
 }: {
   status?: StatusLevel
+  /** pobranie raportu PDF; brak = analiza jeszcze niegotowa */
+  onReport?: () => void
+  reportBusy?: boolean
   search: SearchPhase
   parcel: Parcel | null
   saved: boolean
@@ -44,11 +49,12 @@ export function MobileSheetHeader({
           <ParcelActions parcel={parcel} saved={saved} onToggleSave={onToggleSave} onCopied={onCopied} />
           <button
             type="button"
-            disabled
-            title={t('Raport PDF – w budowie')}
-            className="ml-1 flex h-11 items-center gap-1.5 rounded-md bg-brand-dark px-3 text-sm font-semibold text-white opacity-60"
+            disabled={!onReport || reportBusy}
+            onClick={onReport}
+            title={onReport ? t('Pobierz raport PDF') : t('Raport powstaje z gotowej analizy')}
+            className="ml-1 flex h-11 items-center gap-1.5 rounded-md bg-brand-dark px-3 text-sm font-semibold text-white disabled:opacity-60"
           >
-            <FileDown className="size-4" aria-hidden /> {t('Raport')}
+            {reportBusy ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <FileDown className="size-4" aria-hidden />} {t('Raport')}
           </button>
         </div>
       </div>

@@ -1,4 +1,5 @@
-import { FileDown } from 'lucide-react'
+import { FileDown, Link2, Loader2 } from 'lucide-react'
+import type { ErrorInfo } from '@/api/client'
 import type { CropId } from '@/api/types'
 import { EmptyState } from '@/components/EmptyState'
 import { ErrorNotice } from '@/components/ErrorNotice'
@@ -40,6 +41,8 @@ export function ParcelPanel({
   onFocusSearch,
   onLocate,
   hideHeader,
+  report,
+  onCopyLink,
 }: {
   state: SearchPhase
   crop: CropId | null
@@ -57,6 +60,10 @@ export function ParcelPanel({
   onLocate: () => void
   /** na telefonie nagłówek jest w zwiniętej części szuflady */
   hideHeader?: boolean
+  /** pobieranie raportu PDF (useReportDownload) */
+  report?: { download: () => void; busy: boolean; error: ErrorInfo | null }
+  /** kopiuje link z działką, uprawą i datą */
+  onCopyLink?: () => void
 }) {
   const { t } = useLang()
   if (state.phase === 'idle') return <PanelEmpty onFocusSearch={onFocusSearch} onLocate={onLocate} />
@@ -168,19 +175,36 @@ export function ParcelPanel({
         </section>
       )}
       <div className="space-y-2">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span tabIndex={0} className="block">
-              <Button
-                disabled
-                className="pointer-events-none h-12 w-full rounded-md bg-brand-dark text-base font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
-              >
-                <FileDown className="size-5" /> {t('Pobierz raport')}
-              </Button>
-            </span>
-          </TooltipTrigger>
-          <TooltipContent>{t('Raport PDF – w budowie (najpierw analiza)')}</TooltipContent>
-        </Tooltip>
+        {report?.error && <ErrorNotice {...report.error} onRetry={report.error.retryable ? report.download : undefined} />}
+        {analysis && report ? (
+          <Button
+            onClick={report.download}
+            disabled={report.busy}
+            className="h-12 w-full rounded-md bg-brand-dark text-base font-semibold text-white hover:bg-brand"
+          >
+            {report.busy ? <Loader2 className="size-5 animate-spin" /> : <FileDown className="size-5" />}
+            {t(report.busy ? 'Przygotowuję raport…' : 'Pobierz raport PDF')}
+          </Button>
+        ) : (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span tabIndex={0} className="block">
+                <Button
+                  disabled
+                  className="pointer-events-none h-12 w-full rounded-md bg-brand-dark text-base font-semibold text-white disabled:opacity-60"
+                >
+                  <FileDown className="size-5" /> {t('Pobierz raport PDF')}
+                </Button>
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>{t(crop ? 'Raport powstaje z gotowej analizy' : 'Najpierw wybierz uprawę – raport powstaje z analizy')}</TooltipContent>
+          </Tooltip>
+        )}
+        {onCopyLink && (
+          <Button variant="outline" onClick={onCopyLink} className="h-11 w-full rounded-md bg-surface text-base font-medium">
+            <Link2 className="size-5 text-brand" /> {t('Kopiuj link do tej analizy')}
+          </Button>
+        )}
         <p className="text-center">
           <span className="text-sm text-text-muted" aria-disabled>
             {t('Zobacz pełny paszport wodny')} <span className="text-xs">({t('wkrótce')})</span>

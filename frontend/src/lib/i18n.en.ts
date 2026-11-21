@@ -440,4 +440,17 @@ export const EN: Record<string, string> = {
   '22,5 mm ok. 20.06, powtórz za ok. 5 dni (łącznie ok. 30 mm w 7 dni)': '22.5 mm around 20.06, repeat in about 5 days (about 30 mm in total over 7 days)',
   'Kategoria II – podatna na suszę': 'Category II – susceptible to drought',
   'Powiat nie udostępnia klas bonitacyjnych w usłudze KIEG.': 'The county does not publish land classes in the KIEG service.',
+  // raport PDF i link do analizy
+  'Pobierz raport PDF': 'Download PDF report',
+  'Przygotowuję raport…': 'Preparing report…',
+  'Raport powstaje z gotowej analizy': 'The report is made from a finished analysis',
+  'Najpierw wybierz uprawę – raport powstaje z analizy': 'Choose a crop first – the report is made from the analysis',
+  'Kopiuj link do tej analizy': 'Copy link to this analysis',
+  'Skopiowano link do tej analizy': 'Link to this analysis copied',
+  'Skopiuj adres z paska przeglądarki – to link do tej analizy': 'Copy the address from the browser bar – it links to this analysis',
+  'Raport PDF jest jeszcze w budowie': 'The PDF report is still under construction',
+  'Serwer nie generuje jeszcze raportu.': 'The server does not generate the report yet.',
+  'Wynik analizy na ekranie jest kompletny – możesz go też skopiować linkiem.': 'The analysis on screen is complete – you can also share it with a link.',
+  'Nie udało się pobrać raportu': 'Could not download the report',
+  'Spróbuj ponownie za chwilę.': 'Try again in a moment.',
 }

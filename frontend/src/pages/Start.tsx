@@ -1,5 +1,5 @@
 import type { Map as LeafletMap } from 'leaflet'
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { ApiError, api, describeError } from '@/api/client'
 import type { CropId, Parcel, ParcelCandidates } from '@/api/types'
 import { OfflineBanner } from '@/components/OfflineBanner'
@@ -24,6 +24,8 @@ import { MobileSheet, snapHeights, type Snap } from '@/layout/MobileSheet'
 import { Sidebar } from '@/layout/Sidebar'
 import { TopBar } from '@/layout/TopBar'
 import { todayIso } from '@/lib/dates'
+import { readLink, shareLink, writeLink } from '@/lib/deepLink'
+import { useReportDownload } from '@/features/reports/useReportDownload'
 import { useMediaQuery, useOnline, usePrefersReducedMotion, useSavedParcels } from '@/lib/hooks'
 import { mockRequested } from '@/mocks/useMockAnalysis'
 import { locale, useLang } from '@/lib/i18n'
@@ -61,7 +63,9 @@ export default function Start() {
   const [search, setSearch] = useState<SearchPhase>({ phase: 'idle' })
   const [candidates, setCandidates] = useState<Parcel[]>([])
   const [crops, setCrops] = useState<Record<string, CropId>>({})
-  const [asOf, setAsOf] = useState(todayIso())
+  // link z adresu (?dzialka=&uprawa=&data=) – czytany raz przy wejściu
+  const [link] = useState(readLink)
+  const [asOf, setAsOf] = useState(link.data ?? todayIso())
   const [layer, setLayer] = useState<LayerKey>('kondycja')
   const [baseMap, setBaseMap] = useState<BaseMap>('orto')
   const [pendingPoint, setPendingPoint] = useState<[number, number] | null>(null)
@@ -76,6 +80,8 @@ export default function Start() {
   const mapRef = useRef<LeafletMap>(null)
   const mainRef = useRef<HTMLElement>(null)
   const reqId = useRef(0)
+  // uprawa z linku – przypisywana do działki, gdy wyszukiwanie ją znajdzie
+  const pendingCrop = useRef(link.uprawa)
   const lastRequest = useRef<{ fn: () => Promise<Parcel>; kind: 'number' | 'point' } | null>(null)
 
   const parcel = search.phase === 'parcel' ? search.parcel : null
@@ -111,6 +117,7 @@ export default function Start() {
     try {
       const p = await fn()
       if (id !== reqId.current) return
+      applyPendingCrop(p)
       setSearch({ phase: 'parcel', parcel: p })
       if (isMobile) setSnap('collapsed')
     } catch (e) {
@@ -139,8 +146,16 @@ export default function Start() {
     if (lastRequest.current) find(lastRequest.current.fn, lastRequest.current.kind)
   }
 
+  function applyPendingCrop(p: Parcel) {
+    const c = pendingCrop.current
+    if (!c) return
+    pendingCrop.current = null
+    setCrops((m) => ({ ...m, [p.id]: c }))
+  }
+
   function pickCandidate(p: Parcel) {
     reqId.current++
+    applyPendingCrop(p)
     setCandidates([])
     setSearch({ phase: 'parcel', parcel: p })
     if (isMobile) setSnap('collapsed')
@@ -204,6 +219,41 @@ export default function Start() {
     document.querySelector<HTMLInputElement>('input[data-parcel-search]')?.focus()
   }
 
+  // ── link: otwarcie adresu z ?dzialka= od razu wyszukuje działkę (i liczy analizę, gdy jest uprawa) ──
+  const linkStarted = useRef(false)
+  useEffect(() => {
+    if (linkStarted.current || !link.dzialka) return
+    linkStarted.current = true
+    searchByNumber(link.dzialka)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- tylko raz, przy wejściu
+  }, [])
+
+  // adres w pasku = bieżąca działka, uprawa i data (można go skopiować wprost z przeglądarki)
+  useEffect(() => {
+    if (parcel) writeLink({ dzialka: parcel.id, uprawa: crop, data: asOf })
+  }, [parcel, crop, asOf])
+
+  function copyLink() {
+    if (!parcel) return
+    const href = shareLink({ dzialka: parcel.id, uprawa: crop, data: asOf })
+    if (!navigator.clipboard) return showToast(t('Skopiuj adres z paska przeglądarki – to link do tej analizy'))
+    navigator.clipboard.writeText(href).then(
+      () => showToast(t('Skopiowano link do tej analizy')),
+      () => showToast(t('Skopiuj adres z paska przeglądarki – to link do tej analizy')),
+    )
+  }
+
+  // ── raport PDF: te same parametry co analiza ─────────────────────────────────────────────
+  const report = useReportDownload(
+    parcel && crop && analysis ? { parcelId: parcel.id, numer: parcel.numer, crop, date: asOf } : null,
+  )
+  const clearReportError = report.clearError
+  useEffect(() => clearReportError(), [parcel?.id, crop, asOf, clearReportError])
+  // telefon: błąd raportu ma być widoczny – szuflada do połowy
+  useEffect(() => {
+    if (report.error && isMobile) setSnap('half')
+  }, [report.error, isMobile])
+
   // ── pogoda (Open-Meteo): środek działki albo środek mapy ─────────────────────────────────
   const weatherTarget = useMemo<[number, number]>(() => {
     if (parcel) {
@@ -228,9 +278,9 @@ export default function Start() {
     ? new Date(forecast.teraz.czas).toLocaleString(locale(), { dateStyle: 'short', timeStyle: 'short' })
     : null
 
-  function showToast(t: string) {
-    setToast(t)
-    setTimeout(() => setToast(null), 2000)
+  function showToast(text: string) {
+    setToast(text)
+    setTimeout(() => setToast(null), 2500)
   }
 
   const legend = layerByKey(layer)
@@ -252,6 +302,8 @@ export default function Start() {
     onRetry: retry,
     onFocusSearch: focusSearch,
     onLocate: locate,
+    report,
+    onCopyLink: parcel ? copyLink : undefined,
   }
 
   const searchBar = (
@@ -404,6 +456,8 @@ export default function Start() {
                   onToggleSave={panelProps.onToggleSave}
                   onCopied={panelProps.onCopied}
                   status={analysis?.status.level ?? 'no_data'}
+                  onReport={analysis ? report.download : undefined}
+                  reportBusy={report.busy}
                 />
               }
             >

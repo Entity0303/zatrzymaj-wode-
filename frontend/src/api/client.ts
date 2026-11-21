@@ -34,6 +34,21 @@ export const api = {
   /** GET /api/analysis – backend zwraca na razie 501 „w budowie” (kontrakt: types.ts AnalysisResponse) */
   analysis: (parcelId: string, crop: CropId, date: string, signal?: AbortSignal) =>
     get<AnalysisResponse>('/api/analysis', { parcel_id: parcelId, crop, date }, signal),
+  /** GET /api/report.pdf – te same parametry co analiza; odpowiedź to plik PDF */
+  reportPdf: async (parcelId: string, crop: CropId, date: string): Promise<Blob> => {
+    const params: Record<string, string> = { parcel_id: parcelId, crop, date }
+    let res: Response
+    try {
+      res = await fetch(`/api/report.pdf?${new URLSearchParams(params)}`)
+    } catch {
+      throw new ApiError(0, null, 'Brak połączenia z serwerem aplikacji.')
+    }
+    if (!res.ok) {
+      const body = await res.json().catch(() => null)
+      throw new ApiError(res.status, body?.detail ?? body)
+    }
+    return res.blob()
+  },
 }
 
 /** Teksty po polsku (klucze tłumaczeń) – tłumaczy je ErrorNotice; {zmienne} w `vars`. */
