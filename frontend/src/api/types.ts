@@ -100,6 +100,10 @@ export type AnalysisRequest = {
   previous_crop?: string | null
   crop_history?: string | null
   cultivated_area_ha?: number | null
+  /** A5e: co planujesz posiać – 1–3 uprawy z rankingu (RankingCropId) */
+  planned_crops?: string[] | null
+  /** A5e: tylko POST /api/report.pdf – 'short' (domyślnie, 4–5 stron) | 'full' */
+  report_type?: 'short' | 'full' | null
 }
 
 /** `detail` przy HTTP 409 */
@@ -446,7 +450,10 @@ export type History = {
   balance_band: BandPoint[]
   stress_days_by_year: YearStress[]
   monthly_precip: MonthlyPrecip[]
+  /** A5e: proste zdanie, np. „Ten rok jest suchszy niż zwykle – suszej było tylko w 2 z ostatnich 10 lat.” */
   summary?: string | null
+  /** A5e: szczegóły liczbowe („Od 1 marca do …: spadło minus wyparowało = −228 mm; …”) */
+  details?: string | null
   /** bieżący bilans − średnia z lat porównawczych, mm */
   balance_deviation_mm?: number | null
   balance_rank?: BalanceRank | null
@@ -682,6 +689,63 @@ export type PerennialSection = {
   items: PerennialSuggestion[]
 }
 
+/** A5e: słupek wykresu „Na tle 10 lat” */
+export type SeasonalBalanceYear = {
+  rok: number
+  /** mm, zaokrąglone do całości – ta sama liczba w tekstach i w raporcie */
+  bilans_mm: number
+  /** true = bieżący rok (wyróżniony) */
+  biezacy?: boolean
+}
+
+/** A5e: uprawa wybrana przez rolnika – ocena na tej działce */
+export type ChoiceItem = {
+  crop_id: RankingCropId
+  label: string
+  /** null = uprawa wieloletnia (bez oceny) */
+  category?: SuggestionCategory | null
+  category_label?: string | null
+  perennial?: boolean
+  yield_typical_t_ha?: number | null
+  /** typowo z całej powierzchni, t */
+  total_typical_t?: number | null
+  yield_weak_t_ha?: number | null
+  total_weak_t?: number | null
+  weak_year?: number | null
+  /** „X na 10 lat” – strata plonu > 20% */
+  drought_risk_years: number
+  years_simulated: number
+  /** uwagi płodozmianu z historii pola */
+  rotation: RotationCheck
+  /** JEDNO zdanie: gleba / susza / przedplon (bez powtarzania liczb) */
+  why: string
+  confidence: Confidence
+}
+
+export type AlternativeRelation = 'lepsza' | 'podobna'
+
+/** A5e: uprawa lepsza lub podobna od wyboru rolnika */
+export type AlternativeItem = {
+  crop_id: RankingCropId
+  label: string
+  category: SuggestionCategory
+  category_label: string
+  relation: AlternativeRelation
+  yield_typical_t_ha?: number | null
+  total_typical_t?: number | null
+  drought_risk_years: number
+  years_simulated: number
+  /** np. „Po pszenicy ozimej rzepak – dobry przedplon.” */
+  why: string
+}
+
+/** A5e: „nie siej: …” – jeden powód */
+export type NotRecommendedItem = {
+  crop_id: RankingCropId
+  label: string
+  reason: string
+}
+
 export type CropSuggestions = {
   seasons: number[]
   /** od A5b-2b tylko „uprawy polowe” */
@@ -689,6 +753,16 @@ export type CropSuggestions = {
   /** A5b-2b: uprawy wieloletnie osobno, bez ✅/🟡/❌ */
   perennials?: PerennialSection | null
   area: CultivatedArea
+  /** A5e: wybór rolnika (planned_crops) – pusta lista bez wyboru */
+  choice?: ChoiceItem[]
+  /** A5e: jedno zdanie oceny wyboru, np. „Twój wybór pasuje do tej działki.” */
+  choice_summary?: string | null
+  /** A5e: 2–3 uprawy lepsze lub podobne od wyboru (puste bez wyboru albo gdy wybór jest najlepszy) */
+  alternatives?: AlternativeItem[]
+  /** A5e: uprawy odradzane (bez wybranych) – każda z jednym powodem („nie siej: …”) */
+  not_recommended?: NotRecommendedItem[]
+  /** A5e: top 5 nieodradzanych (do widoku bez wyboru) */
+  top_ids?: RankingCropId[]
   crop_history?: string[]
   /** bez historii: 'Podaj, co rosło w ostatnich latach – uwzględnimy płodozmian.' */
   rotation_hint?: string | null
@@ -854,6 +928,16 @@ export type AnalysisResponse = {
   crop_history?: string[]
   /** powierzchnia uprawy użyta w rankingu, ha */
   cultivated_area_ha?: number | null
+  /** A5e: co rolnik planuje posiać (z zapytania) */
+  planned_crops?: RankingCropId[]
+  /** A5e: słupki „Na tle 10 lat” – bilans od początku sezonu do tego samego dnia: 10 lat + bieżący (biezacy = true) */
+  seasonal_balance_by_year?: SeasonalBalanceYear[]
+  /** A5e: średnia z lat porównawczych, mm – linia na wykresie */
+  seasonal_balance_mean_mm?: number | null
+  /** A5e: okres bilansu, np. „od 1 marca do 18 listopada” */
+  seasonal_balance_label?: string | null
+  /** A5e: ostatni dzień z danymi pogodowymi („dane pogodowe do 18.11”) */
+  weather_data_until?: string | null
   /** A6: teren i spływ wody z NMT (null = brak danych, powód w terrain_note) */
   terrain?: Terrain | null
   /** A6: dlaczego brak analizy terenu */
