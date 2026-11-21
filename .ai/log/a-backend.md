@@ -4,6 +4,35 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-21 22:40 · `a/backend` · A5b-2a: ranking „Co tu posiać?”, historia upraw, powierzchnia, status z percentyli
+**Co:**
+- **0. Dane C** (`git show origin/c/research:research/data/…`, bez merge) → `backend/app/data/crops/`. Ky żyta 0,80 i pszenżyta 0,90 – już zgodne. `uldk_demo.json` – brak. W kopii: + kolumny `root_depth_m`, `typ`; ziemniak `irrigation_practice` → common (decyzja Dominika), burak → not_practiced (z pliku C). `crops.py` czyta CSV; parametry 15 upraw bez zmian (sprawdzone asercją i 296 testami).
+- **1. Ranking** (`suggestions.py`, `rules/ranking.yaml`): model wody × 17 upraw × 10 pełnych sezonów, FAO-33 (Ky faz tylko zweryfikowane), Ym = P90 GUS województwa × gleba, kalibracja do dobrego roku na przeciętnej glebie, kategorie, jedno zdanie, grupy polowe / wieloletnie, pewność. Kalibracja na żywo (NASA POWER, średnia symulowana vs średnia GUS, przeciętna gleba):
+
+| Uprawa | podlaskie | lubelskie | wielkopolskie |
+|---|---|---|---|
+| pszenica ozima | +7% | −2% | −1% |
+| żyto | +7% | −2% | +1% |
+| pszenżyto | +6% | −4% | −2% |
+| jęczmień ozimy / jary | +11% / +8% | −1% / −7% | +2% / 0% |
+| owies | +6% | −8% | +1% |
+| rzepak | +2% | +5% | −1% |
+| kukurydza ziarno / kiszonka | −6% / −5% | −10% / −6% | −11% / −11% |
+| ziemniak | −9% | −7% | −8% |
+| burak cukrowy | +3% | −7% | −4% |
+| strączkowe / łubin | −9% / −2% | −13% / −7% | −12% / −4% |
+| warzywa | −1% | −8% | −7% |
+| krzewy / truskawki | −3% / +17% | −7% / −1% | −5% / −10% |
+| drzewa owocowe | +29% | +10% | +33% |
+
+- **2–3.** `crop_history` (twarda przerwa → odradzane z powodem; miękkie ostrzeżenia / plusy), `cultivated_area_ha` (domyślnie działka × udział rolny IUNG), plon w tonach, `price = null`.
+- **4.** Status poza sezonem / zimowanie / bez uprawy z porównania z tą samą datą w 10 latach; stan działki – goła gleba po 31 VII. 201305, 21.11.2026: bez uprawy 91% wody, „Dobrze” 70 (było „Ryzyko” 43); zboża ozime i rzepak – „w polu – zimowanie”, Dobrze 70; kukurydza – „poza sezonem”, Uwaga 50 (61% wody, mniej było w 1 z 10 lat; było „Ryzyko” 39 → 49); ziemniak, zboża jare – poza sezonem, Dobrze 70; drzewa owocowe – zimowanie, Uwaga 50; rzepak (jesień) – w sezonie, Dobrze 84.
+- **5.** Kukurydza: bez dawek; 201305, 20.08.2019: „W tym sezonie brakuje ok. 62 mm wody; nawadnianie opłaca się tylko przy własnym źródle wody i deszczowni; pobór wody może wymagać pozwolenia wodnoprawnego – Wody Polskie”.
+- Ranking 201305 (kat. III, kompleks 2, podlaskie, 0,58 ha, sezony 2017–2026): polecane – rzepak 3,5 t/ha, pszenica ozima 4,5 (słaby rok 2018: 3,8; ryzyko 1/10), jęczmień ozimy 4,2, jęczmień jary 4,1, pszenżyto 4,2, warzywa 22,1, kukurydza kiszonka 49,3, burak 64,7 (3/10), kukurydza ziarno 7,0 (3/10); możliwe – żyto 3,1 (gleba przeciętna dla żyta), łubin 1,9, owies 3,1, ziemniak 25,6 (4/10), strączkowe 1,9 (4/10); wieloletnie – drzewa 13,2, truskawki 5,8, krzewy 3,6. Z historią „rzepak 2 lata temu”: rzepak spada na koniec jako odradzany („…rosła tu 2 lata temu, a potrzeba 3 lat przerwy (kiła kapusty)”), reszta bez zmian.
+- Kontrakt (addytywnie) + 3 przykłady; `npm run build` OK. Testy: **320 passed** bez sieci (+25 w `test_a5b2.py`, +1 przykład kontraktu; 1 nieaktualny test „dopisek optional” usunięty).
+**Pliki:** `backend/app/data/crops/*`, `backend/app/analysis/{crops,suggestions,scoring,facts,field_state,water_balance}.py`, `backend/app/analysis/rules/{ranking,nawadnianie}.yaml`, `backend/app/routers/{analysis,reports}.py`, `backend/app/schemas/analysis.py`, `backend/tests/{test_a5b2,test_a5b,test_analysis,test_contract}.py`, `frontend/src/api/types.ts`, `frontend/src/mocks/analysis*.json`, `reports/examples/*.pdf`, `.ai/*`.
+**Kontrakt API:** TAK (addytywnie) – `suggestions`, `crop_history`, `cultivated_area_ha`, `StatusScope.zimowanie` (osobny commit, `contract-changes.md`).
+
 ## 2026-11-21 21:50 · `a/backend` · A6: teren i spływ wody z NMT (port prototypu osoby C)
 **Co:**
 - Prototyp `research/terrain/` z `origin/c/research` pobrany przez `git show` (bez merge). Rdzeń (`analyze_surface`, D8 / D-infinity, priority-flood, strefy, odpływy, propozycje) – bez zmian w `analysis/terrain.py`; testy prototypu → `tests/test_terrain.py` (10, przechodzą). Pobieranie: `sources/nmt.py` (httpx async, POST ≤ 1000 punktów, x = PÓŁNOC, y = WSCHÓD, cache bez wygasania, bezpiecznik).
