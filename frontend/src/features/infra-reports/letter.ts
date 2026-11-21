@@ -40,7 +40,7 @@ export function buildLetter(r: InfraReportIn, parcel: Parcel | null, hasPhoto: b
     '(podpis)',
     '',
     '—',
-    'Pismo przygotowane w aplikacji WodoSkop. Aplikacja niczego nie wysyła automatycznie.',
+    'Pismo przygotowane w aplikacji Wodoskop. Aplikacja niczego nie wysyła automatycznie.',
   ]
   return lines.join('\n')
 }

@@ -6,7 +6,7 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* ── Tokeny WodoSkop – design/SPEC_UI.md, sekcja 2 ───────────────────────────────── */
+/* ── Tokeny Wodoskop – design/SPEC_UI.md, sekcja 2 ───────────────────────────────── */
 @theme {
   /* 2.2 Paleta – wersja „otwarte pole”: szałwia, leśna zieleń, kremowe tło, bursztyn słońca, grafit */
   --color-brand: #2e5b3f; /* leśna zieleń */
