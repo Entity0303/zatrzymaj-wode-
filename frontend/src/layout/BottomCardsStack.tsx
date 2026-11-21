@@ -1,4 +1,4 @@
-import type { Forecast } from '@/api/types'
+import type { BottomCardsProps } from './cards/types'
 import { ForecastCard } from '@/features/weather/ForecastCard'
 import { TimelineCard } from '@/features/timeline/TimelineCard'
 import { AlertsCard } from './cards/AlertsCard'
@@ -7,15 +7,7 @@ import { FarmCard } from './cards/FarmCard'
 import { useLang } from '@/lib/i18n'
 
 /** Karty dolnego paska ułożone pionowo – w pełnej szufladzie na telefonie (SPEC 12). */
-export function BottomCardsStack(props: {
-  savedCount: number
-  forecast: Forecast | null
-  forecastLoading: boolean
-  forecastError: boolean
-  where: string
-  historical: boolean
-  updated: string | null
-}) {
+export function BottomCardsStack(props: BottomCardsProps) {
   const { t } = useLang()
   return (
     <section className="space-y-3 border-t pt-5">
@@ -30,16 +22,16 @@ export function BottomCardsStack(props: {
         />
       </div>
       <div className="h-[140px]">
-        <FarmCard savedCount={props.savedCount} />
+        <FarmCard saved={props.saved} />
       </div>
       <div className="h-[140px]">
-        <BalanceCard />
+        <BalanceCard analysis={props.analysis} />
       </div>
       <div className="h-[140px]">
-        <AlertsCard />
+        <AlertsCard analysis={props.analysis} />
       </div>
       <div className="h-[156px]">
-        <TimelineCard updated={props.updated} />
+        <TimelineCard updated={props.updated} analysis={props.analysis} asOf={props.asOf} onAsOfChange={props.onAsOfChange} />
       </div>
     </section>
   )

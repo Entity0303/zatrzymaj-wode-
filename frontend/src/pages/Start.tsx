@@ -516,7 +516,10 @@ export default function Start() {
           {!isMobile && (
             <div className="absolute inset-x-4 bottom-4 z-[1000]" style={{ height: CARDS_H }}>
               <BottomCards
-                savedCount={saved.length}
+                saved={saved}
+                analysis={analysis}
+                asOf={asOf}
+                onAsOfChange={setAsOf}
                 forecast={forecast}
                 forecastLoading={forecastState === 'loading'}
                 forecastError={forecastState === 'error'}
@@ -560,7 +563,10 @@ export default function Start() {
                 </div>
                 <ParcelPanel {...panelProps} hideHeader />
                 <BottomCardsStack
-                  savedCount={saved.length}
+                  saved={saved}
+                analysis={analysis}
+                asOf={asOf}
+                onAsOfChange={setAsOf}
                   forecast={forecast}
                   forecastLoading={forecastState === 'loading'}
                   forecastError={forecastState === 'error'}
