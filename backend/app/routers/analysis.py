@@ -27,11 +27,13 @@ from app.analysis.confidence import ConfidenceInputs, reliability
 from app.analysis.crops import ALL_CROPS, CROPS, PHASE_LABELS
 from app.analysis import field_state as fs
 from app.analysis import approx_area, drawn_field, soil_consistency, soil_label
+from app.analysis import choice as choice_mod
+from app.analysis import precip as precip_mod
 from app.analysis import verdict as verdict_mod
 from app.analysis import suggestions as sugg
 from app.analysis import terrain_interpret
 from app.analysis.terrain import terrain_for_parcel
-from app.analysis.facts import build_facts, field_facts
+from app.analysis.facts import CROP_OFF_PHASES, IN_SEASON_PHASES, build_facts, field_facts
 from app.analysis.recommendations import Evaluation, evaluate
 from app.analysis.scoring import overall_status, reserve_status
 from app.analysis.soil_texture import enrich_soil
@@ -39,6 +41,7 @@ from app.analysis.water_balance import (
     HorizonDay,
     SoilWaterResult,
     build_history,
+    format_date_pl,
     history_range,
     last_usable_day,
     recent_balance,
@@ -51,7 +54,15 @@ from app.core.cache import stale_scope
 from app.core.config import settings
 from app.core.http import SourceError, http_error, in_poland
 from app.routers.parcel import parcel_out, resolve_parcel
-from app.schemas.analysis import AnalysisRequest, ApproximateArea
+from app.schemas.analysis import (
+    AnalysisRequest,
+    ApproximateArea,
+    PrecipSources,
+    PrecipStation,
+    PrecipWindow,
+    SeasonalBalanceYear,
+)
+from app.sources import imgw
 from app.schemas.parcel import DataSource
 from app.sources import uldk
 from app.schemas.analysis import (
@@ -89,6 +100,7 @@ class WeatherLoad:
     fallback_used: bool
     fetch_ms: int
     notes: list[str] = field(default_factory=list)
+    precip: "precip_mod.PrecipInfo | None" = None  # A7: skąd opad (stacje IMGW / NASA)
 
 
 async def load_weather_history(
@@ -114,7 +126,9 @@ async def load_weather_history(
                 f"{primary.message}; {backup.message}",
             ) from backup
         fallback = True
-    return WeatherLoad(w, start, end, fallback, int((perf_counter() - t0) * 1000), notes)
+    # A7 (D82): opad ze stacji IMGW (magazyn w repo, bez sieci); ET0 zostaje z modelu pogodowego
+    w, pinfo = precip_mod.apply(w, lon, lat, analysis_date)
+    return WeatherLoad(w, start, end, fallback, int((perf_counter() - t0) * 1000), notes, pinfo)
 
 
 # ── TYMCZASOWE (deweloperskie) ──────────────────────────────────────────────────────────────
@@ -505,6 +519,34 @@ def parse_history(crop_history: str | None) -> list[str]:
             "message": f"Nieznana uprawa w historii pola: {exc}. Podaj 1–3 uprawy po przecinku albo „nie_wiem”."}) from exc
 
 
+def precip_contract(info: "precip_mod.PrecipInfo | None", data_until: dt.date | None) -> PrecipSources:
+    """PrecipInfo → kontrakt `precip_sources` (None = opad z NASA, jak przed A7)."""
+    info = info or precip_mod.PrecipInfo(main="nasa", sentence=precip_mod.cfg()["sentences"]["nasa_no_store"])
+    c = precip_mod.cfg()
+    measured = info.main != "nasa"
+    return PrecipSources(
+        main=info.main, main_label=c["main_labels"][info.main],
+        stations=[PrecipStation(code=p.code, name=p.name, kind=p.kind, kind_label=imgw.KIND_LABEL[p.kind],
+                                distance_km=p.dist_km, weight=wgt, coverage_pct=round(100 * p.coverage, 1),
+                                lon=round(p.lon, 5), lat=round(p.lat, 5)) for p, wgt in info.stations],
+        nasa_factor=info.factor, nasa_vs_imgw_pct=info.nasa_vs_imgw_pct, common_days=info.common_days,
+        filled_days=info.filled_days, filled_from=info.filled_from, filled_earlier_days=info.filled_earlier_days,
+        agreement=info.agreement, agreement_label=c["labels"][info.agreement],
+        windows=[PrecipWindow(key=x.key, label=x.label, start=x.start, end=x.end, imgw_mm=x.imgw_mm, nasa_mm=x.nasa_mm,
+                              difference_pct=x.difference_pct, rating=x.rating) for x in info.windows],
+        sentence=info.sentence, confidence_lowered=info.confidence_lowered,
+        source_tag=SourceTag(kind="pomiar" if measured else "szacunek_modelu", date=data_until,
+                             source=imgw.SOURCE if measured else precip_mod.NASA_LABEL))
+
+
+def species_to_group(crop_id: str | None) -> str | None:
+    """A5e-2 (D80): gatunek z rankingu (pszenica_ozima, łubin…) w `crop` / `previous_crop` → uprawa IUNG jego grupy
+    (zboza_ozime, straczkowe…), bo model wody liczy grupy (15 upraw)."""
+    if crop_id and crop_id not in CROPS and crop_id in ALL_CROPS and ALL_CROPS[crop_id].group_id in CROPS:
+        return ALL_CROPS[crop_id].group_id
+    return crop_id
+
+
 def validate_params(crop: str | None, analysis_date: dt.date, previous_crop: str | None, today: dt.date) -> None:
     """Uprawa opcjonalna (A5b-1): bez niej – „Stan działki”. Nieznana uprawa / zła data – 422."""
     if crop and crop not in CROPS:
@@ -521,11 +563,12 @@ async def run_analysis(
     parcel_id: str | None, crop: str | None, analysis_date: dt.date | None = None, previous_crop: str | None = None,
     crop_history: str | None = None, cultivated_area_ha: float | None = None,
     lon: float | None = None, lat: float | None = None, geometry: dict | None = None,
+    planned_crops: str | list[str] | None = None,
 ) -> AnalysisResponse:
     """Pełna analiza (wspólna dla /api/analysis, raportu PDF i rozgrzewki przykładów demo)."""
     with stale_scope() as stale_hits:
         return await _run(parcel_id, crop, analysis_date, previous_crop, stale_hits, crop_history, cultivated_area_ha,
-                          lon, lat, geometry)
+                          lon, lat, geometry, planned_crops)
 
 
 async def _resolve_point(lon: float, lat: float) -> tuple[uldk.Parcel, ApproximateArea | None]:
@@ -546,12 +589,20 @@ async def _resolve_point(lon: float, lat: float) -> tuple[uldk.Parcel, Approxima
 async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, previous_crop: str | None,
                stale_hits: list, crop_history: str | None = None, cultivated_area_ha: float | None = None,
                lon: float | None = None, lat: float | None = None, geometry: dict | None = None,
+               planned_crops: str | list[str] | None = None,
                ) -> AnalysisResponse:
     t0 = perf_counter()
     today = dt.date.today()
     analysis_date = date or today
+    crop, previous_crop = species_to_group(crop), species_to_group(previous_crop)
     validate_params(crop, analysis_date, previous_crop, today)
     crop_hist = parse_history(crop_history)
+    try:
+        planned = choice_mod.parse_planned(planned_crops)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail={
+            "message": f"Nieznana uprawa w planie siewu: {exc}. Podaj 1–3 uprawy (crop_id albo grupa), np. "
+                       "„pszenica_ozima,zboza_jare”."}) from exc
     if cultivated_area_ha is not None and not 0 < cultivated_area_ha <= 10_000:
         raise HTTPException(status_code=422, detail={"message": "Powierzchnia uprawy musi być większa od 0 ha."})
     if not crop_hist and previous_crop in CROPS:  # zgodność z A5: sam przedplon = historia 1 roku
@@ -686,8 +737,16 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
     s = perf_counter()
     prev = previous_crop if previous_crop in CROPS else None
     soil_prof = soil_label.profile(soil_a, map_sum, soil_c.texture)
-    facts = build_facts(crop_obj, analysis_date, soil_a, model, wb, sums, soil_c=soil_c, previous_crop=prev,
-                        field=field, recent=recent, soil_profile=soil_prof)
+    # A5e (D79): poza sezonem wybranej uprawy (przed siewem / po zbiorze) – JEDEN stan wody: stan działki (field_state)
+    # jako status główny, jedna liczba wody w glebie; stan uprawy (stres, fazy, nawadnianie) tylko w jej sezonie.
+    crop_off = bool(crop_obj and out is not None and out.crop_season is not None
+                    and out.crop_season.phase in CROP_OFF_PHASES and field is not None and field.status == "ok")
+    crop_active = bool(crop_obj and out is not None and out.crop_season is not None
+                       and out.crop_season.phase in IN_SEASON_PHASES)
+    facts = build_facts(None if crop_off else crop_obj, analysis_date, soil_a, None if crop_off else model, wb, sums,
+                        soil_c=soil_c, previous_crop=prev, field=field, recent=recent, soil_profile=soil_prof)
+    if crop_off:
+        ok_calc = True
     # teren z NMT (A6): sekcja kontraktu + fakty dla reguł (requires: terrain)
     terrain_c, terrain_note = None, None
     soil_cat = cons.category_used if cons.contract else soil_a.dominant_mineral
@@ -712,10 +771,11 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
     rel, _premises, _points = reliability(ConfidenceInputs(
         analysis_date=analysis_date, today=today, parcel_fetched=p.fetched_at.date(), weather_name=w.source,
         weather_resolution=w.resolution, weather_fallback=w_res.fallback_used, weather_notes=w_res.notes,
+        precip=w_res.precip,
         weather_until=wb.data_until, forecast_ok=(None if not is_today else forecast is not None),
         forecast_error=err(fc_res), soil=soil_a, model=model, wb=wb,
         hg_share_season=_hg_share(w, sums),
-        extra_limitations=soil_lim + (field.limitations if field and crop_obj is None else []),
+        extra_limitations=soil_lim + (field.limitations if field and (crop_obj is None or crop_off) else []),
         soilgrids="brak" if isinstance(sg_res, SourceError) else "ok", soilgrids_error=err(sg_res),
         soil_map=sm_status or "brak", soil_map_error=err(sm_res),
         soil_map_year=sm_rep.mapped_year if sm_status == "ok" else None,
@@ -727,8 +787,13 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
     ))
     history = wb.history.model_copy(update={"stress_days_by_year": out.stress_days_by_year if out else []})
     no_sat = SourceTag(kind="brak_danych", source="Sentinel-2 L2A")
-    if out:
+    if out and not crop_off:
         sw_pct, sw_mm, risk7, soil_water = out.soil_water_pct, out.soil_water_mm, out.risk_7d, out.soil_water
+    elif crop_off:  # jedna liczba wody: profil działki (field_state); ryzyko stresu – nie dotyczy poza sezonem
+        sw_pct, sw_mm, soil_water = fs.water_indicators(field, analysis_date)
+        risk7 = RiskIndicator(value=None, unit="dni", label="Nie dotyczy", status="no_data",
+                              note=f"{out.crop_season.phase_label} – poza sezonem uprawy; pokazujemy stan wody na działce",
+                              source_tag=SourceTag(kind="brak_danych", source=fs.FIELD_SOURCE))
     else:  # bez uprawy – stan działki (pokrycie referencyjne); ryzyko stresu roślin nie dotyczy
         if field is not None:
             sw_pct, sw_mm, soil_water = fs.water_indicators(field, analysis_date)
@@ -772,6 +837,7 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
             suggestions = await asyncio.to_thread(sugg.build, w, analysis_date, ctx, settings.history_years)
         except Exception as exc:  # noqa: BLE001 – ranking nie może wywrócić analizy
             steps.append(_step("suggestions", "Ranking „Co tu posiać?”", "error", note=exc.__class__.__name__))
+    suggestions = choice_mod.attach(suggestions, planned, soil_prof.group == "lekka")
     if suggestions is not None:
         steps.append(_step("suggestions", "Ranking „Co tu posiać?” (17 upraw × 10 sezonów)", "done",
                            ms=int((perf_counter() - s) * 1000)))
@@ -780,9 +846,10 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
     if not soil_a.not_agricultural and soil_a.wod_mm is not None:
         chosen = None
         if crop_obj and out is not None and out.crop_season is not None:
-            chosen = (crop_obj.label, out.crop_season.phase_label, status)
+            chosen = (crop_obj.label, out.crop_season.phase_label, status, crop_off)
         verdict = verdict_mod.build(soil_prof, soil_a.wod_mm, w, last_usable_day(analysis_date), terrain_c, suggestions,
-                                    evaluation.recommendations, field_c.status if field_c else None, chosen)
+                                    evaluation.recommendations, field_c.status if field_c else None, chosen,
+                                    measured_precip=bool(w_res.precip and w_res.precip.main != "nasa"))
     steps.append(_step("total", "Cała analiza", "done", ms=int((perf_counter() - t0) * 1000)))
 
     return AnalysisResponse(
@@ -798,7 +865,7 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
         indicators=indicators,
         crop_season=out.crop_season if out else None,
         soil_water=soil_water,
-        irrigation=out.irrigation if out else None,
+        irrigation=out.irrigation if out and crop_active else None,  # A5e: zero nawadniania poza sezonem uprawy
         soil=soil_c,
         field_state=field_c,
         terrain=terrain_c,
@@ -808,6 +875,13 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
         suggestions=suggestions,
         crop_history=crop_hist,
         cultivated_area_ha=area_ha,
+        planned_crops=planned,
+        seasonal_balance_by_year=[SeasonalBalanceYear(year=y, balance_mm=v, current=c) for y, v, c in wb.by_year],
+        seasonal_balance_mean_mm=wb.mean_balance_mm,
+        seasonal_balance_label=(f"od {format_date_pl(wb.season_start, with_year=False)} do "
+                                f"{format_date_pl(wb.data_until, with_year=False)}" if wb.data_until else None),
+        weather_data_until=wb.data_until,
+        precip_sources=precip_contract(w_res.precip, wb.data_until),
         history=history,
         causes=causes,
         recommendations=evaluation.recommendations,
@@ -832,13 +906,15 @@ async def get_analysis(
     crop_history: str | None = Query(None, description="Historia pola: 1–3 uprawy po przecinku, pierwsza = rok temu "
                                                        "(crop_id z crops.csv albo 'nie_wiem'), np. 'zyto,rzepak'"),
     cultivated_area_ha: float | None = Query(None, description="Powierzchnia uprawy w ha (domyślnie działka × udział gruntów rolnych)"),
+    planned_crops: str | None = Query(None, description="Co planujesz posiać: 1–3 uprawy z rankingu po przecinku, np. 'pszenica_ozima,rzepak'"),
 ) -> AnalysisResponse:
     """Pełna analiza wodna działki: ULDK → równolegle pogoda 10 lat, gleba IUNG, klasy EGiB, SoilGrids, mapa
     glebowo-rolnicza, prognoza (dla dziś) → model wody w glebie → ocena → pewność → przyczyny → rekomendacje.
     Awaria jednego źródła = brak danych i niższa pewność; 502 tylko bez działki (ULDK) albo bez pogody.
     Bez `crop` – stan działki (gleba, zapas wody pod pokryciem referencyjnym FAO-56, bilans opad − ET0),
     `crop`, `crop_season`, `irrigation` = null."""
-    return await run_analysis(parcel_id, crop, date, previous_crop, crop_history, cultivated_area_ha, lon, lat)
+    return await run_analysis(parcel_id, crop, date, previous_crop, crop_history, cultivated_area_ha, lon, lat,
+                              planned_crops=planned_crops)
 
 
 @router.post(
@@ -852,4 +928,4 @@ async def post_analysis(req: AnalysisRequest) -> AnalysisResponse:
     GeoJSON Polygon w WGS84; zbyt długi na adres URL). Odpowiedź: `parcel.source = "drawn"`, nazwa „Pole narysowane
     przez rolnika”, powierzchnia z kształtu; cała analiza (werdykt, ranking, teren) jak dla działki."""
     return await run_analysis(req.parcel_id, req.crop, req.date, req.previous_crop, req.crop_history,
-                              req.cultivated_area_ha, req.lon, req.lat, req.geometry)
+                              req.cultivated_area_ha, req.lon, req.lat, req.geometry, req.planned_crops)

@@ -138,7 +138,7 @@ def reserve_summary(f: Facts, scope: str) -> str:
     else:
         text += f"; mniej wody było tego dnia w {lower} z {of} ostatnich lat."
     if f.get("kbw30_mm") is not None:
-        text += f" Bilans opad − parowanie z ostatnich 30 dni: {format_mm(f['kbw30_mm'])} mm"
+        text += f" W ostatnich 30 dniach spadło minus wyparowało: {format_mm(f['kbw30_mm'])} mm"
         text += f" ({f['kbw30_vs_mean_txt']})." if f.get("kbw30_vs_mean_txt") else "."
     if scope == "poza_sezonem" and f.get("phase_label"):
         text += f" Uprawa: {f['phase_label']} – poza sezonem oceniamy zapas wody w glebie, nie stres roślin."

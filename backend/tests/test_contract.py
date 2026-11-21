@@ -138,3 +138,20 @@ def test_verdict_samples_match_contract():
     ApproximateArea.model_validate(weak["approximate_area"])
     assert v.level == "bad" and {"pszenica_ozima", "rzepak"} <= {c.crop_id for c in v.crops_bad}
     assert "zyto" in {c.crop_id for c in v.crops_good}
+
+
+SAMPLE_CHOICE = SAMPLE.with_name("analysis.choice.sample.json")
+
+
+@pytest.mark.skipif(not SAMPLE_CHOICE.exists(), reason="brak katalogu frontend/ obok backend/")
+def test_choice_sample_matches_contract():
+    """A5e: wybór rolnika (planned_crops) + słupki „Na tle 10 lat” – prawdziwa odpowiedź."""
+    a = AnalysisResponse.model_validate(json.loads(SAMPLE_CHOICE.read_text(encoding="utf-8")))
+    assert a.planned_crops == ["pszenica_ozima", "zboza_jare"] and a.suggestions.choice and a.suggestions.alternatives
+    grp = next(c for c in a.suggestions.choice if c.requested_id == "zboza_jare")  # A5e-2: grupa → najlepszy gatunek
+    assert grp.group_note and grp.crop_id in ("jeczmien_jary", "owies")
+    assert a.suggestions.choice_summary and a.suggestions.top_ids
+    assert len(a.seasonal_balance_by_year) == 11 and a.seasonal_balance_by_year[-1].current
+    assert a.weather_data_until is not None and a.history.details
+    ps = a.precip_sources  # A7: opad ze stacji IMGW
+    assert ps is not None and ps.main == "imgw" and ps.stations[0].name == "Burzyn" and ps.sentence.startswith("Opady liczymy")

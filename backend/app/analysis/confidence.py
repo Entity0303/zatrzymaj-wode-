@@ -31,6 +31,8 @@ PENALTY = {
     "teren_brak": 10,
     "frakcje_brak": 5,  # brak SoilGrids – bez przepuszczalności i uziarnienia
     "gleba_konflikt": 10,
+    "opad_stacje_daleko": 10,  # A7: brak stacji IMGW ≤ 30 km – stacje do 50 km
+    "opad_zrodla_rozne": 10,  # A7: stacje IMGW i NASA mocno się różnią (> 35%)
     "pole_narysowane": 4,  # obrys rolnika – brak EGiB, dokładny obrys z mapy (D75)
     "obszar_przyblizony": 15,  # brak granic działki z ULDK – kwadrat 1 ha wokół punktu (D69)  # źródła gleby różnią się (mapa glebowo-rolnicza / IUNG / SoilGrids, D49)
 }
@@ -47,6 +49,10 @@ class Premise:
     key: str
     text: str
     points: int
+
+
+def _measured(i) -> bool:
+    return i.precip is not None and i.precip.main != "nasa"
 
 
 @dataclass
@@ -77,6 +83,7 @@ class ConfidenceInputs:
     soil_conflict: bool = False
     approximate: bool = False
     drawn: bool = False  # obrys narysowany przez rolnika (A5c, D75)
+    precip: object | None = None  # analysis.precip.PrecipInfo (A7) – None = opad z NASA
     terrain_error: str | None = None  # A6: powód braku analizy terenu
     terrain_saved: bool = False  # teren z zapisanego wyniku (NMT nie odpowiadał)
     terrain_limitations: list[str] = field(default_factory=list)
@@ -97,6 +104,11 @@ def premises(i: ConfidenceInputs) -> list[Premise]:
     if i.weather_name:
         if i.weather_fallback:
             add("pogoda_zapasowa", f"pogoda ze źródła zapasowego ({i.weather_name})")
+        elif _measured(i):
+            if i.precip.main == "imgw_daleko":
+                add("opad_stacje_daleko", "najbliższe stacje opadowe IMGW są dalej niż 30 km")
+            if i.precip.agreement == "mocno_sie_roznia":
+                add("opad_zrodla_rozne", "stacje IMGW i dane NASA mocno się różnią – możliwe lokalne burze")
         else:
             add("pogoda_nasa", f"pogoda uśredniona dla obszaru {i.weather_resolution}")
         if i.weather_until and (i.analysis_date - i.weather_until).days - 1 > 3:
@@ -177,6 +189,13 @@ def reliability(i: ConfidenceInputs) -> tuple[Reliability, list[Premise], int]:
             resolution=i.weather_resolution, status="czesciowo" if part else "ok",
             note="źródło zapasowe" if i.weather_fallback else None,
         ))
+        if i.precip is not None and i.precip.store_end is not None:  # A7: stacje IMGW
+            names = ", ".join(f"{p.name} {p.dist_km:.0f} km" for p, _w in i.precip.stations)
+            sources.append(SourceStatus(
+                name="IMGW-PIB (stacje)", used_for="opad dobowy – pomiar ze stacji", data_date=i.precip.store_end,
+                resolution=names or None, status="ok" if i.precip.main == "imgw" else
+                "czesciowo" if i.precip.main == "imgw_daleko" else "brak",
+                note=None if _measured(i) else "brak stacji z danymi w promieniu 50 km – opad z NASA POWER"))
     else:
         sources.append(SourceStatus(name="NASA POWER / Open-Meteo", used_for="pogoda z 10 lat", data_date=None, status="brak"))
     if i.forecast_ok is not None:
@@ -222,7 +241,14 @@ def reliability(i: ConfidenceInputs) -> tuple[Reliability, list[Premise], int]:
     if i.drawn:
         lim.insert(0, "Pole narysowane przez rolnika – to nie jest działka ewidencyjna: powierzchnia z kształtu, bez klas "
                       "bonitacyjnych (EGiB); gleba i teren dla narysowanego obrysu.")
-    if i.weather_name and not i.weather_fallback:
+    if i.weather_name and not i.weather_fallback and _measured(i):
+        names = ", ".join(f"{p.name} ({p.dist_km:.0f} km)" for p, _w in i.precip.stations)
+        lim.insert(0, f"Opad ze stacji IMGW: {names} – lokalna burza nad polem może ominąć stację; parowanie (ET0) "
+                      f"uśrednione dla obszaru {i.weather_resolution}.")
+        if i.precip.filled_days:
+            lim.insert(1, f"Ostatnie {i.precip.filled_days} dni opadu (od {i.precip.filled_from:%d.%m.%Y}) – dane NASA "
+                          "przeliczone do poziomu stacji (archiwum IMGW publikuje dane z opóźnieniem).")
+    elif i.weather_name and not i.weather_fallback:
         lim.insert(0, f"Pogoda uśredniona dla obszaru {i.weather_resolution} ({i.weather_name}).")
     if i.wb:
         lim += i.wb.limitations

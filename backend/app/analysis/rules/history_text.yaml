@@ -1,0 +1,19 @@
+# Proste zdanie „Na tle 10 lat” (A5e, D78). Zdanie z policzonych liczb: ile z ostatnich lat miało NIŻSZY bilans od tegorocznego
+# (lower = w ilu latach było suszej niż teraz). Szczegóły liczbowe zostają w polu History.details.
+# Progi: udział lat suchszych od tego roku w liczbie lat porównawczych.
+history_text:
+  thresholds:
+    drier_max_share: 0.30          # ≤ 30% lat suchszych = „suchszy niż zwykle”
+    slightly_drier_max_share: 0.45
+    average_max_share: 0.55
+    slightly_wetter_max_share: 0.70
+  sentences:
+    most_dry: "Ten rok jest najsuchszy z ostatnich {n} lat."
+    drier_only: "Ten rok jest suchszy niż zwykle – suszej było tylko w {k} z ostatnich {n} lat."
+    slightly_drier: "Ten rok jest trochę suchszy niż zwykle – suszej było w {k} z ostatnich {n} lat."
+    average: "Pod względem wody ten rok jest przeciętny – suszej było w {k} z ostatnich {n} lat."
+    slightly_wetter: "Ten rok jest trochę wilgotniejszy niż zwykle – suszej było w {k} z ostatnich {n} lat."
+    wetter: "Ten rok jest wilgotniejszy niż zwykle – suszej było w {k} z ostatnich {n} lat."
+    most_wet: "Ten rok jest najwilgotniejszy z ostatnich {n} lat."
+    no_comparison: "Brak lat porównawczych – nie wiadomo, czy ten rok jest suchszy niż zwykle."
+  details: "Od {start} do {until}: spadło minus wyparowało = {balance} mm; średnio w tym okresie w latach {first}–{last}: {mean} mm – o {dev} mm {more_less} niż zwykle. Niższy bilans był w {k} z {n} lat."

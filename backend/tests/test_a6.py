@@ -436,5 +436,9 @@ def test_report_pdf_terrain_section(client):
     r = client.get("/api/report.pdf", params=Q)
     assert r.status_code == 200
     text = "\n".join(p.extract_text() for p in PdfReader(io.BytesIO(r.content)).pages)
-    for phrase in ("Gleba i teren", "obniżenie – zbiera się woda", "32% działki to obniżenie", "Teren (NMT GUGiK)", "Dla dociekliwych"):
+    for phrase in ("obniżenie – zbiera się woda", "32% działki to obniżenie"):  # strona 1 (werdykt)
         assert phrase in text, phrase
+    full = client.get("/api/report.pdf", params={**Q, "report_type": "full"})  # A5e-2: teren w raporcie szczegółowym
+    text_full = "\n".join(p.extract_text() for p in PdfReader(io.BytesIO(full.content)).pages)
+    for phrase in ("Gleba, teren i skąd dane", "NMT GUGiK", "Woda spływa", "Teren – szczegóły", "Siatka"):
+        assert phrase in text_full, phrase

@@ -280,7 +280,8 @@ class History(Contract):
     balance_band: list[BandPoint] = Field(description="Pasmo min/max/średnia z 10 lat, mm")
     stress_days_by_year: list[YearStress]
     monthly_precip: list[MonthlyPrecip]
-    summary: str | None = Field(None, description="Np. 'W 6 z 10 ostatnich lat w maju–lipcu brakowało wody.'")
+    summary: str | None = Field(None, description="Proste zdanie, np. 'Ten rok jest suchszy niż zwykle – suszej było tylko w 2 z ostatnich 10 lat.'")
+    details: str | None = Field(None, description="Szczegóły liczbowe: 'Od 1 marca do …: spadło minus wyparowało = −228 mm; średnio …'")
     balance_deviation_mm: float | None = Field(None, description="Bieżący bilans − średnia z lat porównawczych, mm")
     balance_rank: BalanceRank | None = None
     longest_dry_spell: DrySpell | None = None
@@ -478,6 +479,54 @@ class PerennialSection(Contract):
     items: list[PerennialSuggestion]
 
 
+AlternativeRelation = Literal["lepsza", "podobna"]
+
+
+class ChoiceItem(Contract):
+    """Uprawa wybrana przez rolnika (planned_crops) – ocena na tej działce (A5e, D77)."""
+
+    crop_id: RankingCropId
+    label: str
+    category: SuggestionCategory | None = Field(None, description="null = uprawa wieloletnia (bez oceny ✅/🟡/❌)")
+    category_label: str | None = None
+    perennial: bool = False
+    requested_id: str | None = Field(None, description="Co rolnik podał – uprawa albo grupa (np. 'zboza_ozime')")
+    group_note: str | None = Field(None, description="Dla grupy: 'Z grupy zboża ozime najlepiej wypada: żyto.'")
+    yield_typical_t_ha: float | None = None
+    total_typical_t: float | None = Field(None, description="Typowy plon z całej powierzchni uprawy, t")
+    yield_weak_t_ha: float | None = None
+    total_weak_t: float | None = None
+    weak_year: int | None = None
+    drought_risk_years: int = Field(ge=0, description="W ilu latach strata plonu > 20%")
+    years_simulated: int
+    rotation: RotationCheck = Field(description="Uwagi płodozmianu z historii pola (crop_history)")
+    why: str = Field(description="JEDNO zdanie: gleba / susza / przedplon – bez powtarzania liczb z tabeli")
+    confidence: Confidence
+
+
+class AlternativeItem(Contract):
+    """Uprawa lepsza lub podobna od wyboru rolnika na tej działce (z uwzględnieniem historii pola)."""
+
+    crop_id: RankingCropId
+    label: str
+    category: SuggestionCategory
+    category_label: str
+    relation: AlternativeRelation = Field(
+        description="lepsza = mniej lat ze stratą > 20% przy podobnym plonie względnym; podobna = tylko gdy wybór jest ❌ "
+                    "wyłącznie przez płodozmian (podobne ryzyko suszy, bez problemu z przerwą)")
+    yield_typical_t_ha: float | None = None
+    total_typical_t: float | None = None
+    drought_risk_years: int = Field(ge=0)
+    years_simulated: int
+    why: str = Field(description="Np. 'Po pszenicy ozimej rzepak – dobry przedplon.'")
+
+
+class NotRecommendedItem(Contract):
+    crop_id: RankingCropId
+    label: str
+    reason: str = Field(description="JEDEN powód, np. 'ta uprawa rosła 2 lata temu, potrzeba 3 lat przerwy'")
+
+
 class CropSuggestions(Contract):
     """Ranking upraw dla tej działki i gleby na pogodzie z 10 sezonów. Plony zawsze BEZ nawadniania."""
 
@@ -485,6 +534,14 @@ class CropSuggestions(Contract):
     groups: list[SuggestionGroup] = Field(description="Od A5b-2b tylko „uprawy polowe” (wieloletnie – w `perennials`)")
     perennials: PerennialSection | None = Field(None, description="Uprawy wieloletnie – osobno, bez kategorii, niska pewność")
     area: CultivatedArea
+    choice: list[ChoiceItem] = Field(default_factory=list, description="Wybór rolnika (planned_crops) – pusta lista, gdy nie podano")
+    choice_summary: str | None = Field(None, description="Jedno zdanie oceny wyboru, np. 'Twój wybór pasuje do tej działki.'")
+    choice_notes: list[str] = Field(default_factory=list, description="Uprawy z planu, których nie ma w rankingu (chmiel, tytoń)")
+    alternatives: list[AlternativeItem] = Field(
+        default_factory=list, description="2–3 uprawy lepsze lub podobne od wyboru (puste bez wyboru albo gdy wybór jest najlepszy)")
+    not_recommended: list[NotRecommendedItem] = Field(
+        default_factory=list, description="Uprawy odradzane (bez wybranych) – każda z jednym powodem")
+    top_ids: list[RankingCropId] = Field(default_factory=list, description="Top 5 upraw nieodradzanych (bez wyboru rolnika)")
     crop_history: list[str] = Field(default_factory=list, description="Historia upraw z zapytania (0 = rok temu)")
     rotation_hint: str | None = Field(None, description="Bez historii: 'Podaj, co rosło w ostatnich latach…'")
     note: str
@@ -710,6 +767,63 @@ class LoadingStep(Contract):
 # ── Odpowiedź ───────────────────────────────────────────────────────────────────────────────
 
 
+PrecipMain = Literal["imgw", "imgw_daleko", "nasa"]
+PrecipAgreement = Literal["zgodne", "roznia_sie", "mocno_sie_roznia", "brak_danych"]
+
+
+class PrecipStation(Contract):
+    code: str = Field(description="Kod stacji IMGW (9 cyfr)")
+    name: str = Field(description="Np. 'Burzyn'")
+    kind: Literal["synop", "klimat", "opad"]
+    kind_label: str = Field(description="stacja synoptyczna / klimatologiczna / posterunek opadowy")
+    distance_km: float
+    weight: float = Field(description="Waga IDW (1/d², suma = 1)")
+    coverage_pct: float = Field(description="Udział dni z pomiarem w okresie analizy, %")
+    lon: float
+    lat: float
+
+
+class PrecipWindow(Contract):
+    """Porównanie sum opadu w oknie (doba IMGW 6:00–6:00 – porównujemy sumy, nie dni)."""
+
+    key: Literal["sezon", "ostatnie_30_dni", "wielolecie"]
+    label: str
+    start: dt.date
+    end: dt.date
+    imgw_mm: float | None = None
+    nasa_mm: float | None = None
+    difference_pct: float | None = Field(None, description="NASA względem stacji IMGW, % (dodatnie = NASA pokazuje więcej)")
+    rating: PrecipAgreement
+
+
+class PrecipSources(Contract):
+    """Skąd opad dla tej działki (A7): stacje IMGW (źródło główne) i porównanie z NASA POWER."""
+
+    main: PrecipMain = Field(description="imgw – stacje ≤ 30 km; imgw_daleko – stacje 30–50 km (pewność niżej); nasa – brak stacji")
+    main_label: str
+    stations: list[PrecipStation] = Field(default_factory=list, description="Do 3 najbliższych stacji z danymi (IDW)")
+    nasa_factor: float | None = Field(None, description="Suma IMGW / suma NASA ze wspólnego okresu – korekta dni bez pomiaru")
+    nasa_vs_imgw_pct: float | None = Field(None, description="O ile % NASA pokazuje więcej (+) / mniej (−) niż stacje, wspólne lata")
+    common_days: int = 0
+    filled_days: int = Field(0, description="Ostatnie dni bez pomiaru ze stacji – NASA przeliczona współczynnikiem")
+    filled_from: dt.date | None = None
+    filled_earlier_days: int = Field(0, description="Wcześniejsze dni bez pomiaru (lata sprzed magazynu, luki) – też przeliczona NASA")
+    agreement: PrecipAgreement = Field(description="Zgodność źródeł: sezon od 1 marca i ostatnie 30 dni (gorsza z dwóch)")
+    agreement_label: str
+    windows: list[PrecipWindow] = Field(default_factory=list)
+    sentence: str = Field(description="Jedno zdanie dla rolnika, np. 'Opady liczymy ze stacji IMGW Burzyn (27 km). …'")
+    confidence_lowered: bool = Field(False, description="True: stacje daleko albo źródła mocno się różnią – pewność o poziom niżej")
+    source_tag: SourceTag
+
+
+class SeasonalBalanceYear(Contract):
+    """Bilans wody (spadło minus wyparowało) od początku sezonu do tego samego dnia – jeden słupek wykresu „Na tle 10 lat”."""
+
+    year: int
+    balance_mm: float = Field(description="mm, zaokrąglone do całości – ta sama liczba w tekstach, raporcie i na wykresie")
+    current: bool = Field(False, description="true = bieżący rok (słupek wyróżniony)")
+
+
 class AnalysisRequest(Contract):
     """Treść POST /api/analysis i POST /api/report.pdf (A5c, D75): to samo co zapytanie GET, plus własny obrys pola.
     Dokładnie jedno z: `parcel_id`, para `lon` + `lat`, `geometry`."""
@@ -724,6 +838,8 @@ class AnalysisRequest(Contract):
     previous_crop: str | None = None
     crop_history: str | None = None
     cultivated_area_ha: float | None = None
+    planned_crops: list[str] | None = Field(None, description="Co rolnik planuje posiać: 1–3 uprawy z rankingu (A5e)")
+    report_type: Literal["short", "full"] | None = Field(None, description="Tylko POST /api/report.pdf: short (domyślnie) | full")
 
 
 class AnalysisResponse(Contract):
@@ -747,6 +863,13 @@ class AnalysisResponse(Contract):
     suggestions: CropSuggestions | None = Field(None, description="Ranking „Co tu posiać?” (null: grunt nierolny / brak danych)")
     crop_history: list[str] = Field(default_factory=list, description="Historia upraw z zapytania: 1–3 lata, indeks 0 = rok temu (crop_id albo 'nie_wiem')")
     cultivated_area_ha: float | None = Field(None, description="Powierzchnia uprawy użyta w rankingu, ha (podana albo oszacowana)")
+    planned_crops: list[str] = Field(default_factory=list, description="Co rolnik planuje posiać (z zapytania): uprawy z rankingu albo grupy (A5e)")
+    seasonal_balance_by_year: list[SeasonalBalanceYear] = Field(
+        default_factory=list, description="Bilans wody od początku sezonu do tego samego dnia: 10 lat + bieżący (słupki „Na tle 10 lat”)")
+    seasonal_balance_mean_mm: float | None = Field(None, description="Średnia z lat porównawczych, mm (linia na wykresie)")
+    seasonal_balance_label: str | None = Field(None, description="Okres bilansu, np. 'od 1 marca do 18 listopada'")
+    weather_data_until: dt.date | None = Field(None, description="Ostatni dzień z danymi pogodowymi („dane pogodowe do 18.11”)")
+    precip_sources: PrecipSources | None = Field(None, description="Skąd opad: stacje IMGW, zgodność z NASA, zdanie dla rolnika (A7)")
     history: History
     causes: list[Cause] = Field(description="Od największego udziału")
     recommendations: list[Recommendation] = Field(description="retencja → agrotechnika → nawadnianie")

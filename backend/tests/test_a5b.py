@@ -61,12 +61,12 @@ def test_irrigation_practice_for_every_crop():
     assert all(c.irrigation_practice in ("not_practiced", "optional", "common") for c in CROPS.values())
     for cid in ("zboza_ozime", "zboza_jare", "rzepak", "rzepak_jesien"):
         assert CROPS[cid].irrigation_practice == "not_practiced"
-    for cid in ("kukurydza_ziarno", "kukurydza_kiszonka"):
+    for cid in ("kukurydza_ziarno", "kukurydza_kiszonka", "ziemniak"):  # A5e (D76): ziemniak optional
         assert CROPS[cid].irrigation_practice == "optional"
-    for cid in ("ziemniak", "warzywa", "drzewa_owocowe", "krzewy_owocowe", "truskawki"):
+    for cid in ("warzywa", "drzewa_owocowe", "krzewy_owocowe", "truskawki"):
         assert CROPS[cid].irrigation_practice == "common"
     assert no_irrigation_sentence(CROPS["zboza_ozime"]) == "Zbóż w Polsce się nie nawadnia – liczy się zatrzymanie wody w glebie"
-    assert no_irrigation_sentence(CROPS["ziemniak"]) is None
+    assert no_irrigation_sentence(CROPS["warzywa"]) is None
 
 
 def test_not_practiced_crop_has_no_irrigation_plan_in_drought():
@@ -138,7 +138,7 @@ def test_off_season_status_from_soil_water_and_recent_balance(phase, scope):
     s = overall_status(f, SOIL_OK)
     assert s.scope == scope and s.level == "ok" and s.score >= 70
     assert "cierpią" not in s.headline and "zapas wody w glebie" in s.summary
-    assert "Bilans opad − parowanie z ostatnich 30 dni" in s.summary
+    assert "W ostatnich 30 dniach spadło minus wyparowało" in s.summary
     assert reserve_score(80.0, 70.0) == round(0.6 * 80 + 0.4 * 70)  # zapas, gdy brak lat porównawczych (D52)
 
 
@@ -305,14 +305,17 @@ def test_report_pdf_without_crop(client):
     respx.get(settings.ortho_wms_url).mock(return_value=httpx.Response(503))
     r = client.get("/api/report.pdf", params=NO_CROP)
     assert r.status_code == 200, r.text
-    assert 'filename="stan-wodny-dzialki-201305_2.0038.6-1-2018-06-10.pdf"' in r.headers["content-disposition"]
+    assert 'filename="stan-wodny-dzialki-201305_2.0038.6-1-2018-06-10-skrocony.pdf"' in r.headers["content-disposition"]
     reader = PdfReader(io.BytesIO(r.content))
     text = "\n".join(p.extract_text() for p in reader.pages)
-    for phrase in ("Stan wodny działki", "Stan wody na działce", "bez uprawy", "Woda w glebie od", "Co mogę zrobić?",
-                   "Skąd te dane", "Zgodność źródeł gleby"):
+    for phrase in ("Werdykt działki", "Raport skrócony", "Co tu posiać?", "Co zrobić z wodą", "Na tle 10 lat"):
         assert phrase in text, phrase
     assert "Paszport wodny" not in text and "Dni stresu" not in text
-    assert len(reader.pages) <= 6  # A5b-2b: werdykt + ranking + szczegóły – maks. 6 stron
+    assert len(reader.pages) == 2  # A5e-2: raport skrócony = dokładnie 2 strony
+    full = client.get("/api/report.pdf", params={**NO_CROP, "report_type": "full"})
+    tf = "\n".join(p.extract_text() for p in PdfReader(io.BytesIO(full.content)).pages)
+    for phrase in ("Raport szczegółowy", "Woda na działce", "stan wody na działce", "Gleba, teren i skąd dane", "Skąd te dane"):
+        assert phrase in tf, phrase
 
 
 def test_unknown_crop_still_422(client):
