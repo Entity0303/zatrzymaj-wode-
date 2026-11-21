@@ -29,6 +29,7 @@ import { TopBar } from '@/layout/TopBar'
 import { todayIso } from '@/lib/dates'
 import { BRAND_NAME, BRAND_TAGLINE } from '@/lib/brand'
 import { readLink, shareLink, writeLink } from '@/lib/deepLink'
+import { rememberAnalysis, useSettings } from '@/lib/storage'
 import { useReportDownload } from '@/features/reports/useReportDownload'
 import { useMediaQuery, useOnline, usePrefersReducedMotion, useSavedParcels } from '@/lib/hooks'
 import { mockRequested } from '@/mocks/useMockAnalysis'
@@ -74,7 +75,8 @@ export default function Start() {
   const [link] = useState(readLink)
   const [asOf, setAsOf] = useState(link.data ?? todayIso())
   const [layer, setLayer] = useState<LayerKey>('kondycja')
-  const [baseMap, setBaseMap] = useState<BaseMap>('orto')
+  const [settings] = useSettings()
+  const [baseMap, setBaseMap] = useState<BaseMap>(settings.baseMap)
   const [pendingPoint, setPendingPoint] = useState<[number, number] | null>(null)
   const [userPoint, setUserPoint] = useState<[number, number] | null>(null)
   const [locating, setLocating] = useState(false)
@@ -92,6 +94,8 @@ export default function Start() {
   const reqId = useRef(0)
   // uprawa z linku – przypisywana do działki, gdy wyszukiwanie ją znajdzie
   const pendingCrop = useRef(link.uprawa)
+  // ?widok=paszport – po pierwszej gotowej analizie od razu paszport wodny
+  const pendingPassport = useRef(link.widok === 'paszport')
   const lastRequest = useRef<{ fn: () => Promise<Parcel>; kind: 'number' | 'point' } | null>(null)
 
   const parcel = search.phase === 'parcel' ? search.parcel : null
@@ -252,7 +256,7 @@ export default function Start() {
 
   function copyLink() {
     if (!parcel) return
-    const href = shareLink({ dzialka: parcel.id, uprawa: crop, data: asOf })
+    const href = shareLink({ dzialka: parcel.id, uprawa: crop, data: asOf, widok: passportOpen ? 'paszport' : null })
     if (!navigator.clipboard) return showToast(t('Skopiuj adres z paska przeglądarki – to link do tej analizy'))
     navigator.clipboard.writeText(href).then(
       () => showToast(t('Skopiowano link do tej analizy')),
@@ -273,6 +277,22 @@ export default function Start() {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [passportOpen, closePassport])
+  // link z ?widok=paszport: otwórz paszport, gdy analiza jest gotowa
+  useEffect(() => {
+    if (!analysis || !pendingPassport.current) return
+    pendingPassport.current = false
+    setPassportFor(analysis)
+    if (isMobile) setSnap('full')
+  }, [analysis, isMobile])
+  // adres pamięta otwarty paszport (link „Kopiuj” otworzy go od razu)
+  useEffect(() => {
+    if (analysis) writeLink({ widok: passportOpen ? 'paszport' : null })
+  }, [analysis, passportOpen])
+  // historia analiz (ekran „Raporty”, stan w „Moje działki”) – tylko prawdziwe wyniki, nie dane przykładowe
+  useEffect(() => {
+    if (analysis && !mock) rememberAnalysis(analysis)
+  }, [analysis, mock])
+
   // nowa działka / analiza = bez podświetlenia starego miejsca
   useEffect(() => setHighlight(null), [analysis])
 

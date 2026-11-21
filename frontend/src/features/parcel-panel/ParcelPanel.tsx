@@ -25,6 +25,7 @@ import { StatusCard } from './StatusCard'
 import type { AnalysisRun, ForecastState, SearchPhase } from './types'
 import { WhatToDo } from './WhatToDo'
 import { useLang } from '@/lib/i18n'
+import { useSettings } from '@/lib/storage'
 
 /** Panel działki (SPEC 6) – prawa karta na komputerze, treść szuflady na telefonie. */
 export function ParcelPanel({
@@ -73,6 +74,7 @@ export function ParcelPanel({
   onShowOnMap?: (g: GeoJSON.Geometry) => void
 }) {
   const { t } = useLang()
+  const [settings] = useSettings()
   if (state.phase === 'idle') return <PanelEmpty onFocusSearch={onFocusSearch} onLocate={onLocate} />
 
   if (state.phase === 'loading')
@@ -152,7 +154,7 @@ export function ParcelPanel({
       {nonAgri ? <NonAgriculturalCard soil={analysis!.soil} /> : <StatusCard crop={crop} analysis={analysis} onOpen={analysis ? onOpenPassport : undefined} />}
       {analysis && !nonAgri && <CropSeasonCard season={analysis.crop_season} analysisDate={analysis.analysis_date} />}
       {crop && (
-        <details className="group rounded-xl border bg-surface p-3.5">
+        <details open={settings.mode === 'doradca' || undefined} className="group rounded-xl border bg-surface p-3.5">
           <summary className="flex min-h-6 cursor-pointer list-none items-center justify-between text-sm font-medium">
             {t('Postęp analizy')}
             <span className="text-text-muted group-open:hidden">{t('pokaż')}</span>

@@ -8,6 +8,8 @@ import { BRAND_NAME } from '@/lib/brand'
 import { cropLabel } from '@/lib/crops'
 import { formatDatePl, formatHa } from '@/lib/format'
 import { useLang } from '@/lib/i18n'
+import { NonAgriculturalCard } from '@/features/parcel-panel/NonAgriculturalCard'
+import { SoilCard } from '@/features/parcel-panel/SoilCard'
 import { SectionA } from './SectionA'
 import { SectionB } from './SectionB'
 import { SectionC } from './SectionC'
@@ -104,6 +106,7 @@ export function Passport({
                 </button>
               )}
             </div>
+            {!analysis.soil.non_agricultural && (
             <nav aria-label={t('Sekcje paszportu')} className="scrollbar-none -mx-1 flex gap-1.5 overflow-x-auto px-1">
               {NAV.map(([id, letter, label]) => (
                 <button
@@ -116,20 +119,33 @@ export function Passport({
                 </button>
               ))}
             </nav>
+            )}
           </>
         )}
         {report?.error && !print && <ErrorNotice {...report.error} onRetry={report.error.retryable ? report.download : undefined} />}
       </header>
 
-      <SectionA analysis={analysis} />
-      <WaveDivider />
-      <SectionB analysis={analysis} chartWidth={print ? 680 : undefined} />
-      <WaveDivider />
-      <SectionC analysis={analysis} />
-      <WaveDivider />
-      <SectionD analysis={analysis} onShowOnMap={print ? undefined : onShowOnMap} />
-      <WaveDivider />
-      <SectionE analysis={analysis} />
+      {analysis.soil.non_agricultural ? (
+        // SPEC 15.1: grunt nierolny – bez oceny suszy, tylko gleba i wiarygodność danych
+        <>
+          <NonAgriculturalCard soil={analysis.soil} />
+          <SoilCard soil={analysis.soil} />
+          <WaveDivider />
+          <SectionE analysis={analysis} />
+        </>
+      ) : (
+        <>
+          <SectionA analysis={analysis} />
+          <WaveDivider />
+          <SectionB analysis={analysis} chartWidth={print ? 680 : undefined} />
+          <WaveDivider />
+          <SectionC analysis={analysis} />
+          <WaveDivider />
+          <SectionD analysis={analysis} onShowOnMap={print ? undefined : onShowOnMap} />
+          <WaveDivider />
+          <SectionE analysis={analysis} />
+        </>
+      )}
     </article>
   )
 }

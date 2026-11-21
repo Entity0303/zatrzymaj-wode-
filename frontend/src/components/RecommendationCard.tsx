@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils'
 import { REC_CATEGORY } from '@/theme/recommendations'
 import { SourceTag } from '@/components/SourceTag'
 import { useLang } from '@/lib/i18n'
+import { useSettings } from '@/lib/storage'
 
 /**
  * Karta rekomendacji (SPEC 14): ikona kategorii, tytuł, zdanie, rozwijane „Dlaczego?”,
@@ -26,7 +27,9 @@ export function RecommendationCard({
   onShowOnMap?: () => void
 }) {
   const { t } = useLang()
-  const [open, setOpen] = useState(false)
+  const [settings] = useSettings()
+  // tryb doradcy: „Dlaczego?” rozwinięte od razu (SPEC 3)
+  const [open, setOpen] = useState(settings.mode === 'doradca' && !noData)
   const id = useId()
   const c = REC_CATEGORY[category]
   const Icon = c.icon

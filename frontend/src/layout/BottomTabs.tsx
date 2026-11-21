@@ -1,20 +1,23 @@
 import { cn } from '@/lib/utils'
-import { ACTIVE, SECTIONS } from './sections'
+import { goTo, usePage } from '@/lib/router'
+import { SECTIONS } from './sections'
 import { useLang } from '@/lib/i18n'
 
 /** Dolny pasek zakładek na telefonie (SPEC 12). */
 export function BottomTabs() {
   const { t } = useLang()
+  const page = usePage()
   return (
     <nav aria-label={t('Nawigacja główna')} className="relative z-[1300] flex h-16 shrink-0 border-t bg-surface md:hidden">
       {SECTIONS.map((s) => {
-        const active = s.key === ACTIVE
+        const active = s.key === page
         const Icon = s.icon
         return (
           <button
             key={s.key}
             type="button"
             aria-current={active ? 'page' : undefined}
+            onClick={() => goTo(s.key)}
             aria-disabled={!s.ready || undefined}
             aria-label={s.ready ? t(s.short) : t('{label} – wkrótce', { label: t(s.label) })}
             className={cn(

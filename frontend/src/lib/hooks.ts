@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { Parcel } from '@/api/types'
+import { SAVED_KEY, useStored } from './storage'
 
 export function useMediaQuery(query: string): boolean {
   const [matches, setMatches] = useState(() => window.matchMedia(query).matches)
@@ -33,27 +34,9 @@ export function useOnline(): boolean {
 /** Zapisana działka – tylko w pamięci przeglądarki (bez kont, bez danych osobowych). */
 export type SavedParcel = Pick<Parcel, 'id' | 'numer' | 'gmina' | 'obreb' | 'powierzchnia_ha'> & { zapisano: string }
 
-const KEY = 'zw.saved-parcels.v1'
-
-function load(): SavedParcel[] {
-  try {
-    const v = JSON.parse(localStorage.getItem(KEY) ?? '[]')
-    return Array.isArray(v) ? v : []
-  } catch {
-    return []
-  }
-}
-
 export function useSavedParcels() {
-  const [saved, setSaved] = useState<SavedParcel[]>(load)
-  const persist = (next: SavedParcel[]) => {
-    setSaved(next)
-    try {
-      localStorage.setItem(KEY, JSON.stringify(next))
-    } catch {
-      /* tryb prywatny / pełna pamięć – trzymamy tylko w stanie */
-    }
-  }
+  const [stored, persist] = useStored<SavedParcel[]>(SAVED_KEY, [])
+  const saved = useMemo(() => (Array.isArray(stored) ? stored : []), [stored])
   const isSaved = useCallback((id: string) => saved.some((p) => p.id === id), [saved])
   const toggle = (p: Parcel) => {
     if (saved.some((s) => s.id === p.id)) persist(saved.filter((s) => s.id !== p.id))
@@ -63,5 +46,6 @@ export function useSavedParcels() {
         ...saved,
       ])
   }
-  return { saved, isSaved, toggle }
+  const remove = (id: string) => persist(saved.filter((s) => s.id !== id))
+  return { saved, isSaved, toggle, remove }
 }
