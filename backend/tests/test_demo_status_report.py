@@ -147,8 +147,7 @@ def test_uldk_redirect_is_retried():
 
 
 @respx.mock
-def test_uldk_persistent_redirect_is_source_error(monkeypatch):
-    monkeypatch.setattr(uldk, "RETRY_DELAY_S", 0)
+def test_uldk_persistent_redirect_is_source_error():
     respx.get(settings.uldk_url).mock(return_value=httpx.Response(302, headers={"location": "https://x/resp/uldk.php"}))
     with pytest.raises(SourceError) as e:
         asyncio.run(uldk.by_id("201305_2.0038.6/1"))

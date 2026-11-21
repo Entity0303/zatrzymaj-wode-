@@ -74,6 +74,8 @@ async def get_with_retry(
     """
     import httpx
 
+    if settings.demo_offline:  # D55: w trybie demo offline nie wysyłamy żadnych zapytań zewnętrznych
+        raise SourceError(source, "tryb demo offline – bez połączenia z usługą")
     last = "brak odpowiedzi"
     for attempt in range(retries + 1):
         try:

@@ -21,6 +21,7 @@ from shapely.geometry import shape
 from app.analysis.crops import CROPS
 from app.core.config import settings
 from app.core.geo import to_2180
+from app.core.cache import TTLCache, cached_fetch
 from app.core.http import SourceError, get_with_retry
 from app.report import charts
 from app.schemas.analysis import AnalysisResponse
@@ -86,8 +87,21 @@ def map_frame(geometry_4326: dict, px: int = MAP_PX) -> tuple[tuple[float, float
     return bbox, charts.outline_svg(rings, px, px)
 
 
+ORTHO_SOURCE = "Ortofotomapa GUGiK"
+_ortho_cache: TTLCache[str] = TTLCache(ttl_s=None, max_items=128, name=ORTHO_SOURCE)  # bez wygasania (D53)
+
+
 async def ortho_image(bbox: tuple[float, float, float, float], px: int = MAP_PX) -> str | None:
-    """Ortofotomapa Geoportalu (WMS GetMap, EPSG:2180 – BBOX w kolejności północ, wschód) jako data URI."""
+    """Ortofotomapa Geoportalu jako data URI – z cache (także w trybie demo offline), None = niedostępna."""
+    key = (tuple(round(v, 1) for v in bbox), px)
+    try:
+        return await cached_fetch(_ortho_cache, key, ORTHO_SOURCE, lambda: _ortho_download(bbox, px))
+    except SourceError:
+        return None
+
+
+async def _ortho_download(bbox: tuple[float, float, float, float], px: int) -> str:
+    """WMS GetMap, EPSG:2180 – BBOX w kolejności północ, wschód."""
     minx, miny, maxx, maxy = bbox
     params = {
         "SERVICE": "WMS", "VERSION": "1.3.0", "REQUEST": "GetMap", "LAYERS": "Raster", "STYLES": "",
@@ -98,11 +112,11 @@ async def ortho_image(bbox: tuple[float, float, float, float], px: int = MAP_PX)
         resp = await asyncio.wait_for(
             get_with_retry(settings.ortho_wms_url, params, source="Ortofotomapa GUGiK", timeout_s=ORTHO_TIMEOUT_S,
                            retries=0), ORTHO_TIMEOUT_S + 1)
-    except (SourceError, asyncio.TimeoutError):
-        return None
+    except asyncio.TimeoutError as exc:
+        raise SourceError(ORTHO_SOURCE, "brak odpowiedzi") from exc
     ctype = resp.headers.get("content-type", "")
     if not ctype.startswith("image/"):
-        return None
+        raise SourceError(ORTHO_SOURCE, "odpowiedź nie jest obrazem")
     return f"data:{ctype.split(';')[0]};base64,{base64.b64encode(resp.content).decode()}"
 
 

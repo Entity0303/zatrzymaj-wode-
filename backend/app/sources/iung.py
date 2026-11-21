@@ -52,7 +52,7 @@ NOT_AGRICULTURAL = {5, 11, 12, 13, 14}  # gdy > 50% działki – ocena suszy rol
 # granica ± połowa szerokości sąsiedniej kategorii (II: 42,4 mm, III: 32,5 mm).
 REPRESENTATIVE_WOD_MM = {1: 106.3, 2: 148.7, 3: 186.2, 4: 218.8}
 
-_cache: TTLCache["SoilResult"] = TTLCache(ttl_s=7 * 24 * 3600, max_items=512, name="IUNG-PIB")
+_cache: TTLCache["SoilResult"] = TTLCache(ttl_s=None, max_items=512, name="IUNG-PIB")
 
 
 @dataclass

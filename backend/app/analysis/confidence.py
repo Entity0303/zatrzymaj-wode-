@@ -128,7 +128,12 @@ def level(points: int, capped: bool, stale: bool = False) -> Confidence:
 
 
 def stale_text(h: StaleHit) -> str:
-    local = h.stored_at.astimezone()
+    try:
+        from zoneinfo import ZoneInfo
+
+        local = h.stored_at.astimezone(ZoneInfo("Europe/Warsaw"))  # kontener działa w UTC
+    except Exception:  # noqa: BLE001
+        local = h.stored_at.astimezone()
     return f"{h.source}: dane z cache z dnia {local:%d.%m.%Y %H:%M} (źródło nie odpowiadało)"
 
 

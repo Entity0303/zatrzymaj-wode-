@@ -1,0 +1,75 @@
+{
+  "_opis": "Działki demo (A5d, D54): ładowane do indeksu działek przy starcie – działają bez ULDK i bez sieci. needs_fetch = true: geometrii jeszcze nie pobrano (ULDK blokował IP sieci hackathonu) – uzupełni ją scripts/warm_demo.py na dobrej sieci. Geometria w EPSG:2180 (wschód, północ), jak w ULDK.",
+  "parcels": [
+    {
+      "id": "201305_2.0038.6/1",
+      "query": "Wnory-Wandy 6/1",
+      "label": "Wnory-Wandy 6/1 – przykłady „Susza 2018”, „Mokry rok 2021”",
+      "wojewodztwo": "podlaskie",
+      "powiat": "powiat wysokomazowiecki",
+      "gmina": "Kobylin-Borzymy",
+      "obreb": "Wnory-Wandy",
+      "numer": "6/1",
+      "geom_wkt_2180": "POLYGON((741326.598870282 582135.860610104,741196.719087438 582172.956309767,741196.080461016 582126.579753392,741319.716303976 582092.766677043,741323.823760127 582113.17232317,741326.598870282 582135.860610104))",
+      "fetched_at": "2026-11-21T16:47:28+00:00",
+      "source": "ULDK GUGiK (zapisana odpowiedź GetParcelById)",
+      "needs_fetch": false
+    },
+    {
+      "id": "061704_2.0011.383/2",
+      "query": null,
+      "label": "Rybczewice 383/2 – przykład „Kukurydza – stan dziś”",
+      "wojewodztwo": "lubelskie",
+      "powiat": null,
+      "gmina": "Rybczewice",
+      "obreb": null,
+      "numer": "383/2",
+      "geom_wkt_2180": null,
+      "fetched_at": null,
+      "source": null,
+      "needs_fetch": true
+    },
+    {
+      "id": "143203_2.0027.112/11",
+      "query": "Szczytno 112/11",
+      "label": "Szczytno 112/11 (gm. Kampinos) – przykład „To nie jest pole”",
+      "wojewodztwo": "mazowieckie",
+      "powiat": null,
+      "gmina": "Kampinos",
+      "obreb": "Szczytno",
+      "numer": "112/11",
+      "geom_wkt_2180": null,
+      "fetched_at": null,
+      "source": null,
+      "needs_fetch": true
+    },
+    {
+      "id": null,
+      "query": "Szczytno 126/3",
+      "label": "Szczytno 126/3 (gm. Kampinos)",
+      "wojewodztwo": "mazowieckie",
+      "powiat": null,
+      "gmina": "Kampinos",
+      "obreb": "Szczytno",
+      "numer": "126/3",
+      "geom_wkt_2180": null,
+      "fetched_at": null,
+      "source": null,
+      "needs_fetch": true
+    },
+    {
+      "id": null,
+      "query": "Lasotka 118",
+      "label": "Lasotka 118",
+      "wojewodztwo": null,
+      "powiat": null,
+      "gmina": null,
+      "obreb": "Lasotka",
+      "numer": "118",
+      "geom_wkt_2180": null,
+      "fetched_at": null,
+      "source": null,
+      "needs_fetch": true
+    }
+  ]
+}

@@ -33,9 +33,18 @@ class Settings(BaseSettings):
     # ile lat wstecz pobieramy dane pogodowe
     history_years: int = 10
 
-    # cache (D44): dane bieżące 6 h, historyczne i stałe (działki, mapy gleb) 7 dni
+    # cache (D53): trwały plik SQLite (pusty = tylko pamięć procesu, np. testy); w Dockerze w wolumenie /data
+    cache_db: str = ""
+    # pogoda z ostatnich 7 dni (NASA uzupełnia je z opóźnieniem) – 6 h; dni zakończone wcześniej – bez wygasania
     cache_ttl_current_s: float = 6 * 3600
-    cache_ttl_history_s: float = 7 * 24 * 3600
+    cache_ttl_forecast_s: float = 3600
+    # tryb demo offline (D55): żadnych zapytań zewnętrznych, tylko cache
+    demo_offline: bool = False
+    # działki demo z app/data/demo_parcels.json ładowane do indeksu działek przy starcie (D54)
+    demo_parcels_preload: bool = True
+    # ULDK: blokada (302 / 429 / HTML) – ponowienia po 1 s i 3 s, potem bezpiecznik na 60 s (D54)
+    uldk_retry_delays_s: list[float] = [1.0, 3.0]
+    uldk_breaker_s: float = 60.0
 
     soilgrids_url: str = "https://rest.isric.org/soilgrids/v2.0/properties/query"
     soilgrids_timeout_s: float = 12.0

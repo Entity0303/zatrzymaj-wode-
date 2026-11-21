@@ -26,7 +26,7 @@ SOURCE_URL = "https://integracja.gugik.gov.pl/"
 NO_CLASSES_NOTE = "Powiat nie udostępnia klas bonitacyjnych w usłudze KIEG."
 
 _ROW = re.compile(r"<tr>\s*<td>(.*?)</td>\s*<td>(.*?)</td>\s*</tr>", re.S | re.I)
-_cache: TTLCache["KiegResult"] = TTLCache(ttl_s=7 * 24 * 3600, max_items=512, name="KIEG / EGiB")
+_cache: TTLCache["KiegResult"] = TTLCache(ttl_s=None, max_items=512, name="KIEG / EGiB")
 
 
 @dataclass

@@ -16,14 +16,14 @@ import numpy as np
 
 from app.analysis.et0 import DailyWeather, apply_et0, densify
 
-from app.core.cache import TTLCache, cached_fetch
+from app.core.cache import FOREVER, TTLCache, cached_fetch
 from app.core.config import settings
 from app.core.http import SourceError, get_client, get_with_retry
 
 SOURCE = "Open-Meteo (prognoza)"
 SOURCE_URL = "https://open-meteo.com/"
 
-_cache: TTLCache["Forecast"] = TTLCache(ttl_s=30 * 60, max_items=1024, name="Open-Meteo")
+_cache: TTLCache["Forecast"] = TTLCache(ttl_s=settings.cache_ttl_forecast_s, max_items=1024, name="Open-Meteo")  # 1 h (D53)
 
 # Kody pogody WMO -> (opis po polsku, ikona). Ikony to klucze rozumiane przez frontend.
 WMO: dict[int, tuple[str, str]] = {
@@ -211,7 +211,7 @@ def parse_archive(payload: dict) -> DailyWeather:
 async def fetch_archive(lon: float, lat: float, start: date, end: date) -> DailyWeather:
     key = (round(lon, 1), round(lat, 1), start.isoformat(), end.isoformat())
     recent = (date.today() - end).days <= 7
-    ttl = settings.cache_ttl_current_s if recent else settings.cache_ttl_history_s
+    ttl = settings.cache_ttl_current_s if recent else FOREVER  # D53
     return await cached_fetch(_archive_cache, key, ARCHIVE_SOURCE_SHORT, lambda: _download_archive(key, start, end), ttl)
 
 

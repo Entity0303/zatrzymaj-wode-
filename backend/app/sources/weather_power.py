@@ -11,7 +11,7 @@ from datetime import date
 import numpy as np
 
 from app.analysis.et0 import DailyWeather, apply_et0, densify
-from app.core.cache import TTLCache, cached_fetch
+from app.core.cache import FOREVER, TTLCache, cached_fetch
 from app.core.config import settings
 from app.core.http import SourceError, get_with_retry
 
@@ -75,9 +75,10 @@ async def fetch(lon: float, lat: float, start: date, end: date) -> DailyWeather:
 
 
 def ttl_for(end: date) -> float:
-    """Dane sprzed tygodnia już się nie zmieniają – 7 dni; bieżące (NASA uzupełnia je z opóźnieniem) – 6 h."""
+    """Dni zakończone ponad tydzień temu już się nie zmieniają – bez wygasania; bieżące (NASA uzupełnia je
+    z opóźnieniem) – 6 h (D53)."""
     recent = (date.today() - end).days <= 7
-    return settings.cache_ttl_current_s if recent else settings.cache_ttl_history_s
+    return settings.cache_ttl_current_s if recent else FOREVER
 
 
 async def _download(key: tuple, start: date, end: date) -> DailyWeather:

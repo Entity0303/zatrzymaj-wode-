@@ -43,7 +43,7 @@ SANDY = {"pl", "plp", "ps", "psp", "ż", "żp"}
 # Gleby lekkie i bardzo lekkie (kategorie agronomiczne): piaski luźne i słabogliniaste + piaski gliniaste
 LIGHT = SANDY | {"pgl", "pglp", "pgm", "pgmp"}
 
-_cache: TTLCache["SoilMapResult | None"] = TTLCache(ttl_s=7 * 24 * 3600, max_items=512, name=SOURCE)
+_cache: TTLCache["SoilMapResult | None"] = TTLCache(ttl_s=None, max_items=512, name=SOURCE)
 
 
 @dataclass(frozen=True)

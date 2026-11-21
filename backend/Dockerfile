@@ -16,7 +16,8 @@ RUN pip install -r requirements.txt
 
 COPY . .
 
-RUN useradd --create-home appuser
+# trwały cache (A5d): wolumen /data musi należeć do użytkownika aplikacji
+RUN useradd --create-home appuser     && mkdir -p /data && chown appuser:appuser /data
 USER appuser
 
 EXPOSE 8000
