@@ -115,3 +115,24 @@ Weryfikacja: `npm run build` (tsc + vite) przechodzi – w kontenerze z aktualny
 - **Powierzchnia uprawy:** pole liczbowe (ha) wypełnione `suggestions.area.value_ha`; gdy `area.estimated` – dopisek z `area.note` („oszacowanie…”). Zmiana → ponowne zapytanie z `cultivated_area_ha`.
 - **Status:** `status.scope_label` może być teraz „w polu – zimowanie”. **Nawadnianie kukurydzy:** nie ma dawek – pokaż samo `irrigation.message`.
 **Łamie zgodność:** nie (pola dodane / opcjonalne, nowa wartość `StatusScope` – nigdzie niemapowana w `Record`; build przechodzi).
+
+### 2026-11-21 · gałąź `a/backend` · A5b-2b – werdykt działki, obszar przybliżony, wieloletnie, „informacyjne”
+**Zmiany (addytywne; `backend/app/schemas/analysis.py` + `frontend/src/api/types.ts`; przykłady w `frontend/src/mocks/`):**
+- `AnalysisResponse` + **`verdict: Verdict | null`** (z uprawą i bez; null – grunt nierolny / brak WOD) i **`approximate_area: ApproximateArea | null`**.
+- `Verdict`: `headline` (jedno zdanie), `level` (`ok|warn|bad`), `statements[]` (4–6 × `VerdictStatement`: `kind` `gleba|opady|teren|uprawy|woda|uprawa_wybrana`, `level`, `text`, `numbers{}`), `crops_good[]` / `crops_bad[]` (`VerdictCrop`: `crop_id` = `RankingCropId`, `label`, `reason` – przy ❌ jeden powód), `note`.
+- `ApproximateArea`: `center` [lon, lat], `side_m` (100), `area_ha` (1), `reason`, `note` („Obszar przybliżony – brak granic działki z ULDK…”), `voivodeship_note`.
+- `GET /api/analysis` i `GET /api/report.pdf`: **`parcel_id` opcjonalne, nowe `lon`, `lat`** (punkt na mapie). Bez żadnego z nich → 422; punkt poza Polską → 404.
+- `IrrigationStatus` + **`informacyjne`** (kukurydza / tytoń z niedoborem – bez dawek, treść w `message`).
+- `CropSuggestions` + **`perennials: PerennialSection | null`** (`label` „Uprawy wieloletnie – inwestycja na lata”, `note`, `items[]` `PerennialSuggestion` – plony, ryzyko, `note` z „Wymaga osobnej analizy opłacalności”); **`groups` ma teraz tylko „polowe”**.
+- `Terrain.soil_group` + wartości `lekka|srednia|ciezka|organiczna` (`zwiezla` zostaje w typie dla zgodności, backend już jej nie zwraca).
+- Przykłady: `analysis.sample.json` i `analysis.no-crop.sample.json` z werdyktem dobrej działki (201305); **nowy `verdict.weak.sample.json`** – werdykt słabej działki (piasek, Puszcza Notecka, obszar przybliżony). Walidowane w `test_contract.py`.
+
+**Dla Mefju – jak pokazać:**
+- **Karta „Werdykt” na samej górze panelu działki** (przed stanem wody, od razu po wybraniu działki): duży `verdict.headline` z lewym paskiem w kolorze `verdict.level`; pod spodem `statements` w podanej kolejności – okrągła ikona w kolorze `level` (ok **#5BB37F** ✓, warn **#E8B931** !, bad **#C8453B** ✕), mała etykieta z `kind` (Gleba / Opady / Teren / Co siać / Woda / Wybrana uprawa) i `text` dużą czcionką. Niżej dwa rzędy chipów: „Siej” – `crops_good` (zielone ✓), „Nie siej” – `crops_bad` (czerwone ✕, `reason` w dymku albo jedną linią pod spodem). Gdy `crops_bad` puste – zdanie jest już w statements („…żadna z popularnych upraw nie jest odradzana”). `note` drobnym szarym tekstem.
+- **Pasek stref terenu** w karcie Werdykt pod zdaniem „Teren” (te same dane i kolory co w A6: `terrain.zones`, szerokość = `share_pct`).
+- **Obszar przybliżony:** gdy `approximate_area != null` – żółty pasek nad werdyktem z `approximate_area.note` (+ `reason` mniejszym), na mapie kwadrat zamiast obrysu działki (geometria jak zwykle w `parcel`), zamiast numeru działki „Obszar przybliżony (lat, lon)”. Klik na mapie, gdy wyszukanie działki zwróci 502 z ULDK → `GET /api/analysis?lon=&lat=`.
+- **Nawadnianie:** `irrigation.status = informacyjne` – etykieta „Informacja” (dodana w `IrrigationCard.tsx`), pokaż samo `message`.
+- **Ranking:** uprawy wieloletnie z `suggestions.perennials` – osobna, zwinięta sekcja pod rankingiem, mniejszym drukiem, bez ✅/🟡/❌.
+- **Pliki frontendu zmienione przez A (minimalnie, żeby typy się zgadzały):** `src/api/types.ts` (typy powyżej), `src/features/parcel-panel/IrrigationCard.tsx` (`informacyjne: { label: 'Informacja', cls: 'bg-surface-2 text-text-muted' }`), `src/lib/i18n.en.ts` (`'Informacja': 'Information'`), mocki (`analysis.sample.json`, `analysis.no-crop.sample.json`, nowy `verdict.weak.sample.json`).
+Weryfikacja: `tsc -b` przechodzi; `vite build` – lokalnie i w kontenerze brak paczki `@fontsource-variable/fraunces` z `package.json` (trzeba `npm install` / `docker compose build frontend`).
+**Łamie zgodność:** nie (pola dodane / opcjonalne; nowa wartość `IrrigationStatus` obsłużona w `Record`; `groups` bez „wieloletnie” – frontend dostaje je w `perennials`).
