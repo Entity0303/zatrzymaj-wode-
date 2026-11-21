@@ -1,0 +1,14 @@
+[project]
+name = "zatrzymaj-wode-backend"
+version = "0.1.0"
+description = "Backend: ocena sytuacji wodnej działki rolnej (HackNation 2026, zadanie KOWR)"
+requires-python = ">=3.12"
+# zależności: requirements.txt
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"

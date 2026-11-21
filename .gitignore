@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# Node
+node_modules/
+dist/
+
+# Środowisko i sekrety
+.env
+.env.*
+!.env.example
+
+# Dane lokalne / cache
+*.sqlite
+*.db
+cache/
+
+# IDE / system
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
