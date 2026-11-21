@@ -242,7 +242,7 @@ def _key(geom_2180: BaseGeometry) -> str:
 
 async def soil_for_parcel(geom_2180: BaseGeometry) -> SoilResult:
     """WCS, a gdy zawiedzie – punkty GetFeatureInfo. Obie metody zawiodą -> SourceError."""
-    return await cached_fetch(_cache, _key(geom_2180), SOURCE_SHORT, lambda: _download(geom_2180))
+    return await cached_fetch(_cache, _key(geom_2180), SOURCE_SHORT, lambda: _download(geom_2180), timeout_s=14.0)
 
 
 async def _download(geom_2180: BaseGeometry) -> SoilResult:

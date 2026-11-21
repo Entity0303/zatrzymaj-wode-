@@ -1,0 +1,95 @@
+@page {
+  size: A4 portrait;
+  margin: 14mm 13mm 18mm 13mm;
+  @bottom-left {
+    content: "Raport ma charakter pomocniczy. Wyniki oparte na danych publicznych – patrz ograniczenia.";
+    font: 7.5pt Inter, sans-serif; color: #5F6B64;
+  }
+  @bottom-right { content: "str. " counter(page) " / " counter(pages); font: 7.5pt Inter, sans-serif; color: #5F6B64; }
+}
+* { box-sizing: border-box; }
+body { font-family: Inter, sans-serif; color: #1E2A23; font-size: 9.5pt; line-height: 1.38; margin: 0;
+       font-variant-numeric: tabular-nums; }
+h1 { font-size: 17pt; margin: 0; color: #2F6B47; font-weight: 700; }
+h2 { font-size: 12.5pt; margin: 14pt 0 6pt; color: #2F6B47; font-weight: 650; border-bottom: 1.2pt solid #E3DED4;
+     padding-bottom: 2pt; break-after: avoid; }
+h2 .tag { font-size: 8pt; color: #5F6B64; font-weight: 500; margin-left: 4pt; }
+h3 { font-size: 10pt; margin: 0 0 3pt; font-weight: 650; }
+p { margin: 0 0 4pt; }
+.muted { color: #5F6B64; }
+.small { font-size: 8pt; }
+.tiny { font-size: 7.2pt; }
+
+/* nagłówek */
+.header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2pt solid #2F6B47;
+          padding-bottom: 6pt; }
+.brand { display: flex; align-items: center; gap: 7pt; }
+.brand .name { font-size: 9pt; font-weight: 700; color: #2F6B47; letter-spacing: .2pt; }
+.qr { text-align: center; width: 92pt; }
+.qr svg { width: 78pt; height: 78pt; }
+.qr .tiny { word-break: break-all; }
+
+/* dane działki */
+.grid2 { display: flex; gap: 10pt; }
+.grid2 > div { flex: 1; }
+table.kv { border-collapse: collapse; width: 100%; }
+table.kv td { padding: 2pt 4pt 2pt 0; vertical-align: top; }
+table.kv td:first-child { color: #5F6B64; width: 38%; }
+.map { position: relative; width: 196pt; height: 196pt; border-radius: 6pt; overflow: hidden; background: #EFEBE3;
+       border: 1pt solid #E3DED4; }
+.map img, .map svg.outline { position: absolute; left: 0; top: 0; width: 196pt; height: 196pt; }
+.map .nomap { position: absolute; top: 40%; width: 100%; text-align: center; color: #5F6B64; font-size: 8pt; }
+.map-cap { width: 196pt; }
+
+/* stan */
+.status { border-radius: 8pt; padding: 8pt 10pt; display: flex; gap: 10pt; align-items: center; }
+.status .badge { color: #fff; font-weight: 700; border-radius: 99pt; padding: 3pt 9pt; font-size: 9.5pt; white-space: nowrap; }
+.status .score { font-size: 22pt; font-weight: 700; line-height: 1; }
+.status .score small { font-size: 8pt; font-weight: 500; color: #5F6B64; }
+.cards { display: flex; gap: 6pt; margin-top: 6pt; }
+.card { flex: 1; border: 1pt solid #E3DED4; border-radius: 6pt; padding: 5pt 6pt; break-inside: avoid; }
+.card .label { color: #5F6B64; font-size: 7.6pt; }
+.card .value { font-size: 13pt; font-weight: 700; margin: 1pt 0; }
+.card .note { font-size: 7.6pt; color: #5F6B64; }
+.tagline { display: inline-block; font-size: 7pt; color: #5F6B64; border: .6pt solid #E3DED4; border-radius: 99pt;
+           padding: 0 4pt; }
+
+/* wykresy */
+.chart { break-inside: avoid; margin-bottom: 4pt; }
+.chart svg { width: 100%; height: auto; }
+.legend span { display: inline-block; margin-right: 8pt; }
+.legend i { display: inline-block; width: 10pt; height: 3pt; vertical-align: middle; margin-right: 3pt; }
+
+/* przyczyny */
+.cause { display: flex; align-items: center; gap: 6pt; margin-bottom: 3pt; break-inside: avoid; }
+.cause .t { width: 92pt; font-weight: 600; }
+.cause .b { width: 110pt; height: 7pt; background: #EFEBE3; border-radius: 99pt; overflow: hidden; }
+.cause .b i { display: block; height: 7pt; background: #8B6B4A; }
+.cause .p { width: 28pt; text-align: right; font-weight: 700; }
+.cause .d { flex: 1; color: #5F6B64; font-size: 8.3pt; }
+
+/* rekomendacje */
+.rec { border: 1pt solid #E3DED4; border-left: 4pt solid #2F6B47; border-radius: 6pt; padding: 6pt 8pt; margin-bottom: 6pt;
+       break-inside: avoid; }
+.rec .top { display: flex; justify-content: space-between; gap: 6pt; }
+.rec .cat { font-size: 7.4pt; font-weight: 700; text-transform: uppercase; letter-spacing: .4pt; }
+.rec .meta { margin-top: 3pt; font-size: 8pt; }
+.rec .meta span { display: inline-block; margin-right: 8pt; }
+.pill { display: inline-block; border-radius: 99pt; padding: 0 5pt; font-size: 7.4pt; font-weight: 600; background: #EFEBE3; }
+.pill.panel { background: #E6F4EA; color: #2F6B47; }
+.warning { background: #FDF4D8; border-radius: 4pt; padding: 2pt 5pt; margin-top: 3pt; font-size: 8pt; font-weight: 600; }
+.why { margin-top: 3pt; font-size: 7.8pt; color: #5F6B64; }
+.eco { margin-top: 3pt; font-size: 8pt; }
+
+/* tabele źródeł */
+table.src { border-collapse: collapse; width: 100%; font-size: 7.8pt; }
+table.src th { text-align: left; color: #5F6B64; font-weight: 600; border-bottom: .8pt solid #E3DED4; padding: 2pt 3pt; }
+table.src td { border-bottom: .5pt solid #EFEBE3; padding: 2pt 3pt; vertical-align: top; }
+.ok { color: #2F6B47; font-weight: 700; } .czesciowo { color: #B8860B; font-weight: 700; } .brak { color: #C8453B; font-weight: 700; }
+ul.lim { margin: 2pt 0 0 12pt; padding: 0; font-size: 8pt; }
+ul.lim li { margin-bottom: 1.5pt; }
+.box { border: 1pt solid #E3DED4; border-radius: 6pt; padding: 6pt 8pt; break-inside: avoid; }
+.fractions { display: flex; height: 10pt; border-radius: 99pt; overflow: hidden; margin: 3pt 0; }
+.fractions i { display: block; height: 10pt; }
+.page-break { break-before: page; }
+.keep { break-inside: avoid; }

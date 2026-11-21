@@ -448,6 +448,9 @@ async def dev_water(
 # ═══ PEŁNE /api/analysis (A4) ═══════════════════════════════════════════════════════════════
 
 ANALYSIS_BUDGET_S = 27.0  # cała analiza < 30 s (wymóg KOWR) – zapas na serializację
+# twardy limit całego pobrania na źródło (D45) – limit httpx dotyczy pojedynczej operacji, nie całego zapytania
+SOURCE_LIMIT_S = {"IUNG-PIB": 15.0, "KIEG / EGiB GUGiK": 8.0, "Open-Meteo (prognoza)": 10.0,
+                  "SoilGrids (ISRIC)": 12.5, "Mapa glebowo-rolnicza (GUGiK)": 8.0}
 
 
 def _step(id_: str, label: str, state: str, note: str | None = None, ms: int | None = None) -> LoadingStep:
@@ -469,8 +472,8 @@ def _balance_indicator(wb) -> Indicator:
     note = None
     if wb.deviation_mm is not None and wb.mean_balance_mm is not None:
         more = "mniej" if wb.deviation_mm < 0 else "więcej"
-        note = (f"o {abs(wb.deviation_mm):.0f} mm {more} niż zwykle (średnia 10 lat {wb.mean_balance_mm:.0f} mm), "
-                f"od {wb.season_start:%d.%m}")
+        mean = f"{wb.mean_balance_mm:.0f}".replace("-", "−")
+        note = f"o {abs(wb.deviation_mm):.0f} mm {more} niż zwykle (średnia 10 lat {mean} mm), od {wb.season_start:%d.%m}"
     return Indicator(value=wb.current_balance_mm, unit="mm", status=status, note=note,
                      source_tag=wb.history.source_tag)
 
@@ -530,12 +533,13 @@ async def _run(parcel_id: str, crop: str | None, date: dt.date | None, previous_
 
     async def timed(name: str, coro):
         st = perf_counter()
+        limit = min(remaining, SOURCE_LIMIT_S.get(name, remaining))
         try:
-            res = await asyncio.wait_for(coro, timeout=remaining)
+            res = await asyncio.wait_for(coro, timeout=limit)
         except SourceError as exc:
             res = exc
         except asyncio.TimeoutError:
-            res = SourceError(name, "przekroczono limit czasu analizy")
+            res = SourceError(name, f"brak odpowiedzi w {limit:.0f} s")
         return res, int((perf_counter() - st) * 1000)
 
     is_today = analysis_date == today

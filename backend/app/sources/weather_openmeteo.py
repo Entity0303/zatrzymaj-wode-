@@ -128,7 +128,7 @@ async def fetch(lon: float, lat: float, days: int = 16, past_days: int = 0) -> F
     opóźnienia NASA POWER w modelu wody w glebie)."""
     # zaokrąglenie do ~1 km: lepsze trafienia w cache, a rozdzielczość modelu i tak jest większa
     key = (round(lon, 2), round(lat, 2), days, past_days)
-    return await cached_fetch(_cache, key, SOURCE, lambda: _download(key, days, past_days))
+    return await cached_fetch(_cache, key, SOURCE, lambda: _download(key, days, past_days), timeout_s=9.5)
 
 
 async def _download(key: tuple, days: int, past_days: int) -> Forecast:

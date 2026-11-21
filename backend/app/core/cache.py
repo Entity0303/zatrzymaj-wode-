@@ -9,6 +9,7 @@ nie odpowiada, `cached_fetch` zwraca przeterminowany wynik i zapisuje w bieżąc
 TODO: trwały cache w SQLite (CLAUDE.md – Stack).
 """
 
+import asyncio
 import datetime as dt
 import time
 from collections import OrderedDict
@@ -125,14 +126,19 @@ def note_stale(source: str, stored_at: dt.datetime, reason: str) -> None:
 
 
 async def cached_fetch(
-    cache: TTLCache[V], key: Hashable, source: str, fetch: Callable[[], Awaitable[V]], ttl_s: float | None = None
+    cache: TTLCache[V], key: Hashable, source: str, fetch: Callable[[], Awaitable[V]], ttl_s: float | None = None,
+    timeout_s: float | None = None,
 ) -> V:
-    """Świeży wpis z cache → zapytanie do źródła → przy błędzie źródła przeterminowany wpis (z adnotacją)."""
+    """Świeży wpis z cache → zapytanie do źródła (z łącznym limitem `timeout_s`) → przy błędzie lub przekroczeniu
+    czasu przeterminowany wpis (z adnotacją)."""
     hit = cache.get(key)
     if hit is not None:
         return hit
     try:
-        value = await fetch()
+        try:
+            value = await (asyncio.wait_for(fetch(), timeout_s) if timeout_s else fetch())
+        except asyncio.TimeoutError as exc:
+            raise SourceError(source, f"brak odpowiedzi w {timeout_s:.0f} s") from exc
     except NotFoundError:
         raise
     except SourceError as exc:

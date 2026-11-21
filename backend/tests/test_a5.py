@@ -351,3 +351,22 @@ def test_analysis_uses_stale_cache_when_sources_down(client):
     nasa = next(s for s in b["reliability"]["sources"] if s["name"] == "NASA POWER")
     assert nasa["status"] == "czesciowo" and "dane z cache z dnia" in nasa["note"]
     assert b["status"]["score"] == first["status"]["score"]  # te same dane – ten sam wynik
+
+
+def test_cached_fetch_timeout_falls_back_to_stale():
+    c: TTLCache[int] = TTLCache(ttl_s=60)
+
+    async def slow():
+        await asyncio.sleep(1)
+        return 2
+
+    async def scenario():
+        c.set("k", 1)
+        c.expire_all()
+        with stale_scope() as hits:
+            assert await cached_fetch(c, "k", "KIEG", slow, timeout_s=0.05) == 1
+        assert hits[0].reason == "brak odpowiedzi w 0 s"
+        with pytest.raises(SourceError, match="brak odpowiedzi"):
+            await cached_fetch(TTLCache(ttl_s=60), "k", "KIEG", slow, timeout_s=0.05)
+
+    asyncio.run(scenario())

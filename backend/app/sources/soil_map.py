@@ -112,7 +112,7 @@ async def soil_map_at(lon: float, lat: float) -> "SoilMapResult | None":
                                     timeout_s=settings.soil_map_timeout_s, retries=0)
         return parse_response(resp.text)
 
-    return await cached_fetch(_cache, key, SOURCE, download)
+    return await cached_fetch(_cache, key, SOURCE, download, timeout_s=7.5)
 
 
 def clear_cache() -> None:

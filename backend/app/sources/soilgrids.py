@@ -79,7 +79,7 @@ async def texture_at(lon: float, lat: float) -> SoilGridsResult:
             raise SourceError(SOURCE, "odpowiedź nie jest poprawnym JSON") from exc
         return parse_response(payload, *key)
 
-    return await cached_fetch(_cache, key, SOURCE, download)
+    return await cached_fetch(_cache, key, SOURCE, download, timeout_s=settings.soilgrids_timeout_s)
 
 
 def clear_cache() -> None:
