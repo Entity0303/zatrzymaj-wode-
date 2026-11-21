@@ -4,6 +4,17 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-22 02:20 · `a/backend` · A5c: wyszukiwanie (`/api/search`), działka z kliknięcia, własny obrys pola
+**Co:**
+- **Geokoder (test na żywo, D73):** ULDK 302, UUG „blocked for abuse”, **PRNG GUGiK WFS działa** (źródło główne), Nominatim działa (rezerwa + odwrotne geokodowanie). Odkrycia o PRNG: literał z polskim znakiem nie dopasowuje się – wzorzec LIKE z `.`; serwer odrzuca szybkie serie połączeń – odstęp 1,2 s + ponowienie.
+- **`GET /api/search`** (D74): rozpoznawanie formatu (id / „obręb numer” / nazwa / przecinek = gmina), działki przez istniejące `uldk.by_id` (+ wariant z myślnikiem i nazwy kanoniczne), miejscowości: słownik demo + PRNG + Nominatim; do 10 wyników z `label`, `lon/lat/bbox`; 200 + podpowiedź przy braku wyników; awarie w `notices`. „Tczów 123” – przyczyny opisane w D74 (nie do potwierdzenia na żywo: ULDK 302).
+- **`GET /api/parcel?lon&lat`** – już było; dopisane testy.
+- **Własny obrys** (D75): `POST /api/analysis` i `/api/report.pdf` z `geometry`, walidacja z czytelnymi komunikatami, `parcel.source = drawn`, id z kształtu, gmina z ULDK / Nominatim, PDF „Pole narysowane przez rolnika”.
+- Słownik demo (9 miejscowości z PRNG) + `scripts/build_places_demo.py`; `.ai/test-parcels.md` – tabela smoke.
+**Pliki:** `backend/app/{core/search_query.py, sources/{prng,nominatim,places}.py, routers/search.py, schemas/search.py, analysis/drawn_field.py, data/places_demo.json}`, `core/config.py`, `main.py`, `routers/{analysis,reports,parcel}.py`, `schemas/{analysis,parcel}.py`, `sources/uldk.py`, `analysis/{confidence,approx_area}.py`, `report/{builder.py,templates/report.html}`, `scripts/build_places_demo.py`, `tests/{test_a5c.py,conftest.py,fixtures/{prng_tcz.xml,nominatim_*.json}}`; frontend: `api/types.ts`, `mocks/{search,drawn}.sample.json`.
+**Kontrakt:** TAK (addytywnie) – `/api/search`, `Parcel.source/name`, `POST` z `geometry` (`contract-changes.md`, „Dla Mefju” + różnice względem `places.proposal.ts`).
+**Uwaga:** `tsc -b` zgłasza tylko brak `maplibre-gl` (kod B, `features/map3d`); backend 403 testy bez sieci.
+
 ## 2026-11-22 01:10 · `a/backend` · A5b-2c: drobne poprawki PDF – nazwa Wodoskop, bez QR, „woda” = info
 **Co:** nazwa produktu „Wodoskop” (nagłówek + podtytuł, stopka, `<title>`, metadane author/generator, tytuł API); QR tylko przy ustawionym `PUBLIC_URL` (domyślnie puste, `.env.example` zakomentowane); werdykt – pozycja `woda` ma `level = info` (ikona kropli #2F80C9 w PDF), poziom całości liczony bez niej; PDF obszaru przybliżonego – tylko nota „brak dokładnych granic działki” (usunięte „ULDK” z noty i ograniczeń, powód techniczny nie trafia do PDF); nowe PNG pierwszych stron. Testy: +3 (343).
 **Pliki:** `core/config.py`, `.env.example`, `main.py`, `analysis/{verdict,approx_area,confidence}.py`, `schemas/analysis.py`, `report/{builder.py,report.css,templates/report.html}`, `tests/test_a5b2b.py`; frontend: `api/types.ts`, mocki.

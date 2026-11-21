@@ -1,6 +1,6 @@
 # Status – osoba A (Dominik), backend
 
-_Stan na: 2026-11-22 01:10_
+_Stan na: 2026-11-22 02:20_
 
 ## Zrobione
 - Wyszukiwanie działki ULDK: pełny identyfikator, „obręb numer”, punkt; `GET /api/parcel` (409 lista kandydatów, 404, 502 z nazwą źródła), timeout 10 s + jedna ponowna próba, cache 24 h.
@@ -49,10 +49,16 @@ _Stan na: 2026-11-22 01:10_
   - analiza po punkcie `lon`/`lat` – obszar przybliżony 1 ha, gdy ULDK nie odpowiada (`analysis/approx_area.py`, D69); test słabej ziemi: Puszcza Notecka i Kurpie – ❌ pszenica, rzepak; ✅ żyto, łubin (owies ❌ – D70);
   - PDF: str. 1 „Werdykt”, str. 2 „Co tu posiać?”, maks. 6 stron (D71); przykłady i PNG pierwszych stron: `reports/examples/{dobra,slaba}-*-p1.png`.
 - **A5b-2c:** nazwa „Wodoskop” w PDF i API, bez QR (włącza `PUBLIC_URL`), „woda” w werdykcie = `info`, PDF obszaru przybliżonego bez komunikatów technicznych (D72).
-- Testy: **343 bez sieci** (`docker run --network none`) + 5 live. Analiza z cache: 0,04–0,2 s; PDF 1–2 s (punkt przy blokadzie ULDK ~5 s – ponowienia ULDK).
+- **A5c (gałąź `a/backend`) – wyszukiwanie + własny obrys pola:**
+  - `GET /api/search?q=` (`routers/search.py`, `core/search_query.py`, `sources/{prng,nominatim,places}.py`): identyfikator → działka, „obręb numer” → działki (kilka obrębów = lista z gminą i powiatem; ponowienie z nazwą kanoniczną), nazwa → miejscowości (słownik demo + **PRNG GUGiK** + rezerwa Nominatim OSM); brak wyników = 200 + `hint`; awarie źródeł w `notices` (D73, D74);
+  - UUG GUGiK zablokowany z tej sieci („blocked for abuse”), ULDK 302 – „Tczów 123” nie dało się potwierdzić na żywo (przyczyny w D74);
+  - `GET /api/parcel?lon&lat` – istniał, dopisane testy; `Parcel.source` / `name`;
+  - własny obrys: `POST /api/analysis` i `POST /api/report.pdf` z `geometry` (0,05–200 ha, w Polsce, bez samoprzecięć, id z kształtu, gmina z ULDK / Nominatim) – D75;
+  - słownik demo `app/data/places_demo.json` (offline), `scripts/build_places_demo.py`.
+- Testy: **403 bez sieci** (343 + 60 nowych w `test_a5c.py`) (`docker run --network none`) + 5 live. Analiza z cache: 0,04–0,2 s; PDF 1–2 s (punkt przy blokadzie ULDK ~5 s – ponowienia ULDK).
 
 ## W trakcie (gałąź)
-- `a/backend` – A5b-2b i A5b-2c gotowe (commit + push); **do `main` nie mergowane**.
+- `a/backend` – A5b-2b, A5b-2c i A5c gotowe (commit + push); **do `main` nie mergowane**.
 
 ## Przed prezentacją (na dobrej sieci; w Git Bash poprzedź komendy `MSYS_NO_PATHCONV=1`)
 1. `docker compose up -d --build` – backend z wolumenem cache (`/data/cache.sqlite`).
@@ -70,6 +76,7 @@ _Stan na: 2026-11-22 01:10_
 6. **NMT GUGiK też odsyła 302** (A6) – porównanie na żywo 201305 z `research/terrain/out/201305_2.0038.6-1.facts.json` nie było możliwe; offline: ten sam kod rdzenia (testy prototypu przechodzą), siatka i liczba punktów identyczne z wynikiem C (test), zapisany wynik C używany jako zapas. Na dobrej sieci: `warm_demo.py` pobierze NMT do cache – potem porównać `terrain.zone_share_pct` z plikiem C.
 
 ## Następne
+0. **Na żywo z innej sieci (A5c):** `Tczów 123`, `Tczów 123/4`, `Wola 1` przez `/api/search` (ULDK); ew. `GetRegionByNameOrId` (obręby / gminy po nazwie) jako dodatkowe źródło; porównanie PRNG z ULDK dla obrębów o nietypowych nazwach.
 1. Werdykt i ranking – do weryfikacji z agronomem / mentorem: owies na piasku (dziś ❌), współczynniki gleby, progi kategorii, próg KBW V–VI < −100 mm i 3 / 5 lat; norma opadów (NASA POWER zawyża względem IMGW).
 2. Obszar przybliżony: województwo z granic administracyjnych zamiast najbliższego środka (dziś przy granicy może być sąsiednie).
 3. Rowy i cieki BDOT10k (zastawka potwierdzona na mapie, warstwa „Spływ” z rowami), Sentinel-2; pas buforowy po warstwicy.
@@ -81,6 +88,7 @@ _Stan na: 2026-11-22 01:10_
 - B: obraz kontenera frontendu nie ma `@fontsource-variable/fraunces` – `docker compose build frontend`.
 - **B (A5b-2a): ranking „Co tu posiać?”, pola historii 1–3 lat i powierzchni** – `contract-changes.md`, wpis A5b-2a „Dla Mefju”.
 - **B (A5b-2b): karta „Werdykt” na samej górze panelu, pasek stref, oznaczenie obszaru przybliżonego, klik na mapie → `?lon=&lat=`, sekcja wieloletnich, status `informacyjne`** – `contract-changes.md`, wpis A5b-2b „Dla Mefju”.
+- **B (A5c): lista podpowiedzi `/api/search` (grupy Działki / Miejscowości, debounce 300 ms), przybliżenie do `bbox`, „Narysuj swoje pole” jako opcja dodatkowa (`POST /api/analysis` z `geometry`), `Parcel.source = drawn`; różnice względem `places.proposal.ts`** – `contract-changes.md`, wpis A5c „Dla Mefju”.
 - **B (A5b-2c): pozycja `woda` w werdykcie ma `level = info` (kropla #2F80C9); nie pokazywać `approximate_area.reason`** – `contract-changes.md`.
 - **B (A6): pasek stref terenu, warstwy Teren i Spływ wody** – `contract-changes.md`, wpis A6 „Dla Mefju” (kolory, `kind`, dymki); w Terrain.tsx zmienić kolory stoku i płasko na #E8B931 i #5BB37F.
 - **B: przykłady na ekranie startowym brać z `GET /api/demo/examples`** – w trybie offline i przy blokadzie ULDK backend zwraca tylko przykłady, które działają (dziś: Susza 2018, Mokry rok 2021); lista lokalna pokaże jury przykłady, które skończą się błędem.
