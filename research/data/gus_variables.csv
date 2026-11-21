@@ -1,0 +1,16 @@
+crop_id,var_id,nazwa_zmiennej,jednostka,poziom,lata_od,lata_do,przyklad_wartosci,uwagi
+zboza_ozime,4332,pszenica – plony z 1 ha – ogółem,dt/ha,województwa (unit-level=2),2016,2025,59.3 (2025),pszenica ogółem jako zastępnik – GUS BDL nie rozdziela form ozimych i jarych; pszenica w PL to w ok. 85–90% forma ozima (szac.)
+zboza_jare,4344,jęczmień – plony z 1 ha – ogółem,dt/ha,województwa (unit-level=2),2016,2025,49.6 (2025),jęczmień ogółem jako zastępnik – GUS BDL nie rozdziela form; jęczmień w PL to głównie forma jara (szac.)
+kukurydza_ziarno,47752,kukurydza na ziarno – plony z 1 ha – ogółem,dt/ha,województwa (unit-level=2),2016,2025,78.2 (2025),
+kukurydza_kiszonka,47749,kukurydza na zielonkę – plony z 1 ha – ogółem,dt/ha,województwa (unit-level=2),2016,2025,513.0 (2025),kukurydza na zielonkę – plon zielonej masy (nie suchej masy)
+rzepak,4380,rzepak i rzepik – plony z 1 ha – ogółem,dt/ha,województwa (unit-level=2),2016,2025,32.6 (2025),rzepak i rzepik razem (ozimy i jary)
+rzepak_jesien,4380,rzepak i rzepik – plony z 1 ha – ogółem,dt/ha,województwa (unit-level=2),2016,2025,32.6 (2025),ta sama zmienna co rzepak – okres jesienny nie daje osobnego plonu
+ziemniak,4368,ziemniaki – plony z 1 ha – ogółem,dt/ha,województwa (unit-level=2),2016,2025,325.4 (2025),
+burak_cukrowy,4374,buraki cukrowe – plony z 1 ha – ogółem,dt/ha,województwa (unit-level=2),2016,2025,716.6 (2025),plon korzeni
+straczkowe,47740,rośliny strączkowe – plony z 1 ha – ogółem,dt/ha,województwa (unit-level=2),2016,2025,26.6 (2025),"rośliny strączkowe razem (jadalne i pastewne, na ziarno)"
+warzywa,4398 / 4397,warzywa gruntowe – zbiory / powierzchnia,dt/ha,województwa (unit-level=2),2016,2025,264.8 (2025),plon wyliczony = zbiory / powierzchnia warzyw gruntowych
+drzewa_owocowe,4402 / 4401,owoce z drzew – zbiory / powierzchnia,dt/ha,województwa (unit-level=2),2017,2025,148.5 (2025),plon wyliczony = zbiory / powierzchnia owoców z drzew (wszystkie gatunki)
+krzewy_owocowe,1751718+1751726+1751730+1751734+1751738+1751746 / 1751716+1751724+1751728+1751732+1751736+1751744,agrest + porzeczki ogółem + maliny + aronia + borówki + pozostałe owoce jagodowe – zbiory / powierzchnia,dt/ha,województwa (unit-level=2),2021,2025,29.6 (2025),"plon wyliczony = Σ zbiorów / Σ powierzchni: agrest, porzeczki, maliny, aronia, borówki, pozostałe jagodowe (bez truskawek); w BDL od 2021"
+truskawki,1751742 / 1751740,truskawki – zbiory / powierzchnia,dt/ha,województwa (unit-level=2),2021,2025,64.3 (2025),plon wyliczony = zbiory / powierzchnia; w BDL od 2021
+tyton,47768,tytoń – plony z 1 ha – ogółem,dt/ha,województwa (unit-level=2),2016,2025,24.4 (2025),
+chmiel,,,,,,,,"BRAK DANYCH W GUS: brak zmiennej plonu, zbiorów ani powierzchni chmielu w BDL na poziomie województw (są tylko ceny skupu i płatności ARiMR)"
