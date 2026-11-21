@@ -23,6 +23,7 @@ from __future__ import annotations
 import heapq
 import math
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
@@ -34,6 +35,17 @@ import numpy as np
 ULDK_URL = "https://uldk.gugik.gov.pl/"
 NMT_URL = "https://services.gugik.gov.pl/nmt/"
 USER_AGENT = "zatrzymaj-wode-research/0.1"
+
+
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    """NIGDY nie podążamy za przekierowaniem: GUGiK przy limicie odpowiada 302 i serwuje plik ~126 MB.
+    redirect_request → None sprawia, że urllib zgłasza HTTPError z kodem 3xx; treści 3xx nie czytamy."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
+_OPENER = urllib.request.build_opener(_NoRedirect)
 
 # --------------------------------------------------------------------------------------
 # Parametry i progi (jawne – patrz NOTES.md „Progi i dlaczego”)
@@ -231,8 +243,9 @@ def http_request(url: str, data: dict | None = None, timeout: float = 12.0,
     for attempt in range(retries + 1):
         t0 = time.monotonic()
         try:
-            req = urllib.request.Request(url, data=body, headers={"User-Agent": USER_AGENT})
-            with urllib.request.urlopen(req, timeout=timeout) as resp:
+            req = urllib.request.Request(url, data=body, headers={"User-Agent": USER_AGENT,
+                                                                 "Connection": "close"})
+            with _OPENER.open(req, timeout=timeout) as resp:
                 chunks, size = [], 0
                 while True:
                     if time.monotonic() - t0 > timeout:
@@ -245,6 +258,12 @@ def http_request(url: str, data: dict | None = None, timeout: float = 12.0,
                         raise ValueError(f"odpowiedź > {max_bytes} B")
                     chunks.append(part)
             return b"".join(chunks).decode("utf-8", errors="replace")
+        except urllib.error.HTTPError as exc:
+            if 300 <= exc.code < 400:  # przekierowanie = usługa ogranicza ruch; treści nie czytamy
+                exc.close()
+                last = RuntimeError(f"HTTP {exc.code} (przekierowanie – usługa ogranicza ruch)")
+            else:
+                last = exc
         except Exception as exc:  # noqa: BLE001 – każde źródło może zawieść, ponawiamy
             last = exc
             time.sleep(0.3 * (attempt + 1))
