@@ -1,4 +1,4 @@
-"""A3: uprawy (FAO-56) i model wody w glebie – bez sieci, dane syntetyczne + fikstury A1/A2."""
+"""A3/A3b: uprawy (FAO-56, kalendarz PL) i ciągły model wody w glebie – bez sieci."""
 
 import json
 from datetime import date, timedelta
@@ -11,20 +11,24 @@ import pytest
 import respx
 from fastapi.testclient import TestClient
 
-from app.analysis.crops import CROPS, get_crop
+from app.analysis.crops import CROPS, KC_BARE, KC_DORMANT, ZE_M, ZR_DORMANT_M, get_crop
 from app.analysis.et0 import DailyWeather
 from app.analysis.water_balance import (
+    MAX_DOSE_MM,
     HorizonDay,
+    State,
+    _resize,
     climatology_horizon,
     effective_precip,
-    initial_depletion,
+    initial_state,
+    kr_coefficient,
     ks_coefficient,
     risk_class,
-    round_dose,
-    simulate,
+    run,
     soil_water_model,
     taw_from_wod,
-    to_contract_indicators,
+    to_contract,
+    window_start,
 )
 from app.core.config import settings
 from app.main import app
@@ -43,6 +47,7 @@ WKT_201305 = (
 ULDK_ONE = f"0\nSRID=2180;{WKT_201305}|201305_2.0038.6/1|podlaskie|powiat wysokomazowiecki|Kobylin-Borzymy|Wnory-Wandy|6/1\n"
 WHEAT = get_crop("zboza_ozime")
 MAIZE = get_crop("kukurydza_ziarno")
+WOD = 150.0
 
 
 @pytest.fixture(autouse=True)
@@ -61,163 +66,222 @@ def client():
 
 
 def synth(start: date, end: date, precip, et0) -> DailyWeather:
-    """precip/et0: funkcje (lata, daty) -> tablica."""
+    """precip/et0: funkcje (lata, miesiące, daty) -> tablica."""
     dates = np.arange(np.datetime64(start, "D"), np.datetime64(end, "D") + np.timedelta64(1, "D"), dtype="datetime64[D]")
     years = dates.astype("datetime64[Y]").astype(int) + 1970
+    months = dates.astype("datetime64[M]").astype(int) % 12 + 1
     n = len(dates)
     w = DailyWeather(
-        dates=dates, precip=np.asarray(precip(years, dates), float), tmax=np.full(n, 20.0), tmin=np.full(n, 10.0),
-        lat=52.9, lon=22.6, elevation_m=130.0, source="TEST", source_url="", resolution="",
+        dates=dates, precip=np.asarray(precip(years, months, dates), float), tmax=np.full(n, 20.0),
+        tmin=np.full(n, 10.0), lat=52.9, lon=22.6, elevation_m=130.0, source="TEST", source_url="", resolution="",
     )
-    w.et0 = np.asarray(et0(years, dates), float)
+    w.et0 = np.asarray(et0(years, months, dates), float)
     w.et0_method = np.full(n, "PM")
     return w
+
+
+def _et0_seasonal(years, months, dates):
+    return np.select([np.isin(months, [11, 12, 1, 2]), np.isin(months, [3, 10]), np.isin(months, [4, 9])],
+                     [0.5, 1.5, 2.5], default=4.0)
+
+
+def _wet(years, months, dates):
+    return np.full(len(years), 4.5)
+
+
+def _dry_2018(years, months, dates):
+    """Mokro przez wszystkie lata, w sezonie 2018 (od VIII 2017) prawie bez deszczu."""
+    dry = dates >= np.datetime64("2017-08-01")
+    return np.where(dry, 0.2, 4.5)
 
 
 # ── uprawy ──────────────────────────────────────────────────────────────────────────────────
 
 
-def test_all_15_crops_match_contract():
+def test_all_15_crops_match_contract_and_calendar():
     assert set(CROPS) == set(get_args(CropId))
     for c in CROPS.values():
-        assert 0 < c.kc_ini <= 1.2 and 0 < c.kc_mid <= 1.25 and 0 < c.kc_end <= 1.2
-        assert 0 < c.p < 1 and 0.2 <= c.root_depth_m <= 2.0 and c.source
-    for cid in ("drzewa_owocowe", "krzewy_owocowe", "truskawki", "chmiel"):
-        assert CROPS[cid].season(2024) == (date(2024, 4, 1), date(2024, 10, 31))
-    assert CROPS["zboza_ozime"].start == (3, 1) and CROPS["rzepak"].start == (3, 1)
-    assert CROPS["kukurydza_ziarno"].start == (5, 1) and CROPS["ziemniak"].start == (4, 20)
-    assert CROPS["burak_cukrowy"].start == (4, 1) and CROPS["rzepak_jesien"].start == (8, 20)
-    assert date(2024, 4, 1) <= date(2024, *CROPS["zboza_jare"].start) <= date(2024, 4, 15)
+        assert c.length == (date(2001, *c.harvest) - date(2001, *c.start)).days + 1  # fazy przeskalowane
+        assert 0 < c.p < 1 and c.source
+    harvest = {"zboza_ozime": (7, 20), "zboza_jare": (8, 5), "rzepak": (7, 15), "kukurydza_ziarno": (10, 10),
+               "kukurydza_kiszonka": (9, 15), "ziemniak": (9, 15), "burak_cukrowy": (10, 20)}
+    for cid, h in harvest.items():
+        assert CROPS[cid].harvest == h
+    assert WHEAT.season(2018) == (date(2018, 3, 1), date(2018, 7, 20)) and WHEAT.length == 142
 
 
-def test_kc_by_stage():
-    c = WHEAT  # 20 / 60 / 50 / 30 dni; Kc 0,70 / 1,15 / 0,30
-    assert c.kc(0) == 0.70 and c.kc(19) == 0.70 and c.stage(19) == "początkowa"
-    assert c.kc(20) == pytest.approx(0.70 + 0.45 / 60) and c.stage(20) == "rozwoju"
-    assert c.kc(79) == pytest.approx(1.15) and c.kc(80) == 1.15 and c.stage(100) == "pełni rozwoju"
-    assert c.kc(159) == pytest.approx(0.30) and c.stage(159) == "dojrzewania"
-    assert c.kc(160) is None and c.kc(-1) is None
-    assert c.season(2018) == (date(2018, 3, 1), date(2018, 8, 7))
+def test_kc_and_phases_scaled():
+    a, b, c, d = WHEAT.phases  # proporcje 20/60/50/30 przeskalowane do 142 dni
+    assert a + b + c + d == 142
+    assert WHEAT.kc(0) == 0.70 and WHEAT.stage(0) == "poczatkowa"
+    assert WHEAT.kc(a + b) == 1.15 and WHEAT.stage(a + b) == "pelnia"
+    assert WHEAT.kc(141) == pytest.approx(0.30) and WHEAT.stage(141) == "dojrzewanie"
+    assert WHEAT.kc(142) is None
 
 
-# ── TAW, RAW, Ks, opad efektywny ────────────────────────────────────────────────────────────
+def test_root_growth_linear_from_sowing():
+    grow = MAIZE.phases[0] + MAIZE.phases[1]
+    assert MAIZE.root_depth(0) == ZE_M
+    assert MAIZE.root_depth(grow // 2) == pytest.approx(ZE_M + (MAIZE.root_depth_m - ZE_M) * (grow // 2) / grow)
+    assert MAIZE.root_depth(grow) == MAIZE.root_depth_m
+    assert WHEAT.root_depth(0) == ZR_DORMANT_M  # oziminy po zimie
+
+
+@pytest.mark.parametrize(
+    ("crop", "d", "phase", "sensitive"),
+    [
+        ("zboza_ozime", date(2018, 1, 15), "spoczynek_zimowy", False),
+        ("zboza_ozime", date(2018, 4, 20), "rozwoj", True),
+        ("zboza_ozime", date(2018, 7, 15), "dojrzewanie", False),
+        ("zboza_ozime", date(2018, 8, 10), "po_zbiorze", False),
+        ("zboza_ozime", date(2018, 10, 5), "wschody_jesienne", False),
+        ("zboza_ozime", date(2018, 11, 21), "spoczynek_zimowy", False),
+        ("kukurydza_ziarno", date(2018, 4, 10), "przed_siewem", False),
+        ("kukurydza_ziarno", date(2018, 5, 5), "poczatkowa", True),
+        ("kukurydza_ziarno", date(2018, 10, 20), "po_zbiorze", False),
+        ("drzewa_owocowe", date(2018, 12, 1), "spoczynek_zimowy", False),
+        ("rzepak_jesien", date(2018, 6, 1), "przed_siewem", False),
+        ("rzepak_jesien", date(2018, 9, 1), "poczatkowa", True),
+        ("rzepak_jesien", date(2019, 1, 10), "spoczynek_zimowy", False),
+    ],
+)
+def test_crop_phase_calendar(crop, d, phase, sensitive):
+    info = get_crop(crop).day_info(d)
+    assert info.phase == phase and info.sensitive is sensitive
+    if phase in ("przed_siewem", "po_zbiorze"):
+        assert info.bare and info.kc == KC_BARE and info.zr == ZE_M
+    if phase == "spoczynek_zimowy":
+        assert info.kc == KC_DORMANT
+    if crop == "zboza_ozime" and phase == "wschody_jesienne":
+        assert info.season_year == d.year + 1  # wschody należą do następnego sezonu
+
+
+# ── TAW, RAW, Ks, Kr, warstwy ───────────────────────────────────────────────────────────────
 
 
 def test_taw_scaled_to_root_depth():
-    assert taw_from_wod(150, 1.5) == 150  # korzenie głębsze niż 1 m – bez zwiększania
-    assert taw_from_wod(150, 0.5) == 75  # ziemniak: połowa profilu
-    assert taw_from_wod(150, 0.3) == pytest.approx(45)
-    taw = taw_from_wod(150, MAIZE.root_depth_m)
-    assert MAIZE.p * taw == pytest.approx(82.5)
+    assert taw_from_wod(150, 1.5) == 150 and taw_from_wod(150, 0.5) == 75
 
 
-def test_ks_fao56_eq84():
-    assert ks_coefficient(50, 100, 50) == 1.0
-    assert ks_coefficient(75, 100, 50) == 0.5
-    assert ks_coefficient(100, 100, 50) == 0.0
+def test_ks_and_kr():
+    assert ks_coefficient(50, 100, 50) == 1.0 and ks_coefficient(75, 100, 50) == 0.5
+    assert kr_coefficient(5, 18, 9) == 1.0 and kr_coefficient(13.5, 18, 9) == 0.5 and kr_coefficient(18, 18, 9) == 0.0
 
 
 def test_effective_precip_runoff():
     np.testing.assert_allclose(effective_precip(np.array([10.0, 30.0, 50.0])), [10.0, 28.0, 44.0])
 
 
-# ── bilans dzienny ──────────────────────────────────────────────────────────────────────────
+def test_resize_keeps_total_depletion():
+    st = State(d1=6.0, d2=44.0, zr=0.12)  # profil 1 m
+    _resize(st, 0.56, WOD)  # korzenie rosną – plaster z warstwy dolnej
+    assert st.total() == pytest.approx(50.0) and st.d1 == pytest.approx(6.0 + 44.0 * 0.44 / 0.88)
+    _resize(st, ZE_M, WOD)  # zbiór – strefa maleje
+    assert st.total() == pytest.approx(50.0) and st.zr == ZE_M
 
 
-def test_drought_leads_to_stress_rain_does_not():
-    n = 30
-    dry = simulate(np.zeros(n), np.full(n, 5.0), np.ones(n), taw=100, raw=50, dr0=0)
-    assert dry.dr[9] == pytest.approx(50)  # 10 dni × 5 mm
-    assert dry.stress_days > 0 and (dry.ks[11:] < 1).all()
-    assert (np.diff(dry.dr[10:]) < 5).all()  # Ks < 1 spowalnia przesuszanie
-    assert dry.dr.max() <= 100
-    wet = simulate(np.full(n, 10.0), np.full(n, 5.0), np.ones(n), taw=100, raw=50, dr0=0)
-    assert wet.stress_days == 0 and wet.dr.max() == 0
+# ── ciągły bilans ───────────────────────────────────────────────────────────────────────────
 
 
-def test_percolation_above_field_capacity():
-    r = simulate(np.array([30.0, 0.0]), np.array([0.0, 2.0]), np.ones(2), taw=100, raw=50, dr0=10)
-    assert r.dp[0] == pytest.approx(18.0)  # 30 − 20% z 10 mm = 28 mm efektywne; ubytek 10 → nadmiar 18
-    assert r.dr[0] == 0 and r.dr[1] == pytest.approx(2.0)
+def test_winter_recharge_refills_profile_with_percolation():
+    days = [date(2017, 11, 1) + timedelta(days=k) for k in range(120)]
+    st = State(d1=0.12 * WOD * 0.6, d2=0.88 * WOD * 0.6, zr=ZR_DORMANT_M)  # 60% ubytku po lecie
+    st.zr = ZR_DORMANT_M
+    tr = run(WHEAT, WOD, days, np.full(120, 3.0), np.full(120, 0.5), st)
+    assert tr.dtot[0] > 80 and tr.dtot[-1] < 1.0  # zostaje tylko parowanie ostatniego dnia
+    assert tr.dp.sum() > 0  # nadmiar przesiąka
 
 
-def test_missing_day_keeps_state():
-    r = simulate(np.array([0.0, np.nan, 0.0]), np.array([3.0, 3.0, 3.0]), np.ones(3), taw=100, raw=50, dr0=0)
-    assert r.missing == 1 and list(r.dr) == [3.0, 3.0, 6.0]
-
-
-def test_initial_depletion_from_winter_deficit():
-    w = synth(date(2017, 11, 1), date(2018, 3, 31), lambda y, d: np.zeros(len(y)), lambda y, d: np.full(len(y), 0.5))
-    dr0, bal, start = initial_depletion(w, date(2018, 3, 1), taw=150)
-    assert start == date(2017, 11, 1)
-    assert bal == pytest.approx(-0.5 * 120)  # 120 dni XI–II
-    assert dr0 == pytest.approx(60)
-    wet = synth(date(2017, 11, 1), date(2018, 3, 31), lambda y, d: np.full(len(y), 2.0), lambda y, d: np.full(len(y), 0.5))
-    assert initial_depletion(wet, date(2018, 3, 1), taw=150)[0] == 0.0  # dodatni bilans → profil pełny
+def test_no_reset_at_sowing_dry_spring_maize_starts_with_deficit():
+    w_dry = synth(date(2006, 8, 1), date(2018, 7, 14), _dry_2018, _et0_seasonal)
+    st, bal = initial_state(w_dry, MAIZE, WOD, window_start(MAIZE, 2018))
+    assert bal < 0 and st.total() > 0  # suche lato–jesień 2017 → profil niepełny na 1 XI
+    days = [date(2017, 11, 1) + timedelta(days=k) for k in range((date(2018, 5, 1) - date(2017, 11, 1)).days)]
+    i0 = int((np.datetime64("2017-11-01") - w_dry.dates[0]).astype(int))
+    tr = run(MAIZE, WOD, days, w_dry.precip[i0 : i0 + len(days)], w_dry.et0[i0 : i0 + len(days)], st)
+    assert tr.dtot[-1] > 0.3 * WOD  # 30 IV: deficyt nie zniknął
+    r_dry = soil_water_model(w_dry, MAIZE, WOD, date(2018, 7, 15))
+    w_wet = synth(date(2006, 8, 1), date(2018, 7, 14), _wet, _et0_seasonal)
+    r_wet = soil_water_model(w_wet, MAIZE, WOD, date(2018, 7, 15))
+    assert r_dry.stress_days_season > r_wet.stress_days_season == 0
+    assert r_dry.stress_days_season > (r_dry.mean_prev_stress_days or 0)
 
 
 # ── model na datę analizy ───────────────────────────────────────────────────────────────────
 
 
-def _dry_2018(years, dates):
-    return np.where(years == 2018, 0.3, 3.0)  # 2018 sucho, wcześniej mokro
+def test_ripening_no_alarm_no_irrigation():
+    w = synth(date(2006, 8, 1), date(2018, 7, 14), _dry_2018, _et0_seasonal)
+    r = soil_water_model(w, WHEAT, WOD, date(2018, 7, 15))
+    assert r.phase == "dojrzewanie" and not r.sensitive and r.scope == "strefa_korzeni"
+    assert r.irrigation.status == "nieuzasadnione_w_fazie" and r.days_to_stress is None
+    assert r.stress_days_season > 0  # stres z faz wrażliwych sezonu policzony
+    out = to_contract(r, WHEAT, date(2018, 7, 15))
+    assert out.risk_7d.value is None and out.risk_7d.label == "Nie dotyczy"
+    assert "nawadnianie nieuzasadnione w tej fazie uprawy" in out.risk_7d.note
+    assert out.irrigation.status == "nieuzasadnione_w_fazie" and out.irrigation_rec is None
 
 
-def _et0_3(years, dates):
-    return np.full(len(years), 3.0)
+def test_after_harvest_no_irrigation_but_water_state_and_season_summary():
+    w = synth(date(2006, 8, 1), date(2018, 8, 9), _dry_2018, _et0_seasonal)
+    r = soil_water_model(w, WHEAT, WOD, date(2018, 8, 10))
+    assert r.phase == "po_zbiorze" and r.irrigation.status == "nieuzasadnione_w_fazie"
+    assert r.water_pct is not None and r.scope == "profil" and r.season_complete
+    out = to_contract(r, WHEAT, date(2018, 8, 10))
+    assert out.soil_water.last_season.year == 2018 and out.soil_water.last_season.stress_days == r.stress_days_season
 
 
-def test_model_dry_year_stress_vs_previous_years():
-    w = synth(date(2007, 11, 1), date(2018, 7, 14), _dry_2018, _et0_3)
-    r = soil_water_model(w, WHEAT, 150, date(2018, 7, 15))
-    assert r.season_status == "w_sezonie" and r.day_of_season == 137
-    assert r.taw_mm == 150 and r.raw_mm == 82.5
-    assert r.raw_exceeded and r.stress_days_season > 30
-    assert len(r.stress_by_year) == 11 and r.stress_by_year[0][0] == 2018
-    assert all(d == 0 for _, d in r.stress_by_year[1:])  # mokre lata – bez stresu
-    assert r.mean_prev_stress_days == 0
-    assert r.horizon_kind == "scenariusz" and r.days_to_stress == 0 and r.risk == "wysokie"
-    assert r.irrigation.needed and r.irrigation.dose_mm % 5 == 0 and r.irrigation.when == date(2018, 7, 15)
-    ind = to_contract_indicators(r, WHEAT, date(2018, 7, 15))
-    assert ind.soil_water_pct.value == r.water_pct and ind.soil_water_pct.source_tag.kind == "szacunek_modelu"
-    assert ind.risk_7d.source_tag.kind == "szacunek_modelu" and "scenariusz typowej pogody" in ind.risk_7d.note
-    assert ind.stress_days_by_year[0].is_current and ind.irrigation.category == "nawadnianie"
+@pytest.mark.parametrize(("category", "dose"), [(1, 17.5), (2, 22.5), (3, 27.5), (4, 32.5), (None, 22.5)])
+def test_irrigation_dose_by_soil_category(category, dose):
+    w = synth(date(2006, 8, 1), date(2018, 6, 9), _dry_2018, _et0_seasonal)
+    r = soil_water_model(w, WHEAT, WOD, date(2018, 6, 10), soil_category=category)
+    assert r.sensitive and r.irrigation.status == "zalecane"
+    assert r.irrigation.dose_mm == dose <= MAX_DOSE_MM
+    assert r.irrigation.first_date == date(2018, 6, 10) and r.irrigation.total_7d_mm >= dose
+    if r.irrigation.doses_7d > 1:
+        assert r.irrigation.interval_days >= 2 and "powtórz za ok." in r.irrigation.message
+    assert r.irrigation.message.startswith(f"{dose:g}".replace(".", ",") + " mm teraz")
 
 
-def test_model_wet_year_no_stress_no_irrigation():
-    w = synth(date(2007, 11, 1), date(2018, 7, 14), lambda y, d: np.full(len(y), 4.0), _et0_3)
-    r = soil_water_model(w, WHEAT, 150, date(2018, 7, 15))
-    assert r.stress_days_season == 0 and r.water_pct == 100 and not r.raw_exceeded
-    assert r.risk == "niskie" and not r.irrigation.needed
-    assert r.percolation_mm > 0
+def test_wet_season_irrigation_not_needed():
+    w = synth(date(2006, 8, 1), date(2018, 6, 9), _wet, _et0_seasonal)
+    r = soil_water_model(w, WHEAT, WOD, date(2018, 6, 10))
+    assert r.irrigation.status == "niepotrzebne" and r.risk == "niskie" and r.stress_days_season == 0
 
 
-def test_model_winter_deficit_lowers_start():
-    w = synth(date(2007, 11, 1), date(2018, 3, 20), lambda y, d: np.full(len(y), 0.2), lambda y, d: np.full(len(y), 0.8))
-    r = soil_water_model(w, WHEAT, 150, date(2018, 3, 21))
-    assert r.winter_balance_mm < 0 and r.dr0_mm > 0
-    assert any("niepełnym zapasem" in x for x in r.limitations)
+def test_november_state_off_season():
+    w = synth(date(2006, 8, 1), date(2018, 11, 20), _dry_2018, _et0_seasonal)
+    r = soil_water_model(w, MAIZE, WOD, date(2018, 11, 21))
+    assert r.phase == "po_zbiorze" and r.scope == "profil" and r.water_pct is not None
+    assert r.description.startswith("poza sezonem") and "niedobór" in r.description
+    assert r.rank_of == 10 and r.rank_lower == 0  # suchszy niż każdy z 10 lat
+    out = to_contract(r, MAIZE, date(2018, 11, 21))
+    assert out.soil_water_pct.value == r.water_pct and out.soil_water.scope == "profil"
+    assert out.soil_water.last_season.year == 2018 and out.irrigation.status == "nieuzasadnione_w_fazie"
+
+
+def test_winter_state_refilling_description():
+    def autumn_rain(years, months, dates):
+        return np.where(np.isin(months, [12, 1]), 3.0, _dry_2018(years, months, dates))  # doładowanie trwa
+
+    w = synth(date(2006, 8, 1), date(2019, 1, 14), autumn_rain, _et0_seasonal)
+    r = soil_water_model(w, WHEAT, WOD, date(2019, 1, 15))
+    assert r.phase == "spoczynek_zimowy" and "odbudowuje zapas wody" in r.description
 
 
 def test_forecast_used_for_today_and_fills_source_lag():
-    analysis = date(2018, 7, 15)
-    w = synth(date(2007, 11, 1), date(2018, 7, 11), lambda y, d: np.full(len(y), 4.0), _et0_3)  # opóźnienie 3 dni
-    fc = [HorizonDay(analysis + timedelta(days=k), 0.0, 9.0) for k in range(-3, 16)]  # sucho i gorąco
-    r = soil_water_model(w, WHEAT, 150, analysis, forecast=fc)
+    analysis = date(2018, 6, 10)
+    w = synth(date(2006, 8, 1), date(2018, 6, 6), _wet, _et0_seasonal)  # opóźnienie 3 dni
+    fc = [HorizonDay(analysis + timedelta(days=k), 0.0, 8.0) for k in range(-3, 16)]
+    r = soil_water_model(w, WHEAT, WOD, analysis, forecast=fc)
     assert r.horizon_kind == "prognoza"
     assert any("uzupełnione danymi modelu Open-Meteo" in x for x in r.limitations)
-    assert r.days_to_stress is not None and r.days_to_stress > 0
-    assert r.risk == risk_class(r.days_to_stress)
-    ind = to_contract_indicators(r, WHEAT, analysis)
-    assert ind.risk_7d.source_tag.kind == "prognoza" and ind.risk_7d.days_to_stress == r.days_to_stress
+    assert r.days_to_stress is not None and r.risk == risk_class(r.days_to_stress)
+    assert to_contract(r, WHEAT, analysis).risk_7d.source_tag.kind == "prognoza"
 
 
 def test_climatology_scenario_is_median_of_previous_years():
-    w = synth(
-        date(2007, 11, 1), date(2018, 7, 31),
-        lambda y, d: (2018 - y).astype(float),  # 2017 → 1 mm … 2008 → 10 mm
-        lambda y, d: np.full(len(y), 2.0),
-    )
+    w = synth(date(2006, 8, 1), date(2018, 7, 31), lambda y, m, d: (2018 - y).astype(float), lambda y, m, d: np.full(len(y), 2.0))
     h = climatology_horizon(w, date(2018, 7, 15), 3)
     assert [x.precip for x in h] == [5.5, 5.5, 5.5] and h[0].et0 == 2.0
 
@@ -225,28 +289,6 @@ def test_climatology_scenario_is_median_of_previous_years():
 @pytest.mark.parametrize(("days", "cls"), [(0, "wysokie"), (3, "wysokie"), (4, "średnie"), (7, "średnie"), (8, "niskie"), (None, "niskie")])
 def test_risk_classes(days, cls):
     assert risk_class(days) == cls
-
-
-def test_irrigation_dose_rounding():
-    assert round_dose(103) == 105 and round_dose(2) == 5 and round_dose(112.4) == 110
-
-
-def test_before_season_no_invented_stress():
-    w = synth(date(2006, 11, 1), date(2018, 4, 9), _dry_2018, _et0_3)
-    r = soil_water_model(w, MAIZE, 150, date(2018, 4, 10))  # kukurydza od 1 V
-    assert r.season_status == "przed_sezonem" and r.water_pct is None and r.stress_by_year == []
-    ind = to_contract_indicators(r, MAIZE, date(2018, 4, 10))
-    assert ind.soil_water_pct.value is None and ind.risk_7d.value is None
-    assert "Poza sezonem wegetacji tej uprawy" in ind.soil_water_pct.note
-    assert ind.soil_water_pct.source_tag.kind == "brak_danych"
-
-
-def test_after_season_summary_only():
-    w = synth(date(2007, 11, 1), date(2018, 9, 14), _dry_2018, _et0_3)
-    r = soil_water_model(w, WHEAT, 150, date(2018, 9, 15))  # sezon do 7 VIII
-    assert r.season_status == "po_sezonie" and r.water_pct is None and r.irrigation is None
-    assert r.stress_by_year[0] == (2018, r.stress_days_season) and len(r.stress_by_year) == 11
-    assert to_contract_indicators(r, WHEAT, date(2018, 9, 15)).soil_water_pct.value is None
 
 
 # ── endpoint deweloperski ───────────────────────────────────────────────────────────────────
@@ -258,15 +300,15 @@ def test_dev_water_endpoint(client):
     respx.get(settings.iung_wcs_url).mock(return_value=httpx.Response(200, text=WCS_201305))
     respx.get(settings.kieg_url).mock(return_value=httpx.Response(200, text=KIEG_CLASSES))
     respx.get(settings.nasa_power_url).mock(return_value=httpx.Response(200, json=NASA))
-    r = client.get("/api/dev/water", params={"parcel_id": "201305_2.0038.6/1", "crop": "zboza_ozime", "date": "2018-07-15"})
-    assert r.status_code == 200
+    r = client.get("/api/dev/water", params={"parcel_id": "201305_2.0038.6/1", "crop": "zboza_ozime", "date": "2018-06-10"})
+    assert r.status_code == 200, r.text
     b = r.json()
-    assert b["soil"]["dominant_code"] == 3 and b["soil"]["classes"] == ["RIIIb", "RIVa", "RIVb"]
-    assert b["season"]["status"] == "w_sezonie" and b["model"]["taw_mm"] == pytest.approx(166.2, abs=0.2)
-    assert b["soil_water_pct"]["source_tag"]["kind"] == "szacunek_modelu"
-    assert b["risk_7d"]["source_tag"]["kind"] == "szacunek_modelu"  # data historyczna → scenariusz
-    assert b["stress_days_by_year"][0]["year"] == 2018 and b["stress_days_by_year"][0]["is_current"]
-    assert any("poprzednich lat" in x for x in b["limitations"])  # fikstura ma tylko 2017–2018
+    assert b["soil"]["dominant_code"] == 3 and b["crop_season"]["phase"] == "pelnia"
+    assert b["soil_water_pct"]["value"] is not None and b["soil_water"]["scope"] == "strefa_korzeni"
+    assert b["irrigation"]["status"] in ("zalecane", "niepotrzebne")
+    if b["irrigation"]["status"] == "zalecane":
+        assert b["irrigation"]["dose_mm"] == 27.5  # kategoria III
+    assert b["stress_days_by_year"][0]["year"] == 2018
 
 
 @respx.mock
@@ -279,7 +321,7 @@ def test_dev_water_non_agricultural_parcel(client):
     b = client.get("/api/dev/water", params={"parcel_id": "201305_2.0038.6/1", "crop": "zboza_ozime", "date": "2018-07-15"}).json()
     assert b["non_agricultural"] is True and b["soil"]["non_agricultural_reason"] == "las"
     assert b["model"] is None and b["soil_water_pct"]["value"] is None
-    assert "nie ma tu zastosowania" in b["soil_water_pct"]["note"]
+    assert b["irrigation"]["status"] == "brak_danych"
 
 
 # ── test na żywo (pytest -m live -s) ────────────────────────────────────────────────────────
@@ -297,17 +339,14 @@ def test_live_water_model_table():
                 for d in ("2018-07-15", "2021-07-15", today):
                     t0 = time.perf_counter()
                     r = c.get("/api/dev/water", params={"parcel_id": pid, "crop": crop, "date": d})
-                    sec = time.perf_counter() - t0
                     assert r.status_code == 200, r.text
-                    rows.append((pid, crop, d, r.json(), sec))
-    print("\n| działka | uprawa | data | woda % | woda mm | dni stresu (sezon) | ten rok vs śr. 10 lat | ryzyko 7 dni | nawadnianie | czas s |")
+                    rows.append((pid, crop, d, r.json(), time.perf_counter() - t0))
+    print("\n| działka | uprawa | data | faza | woda % | woda mm | dni stresu | sezon vs śr. 10 lat | ryzyko 7 dni | nawadnianie | czas s |")
     for pid, crop, d, b, sec in rows:
         m = b["model"] or {}
-        cur = b["stress_days_by_year"][0]["stress_days"] if b["stress_days_by_year"] else None
-        irr = (f"{b['irrigation']['description'].split(' –')[0]} ({m.get('irrigation_date')})" if b["irrigation"] else
-               (m.get("irrigation_text") or "—"))
-        print(f"| {pid} | {crop} | {d} | {b['soil_water_pct']['value']} | {b['soil_water_mm']['value']} | "
-              f"{m.get('stress_days_season')} | {cur} vs {m.get('mean_prev_stress_days')} | "
-              f"{b['risk_7d']['label']} ({b['risk_7d']['note']}) | {irr} | {sec:.2f} |")
-        if b["season"] and b["season"]["status"] != "w_sezonie":
-            print(f"|   ↳ {b['season']['status']}: {b['limitations'][1] if len(b['limitations']) > 1 else ''}")
+        print(f"| {pid} | {crop} | {d} | {b['crop_season']['phase_label']} | {b['soil_water_pct']['value']} "
+              f"({b['soil_water']['scope']}) | {b['soil_water_mm']['value']} | {m.get('stress_days_season')} | "
+              f"{m.get('stress_days_season')} vs {m.get('mean_prev_stress_days')} | {b['risk_7d']['label']} | "
+              f"{b['irrigation']['message']} | {sec:.2f} |")
+        assert b["irrigation"]["dose_mm"] is None or b["irrigation"]["dose_mm"] <= 35
+        assert b["soil_water_pct"]["value"] is not None

@@ -24,14 +24,15 @@ from app.analysis.et0 import DailyWeather
 from app.analysis.crops import get_crop
 from app.analysis.soil import assess_soil
 from app.analysis.soil import to_contract as soil_to_contract
+from app.analysis.crops import PHASE_LABELS
 from app.analysis.water_balance import (
     HorizonDay,
     SoilWaterResult,
     build_history,
     history_range,
     soil_water_model,
-    to_contract_indicators,
 )
+from app.analysis.water_balance import to_contract as model_to_contract
 from app.core.config import settings
 from app.core.http import SourceError, http_error, in_poland, not_implemented
 from app.routers.parcel import resolve_parcel
@@ -39,10 +40,13 @@ from app.schemas.analysis import (
     AnalysisResponse,
     CropId,
     History,
+    CropSeason,
     Indicator,
+    IrrigationPlan,
     Recommendation,
     RiskIndicator,
     Soil,
+    SoilWaterState,
     SourceStatus,
     YearStress,
 )
@@ -286,40 +290,27 @@ async def dev_soil(parcel_id: str = Query(description="Identyfikator działki UL
 
 
 # ── TYMCZASOWE (deweloperskie): GET /api/dev/water?parcel_id=&crop=&date= ───────────────────
-# Pogoda (A1) + gleba (A2) + model wody w glebie FAO-56 (A3) w formacie kontraktu.
+# Pogoda (A1) + gleba (A2) + ciągły model wody w glebie FAO-56 (A3/A3b) w formacie kontraktu.
 # ZNIKNIE razem z modelami DevWater*, gdy /api/analysis zwróci prawdziwy wynik.
 
 
-class DevWaterSeason(BaseModel):
-    status: str = Field(description="w_sezonie | przed_sezonem | po_sezonie | brak_danych")
-    start: dt.date
-    end: dt.date
-    day_of_season: int | None
-    stage: str | None
-    kc: float | None
-
-
 class DevWaterModel(BaseModel):
-    taw_mm: float
-    raw_mm: float
-    root_depth_m: float
-    p: float
-    dr_mm: float | None
-    dr0_mm: float | None
-    winter_balance_mm: float | None
-    winter_window_start: dt.date | None
-    raw_exceeded: bool | None
-    ks: float | None
+    window_start: dt.date | None
+    init_balance_mm: float | None
+    data_until: dt.date | None
+    root_depth_m: float | None
+    taw_root_mm: float | None
+    raw_root_mm: float | None
+    taw_profile_mm: float | None
+    d1_mm: float | None = Field(description="Ubytek wody w strefie czynnej")
+    dtot_mm: float | None = Field(description="Ubytek wody w profilu 1 m")
     percolation_mm: float | None
     stress_days_season: int | None
     mean_prev_stress_days: float | None
-    horizon_kind: str | None = Field(description="prognoza | scenariusz")
+    horizon_kind: str | None
     days_to_stress: int | None
     risk: str | None
-    horizon: list[dict] = Field(description="[{date, dr_mm}] – ubytek wody w kolejnych dniach horyzontu")
-    irrigation_text: str | None
-    irrigation_dose_mm: int | None
-    irrigation_date: dt.date | None
+    horizon: list[dict] = Field(description="[{date, d1_mm, raw_mm, phase}]")
 
 
 class DevWater(BaseModel):
@@ -329,13 +320,15 @@ class DevWater(BaseModel):
     analysis_date: dt.date
     soil: Soil = Field(description="Kontrakt: soil")
     non_agricultural: bool
-    season: DevWaterSeason | None
-    model: DevWaterModel | None
+    crop_season: CropSeason = Field(description="Kontrakt: crop_season")
+    soil_water: SoilWaterState = Field(description="Kontrakt: soil_water")
+    irrigation: IrrigationPlan = Field(description="Kontrakt: irrigation")
     soil_water_pct: Indicator = Field(description="Kontrakt: indicators.soil_water_pct")
     soil_water_mm: Indicator = Field(description="Kontrakt: indicators.soil_water_mm")
     risk_7d: RiskIndicator = Field(description="Kontrakt: indicators.risk_7d")
     stress_days_by_year: list[YearStress] = Field(description="Kontrakt: history.stress_days_by_year")
-    irrigation: Recommendation | None = Field(description="Kontrakt: recommendations[] (kategoria nawadnianie)")
+    irrigation_recommendation: Recommendation | None = Field(description="Kontrakt: recommendations[] (nawadnianie)")
+    model: DevWaterModel | None
     weather_source: str
     limitations: list[str]
     timings_ms: dict[str, int]
@@ -361,7 +354,7 @@ async def dev_water(
     crop: CropId = Query(description="Uprawa"),
     date: dt.date | None = Query(None, description="Data analizy (domyślnie dziś)"),
 ) -> DevWater:
-    """TYMCZASOWE: woda w glebie, ryzyko 7 dni, dni stresu i nawadnianie dla działki i uprawy."""
+    """TYMCZASOWE: stan wody w glebie (także poza sezonem), faza uprawy, ryzyko 7 dni, dni stresu, nawadnianie."""
     t0 = perf_counter()
     today = dt.date.today()
     analysis_date = date or today
@@ -391,35 +384,34 @@ async def dev_water(
     soil = soil_to_contract(soil_a)
     crop_obj = get_crop(crop)
     limitations = list(soil_a.limitations)
-    res = None
     weather_source = "—"
-
+    res: SoilWaterResult | None = None
+    no_model = None
     if isinstance(weather_res, SourceError):
-        limitations.insert(0, f"Brak danych pogodowych ({weather_res.message}) – modelu wody w glebie nie policzono.")
-        ind = to_contract_indicators(
-            SoilWaterResult(crop, "brak_danych", *crop_obj.season(analysis_date.year), 0, 0, crop_obj.root_depth_m, crop_obj.p,
-                            limitations=["Brak danych pogodowych."]),
-            crop_obj, analysis_date,
-        )
+        no_model = f"Brak danych pogodowych ({weather_res.message}) – modelu wody w glebie nie policzono."
     elif soil_a.not_agricultural or soil_a.wod_mm is None:
-        why = soil.non_agricultural_note or "Brak danych o glebie (WOD) – modelu wody w glebie nie policzono."
-        ind = to_contract_indicators(
-            SoilWaterResult(crop, "brak_danych", *crop_obj.season(analysis_date.year), 0, 0, crop_obj.root_depth_m, crop_obj.p,
-                            limitations=[why]),
-            crop_obj, analysis_date,
-        )
+        no_model = soil.non_agricultural_note or "Brak danych o glebie (WOD) – modelu wody w glebie nie policzono."
         weather_source = weather_res.weather.source
     else:
-        forecast = None if isinstance(fc_res, SourceError) or fc_res is None else fc_res
+        forecast = None if fc_res is None or isinstance(fc_res, SourceError) else fc_res
         if isinstance(fc_res, SourceError):
             limitations.append(f"Prognoza Open-Meteo niedostępna ({fc_res.message}) – ryzyko ze scenariusza typowej pogody.")
-        res = soil_water_model(weather_res.weather, crop_obj, soil_a.wod_mm, analysis_date, forecast, settings.history_years)
-        ind = to_contract_indicators(res, crop_obj, analysis_date)
-        limitations = [f"Pogoda uśredniona dla obszaru {weather_res.weather.resolution} ({weather_res.weather.source})."] \
-            + weather_res.notes + res.limitations + limitations
-        weather_source = weather_res.weather.source
+        w = weather_res.weather
+        res = soil_water_model(
+            w, crop_obj, soil_a.wod_mm, analysis_date, forecast,
+            soil_category=soil_a.dominant_mineral, years=settings.history_years,
+        )
+        limitations = (
+            [f"Pogoda uśredniona dla obszaru {w.resolution} ({w.source})."] + weather_res.notes + res.limitations + limitations
+        )
+        weather_source = w.source
+    if res is None:
+        limitations.insert(0, no_model)
+        s0, h0 = crop_obj.season(crop_obj.season_year_for(analysis_date))
+        info = crop_obj.day_info(analysis_date)
+        res = SoilWaterResult(crop, "brak_danych", s0.year, s0, h0, info.phase, PHASE_LABELS[info.phase], info.sensitive)
+    out = model_to_contract(res, crop_obj, analysis_date, no_model_note=no_model)
     t3 = perf_counter()
-
     return DevWater(
         parcel_id=p.id,
         crop=crop,
@@ -427,26 +419,23 @@ async def dev_water(
         analysis_date=analysis_date,
         soil=soil,
         non_agricultural=soil_a.not_agricultural,
-        season=None if res is None else DevWaterSeason(
-            status=res.season_status, start=res.season_start, end=res.season_end,
-            day_of_season=res.day_of_season, stage=res.stage, kc=res.kc,
+        crop_season=out.crop_season,
+        soil_water=out.soil_water,
+        irrigation=out.irrigation,
+        soil_water_pct=out.soil_water_pct,
+        soil_water_mm=out.soil_water_mm,
+        risk_7d=out.risk_7d,
+        stress_days_by_year=out.stress_days_by_year,
+        irrigation_recommendation=out.irrigation_rec,
+        model=None if no_model else DevWaterModel(
+            window_start=res.window_start, init_balance_mm=res.init_balance_mm, data_until=res.data_until,
+            root_depth_m=res.root_depth_m, taw_root_mm=res.taw_root_mm, raw_root_mm=res.raw_root_mm,
+            taw_profile_mm=res.taw_profile_mm, d1_mm=res.d1_mm, dtot_mm=res.dtot_mm,
+            percolation_mm=res.percolation_mm, stress_days_season=res.stress_days_season,
+            mean_prev_stress_days=res.mean_prev_stress_days, horizon_kind=res.horizon_kind,
+            days_to_stress=res.days_to_stress, risk=res.risk,
+            horizon=[{"date": d.isoformat(), "d1_mm": a, "raw_mm": r, "phase": ph} for d, a, r, ph in res.horizon],
         ),
-        model=None if res is None else DevWaterModel(
-            taw_mm=res.taw_mm, raw_mm=res.raw_mm, root_depth_m=res.root_depth_m, p=res.p, dr_mm=res.dr_mm,
-            dr0_mm=res.dr0_mm, winter_balance_mm=res.winter_balance_mm, winter_window_start=res.winter_window_start,
-            raw_exceeded=res.raw_exceeded, ks=res.ks, percolation_mm=res.percolation_mm,
-            stress_days_season=res.stress_days_season, mean_prev_stress_days=res.mean_prev_stress_days,
-            horizon_kind=res.horizon_kind, days_to_stress=res.days_to_stress, risk=res.risk,
-            horizon=[{"date": d.isoformat(), "dr_mm": v} for d, v in res.horizon_dr],
-            irrigation_text=res.irrigation.text if res.irrigation else None,
-            irrigation_dose_mm=res.irrigation.dose_mm if res.irrigation else None,
-            irrigation_date=res.irrigation.when if res.irrigation else None,
-        ),
-        soil_water_pct=ind.soil_water_pct,
-        soil_water_mm=ind.soil_water_mm,
-        risk_7d=ind.risk_7d,
-        stress_days_by_year=ind.stress_days_by_year,
-        irrigation=ind.irrigation,
         weather_source=weather_source,
         limitations=limitations,
         timings_ms={
