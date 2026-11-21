@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Paszport wodny działki {{ a.parcel.id }}</title>
+<style>{{ css }}</style>
+</head>
+<body>
+
+{# 1. Nagłówek #}
+<div class="header">
+  <div>
+    <div class="brand">
+      <svg width="22" height="26" viewBox="0 0 22 26"><path d="M11 1 C11 1 2 11.5 2 17 a9 9 0 0 0 18 0 C20 11.5 11 1 11 1z" fill="#2F80C9"/><path d="M6 17 q5 4 10 0" stroke="#fff" stroke-width="1.6" fill="none"/></svg>
+      <span class="name">ZATRZYMAJ WODĘ</span>
+    </div>
+    <h1>Paszport wodny działki</h1>
+    <p class="muted">Wygenerowano: {{ generated|date_pl }} · data analizy: <b>{{ a.analysis_date|date_pl }}</b>{% if a.historical %} (analiza historyczna – tylko dane sprzed tej daty){% endif %}</p>
+  </div>
+  <div class="qr">{{ qr }}<div class="tiny muted">Zeskanuj – analiza online</div><div class="tiny muted">{{ url_host }}</div></div>
+</div>
+
+{# 2. Dane działki #}
+<h2>Działka</h2>
+<div class="grid2">
+  <div>
+    <table class="kv">
+      <tr><td>Identyfikator</td><td><b>{{ a.parcel.id }}</b></td></tr>
+      <tr><td>Położenie</td><td>woj. {{ a.parcel.wojewodztwo }}, {{ a.parcel.powiat }}, gm. {{ a.parcel.gmina }}, obręb {{ a.parcel.obreb }}, nr {{ a.parcel.numer }}</td></tr>
+      <tr><td>Powierzchnia</td><td>{{ a.parcel.powierzchnia_ha|num(2, 'ha') }} <span class="muted small">(z geometrii ULDK)</span></td></tr>
+      <tr><td>Uprawa</td><td>{{ crop_label }} – {{ a.crop_season.phase_label }}{% if a.crop_season.sensitive %} <span class="pill">faza wrażliwa na brak wody</span>{% endif %}</td></tr>
+      {% if previous_crop_label %}<tr><td>Uprawa rok wcześniej</td><td>{{ previous_crop_label }}</td></tr>{% endif %}
+      <tr><td>Sezon</td><td>{{ a.crop_season.season_start|date_pl }} – {{ a.crop_season.harvest|date_pl }} (typowy termin zbioru)</td></tr>
+      <tr><td>Gleba</td><td>{{ a.soil.dominant_label or 'brak danych' }}{% if a.soil.wod_mm is not none %} · zmieści ok. {{ a.soil.wod_mm|num(0, 'mm') }} wody{% endif %}</td></tr>
+    </table>
+  </div>
+  <div class="map-cap">
+    <div class="map">
+      {% if ortho %}<img src="{{ ortho }}" alt="ortofotomapa">{% else %}<div class="nomap">Ortofotomapa niedostępna</div>{% endif %}
+      {{ outline }}
+    </div>
+    <div class="tiny muted">Ortofotomapa: Geoportal GUGiK · obrys: ULDK · wycinek ok. {{ map_side_m }} × {{ map_side_m }} m</div>
+  </div>
+</div>
+
+{# 3. Stan obecny (A) #}
+<h2>A. Stan obecny</h2>
+<div class="status" style="background: {{ status[2] }}">
+  <span class="badge" style="background: {{ status[1] }}">{{ status[0] }}</span>
+  {% if a.status.score is not none %}<div class="score">{{ a.status.score }}<small> / 100</small></div>{% endif %}
+  <div><h3>{{ a.status.headline }}</h3><p>{{ a.status.summary }}</p></div>
+</div>
+<div class="cards">
+  <div class="card">
+    <div class="label">Woda w glebie{% if a.soil_water.scope == 'profil' %} (profil ~1 m){% else %} (strefa korzeni){% endif %}</div>
+    <div class="value">{{ a.indicators.soil_water_pct.value|num(0, '%') }}</div>
+    {{ water_bar }}
+    <div class="note">{{ a.indicators.soil_water_mm.value|num(0, 'mm') }} · {{ a.soil_water.description }}</div>
+    <span class="tagline">szacunek modelu FAO-56</span>
+  </div>
+  <div class="card">
+    <div class="label">Ryzyko niedoboru wody – 7 dni</div>
+    <div class="value">{{ a.indicators.risk_7d.label or 'brak danych' }}</div>
+    <div class="note">{{ a.indicators.risk_7d.note or '' }}</div>
+    <span class="tagline">{{ 'prognoza' if a.indicators.risk_7d.source_tag.kind == 'prognoza' else a.indicators.risk_7d.source_tag.kind|replace('_', ' ') }}</span>
+  </div>
+  <div class="card">
+    <div class="label">Bilans wody od {{ a.history.season_start|date_pl }}</div>
+    <div class="value">{{ a.indicators.water_balance_season.value|num(0, 'mm') }}</div>
+    <div class="note">{{ a.indicators.water_balance_season.note or '' }}</div>
+    <span class="tagline">obliczenia: opad − parowanie</span>
+  </div>
+  <div class="card">
+    <div class="label">Kondycja upraw (satelita)</div>
+    <div class="value muted">brak danych</div>
+    <div class="note">{{ a.indicators.crop_health.note }}</div>
+    <span class="tagline">brak danych</span>
+  </div>
+</div>
+
+{# 4. Na tle 10 lat (B) #}
+<div class="keep">
+<h2>B. Na tle 10 lat <span class="tag">{{ a.history.period_start|date_pl }} – {{ a.history.period_end|date_pl }}</span></h2>
+{% if a.history.summary %}<p>{{ a.history.summary }}</p>{% endif %}
+<div class="chart">
+  <h3>Bilans wody narastająco (opad − parowanie), mm</h3>
+  {{ chart_balance }}
+  <div class="legend small muted"><span><i style="background:#C8453B"></i>ten sezon (zielony, gdy powyżej średniej)</span><span><i style="background:#2F80C9"></i>średnia{% if a.history.band_years %} z lat {{ a.history.band_years|min }}–{{ a.history.band_years|max }}{% endif %}</span><span><i style="background:#E3F0FB;height:8pt"></i>zakres min–max</span></div>
+</div>
+</div>
+<div class="grid2">
+  <div class="chart"><h3>Dni stresu wodnego w sezonach</h3>{{ chart_stress }}<div class="tiny muted">czerwony – bieżący sezon; b.d. – brak danych</div></div>
+  <div class="chart"><h3>Opad w miesiącach, mm</h3>{{ chart_precip }}<div class="tiny muted">niebieski – ten rok, szary – średnia z 10 lat</div></div>
+</div>
+
+{# 5. Dlaczego? (C) #}
+<h2>C. Dlaczego?</h2>
+{% for c in a.causes %}
+<div class="cause">
+  <div class="t">{{ c.title }}</div>
+  {% if c.factor == 'teren' and c.share == 0 %}<div class="b"></div><div class="p muted">–</div>
+  {% else %}<div class="b"><i style="width: {{ (c.share * 100)|round(0) }}%"></i></div><div class="p">{{ c.share|pct }}</div>{% endif %}
+  <div class="d">{{ c.description }}</div>
+</div>
+{% else %}<p class="muted">Przyczyn nie analizowano – ocena suszy rolniczej nie dotyczy tej działki.</p>{% endfor %}
+
+{# 6. Co mogę zrobić? (D) #}
+<h2>D. Co mogę zrobić? <span class="tag">kolejność: retencja → agrotechnika → nawadnianie</span></h2>
+{% for r in a.recommendations %}
+<div class="rec" style="border-left-color: {{ CATEGORY[r.category][1] }}">
+  <div class="top">
+    <div>
+      <div class="cat" style="color: {{ CATEGORY[r.category][1] }}">{{ CATEGORY[r.category][0] }}{% if r.in_panel %} · <span class="pill panel">najważniejsze</span>{% endif %}</div>
+      <h3>{{ r.title }}</h3>
+    </div>
+    <div class="small muted" style="text-align:right; white-space: nowrap">Kiedy: <b>{{ r.when_label }}</b><br>pewność: {{ CONFIDENCE[r.confidence] }}</div>
+  </div>
+  <p>{{ r.description }}</p>
+  {% if r.warning %}<div class="warning">⚠ {{ r.warning }}</div>{% endif %}
+  <div class="meta"><span><b>{{ PERMIT_ICON[r.permit] }}</b> {{ r.permit_note }}{% if r.permit_url %} <span class="muted">({{ r.permit_url }})</span>{% endif %}</span></div>
+  {% if r.eco_scheme %}<div class="eco">Ekoschemat: <b>{{ r.eco_scheme.name }}</b> – praktyka „{{ r.eco_scheme.practice }}”{% if r.eco_scheme.code %} ({{ r.eco_scheme.code }}){% endif %}. <span class="muted">{{ r.eco_scheme.note }}</span></div>{% endif %}
+  <div class="why"><b>Dlaczego?</b> {{ r.why }}</div>
+</div>
+{% else %}<p class="muted">Brak rekomendacji – nie wynikają z danych dla tej działki (np. grunt nierolny albo brak danych o glebie).</p>{% endfor %}
+<p class="small muted">Miejsca działań na mapie (oczka, zastawki, pasy zieleni) – po analizie terenu i rowów (w przygotowaniu).</p>
+
+{# 7. Gleba i teren #}
+<h2>Gleba i teren</h2>
+<div class="grid2">
+  <div class="box">
+    <h3>Gleba (IUNG-PIB)</h3>
+    {% if a.soil.non_agricultural %}<p><b>{{ a.soil.non_agricultural_note }}</b></p>{% endif %}
+    <table class="kv">
+      <tr><td>Kategoria podatności na suszę</td><td>{{ a.soil.dominant_label or 'brak danych' }}</td></tr>
+      <tr><td>Udziały w działce</td><td>{% for s in a.soil.shares %}{{ s.label }} {{ s.share|pct }}{% if not loop.last %}, {% endif %}{% else %}brak danych{% endfor %}</td></tr>
+      <tr><td>Ile wody zmieści (WOD)</td><td>{{ a.soil.wod_mm|num(0, 'mm') }}</td></tr>
+      <tr><td>Klasy bonitacyjne (EGiB)</td><td>{{ a.soil.classes|join(', ') if a.soil.classes else (a.soil.classes_note or 'brak danych') }}</td></tr>
+    </table>
+    {% if a.soil.soil_map %}{% set m = a.soil.soil_map %}
+    <h3 style="margin-top:5pt">Mapa glebowo-rolnicza</h3>
+    <table class="kv">
+      <tr><td>Kompleks przydatności</td><td>{{ m.complex_code or '–' }}{% if m.complex_label %} – {{ m.complex_label }}{% endif %}</td></tr>
+      <tr><td>Gatunek (wierzch)</td><td>{{ m.species_label or m.species_code or 'brak danych' }}{% if m.deeper %} <span class="muted">· głębiej: {{ m.deeper|join(', ') }}</span>{% endif %}</td></tr>
+      <tr><td>Aktualność mapy</td><td>{{ m.mapped_year or 'brak informacji' }}</td></tr>
+    </table>{% endif %}
+  </div>
+  <div class="box">
+    <h3>Uziarnienie i woda z ulewy</h3>
+    {% if a.soil.texture %}{% set t = a.soil.texture %}
+    <div class="fractions"><i style="width:{{ t.sand_pct }}%;background:#E8C98A"></i><i style="width:{{ t.silt_pct }}%;background:#B9A27E"></i><i style="width:{{ t.clay_pct }}%;background:#8B6B4A"></i></div>
+    <p class="small">Piasek {{ t.sand_pct|num(0, '%') }} · pył {{ t.silt_pct|num(0, '%') }} · ił {{ t.clay_pct|num(0, '%') }}{% if t.organic_carbon_pct is not none %} · węgiel org. {{ t.organic_carbon_pct|num(1, '%') }}{% endif %} ({{ t.depth }})</p>
+    <p>Klasa uziarnienia: <b>{{ t.texture_class }}</b></p>
+    {% endif %}
+    {% if a.soil.permeability %}{% set p = a.soil.permeability %}
+    <p>Przepuszczalność: <b>{{ p.label }}</b> (ok. {{ p.ksat_mm_h|num(0, 'mm/h') }})</p>
+    <p>Woda z ulewy: <b>{{ RAIN[p.rain_retention] }}</b>. {{ p.description }}</p>
+    <p class="tiny muted">{{ p.method }}; SoilGrids 250 m – wartości orientacyjne.</p>
+    {% endif %}
+    {% if a.soil.texture_note %}<p class="small muted">{{ a.soil.texture_note }}</p>{% endif %}
+    <h3 style="margin-top:5pt">Teren</h3>
+    <p class="muted">Spadki, zagłębienia i spływ wody (NMT) oraz rowy w okolicy (BDOT10k) – w przygotowaniu, brak danych.</p>
+  </div>
+</div>
+
+{# 8. Źródła, wiarygodność, ograniczenia (E) #}
+<h2>E. Skąd te dane i na ile im ufać</h2>
+<p>Pewność wyniku: <b>{{ CONFIDENCE[a.reliability.confidence] }}</b> · źródła dostępne: {{ a.reliability.completeness.available }} z {{ a.reliability.completeness.total }}. {{ a.reliability.reason }}</p>
+<p class="tiny muted">Wszystkie liczby i rekomendacje policzyła aplikacja z danych pobranych przy analizie (reguły w kodzie, bez gotowych tekstów; model językowy niczego nie liczy).</p>
+<table class="src">
+  <tr><th></th><th>Źródło</th><th>Do czego</th><th>Dane z dnia</th><th>Rozdzielczość</th><th>Uwagi</th></tr>
+  {% for s in a.reliability.sources %}
+  <tr><td class="{{ s.status }}">{{ SOURCE_ICON[s.status] }}</td><td>{{ s.name }}</td><td>{{ s.used_for }}</td><td>{{ s.data_date|date_pl if s.data_date else '–' }}</td><td>{{ s.resolution or '–' }}</td><td>{{ s.note or '' }}</td></tr>
+  {% endfor %}
+</table>
+<h3 style="margin-top:6pt">Ograniczenia</h3>
+<ul class="lim">{% for l in a.reliability.limitations %}<li>{{ l }}</li>{% endfor %}</ul>
+
+</body>
+</html>

@@ -44,3 +44,12 @@ Silnik reguł zwraca pełną listę (retencja → agrotechnika → nawadnianie, 
 
 ### 2026-11-21 · gałąź `a/backend` · A4 – przykład (bez zmiany kontraktu)
 `frontend/src/mocks/analysis.sample.json` zastąpiony **zapisem prawdziwej odpowiedzi** `/api/analysis` (201305_2.0038.6/1, zboża ozime, 2018-06-10: status „Susza”, plan nawadniania, 101 dni historii). Dopisek w `parcel.zrodlo.uwagi`; UI dalej pokazuje „DANE PRZYKŁADOWE”.
+
+### 2026-11-21 · gałąź `a/backend` · A5 – konsultacja z mentorem, gleba dla rolnika, demo i status
+**Zmiana kontraktu (obie strony: `backend/app/schemas/` + `frontend/src/api/types.ts`, mock = prawdziwa odpowiedź):**
+- `GET /api/analysis` – nowy opcjonalny parametr **`previous_crop`** (15 upraw albo `nie_wiem`); w odpowiedzi `previous_crop`.
+- `Recommendation` – nowe pola: **`when`** (`teraz` | `po_zbiorze` | `przed_sezonem`) + `when_label`, **`permit`** (`none` | `maybe` | `required`) + `permit_note` + `permit_url` (Wody Polskie), **`warning`** (przy niskiej pewności: „Obarczone dużym ryzykiem błędu…”), **`eco_scheme`** (`EcoScheme`: name, practice, code, note – bez kwot dopłat).
+- Lista rekomendacji: **maks. 5** (paszport), `in_panel` – maks. 3 (po jednej z grupy). Rekomendacja z `warning` nigdy nie jest pierwsza w grupie.
+- `Soil` – nowe pola: **`texture`** (`SoilTexture`: piasek/pył/ił %, węgiel org. %, klasa uziarnienia PL, kod USDA, głębokość), **`permeability`** (`SoilPermeability`: Ksat mm/h, opis, `rain_retention` `ucieka` | `zatrzymuje` | `splywa`, zdanie dla rolnika), **`soil_map`** (`SoilMapInfo`: kompleks przydatności, gatunek gleby, głębsze warstwy, typ, rok mapy), `texture_note` (powód braku).
+- Nowe endpointy i typy: **`GET /api/demo/examples`** → `DemoExample[]`; **`GET /api/status`** → `StatusResponse` (źródła: ok, czas, cache; rozgrzewka przykładów); **`GET /api/report.pdf?parcel_id=&crop=&date=&previous_crop=`** → PDF.
+**Dla B:** panel filtruje po `in_panel`; przy każdej rekomendacji pokazać `when_label`, formalności (`permit_note` + link), `warning` (wyraźnie) i ekoschemat; w sekcji gleby – uziarnienie, przepuszczalność i „woda z ulewy”; wybór przedplonu (opcjonalny, „Nie wiem”) obok wyboru uprawy; przycisk „Pobierz raport” → `/api/report.pdf` z tymi samymi parametrami.

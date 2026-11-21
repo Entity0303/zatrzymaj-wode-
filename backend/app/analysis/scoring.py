@@ -120,4 +120,7 @@ def overall_status(f: Facts, soil: Soil) -> OverallStatus:
     headline = (HEADLINES_SENSITIVE if sensitive else HEADLINES_OTHER)[level]
     if sensitive and level == "risk" and f.get("days_to_stress") == 0:
         headline = "Ryzyko – rośliny odczuwają brak wody"
+    # „niż zwykle” tylko, gdy dane to potwierdzają (bilans poniżej średniej z 10 lat)
+    if not sensitive and level == "warn" and not ((f.get("balance_deviation_mm") or 0) < 0):
+        headline = "Uwaga – zapas wody w glebie niepełny"
     return OverallStatus(level=level, score=score, headline=headline, summary=summary_sentence(f))

@@ -11,7 +11,7 @@ from datetime import date
 import numpy as np
 
 from app.analysis.et0 import DailyWeather, apply_et0, densify
-from app.core.cache import TTLCache
+from app.core.cache import TTLCache, cached_fetch
 from app.core.config import settings
 from app.core.http import SourceError, get_with_retry
 
@@ -22,7 +22,7 @@ RESOLUTION = "ok. 50 km"
 PARAMS = ["PRECTOTCORR", "T2M_MAX", "T2M_MIN", "RH2M", "WS2M", "ALLSKY_SFC_SW_DWN"]
 
 # dane historyczne się nie zmieniają; kilka godzin wystarcza, by doszły świeże dni
-_cache: TTLCache[DailyWeather] = TTLCache(ttl_s=6 * 3600, max_items=256)
+_cache: TTLCache[DailyWeather] = TTLCache(ttl_s=6 * 3600, max_items=256, name="NASA POWER")
 
 
 def _series(param_block: dict, keys: list[str]) -> np.ndarray:
@@ -70,9 +70,17 @@ def cache_key(lon: float, lat: float, start: date, end: date) -> tuple:
 async def fetch(lon: float, lat: float, start: date, end: date) -> DailyWeather:
     """Dane dobowe od `start` do `end` włącznie. SourceError, gdy usługa nie odpowie."""
     key = cache_key(lon, lat, start, end)
-    hit = _cache.get(key)
-    if hit is not None:
-        return hit
+    return await cached_fetch(_cache, key, SOURCE_SHORT, lambda: _download(key, start, end), ttl_s=ttl_for(end),
+                              breaker_s=120)
+
+
+def ttl_for(end: date) -> float:
+    """Dane sprzed tygodnia już się nie zmieniają – 7 dni; bieżące (NASA uzupełnia je z opóźnieniem) – 6 h."""
+    recent = (date.today() - end).days <= 7
+    return settings.cache_ttl_current_s if recent else settings.cache_ttl_history_s
+
+
+async def _download(key: tuple, start: date, end: date) -> DailyWeather:
     params = {
         "parameters": ",".join(PARAMS),
         "community": "AG",
@@ -89,9 +97,7 @@ async def fetch(lon: float, lat: float, start: date, end: date) -> DailyWeather:
         payload = resp.json()
     except ValueError as exc:
         raise SourceError(SOURCE, "odpowiedź nie jest poprawnym JSON") from exc
-    w = parse_response(payload)
-    _cache.set(key, w)
-    return w
+    return parse_response(payload)
 
 
 def clear_cache() -> None:

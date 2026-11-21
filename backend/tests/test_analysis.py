@@ -19,7 +19,7 @@ from app.core.config import settings
 from app.core.http import SourceError
 from app.main import app
 from app.schemas.analysis import AnalysisResponse, Soil, SourceTag
-from app.sources import iung, kieg, uldk, weather_openmeteo, weather_power
+from app.sources import iung, kieg, soil_map, soilgrids, uldk, weather_openmeteo, weather_power
 from app.sources.iung import SoilResult
 
 FIX = Path(__file__).parent / "fixtures"
@@ -27,6 +27,8 @@ NASA = json.loads((FIX / "nasa_power_2017_2018.json").read_text(encoding="utf-8"
 OM = json.loads((FIX / "open_meteo_archive_2017_2018.json").read_text(encoding="utf-8"))
 WCS_201305 = (FIX / "iung_wcs_201305.txt").read_text(encoding="utf-8")
 KIEG_CLASSES = (FIX / "kieg_201305_klasy.html").read_text(encoding="utf-8")
+SOILGRIDS = json.loads((FIX / "soilgrids_201305.json").read_text(encoding="utf-8"))
+SOIL_MAP = (FIX / "soil_map_201305.xml").read_text(encoding="utf-8")
 WKT_201305 = (
     "POLYGON((741326.598870282 582135.860610104,741196.719087438 582172.956309767,"
     "741196.080461016 582126.579753392,741319.716303976 582092.766677043,"
@@ -38,7 +40,7 @@ SOIL_OK = Soil(dominant_code=3, dominant_label="Kat. III", shares=[], source_tag
 
 @pytest.fixture(autouse=True)
 def _clean():
-    for m in (iung, kieg, uldk, weather_power):
+    for m in (iung, kieg, uldk, weather_power, soilgrids, soil_map):
         m.clear_cache()
     weather_openmeteo.clear_archive_cache()
     weather_openmeteo.clear_cache()
@@ -64,6 +66,12 @@ def facts(**kw) -> Facts:
         "longest_dry_spell_days": 7, "season_start_txt": "1 marca", "precip_mm": 150.0, "precip_mean_mm": 180.0,
         "precip_pct_of_mean": 83, "precip_deficit_mm": 30.0, "et0_mm": 220.0, "et0_mean_mm": 200.0,
         "et0_excess_mm": 20.0, "etc_mm_day": 4.6, "terrain": None, "water_nearby": None, "horizon_kind": "scenariusz",
+        # A5
+        "balance_vs_mean_txt": "o 10 mm mniej niż zwykle", "in_season": True, "strong_stress": False,
+        "light_soil": False, "soil_txt": "kat. III", "crop_label_lower": "zboża ozime", "previous_crop": None,
+        "previous_crop_label": None, "same_crop": None, "cereal_after_cereal": None, "rotation_issue": None,
+        "rain_retention": None, "rain_retention_label": None, "ksat_mm_h": None, "sand_pct": None,
+        "texture_label": None, "soil_species": None, "soil_complex_label": None,
     }
     base.update(kw)
     return Facts(base)
@@ -170,19 +178,20 @@ def test_rules_load_and_validate():
 
 def test_autumn_rules_order_and_panel():
     f = facts(phase="po_zbiorze", phase_label="po zbiorze", sensitive=False, off_season=True, month=8,
+              in_season=False, light_soil=True, soil_txt="kat. II",
               soil_category=2, soil_category_roman="II", wod_mm=148.7, water_pct=40.0, water_scope="profil",
               stress_days_season=30, stress_days_mean=12.0, stress_ratio=2.5, irrigation_status="nieuzasadnione_w_fazie")
     ev = evaluate(f)
-    ids = [r.id for r in ev.recommendations]
-    assert "retencja.miedzyplon_po_zbiorze" in ids and "retencja.odbudowa_zapasu_jesienia" in ids
+    ids = [r.id for r in ev.all_matched]
+    assert "retencja.nie_zostawiaj_scierniska" in ids and "retencja.prochnica" in ids
     assert "agrotechnika.odmiany_odporne" in ids
     cats = [r.category for r in ev.recommendations]
     assert cats == sorted(cats, key=CATEGORY_ORDER.index)  # retencja → agrotechnika → nawadnianie
     panel = [r for r in ev.recommendations if r.in_panel]
     assert len(panel) <= 3 and len({r.category for r in panel}) == len(panel)
-    assert panel[0].id == "retencja.odbudowa_zapasu_jesienia" or panel[0].priority >= 85
-    rec = next(r for r in ev.recommendations if r.id == "retencja.miedzyplon_po_zbiorze")
-    assert "40% wody" in rec.description and rec.inputs and "Dane:" in rec.why
+    assert panel[0].id == "retencja.nie_zostawiaj_scierniska" and panel[0].when == "teraz"
+    rec = next(r for r in ev.recommendations if r.id == "retencja.nie_zostawiaj_scierniska")
+    assert "−50 mm" in rec.description and "40% wody" in rec.why and rec.inputs and "Dane:" in rec.why
     assert not any(r.category == "nawadnianie" for r in ev.recommendations)
 
 
@@ -194,7 +203,8 @@ def test_terrain_rules_disabled_until_data():
 
 
 def test_no_recommendation_without_data():
-    f = facts(**{k: None for k in ("soil_category", "water_pct", "balance_percentile", "days_to_stress", "stress_ratio")},
+    f = facts(**{k: None for k in ("soil_category", "water_pct", "balance_percentile", "days_to_stress", "stress_ratio",
+                                   "balance_mm", "balance_vs_mean_txt", "light_soil", "strong_stress")},
               irrigation_status=None, wod_mm=None)
     for ph in ("po_zbiorze", "przed_siewem", "pelnia"):
         assert evaluate(Facts({**f.values, "phase": ph, "off_season": ph != "pelnia"})).recommendations == []
@@ -220,6 +230,8 @@ def _mock(nasa=True, wcs=True):
     respx.get(settings.iung_wcs_url).mock(return_value=httpx.Response(200, text=WCS_201305) if wcs else httpx.Response(503))
     respx.get(settings.iung_wms_url).mock(return_value=httpx.Response(503))
     respx.get(settings.kieg_url).mock(return_value=httpx.Response(200, text=KIEG_CLASSES))
+    respx.get(settings.soilgrids_url).mock(return_value=httpx.Response(200, json=SOILGRIDS))
+    respx.get(settings.soil_map_url).mock(return_value=httpx.Response(200, text=SOIL_MAP))
 
 
 @respx.mock
