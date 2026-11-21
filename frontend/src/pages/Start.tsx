@@ -15,6 +15,7 @@ import { POLAND_CENTER, ParcelMap, type BaseMap } from '@/features/map/ParcelMap
 import { MobileSheetHeader } from '@/features/parcel-panel/MobileSheetHeader'
 import { ParcelPanel } from '@/features/parcel-panel/ParcelPanel'
 import { Passport } from '@/features/passport/Passport'
+import { exampleDate, type Example } from '@/features/parcel-panel/examples'
 import { InfraReportWizard } from '@/features/infra-reports/InfraReportWizard'
 import type { SearchPhase } from '@/features/parcel-panel/types'
 import { useAnalysis } from '@/features/parcel-panel/useAnalysis'
@@ -83,7 +84,7 @@ export default function Start() {
   const [pendingPoint, setPendingPoint] = useState<[number, number] | null>(null)
   const [userPoint, setUserPoint] = useState<[number, number] | null>(null)
   const [locating, setLocating] = useState(false)
-  const [snap, setSnap] = useState<Snap>('collapsed')
+  const [snap, setSnap] = useState<Snap>(() => (link.dzialka ? 'collapsed' : 'half')) // bez linku: przykłady widoczne od razu
   const [insidePopup, setInsidePopup] = useState<{ lon: number; lat: number; text: string } | null>(null)
   const [toast, setToast] = useState<string | null>(null)
   const [mapCenter, setMapCenter] = useState<[number, number]>([round1(POLAND_CENTER[1]), round1(POLAND_CENTER[0])])
@@ -100,6 +101,8 @@ export default function Start() {
   const reqId = useRef(0)
   // uprawa z linku – przypisywana do działki, gdy wyszukiwanie ją znajdzie
   const pendingCrop = useRef(link.uprawa)
+  // przykład jednym klikiem: na telefonie po znalezieniu działki szuflada do połowy (wynik od razu widoczny)
+  const expandAfterFind = useRef(false)
   // ?widok=paszport – po pierwszej gotowej analizie od razu paszport wodny
   const pendingPassport = useRef(link.widok === 'paszport')
   const lastRequest = useRef<{ fn: () => Promise<Parcel>; kind: 'number' | 'point' } | null>(null)
@@ -141,7 +144,8 @@ export default function Start() {
       if (id !== reqId.current) return
       applyPendingCrop(p)
       setSearch({ phase: 'parcel', parcel: p })
-      if (isMobile) setSnap('collapsed')
+      if (isMobile) setSnap(expandAfterFind.current ? 'half' : 'collapsed')
+      expandAfterFind.current = false
     } catch (e) {
       if (id !== reqId.current) return
       if (e instanceof ApiError && e.status === 409) {
@@ -340,6 +344,16 @@ export default function Start() {
     else map.flyToBounds(b, { ...opts, duration: 0.8 })
   }
 
+  // ── „Zobacz przykład”: działka + uprawa + data jednym klikiem ───────────────────────────────
+  function openExample(e: Example) {
+    pendingCrop.current = e.crop
+    setPassportFor(null)
+    setAsOf(exampleDate(e))
+    expandAfterFind.current = true
+    searchByNumber(e.parcel)
+    if (isMobile) setSnap('half')
+  }
+
   // ── zgłoszenia rowów i zbiorników (SPEC 11) ─────────────────────────────────────────────
   function openInfra() {
     const c = parcel ? parcelBounds(parcel).getCenter() : null
@@ -433,6 +447,7 @@ export default function Start() {
     onOpenPassport: openPassport,
     onShowOnMap: showOnMap,
     onReportInfra: openInfra,
+    onExample: openExample,
   }
 
   const searchBar = (
