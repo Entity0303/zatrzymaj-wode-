@@ -13,6 +13,20 @@ MAX_CANDIDATES = 30
 
 
 def parcel_out(p: uldk.Parcel) -> Parcel:
+    if p.source == "drawn":
+        zrodlo = DataSource(
+            nazwa="Pole narysowane przez rolnika", url=p.admin_url or uldk.SOURCE_URL,
+            pobrano=p.fetched_at.isoformat(timespec="seconds"),
+            uwagi="Obrys narysowany na mapie – to nie jest działka ewidencyjna; powierzchnia z kształtu (EPSG:2180). "
+                  + (p.admin_note or ""))
+    else:
+        zrodlo = DataSource(
+            nazwa=uldk.SOURCE,
+            url=uldk.SOURCE_URL,
+            pobrano=p.fetched_at.isoformat(timespec="seconds"),
+            uwagi="Powierzchnia policzona z geometrii (EPSG:2180), "
+            "może nieznacznie różnić się od powierzchni ewidencyjnej.",
+        )
     return Parcel(
         id=p.id,
         wojewodztwo=p.voivodeship,
@@ -23,13 +37,9 @@ def parcel_out(p: uldk.Parcel) -> Parcel:
         teryt_gminy=p.teryt_commune,
         powierzchnia_ha=p.area_ha,
         geometria=geojson(p.geom_4326),
-        zrodlo=DataSource(
-            nazwa=uldk.SOURCE,
-            url=uldk.SOURCE_URL,
-            pobrano=p.fetched_at.isoformat(timespec="seconds"),
-            uwagi="Powierzchnia policzona z geometrii (EPSG:2180), "
-            "może nieznacznie różnić się od powierzchni ewidencyjnej.",
-        ),
+        zrodlo=zrodlo,
+        source=p.source if p.source in ("drawn", "approximate") else "uldk",
+        name=p.name,
     )
 
 

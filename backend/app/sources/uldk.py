@@ -46,10 +46,19 @@ class Parcel:
     number: str
     geom_2180: BaseGeometry
     fetched_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    # A5c: działka z ULDK (domyślnie) albo obszar bez granic z ULDK: „approximate” (D69) / „drawn” (obrys rolnika, D75)
+    source: str = "uldk"
+    name: str | None = None            # np. „Pole narysowane przez rolnika”
+    teryt: str | None = None           # TERYT gminy dla pól bez identyfikatora ULDK
+    admin_note: str | None = None      # skąd gmina / powiat / województwo (pola narysowane)
+    admin_url: str | None = None
 
     @property
     def teryt_commune(self) -> str:
-        """TERYT gminy (7 znaków, np. 1432032), z identyfikatora działki."""
+        """TERYT gminy (7 znaków, np. 1432032), z identyfikatora działki (pola narysowane: z działki w środku pola
+        albo pusty)."""
+        if self.source != "uldk":
+            return self.teryt or ""
         return self.id.split(".")[0].replace("_", "")
 
     @property

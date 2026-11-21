@@ -43,4 +43,4 @@ def approximate_parcel(lon: float, lat: float, side_m: float = SIDE_M) -> Parcel
     h = side_m / 2
     woj = nearest_voivodeship(lon, lat)
     return Parcel(id=f"{APPROX_PREFIX}_{lat:.5f}_{lon:.5f}", voivodeship=woj, county="nieznany", commune="nieznana",
-                  region="nieznany", number="—", geom_2180=box(e - h, n - h, e + h, n + h))
+                  region="nieznany", number="—", geom_2180=box(e - h, n - h, e + h, n + h), source="approximate")

@@ -107,9 +107,15 @@
 <div class="grid2">
   <div>
     <table class="kv">
+      {% if a.parcel.source == 'drawn' %}
+      <tr><td>Pole</td><td><b>{{ a.parcel.name }}</b> <span class="muted small">({{ a.parcel.id }})</span></td></tr>
+      <tr><td>Położenie</td><td>woj. {{ a.parcel.wojewodztwo }}{% if a.parcel.powiat != 'nieznany' %}, {{ a.parcel.powiat }}{% endif %}{% if a.parcel.gmina != 'nieznana' %}, gm. {{ a.parcel.gmina }}{% endif %}</td></tr>
+      <tr><td>Powierzchnia</td><td>{{ a.parcel.powierzchnia_ha|num(2, 'ha') }} <span class="muted small">(z kształtu narysowanego na mapie – to nie jest działka ewidencyjna)</span></td></tr>
+      {% else %}
       <tr><td>Identyfikator</td><td><b>{{ a.parcel.id }}</b></td></tr>
       <tr><td>Położenie</td><td>woj. {{ a.parcel.wojewodztwo }}, {{ a.parcel.powiat }}, gm. {{ a.parcel.gmina }}, obręb {{ a.parcel.obreb }}, nr {{ a.parcel.numer }}</td></tr>
       <tr><td>Powierzchnia</td><td>{{ a.parcel.powierzchnia_ha|num(2, 'ha') }} <span class="muted small">(z geometrii ULDK)</span></td></tr>
+      {% endif %}
       {% if a.crop %}
       <tr><td>Uprawa</td><td>{{ crop_label }} – {{ a.crop_season.phase_label }}{% if a.crop_season.sensitive %} <span class="pill">faza wrażliwa na brak wody</span>{% endif %}</td></tr>
       {% if previous_crop_label %}<tr><td>Uprawa rok wcześniej</td><td>{{ previous_crop_label }}</td></tr>{% endif %}
