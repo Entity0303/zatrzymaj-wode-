@@ -140,3 +140,24 @@ Wpis: data · decyzja · uzasadnienie · konsekwencje. Zmieniany w osobnym mały
 ### D34 · 2026-11-21 · Stan wody w glebie na każdą datę
 **Uzasadnienie:** dane do rekomendacji jesienno-zimowych (retencja, międzyplony) i odpowiedź „jak teraz jest z wodą” także w listopadzie.
 **Konsekwencje:** w fazach uprawy (początkowa…dojrzewanie) – strefa korzeni; poza nimi – cały profil ok. 1 m. Opis: < 50% → „niedobór wody po suchym lecie” (VIII–XII) / „po suchym okresie”; zapas rośnie (> 1 mm w 30 dni) → „gleba odbudowuje zapas wody”; ≥ 90% → „zapas wody w glebie odbudowany”; inaczej „zapas wody w normie”. Porównanie z tym samym dniem w 10 poprzednich latach (ciągły bilans każdego roku): w ilu latach było mniej wody. Podsumowanie zakończonego sezonu (dni stresu vs średnia 10 lat) jako informacja dodatkowa.
+
+### D35 · 2026-11-21 · Ogólny stan wodny: wskaźnik 0–100, wagi i progi
+**Składowe (0–100):** woda – % wody dostępnej (strefa korzeni w fazach uprawy, profil ~1 m poza nimi); ryzyko – dni do stresu: 0 → 0 pkt, ≤ 3 → 25, ≤ 7 → 50, ≤ 16 → 75, brak stresu w horyzoncie → 100 (tylko fazy wrażliwe); historia – średnia z „% lat z niższym bilansem wody od 1 III” i „% lat z mniejszym zapasem wody tego dnia”.
+**Wagi:** fazy wrażliwe – woda 0,45, ryzyko 0,35, historia 0,20; pozostałe fazy – woda 0,65, historia 0,35. Brak składowej → wagi pozostałych przeskalowane; brak wody w glebie → `no_data`.
+**Progi:** ≥ 70 ok, ≥ 50 warn, ≥ 30 risk, < 30 danger. Poza fazami wrażliwymi (dojrzewanie, po zbiorze, przed siewem, wschody jesienne, spoczynek) najwyżej **risk** i nagłówki o zapasie wody w glebie („Uwaga – mniejszy zapas wody w glebie niż zwykle”) – bez alarmu o stresie roślin. Grunt nierolny → `no_data` z komunikatem z sekcji `soil`.
+**Uzasadnienie:** woda w glebie najlepiej oddaje stan na dziś; ryzyko – to, co stanie się za chwilę; historia – czy to normalne dla tego miejsca. Wagi do kalibracji z IUNG SMSR.
+
+### D36 · 2026-11-21 · Pewność wyniku – punkty za przesłanki
+**Metoda:** start 100 pkt, odejmowanie: brak satelity 15, brak terenu 10, pogoda NASA (~50 km) 10 albo źródło zapasowe 15, opóźnienie pogody > 3 dni 5, luka uzupełniona scenariuszem 10, > 10% dni Hargreavesa 10, brak prognozy (dziś) 10, data historyczna (ryzyko ze scenariusza) 5, brak gleby 35, gleba metodą punktową 10, część działki poza mapą IUNG 10, < 80% gleb rolnych mineralnych 5. Progi: ≥ 75 wysoka, ≥ 50 średnia, < 50 ograniczona. Bez zdjęć satelitarnych lub analizy terenu – najwyżej „średnia”.
+**Konsekwencje:** `reason` = 3 najważniejsze przesłanki; źródła ze statusem ok / częściowo / brak (Sentinel-2, NMT, BDOT10k – „brak, w przygotowaniu”); kompletność bez EGiB (tylko informacyjnie); ograniczenia = z modułów + stałe (bez powtórzeń).
+
+### D37 · 2026-11-21 · Przyczyny i ich udziały
+**Wagi surowe:** opady – (średnia − opad)/średnia, gdy opad poniżej średniej z 10 lat; parowanie – (ET0 − średnia)/średnia, gdy powyżej; gleba – kat. I 0,50, II 0,35, III 0,20, IV 0,10; uprawa – 0,15 × Kc w fazach wrażliwych, 0,05 poza nimi (po pierwszym przeglądzie zmniejszone z 0,3, by uprawa nie przesłaniała niedoboru opadów); teren – brak danych, udział 0.
+**Konsekwencje:** udziały = wagi / suma (zaokrąglone, suma dokładnie 100%), od największego; teren zawsze na końcu jako „brak danych (analiza terenu w przygotowaniu)”.
+
+### D38 · 2026-11-21 · Silnik reguł rekomendacji (YAML)
+**Uzasadnienie:** wymóg KOWR – żadnych gotowych tekstów bez danych; reguły czytelne i edytowalne bez zmiany kodu.
+**Konsekwencje:** `analysis/rules/{retencja,agrotechnika,nawadnianie}.yaml`, 19 reguł; każda ma warunek (walidacja przy wczytaniu), fakt bez danych = warunek fałszywy, szablon z brakującym faktem = reguła pominięta; „Dlaczego?” i `inputs` z faktów, które uruchomiły regułę. Reguły wymagające terenu / wód w okolicy (oczko w zagłębieniu, zastawka, pas buforowy na stoku, mokradło) mają `requires` i są wyłączone do A6/A7. Kolejność: retencja → agrotechnika → nawadnianie, w grupie wg `priority`; `in_panel` – najważniejsza z każdej grupy (maks. 3). Kierunki działań wg listy z zadania A4 („Podstawy naukowe” KOWR) – treść dokumentu KOWR nie była czytana w tej sesji; do weryfikacji merytorycznej.
+
+### D39 · 2026-11-21 · Pełne /api/analysis: czas, błędy, kroki
+**Konsekwencje:** łączny budżet 27 s (zapas do 30 s): ULDK z własnym limitem, potem źródła równolegle z limitem = pozostały budżet. **502 tylko gdy brak działki (ULDK) albo pogody** (NASA POWER i archiwum Open-Meteo); awaria IUNG / KIEG / prognozy → brak danych w danej części, niższa pewność, krok `error`. 422: brak uprawy („Wybierz uprawę…”), nieznana uprawa, data z przyszłości lub starsza niż 10 lat. `steps` – każdy krok ze stanem i czasem (satelita i teren: `pending`, „w przygotowaniu”), ostatni krok `total` = czas całej analizy. Pomiar live: 1,2–2,5 s.
