@@ -54,3 +54,7 @@ Wpis: data · decyzja · uzasadnienie · konsekwencje. Zmieniany w osobnym mały
 ### D13 · 2026-11-21 · Ortofotomapa przez WMTS (EPSG:3857) zamiast WMS
 **Uzasadnienie:** WMS Geoportalu obsługuje EPSG:3857, ale kafel ~4,5 s; WMTS tej samej usługi (te same zdjęcia, kafle z cache) ~2,3 s.
 **Konsekwencje:** `features/map/ParcelMap.tsx` – szablon KVP GetTile; OSM jako zapas.
+
+### D30 · 2026-11-21 · Przełącznik języka PL | EN (domyślnie polski) – zmienia D9
+**Uzasadnienie:** prośba osoby B – interfejs ma być czytelny także dla osób nieznających polskiego (np. jury, goście). Polski zostaje językiem domyślnym, więc rolnik nic nie musi przełączać.
+**Konsekwencje:** własny mały moduł `frontend/src/lib/i18n.ts` (bez nowej zależności): kluczem tłumaczenia jest tekst polski (`t('Szukam działki')`, zmienne `{n}`), słownik `lib/i18n.en.ts`, brak wpisu = tekst polski. Wybór zapamiętany w przeglądarce (`zw.lang.v1`), przełącznik w górnym pasku. Liczby i daty w formacie języka. Teksty z backendu (komunikaty błędów, rekomendacje, opisy) zostają po polsku, dopóki backend nie obsłuży języka – wyjątek: opisy pogody Open-Meteo i teksty mocka są w słowniku. Nowy tekst w UI = nowy wpis w `i18n.en.ts`.
