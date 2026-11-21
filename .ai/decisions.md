@@ -161,3 +161,15 @@ Wpis: data · decyzja · uzasadnienie · konsekwencje. Zmieniany w osobnym mały
 
 ### D39 · 2026-11-21 · Pełne /api/analysis: czas, błędy, kroki
 **Konsekwencje:** łączny budżet 27 s (zapas do 30 s): ULDK z własnym limitem, potem źródła równolegle z limitem = pozostały budżet. **502 tylko gdy brak działki (ULDK) albo pogody** (NASA POWER i archiwum Open-Meteo); awaria IUNG / KIEG / prognozy → brak danych w danej części, niższa pewność, krok `error`. 422: brak uprawy („Wybierz uprawę…”), nieznana uprawa, data z przyszłości lub starsza niż 10 lat. `steps` – każdy krok ze stanem i czasem (satelita i teren: `pending`, „w przygotowaniu”), ostatni krok `total` = czas całej analizy. Pomiar live: 1,2–2,5 s.
+
+### D40 · 2026-11-21 · Konsultacja z mentorem 21.11 (prof. Gozdowski, SGGW, ekspert KOWR)
+Wnioski (obowiązują przy regułach, raporcie i UI):
+- **Rekomendacji mało i jasnych** – panel maks. 3, paszport/raport maks. 5.
+- Rekomendacje niepewne oznaczamy wprost: **„obarczone dużym ryzykiem błędu”**; nigdy nie stoją na pierwszym miejscu.
+- **Przy silnej suszy nawozy nie działają** – przy stresie wodnym zalecamy odłożenie nawożenia, żadna reguła nie zaleca wtedy nawożenia.
+- **Dla rolnika najważniejsza jest gleba**: kategorie, frakcje (uziarnienie), przepuszczalność, zatrzymywanie wody przy ulewach, gruboziarnistość piasku, topografia.
+- **Korzystać z gotowych modeli pogody** (u nas: NASA POWER, Open-Meteo/ERA5) – nie budujemy własnej interpolacji.
+- Ważny **płodozmian** i **ekoschematy** (ARiMR) – pokazujemy powiązaną praktykę, bez kwot dopłat.
+- Rekomendować przede wszystkim to, **co rolnik może zrobić bez pozwolenia**; przy każdej rekomendacji informacja o formalnościach.
+- **Nawadnianie (pobór wody) wymaga pozwolenia wodnoprawnego – Wody Polskie.**
+Źródła merytoryczne reguł: `docs/kowr/KOWR - Podstawy naukowe.pdf` (sekwencja: ocena → przyczyny → retencja → agrotechnika → nawadnianie; „retain water where it falls”; retencja glebowa: międzyplony, resztki pożniwne, ograniczenie intensywnej uprawy, materia organiczna; retencja krajobrazowa: oczka, mokradła, strefy buforowe, zadrzewienia).
