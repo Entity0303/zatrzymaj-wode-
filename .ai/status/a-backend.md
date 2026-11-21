@@ -1,6 +1,6 @@
 # Status – osoba A (Dominik), backend
 
-_Stan na: 2026-11-22 12:30_
+_Stan na: 2026-11-22 00:55 (INT3)_
 
 ## Zrobione
 - Wyszukiwanie działki ULDK: pełny identyfikator, „obręb numer”, punkt; `GET /api/parcel` (409 lista kandydatów, 404, 502 z nazwą źródła), timeout 10 s + jedna ponowna próba, cache 24 h.
@@ -72,7 +72,7 @@ _Stan na: 2026-11-22 12:30_
 - Testy: **485 bez sieci** (457 + 28 w `test_a11.py`) (`docker run --network none`) + 5 live. Analiza z cache: 0,04–0,7 s; PDF 0,5–1,3 s.
 
 ## W trakcie (gałąź)
-- `a/backend` – A5b-2b … A5e-2, A7 i A11 gotowe (commit + push); **do `main` nie mergowane**.
+- **INT3 (22.11 ok. 00:55): `c/research`, `a/backend`, `b/frontend` scalone do `main` (bez konfliktów) i wypchnięte.** Od 22.11 00:45 praca bezpośrednio na `main` (zasady w CLAUDE.md); gałęzie `a/backend` itp. już nieużywane. Główny folder `zatrzymaj-wode-` przełączony na `main`, kontenery przebudowane.
 
 ## Uwaga (A5e)
 - Backend w kontenerze działa teraz w trybie **DEMO_OFFLINE** (tylko cache) – GUGiK oznaczył sieć jako nadużycie; przykłady PDF wygenerowane z cache. Powrót: `docker compose up -d backend` (bez zmiennej) – dopiero na innej sieci.

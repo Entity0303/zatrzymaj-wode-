@@ -4,6 +4,16 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-22 00:55 · `main` · INT3: integracja końcowa
+**Co:**
+- `main` (ea59a60) ← merge `origin/c/research` (dd2e70d) → `origin/a/backend` (e7a2dce) → `origin/b/frontend` (622d9c3) – **bez konfliktów**; CLAUDE.md: od 22.11 00:45 praca bezpośrednio na `main` (e5362e1); push `ea59a60..e5362e1`.
+- Testy: backend **485 passed** bez sieci (`docker run --network none` z podmontowanym `frontend/src` – w samym obrazie brak `frontend/`, więc test kontraktu `types.ts` pada na „brak pliku”; `docker compose run` nie zna `--network`); `research/` **86 passed** (w obrazie backendu – na hoście brak Pythona z pytest); frontend `npm ci && npm run build` OK (ostrzeżenie o chunkach > 500 kB).
+- Na żywo po `docker compose up -d --build` (201305_2.0038.6/1): `/api/status` 200 0,58 s (ULDK ograniczony, Open-Meteo / KIEG / NMT niedostępne – reszta OK); `/api/analysis` 200 0,69 s 117 kB; `/api/satellite` 200 0,03 s (cache, scena 16.11.2026 NDVI 0,857); `/api/report.pdf?report_type=short` 200 1,19 s 141 kB.
+**Pliki:** `CLAUDE.md`, `.ai/status/a-backend.md`, `.ai/log/a-backend.md`.
+**Kontrakt:** NIE.
+
+---
+
 ## 2026-11-22 12:30 · `a/backend` · A11: satelita Sentinel-2 w backendzie
 **Co:** (GUGiK nieodpytywany; sieć – tylko Earth Search / AWS przez `core/http.request`; backend w DEMO_OFFLINE)
 - **Źródło** (D86): `sources/sentinel.py` – STAC (POST, `fields`), nagłówek COG z rzadkiego bufora przez tifffile (BSD-3), tylko kafle okna działki (Range, równolegle), jedna ponowna próba odczytu; prototyp osoby C przez `git show`, bez merge.
