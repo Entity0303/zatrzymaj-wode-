@@ -70,7 +70,8 @@ def cache_key(lon: float, lat: float, start: date, end: date) -> tuple:
 async def fetch(lon: float, lat: float, start: date, end: date) -> DailyWeather:
     """Dane dobowe od `start` do `end` włącznie. SourceError, gdy usługa nie odpowie."""
     key = cache_key(lon, lat, start, end)
-    return await cached_fetch(_cache, key, SOURCE_SHORT, lambda: _download(key, start, end), ttl_s=ttl_for(end))
+    return await cached_fetch(_cache, key, SOURCE_SHORT, lambda: _download(key, start, end), ttl_s=ttl_for(end),
+                              breaker_s=120)
 
 
 def ttl_for(end: date) -> float:

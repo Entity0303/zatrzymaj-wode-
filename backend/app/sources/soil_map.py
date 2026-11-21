@@ -38,6 +38,8 @@ SPECIES = {
 }
 # Gatunki piaszczyste – gleba przepuszczalna, mało wody (gruboziarnistość piasku)
 SANDY = {"pl", "plp", "ps", "psp", "ż", "żp"}
+# Gleby lekkie i bardzo lekkie (kategorie agronomiczne): piaski luźne i słabogliniaste + piaski gliniaste
+LIGHT = SANDY | {"pgl", "pglp", "pgm", "pgmp"}
 
 _cache: TTLCache["SoilMapResult | None"] = TTLCache(ttl_s=7 * 24 * 3600, max_items=512, name=SOURCE)
 
@@ -112,7 +114,7 @@ async def soil_map_at(lon: float, lat: float) -> "SoilMapResult | None":
                                     timeout_s=settings.soil_map_timeout_s, retries=0)
         return parse_response(resp.text)
 
-    return await cached_fetch(_cache, key, SOURCE, download, timeout_s=7.5)
+    return await cached_fetch(_cache, key, SOURCE, download, timeout_s=7.5, breaker_s=300)
 
 
 def clear_cache() -> None:

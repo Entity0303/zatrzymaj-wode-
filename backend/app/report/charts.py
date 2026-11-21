@@ -33,7 +33,7 @@ def _ticks(lo: float, hi: float, n: int = 5) -> list[float]:
     return out
 
 
-def balance_chart(h: History, width: int = 680, height: int = 230) -> str | None:
+def balance_chart(h: History, width: int = 680, height: int = 190) -> str | None:
     """Bilans wody narastająco: pasmo min–max z 10 lat, średnia (przerywana), bieżący sezon (gruba linia)."""
     band: list[BandPoint] = [b for b in h.balance_band if b.min is not None and b.max is not None]
     cur: list[SeriesPoint] = [p for p in h.balance_cumulative if p.value is not None]

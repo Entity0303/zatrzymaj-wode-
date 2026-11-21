@@ -43,6 +43,9 @@ class TTLCache(Generic[V]):
         self.stale_max_s = stale_max_s
         self.name = name
         self._data: OrderedDict[Hashable, _Entry[V]] = OrderedDict()
+        # bezpiecznik (D45): po awarii źródła przez `breaker_s` nie odpytujemy go ponownie
+        self.down_until = 0.0
+        self.down_reason = ""
         if name:
             REGISTRY.setdefault(name, []).append(self)
 
@@ -83,6 +86,7 @@ class TTLCache(Generic[V]):
 
     def clear(self) -> None:
         self._data.clear()
+        self.down_until, self.down_reason = 0.0, ""
 
     def __len__(self) -> int:
         return len(self._data)
@@ -128,6 +132,7 @@ def note_stale(source: str, stored_at: dt.datetime, reason: str) -> None:
 async def cached_fetch(
     cache: TTLCache[V], key: Hashable, source: str, fetch: Callable[[], Awaitable[V]], ttl_s: float | None = None,
     timeout_s: float | None = None,
+    breaker_s: float | None = None,
 ) -> V:
     """Świeży wpis z cache → zapytanie do źródła (z łącznym limitem `timeout_s`) → przy błędzie lub przekroczeniu
     czasu przeterminowany wpis (z adnotacją)."""
@@ -135,6 +140,9 @@ async def cached_fetch(
     if hit is not None:
         return hit
     try:
+        left = cache.down_until - time.monotonic()
+        if left > 0:  # bezpiecznik: źródło niedawno zawiodło – nie czekamy na nie ponownie
+            raise SourceError(source, f"{cache.down_reason} (ponowna próba za ok. {max(1, round(left / 60))} min)")
         try:
             value = await (asyncio.wait_for(fetch(), timeout_s) if timeout_s else fetch())
         except asyncio.TimeoutError as exc:
@@ -142,6 +150,8 @@ async def cached_fetch(
     except NotFoundError:
         raise
     except SourceError as exc:
+        if breaker_s and cache.down_until <= time.monotonic():
+            cache.down_until, cache.down_reason = time.monotonic() + breaker_s, exc.message
         stale = cache.get_stale(key)
         if stale is None:
             raise

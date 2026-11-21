@@ -121,7 +121,7 @@ def merge(parcel_id: str, infos: list[dict[str, str]]) -> KiegResult:
 async def classes_for_parcel(parcel_id: str, geom_2180: BaseGeometry, extra_points: int = 3) -> KiegResult:
     """Środek działki + do `extra_points` punktów w obrysie, równolegle. SourceError, gdy usługa nie odpowie."""
     return await cached_fetch(_cache, parcel_id, "EGiB (KIEG)", lambda: _download(parcel_id, geom_2180, extra_points),
-                              timeout_s=7.5)
+                              timeout_s=6.0, breaker_s=300)
 
 
 async def _download(parcel_id: str, geom_2180: BaseGeometry, extra_points: int) -> KiegResult:

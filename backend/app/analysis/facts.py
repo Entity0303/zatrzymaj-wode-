@@ -12,7 +12,7 @@ from app.analysis.crops import CROPS, Crop
 from app.analysis.soil import SoilAssessment
 from app.analysis.water_balance import SeasonSums, SoilWaterResult, WaterBalanceResult, format_date_pl
 from app.schemas.analysis import Soil
-from app.sources.soil_map import SANDY
+from app.sources.soil_map import LIGHT
 
 ROMAN = {1: "I", 2: "II", 3: "III", 4: "IV"}
 OFF_SEASON_PHASES = {"przed_siewem", "po_zbiorze", "spoczynek_zimowy", "wschody_jesienne"}
@@ -177,7 +177,7 @@ def build_facts(
     v["soil_species"] = smap.species_code if smap else None
     v["soil_complex_label"] = smap.complex_label if smap else None
     v["texture_label"] = (smap.species_label if smap and smap.species_label else tex.texture_class if tex else None)
-    sandy_map = bool(smap and smap.species_code in SANDY)
+    sandy_map = bool(smap and smap.species_code in LIGHT)
     sandy_sg = bool(tex and tex.texture_code in ("sand", "loamy_sand"))
     parts = ([f"kat. {v['soil_category_roman']}"] if v["soil_category_roman"] else []) + (
         [v["texture_label"]] if v["texture_label"] else [])

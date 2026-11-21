@@ -11,7 +11,7 @@
 body { font-family: Inter, sans-serif; color: #1E2A23; font-size: 9.5pt; line-height: 1.38; margin: 0;
        font-variant-numeric: tabular-nums; }
 h1 { font-size: 17pt; margin: 0; color: #2F6B47; font-weight: 700; }
-h2 { font-size: 12.5pt; margin: 14pt 0 6pt; color: #2F6B47; font-weight: 650; border-bottom: 1.2pt solid #E3DED4;
+h2 { font-size: 12.5pt; margin: 11pt 0 5pt; color: #2F6B47; font-weight: 650; border-bottom: 1.2pt solid #E3DED4;
      padding-bottom: 2pt; break-after: avoid; }
 h2 .tag { font-size: 8pt; color: #5F6B64; font-weight: 500; margin-left: 4pt; }
 h3 { font-size: 10pt; margin: 0 0 3pt; font-weight: 650; }
@@ -35,11 +35,11 @@ p { margin: 0 0 4pt; }
 table.kv { border-collapse: collapse; width: 100%; }
 table.kv td { padding: 2pt 4pt 2pt 0; vertical-align: top; }
 table.kv td:first-child { color: #5F6B64; width: 38%; }
-.map { position: relative; width: 196pt; height: 196pt; border-radius: 6pt; overflow: hidden; background: #EFEBE3;
+.map { position: relative; width: 170pt; height: 170pt; border-radius: 6pt; overflow: hidden; background: #EFEBE3;
        border: 1pt solid #E3DED4; }
-.map img, .map svg.outline { position: absolute; left: 0; top: 0; width: 196pt; height: 196pt; }
+.map img, .map svg.outline { position: absolute; left: 0; top: 0; width: 170pt; height: 170pt; }
 .map .nomap { position: absolute; top: 40%; width: 100%; text-align: center; color: #5F6B64; font-size: 8pt; }
-.map-cap { width: 196pt; }
+.map-cap { width: 170pt; }
 
 /* stan */
 .status { border-radius: 8pt; padding: 8pt 10pt; display: flex; gap: 10pt; align-items: center; }

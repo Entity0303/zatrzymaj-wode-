@@ -257,8 +257,7 @@ def test_soilgrids_parse_and_texture():
     assert t.texture_code == "sandy_loam" and t.texture_class == "glina piaszczysta" and t.depth == "0–30 cm"
     p = permeability(t)
     assert p.ksat_mm_h > 0 and p.description and p.method.startswith("Saxton")
-    with pytest.raises(SourceError):
-        soilgrids.parse_response({"properties": {"layers": []}}, 0, 0)
+    assert soilgrids.parse_response({"properties": {"layers": []}}, 0, 0) is None  # brak danych ≠ awaria
 
 
 def test_soil_map_parse():
@@ -370,3 +369,44 @@ def test_cached_fetch_timeout_falls_back_to_stale():
             await cached_fetch(TTLCache(ttl_s=60), "k", "KIEG", slow, timeout_s=0.05)
 
     asyncio.run(scenario())
+
+
+def test_breaker_skips_failing_source_then_uses_stale():
+    c: TTLCache[int] = TTLCache(ttl_s=60)
+    calls = []
+
+    async def fail():
+        calls.append(1)
+        raise SourceError("SoilGrids (ISRIC)", "usługa nie odpowiada")
+
+    async def scenario():
+        with pytest.raises(SourceError):
+            await cached_fetch(c, "a", "SoilGrids (ISRIC)", fail, breaker_s=300)
+        with pytest.raises(SourceError, match="ponowna próba"):  # bezpiecznik – bez zapytania
+            await cached_fetch(c, "b", "SoilGrids (ISRIC)", fail, breaker_s=300)
+        assert len(calls) == 1
+        c.set("b", 7)
+        c.expire_all()
+        assert await cached_fetch(c, "b", "SoilGrids (ISRIC)", fail, breaker_s=300) == 7  # stary wpis
+        c.clear()
+        with pytest.raises(SourceError):
+            await cached_fetch(c, "a", "SoilGrids (ISRIC)", fail, breaker_s=300)
+        assert len(calls) == 2  # po wyczyszczeniu bezpiecznik zresetowany
+
+    asyncio.run(scenario())
+
+
+def test_light_soil_from_soil_map_species():
+    assert {"pgl", "pgm", "pl", "ps"} <= soil_map.LIGHT and "glp" not in soil_map.LIGHT and "gs" not in soil_map.LIGHT
+
+
+
+def test_off_season_warn_headline_matches_data():
+    from app.analysis.scoring import overall_status
+    from test_analysis import SOIL_OK
+
+    base = dict(phase="dojrzewanie", phase_label="dojrzewanie", sensitive=False, water_pct=59.0, water_rank_pct=40.0)
+    wetter = overall_status(facts(**base, balance_deviation_mm=40.0, balance_percentile=70.0), SOIL_OK)
+    drier = overall_status(facts(**base, balance_deviation_mm=-40.0, balance_percentile=30.0), SOIL_OK)
+    assert wetter.level == drier.level == "warn"
+    assert "niż zwykle" not in wetter.headline and "niż zwykle" in drier.headline

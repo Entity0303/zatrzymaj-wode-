@@ -449,7 +449,7 @@ async def dev_water(
 
 ANALYSIS_BUDGET_S = 27.0  # cała analiza < 30 s (wymóg KOWR) – zapas na serializację
 # twardy limit całego pobrania na źródło (D45) – limit httpx dotyczy pojedynczej operacji, nie całego zapytania
-SOURCE_LIMIT_S = {"IUNG-PIB": 15.0, "KIEG / EGiB GUGiK": 8.0, "Open-Meteo (prognoza)": 10.0,
+SOURCE_LIMIT_S = {"IUNG-PIB": 15.0, "KIEG / EGiB GUGiK": 6.5, "Open-Meteo (prognoza)": 10.0,
                   "SoilGrids (ISRIC)": 12.5, "Mapa glebowo-rolnicza (GUGiK)": 8.0}
 
 

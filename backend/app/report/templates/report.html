@@ -165,6 +165,7 @@
 {# 8. Źródła, wiarygodność, ograniczenia (E) #}
 <h2>E. Skąd te dane i na ile im ufać</h2>
 <p>Pewność wyniku: <b>{{ CONFIDENCE[a.reliability.confidence] }}</b> · źródła dostępne: {{ a.reliability.completeness.available }} z {{ a.reliability.completeness.total }}. {{ a.reliability.reason }}</p>
+<p class="tiny muted">Wszystkie liczby i rekomendacje policzyła aplikacja z danych pobranych przy analizie (reguły w kodzie, bez gotowych tekstów; model językowy niczego nie liczy).</p>
 <table class="src">
   <tr><th></th><th>Źródło</th><th>Do czego</th><th>Dane z dnia</th><th>Rozdzielczość</th><th>Uwagi</th></tr>
   {% for s in a.reliability.sources %}
@@ -173,7 +174,6 @@
 </table>
 <h3 style="margin-top:6pt">Ograniczenia</h3>
 <ul class="lim">{% for l in a.reliability.limitations %}<li>{{ l }}</li>{% endfor %}</ul>
-<p class="tiny muted" style="margin-top:6pt">Wszystkie liczby i rekomendacje policzyła aplikacja z danych pobranych w chwili analizy (reguły w kodzie, bez gotowych tekstów; model językowy niczego nie liczy). Czas analizy: {{ (a.steps|selectattr('id', 'equalto', 'total')|first).duration_ms|num(0, 'ms') }}.</p>
 
 </body>
 </html>

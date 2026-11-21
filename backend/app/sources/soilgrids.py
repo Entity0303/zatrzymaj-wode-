@@ -31,7 +31,8 @@ class SoilGridsResult:
     lat: float
 
 
-def parse_response(payload: dict, lon: float, lat: float) -> SoilGridsResult:
+def parse_response(payload: dict, lon: float, lat: float) -> "SoilGridsResult | None":
+    """None = SoilGrids nie ma danych w tym miejscu (woda, zabudowa) – poprawna odpowiedź, nie awaria."""
     try:
         layers = {l["name"]: l for l in payload["properties"]["layers"]}
     except (KeyError, TypeError) as exc:
@@ -52,23 +53,23 @@ def parse_response(payload: dict, lon: float, lat: float) -> SoilGridsResult:
                 den += w
         out[prop] = num / den if den else None
     if out["sand"] is None or out["silt"] is None or out["clay"] is None:
-        raise SourceError(SOURCE, "brak danych o glebie w tym miejscu (np. woda lub zabudowa)")
+        return None
     # g/kg -> %; suma frakcji normalizowana do 100 (zaokrąglenia modelu)
     s, si, c = (out[k] / 10 for k in ("sand", "silt", "clay"))
     total = s + si + c
     if total <= 0:
-        raise SourceError(SOURCE, "zerowe frakcje w odpowiedzi")
+        return None
     return SoilGridsResult(
         sand_pct=round(100 * s / total, 1), silt_pct=round(100 * si / total, 1), clay_pct=round(100 * c / total, 1),
         soc_g_kg=None if out["soc"] is None else round(out["soc"], 1), lon=lon, lat=lat,
     )
 
 
-async def texture_at(lon: float, lat: float) -> SoilGridsResult:
+async def texture_at(lon: float, lat: float) -> "SoilGridsResult | None":
     """Frakcje 0–30 cm w punkcie. SourceError, gdy usługa nie odpowie (12 s) lub nie ma danych."""
     key = (round(lon, 4), round(lat, 4))
 
-    async def download() -> SoilGridsResult:
+    async def download() -> "SoilGridsResult | None":
         params = [("lon", f"{key[0]:.4f}"), ("lat", f"{key[1]:.4f}")]
         params += [("property", p) for p in PROPERTIES] + [("depth", d) for d in DEPTHS] + [("value", "mean")]
         resp = await get_with_retry(settings.soilgrids_url, params, source=SOURCE,
@@ -79,7 +80,8 @@ async def texture_at(lon: float, lat: float) -> SoilGridsResult:
             raise SourceError(SOURCE, "odpowiedź nie jest poprawnym JSON") from exc
         return parse_response(payload, *key)
 
-    return await cached_fetch(_cache, key, SOURCE, download, timeout_s=settings.soilgrids_timeout_s)
+    return await cached_fetch(_cache, key, SOURCE, download, timeout_s=settings.soilgrids_timeout_s,
+                              breaker_s=300)
 
 
 def clear_cache() -> None:

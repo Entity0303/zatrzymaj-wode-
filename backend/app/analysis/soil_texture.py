@@ -128,6 +128,8 @@ def enrich_soil(
                    "nie pomiar na tej działce.")
     elif isinstance(sg, SourceError):
         notes.append(f"Frakcje gleby: brak danych ({sg.message}).")
+    else:
+        notes.append("Frakcje gleby: SoilGrids nie ma danych w tym miejscu (np. woda, zabudowa).")
     if isinstance(sm, SoilMapResult):
         smi = soil_map_info(sm)
         if sm.mapped_year:
