@@ -153,3 +153,5 @@ def test_choice_sample_matches_contract():
     assert a.suggestions.choice_summary and a.suggestions.top_ids
     assert len(a.seasonal_balance_by_year) == 11 and a.seasonal_balance_by_year[-1].current
     assert a.weather_data_until is not None and a.history.details
+    ps = a.precip_sources  # A7: opad ze stacji IMGW
+    assert ps is not None and ps.main == "imgw" and ps.stations[0].name == "Burzyn" and ps.sentence.startswith("Opady liczymy")

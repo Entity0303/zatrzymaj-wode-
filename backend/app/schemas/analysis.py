@@ -767,6 +767,55 @@ class LoadingStep(Contract):
 # ── Odpowiedź ───────────────────────────────────────────────────────────────────────────────
 
 
+PrecipMain = Literal["imgw", "imgw_daleko", "nasa"]
+PrecipAgreement = Literal["zgodne", "roznia_sie", "mocno_sie_roznia", "brak_danych"]
+
+
+class PrecipStation(Contract):
+    code: str = Field(description="Kod stacji IMGW (9 cyfr)")
+    name: str = Field(description="Np. 'Burzyn'")
+    kind: Literal["synop", "klimat", "opad"]
+    kind_label: str = Field(description="stacja synoptyczna / klimatologiczna / posterunek opadowy")
+    distance_km: float
+    weight: float = Field(description="Waga IDW (1/d², suma = 1)")
+    coverage_pct: float = Field(description="Udział dni z pomiarem w okresie analizy, %")
+    lon: float
+    lat: float
+
+
+class PrecipWindow(Contract):
+    """Porównanie sum opadu w oknie (doba IMGW 6:00–6:00 – porównujemy sumy, nie dni)."""
+
+    key: Literal["sezon", "ostatnie_30_dni", "wielolecie"]
+    label: str
+    start: dt.date
+    end: dt.date
+    imgw_mm: float | None = None
+    nasa_mm: float | None = None
+    difference_pct: float | None = Field(None, description="NASA względem stacji IMGW, % (dodatnie = NASA pokazuje więcej)")
+    rating: PrecipAgreement
+
+
+class PrecipSources(Contract):
+    """Skąd opad dla tej działki (A7): stacje IMGW (źródło główne) i porównanie z NASA POWER."""
+
+    main: PrecipMain = Field(description="imgw – stacje ≤ 30 km; imgw_daleko – stacje 30–50 km (pewność niżej); nasa – brak stacji")
+    main_label: str
+    stations: list[PrecipStation] = Field(default_factory=list, description="Do 3 najbliższych stacji z danymi (IDW)")
+    nasa_factor: float | None = Field(None, description="Suma IMGW / suma NASA ze wspólnego okresu – korekta dni bez pomiaru")
+    nasa_vs_imgw_pct: float | None = Field(None, description="O ile % NASA pokazuje więcej (+) / mniej (−) niż stacje, wspólne lata")
+    common_days: int = 0
+    filled_days: int = Field(0, description="Ostatnie dni bez pomiaru ze stacji – NASA przeliczona współczynnikiem")
+    filled_from: dt.date | None = None
+    filled_earlier_days: int = Field(0, description="Wcześniejsze dni bez pomiaru (lata sprzed magazynu, luki) – też przeliczona NASA")
+    agreement: PrecipAgreement = Field(description="Zgodność źródeł: sezon od 1 marca i ostatnie 30 dni (gorsza z dwóch)")
+    agreement_label: str
+    windows: list[PrecipWindow] = Field(default_factory=list)
+    sentence: str = Field(description="Jedno zdanie dla rolnika, np. 'Opady liczymy ze stacji IMGW Burzyn (27 km). …'")
+    confidence_lowered: bool = Field(False, description="True: stacje daleko albo źródła mocno się różnią – pewność o poziom niżej")
+    source_tag: SourceTag
+
+
 class SeasonalBalanceYear(Contract):
     """Bilans wody (spadło minus wyparowało) od początku sezonu do tego samego dnia – jeden słupek wykresu „Na tle 10 lat”."""
 
@@ -820,6 +869,7 @@ class AnalysisResponse(Contract):
     seasonal_balance_mean_mm: float | None = Field(None, description="Średnia z lat porównawczych, mm (linia na wykresie)")
     seasonal_balance_label: str | None = Field(None, description="Okres bilansu, np. 'od 1 marca do 18 listopada'")
     weather_data_until: dt.date | None = Field(None, description="Ostatni dzień z danymi pogodowymi („dane pogodowe do 18.11”)")
+    precip_sources: PrecipSources | None = Field(None, description="Skąd opad: stacje IMGW, zgodność z NASA, zdanie dla rolnika (A7)")
     history: History
     causes: list[Cause] = Field(description="Od największego udziału")
     recommendations: list[Recommendation] = Field(description="retencja → agrotechnika → nawadnianie")

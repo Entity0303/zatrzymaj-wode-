@@ -689,6 +689,65 @@ export type PerennialSection = {
   items: PerennialSuggestion[]
 }
 
+// ── Źródła opadu (A7) ─────────────────────────────────────────────────────────────────────
+
+/** imgw – stacje ≤ 30 km; imgw_daleko – stacje 30–50 km (pewność niżej); nasa – brak stacji z danymi */
+export type PrecipMain = 'imgw' | 'imgw_daleko' | 'nasa'
+export type PrecipAgreement = 'zgodne' | 'roznia_sie' | 'mocno_sie_roznia' | 'brak_danych'
+
+export type PrecipStation = {
+  /** kod stacji IMGW (9 cyfr) */
+  code: string
+  /** np. „Burzyn” */
+  name: string
+  kind: 'synop' | 'klimat' | 'opad'
+  /** stacja synoptyczna / klimatologiczna / posterunek opadowy */
+  kind_label: string
+  distance_km: number
+  /** waga IDW (1/d², suma = 1) */
+  weight: number
+  coverage_pct: number
+  lon: number
+  lat: number
+}
+
+/** porównanie sum opadu w oknie (doba IMGW 6:00–6:00 – sumy, nie dni) */
+export type PrecipWindow = {
+  key: 'sezon' | 'ostatnie_30_dni' | 'wielolecie'
+  label: string
+  start: string
+  end: string
+  imgw_mm?: number | null
+  nasa_mm?: number | null
+  /** NASA względem stacji IMGW, % (dodatnie = NASA pokazuje więcej) */
+  difference_pct?: number | null
+  rating: PrecipAgreement
+}
+
+export type PrecipSources = {
+  main: PrecipMain
+  main_label: string
+  /** do 3 najbliższych stacji z danymi */
+  stations?: PrecipStation[]
+  /** suma IMGW / suma NASA ze wspólnego okresu – korekta dni bez pomiaru */
+  nasa_factor?: number | null
+  /** o ile % NASA pokazuje więcej (+) / mniej (−) niż stacje */
+  nasa_vs_imgw_pct?: number | null
+  common_days?: number
+  /** ostatnie dni bez pomiaru ze stacji – NASA przeliczona współczynnikiem */
+  filled_days?: number
+  filled_from?: string | null
+  filled_earlier_days?: number
+  agreement: PrecipAgreement
+  agreement_label: string
+  windows?: PrecipWindow[]
+  /** jedno zdanie dla rolnika: „Opady liczymy ze stacji IMGW Burzyn (27 km). …” */
+  sentence: string
+  /** true: stacje daleko albo źródła mocno się różnią – pewność o poziom niżej */
+  confidence_lowered?: boolean
+  source_tag: SourceTag
+}
+
 /** A5e: słupek wykresu „Na tle 10 lat” */
 export type SeasonalBalanceYear = {
   year: number
@@ -944,6 +1003,8 @@ export type AnalysisResponse = {
   seasonal_balance_label?: string | null
   /** A5e: ostatni dzień z danymi pogodowymi („dane pogodowe do 18.11”) */
   weather_data_until?: string | null
+  /** A7: skąd opad – stacje IMGW (źródło główne), zgodność z NASA, zdanie dla rolnika */
+  precip_sources?: PrecipSources | null
   /** A6: teren i spływ wody z NMT (null = brak danych, powód w terrain_note) */
   terrain?: Terrain | null
   /** A6: dlaczego brak analizy terenu */
