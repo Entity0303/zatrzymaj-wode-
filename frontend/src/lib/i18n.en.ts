@@ -661,4 +661,8 @@ export const EN: Record<string, string> = {
   // zwinięty panel działki
   'Pełny panel': 'Full panel',
   'Zwiń panel': 'Collapse panel',
+  // ekran powitalny
+  'albo kliknij swoje pole na mapie': 'or click your field on the map',
+  // ekran powitalny
+  'Numer działki, np. Szczytno 112/11': 'Parcel number, e.g. Szczytno 112/11',
 }

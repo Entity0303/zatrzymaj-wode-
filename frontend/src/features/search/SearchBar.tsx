@@ -15,6 +15,7 @@ export function SearchBar({
   onPick,
   onDismiss,
   selected,
+  placeholder,
   className,
 }: {
   loading: boolean
@@ -26,6 +27,8 @@ export function SearchBar({
   onDismiss: () => void
   /** wybrana działka jako tekst wyszukiwania („Szczytno 112/11”) – wpisywany przy każdej zmianie działki */
   selected?: string | null
+  /** krótszy tekst podpowiedzi (np. na ekranie powitalnym) */
+  placeholder?: string
   className?: string
 }) {
   const { t } = useLang()
@@ -83,7 +86,7 @@ export function SearchBar({
           aria-autocomplete="list"
           aria-invalid={!!error || undefined}
           enterKeyHint="search"
-          placeholder={t('Wpisz numer działki, np. 143203_2.0027.112/11 lub Szczytno 112/11')}
+          placeholder={placeholder ?? t('Wpisz numer działki, np. 143203_2.0027.112/11 lub Szczytno 112/11')}
           className={cn(
             'h-12 w-full rounded-full border border-transparent bg-surface pr-12 pl-12 text-base shadow-float outline-none placeholder:text-sm placeholder:text-text-muted/80',
             'focus-visible:border-brand focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-brand',

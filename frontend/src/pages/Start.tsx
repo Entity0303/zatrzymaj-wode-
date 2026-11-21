@@ -16,6 +16,8 @@ import { POLAND_CENTER, ParcelMap, type BaseMap } from '@/features/map/ParcelMap
 import { MobileSheetHeader } from '@/features/parcel-panel/MobileSheetHeader'
 import { ParcelPanel } from '@/features/parcel-panel/ParcelPanel'
 import { ParcelSummary } from '@/features/parcel-panel/ParcelSummary'
+import { IntroHero } from '@/features/intro/IntroHero'
+import { LocateButton } from '@/features/search/LocateButton'
 import { Passport } from '@/features/passport/Passport'
 import { exampleDate, type Example } from '@/features/parcel-panel/examples'
 import { InfraReportWizard } from '@/features/infra-reports/InfraReportWizard'
@@ -460,6 +462,9 @@ export default function Start() {
     onExample: openExample,
   }
 
+  // ekran powitalny: przed wyborem działki tylko mapa i karta z logo, wyszukiwarką i przykładami
+  const intro = search.phase === 'idle' && !infra
+
   const searchBar = (
     <SearchBar
       loading={search.phase === 'loading'}
@@ -493,7 +498,7 @@ export default function Start() {
   return (
     <div className="flex h-dvh w-full flex-col overflow-hidden bg-bg print:hidden">
       <div className="flex min-h-0 flex-1">
-        <Sidebar />
+        {!intro && <Sidebar />}
         <main
           ref={mainRef}
           className="relative min-w-0 flex-1 overflow-hidden"
@@ -513,6 +518,7 @@ export default function Start() {
             insidePopup={insidePopup}
             highlight={infra ? infraMarker : highlight}
             infraRefresh={infraRefresh}
+            intro={intro}
             insets={insets}
             reducedMotion={reducedMotion}
             onMapClick={onMapClick}
@@ -521,6 +527,26 @@ export default function Start() {
             onClosePopup={() => setInsidePopup(null)}
           />
 
+          {intro ? (
+            <IntroHero
+              search={
+                <SearchBar
+                  loading={false}
+                  error={null}
+                  candidates={[]}
+                  total={0}
+                  onSearch={searchByNumber}
+                  onPick={pickCandidate}
+                  onDismiss={() => undefined}
+                  placeholder={isMobile ? t('Numer działki') : t('Numer działki, np. Szczytno 112/11')}
+                  className="min-w-0 flex-1"
+                />
+              }
+              locate={<LocateButton locating={locating} onClick={locate} iconOnly={isMobile} />}
+              onExample={openExample}
+            />
+          ) : (
+          <div className="contents ui-appear">
           <TopBar
             isMobile={isMobile}
             search={searchBar}
@@ -763,6 +789,9 @@ export default function Start() {
             document.body,
           )}
 
+          </div>
+          )}
+
           {toast && (
             <div
               role="status"
@@ -773,7 +802,7 @@ export default function Start() {
           )}
         </main>
       </div>
-      <BottomTabs />
+      {!intro && <BottomTabs />}
     </div>
   )
 }

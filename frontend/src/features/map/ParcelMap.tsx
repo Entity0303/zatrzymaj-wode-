@@ -30,6 +30,25 @@ const ORTO_WMTS =
   '?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=ORTOFOTOMAPA&STYLE=default' +
   '&FORMAT=image/jpeg&TILEMATRIXSET=EPSG:3857&TILEMATRIX=EPSG:3857:{z}&TILEROW={y}&TILECOL={x}'
 
+/** Ekran powitalny: pola uprawne z bliska (okolice działki z przykładu „Susza 2018”, Podlasie) i powolny „przelot”. */
+const INTRO_FROM: [number, number] = [53.043, 22.586]
+const INTRO_TO: [number, number] = [53.05, 22.601]
+
+function IntroView({ active, reducedMotion }: { active: boolean; reducedMotion: boolean }) {
+  const map = useMap()
+  useEffect(() => {
+    if (!active) return
+    map.setView(INTRO_FROM, 14, { animate: false })
+    if (reducedMotion) return
+    const id = window.setTimeout(() => map.flyTo(INTRO_TO, 15, { duration: 14, easeLinearity: 0.1 }), 400)
+    return () => {
+      window.clearTimeout(id)
+      map.stop()
+    }
+  }, [active, map, reducedMotion])
+  return null
+}
+
 function FitTo({
   parcel,
   candidates,
@@ -110,6 +129,8 @@ type Props = {
   onClosePopup: () => void
   /** miejsce rekomendacji („Pokaż na mapie”) */
   highlight?: GeoJSON.Geometry | null
+  /** ekran powitalny – widok pól z bliska */
+  intro?: boolean
   /** zgłoszenia rowów/zbiorników wokół działki; zmiana `infraRefresh` = ponowne pobranie */
   infraRefresh?: number
 }
@@ -133,6 +154,7 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
     onSelectCandidate,
     onClosePopup,
     highlight,
+    intro = false,
     infraRefresh = 0,
   },
   ref,
@@ -260,6 +282,7 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
         />
       )}
 
+      <IntroView active={intro} reducedMotion={reducedMotion} />
       <InfraPins bbox={infraBox} refresh={infraRefresh} />
 
       <FitTo parcel={parcel} candidates={candidates} insets={insets} reducedMotion={reducedMotion} />

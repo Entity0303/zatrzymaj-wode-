@@ -208,6 +208,19 @@
   border-radius: 12px;
 }
 
+/* Interfejs pojawia się łagodnie po wybraniu działki (tylko przezroczystość – bez psucia przesunięć) */
+@keyframes ui-appear {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.ui-appear > * {
+  animation: ui-appear 450ms ease-out both;
+}
+
 /* 2.4 / 16: szanuj prefers-reduced-motion */
 @media (prefers-reduced-motion: reduce) {
   *,
