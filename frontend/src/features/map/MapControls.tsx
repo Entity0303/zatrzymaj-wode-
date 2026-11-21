@@ -66,14 +66,14 @@ export function MapControls({
     <div className={cn('flex flex-col items-start gap-2', className)} style={style}>
       {/* mały przycisk podkładu mapy (SPEC 5.1) */}
       <div className="relative">
-        <div className="overflow-hidden rounded-md border shadow-float">
+        <div className="overflow-hidden rounded-md shadow-float">
           <CtrlButton icon={Layers2} label={t('Podkład mapy')} onClick={() => setBaseOpen((o) => !o)} pressed={baseOpen} />
         </div>
         {baseOpen && (
           <div
             role="radiogroup"
             aria-label={t('Podkład mapy')}
-            className="absolute bottom-0 left-full z-10 ml-2 flex w-44 flex-col gap-1 rounded-xl border bg-surface p-1.5 shadow-float max-md:top-0 max-md:right-full max-md:bottom-auto max-md:left-auto max-md:mr-2 max-md:ml-0"
+            className="absolute bottom-0 left-full z-10 ml-2 flex w-44 flex-col gap-1 rounded-xl bg-surface p-1.5 shadow-float max-md:top-0 max-md:right-full max-md:bottom-auto max-md:left-auto max-md:mr-2 max-md:ml-0"
           >
             {(
               [
@@ -101,7 +101,7 @@ export function MapControls({
           </div>
         )}
       </div>
-      <div className="flex flex-col divide-y overflow-hidden rounded-md border shadow-float">
+      <div className="flex flex-col divide-y divide-line overflow-hidden rounded-md shadow-float">
         <CtrlButton icon={Plus} label={t('Przybliż')} onClick={onZoomIn} />
         <CtrlButton icon={Minus} label={t('Oddal')} onClick={onZoomOut} />
         <CtrlButton icon={Crosshair} label={t('Wróć do mojej działki')} onClick={onBackToParcel} disabled={!canGoBack} />

@@ -12,7 +12,7 @@ export function LocateButton({ locating, onClick, iconOnly }: { locating: boolea
       disabled={locating}
       aria-label={t('Moja lokalizacja – znajdź działkę, na której stoisz')}
       className={cn(
-        'flex h-12 shrink-0 items-center justify-center gap-2 rounded-full border bg-surface font-medium text-text shadow-float hover:bg-ok-soft disabled:opacity-70',
+        'flex h-12 shrink-0 items-center justify-center gap-2 rounded-full bg-surface font-medium text-text shadow-float hover:bg-ok-soft disabled:opacity-70',
         iconOnly ? 'w-12' : 'px-4 text-base',
       )}
     >

@@ -16,6 +16,7 @@ const CropHealth: MapLayer = {
     colors: ['#C8453B', '#E8B931', '#5BB37F', '#1F4D33'],
     left: 'Słaba roślinność',
     right: 'Bujna',
+    extra: { color: '#FFFFFF', label: 'Chmury' },
     note: 'Białe = chmury lub brak zdjęcia',
   },
   Overlay: null,

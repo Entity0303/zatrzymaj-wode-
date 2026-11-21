@@ -76,7 +76,7 @@ export function SearchBar({
           enterKeyHint="search"
           placeholder={t('Wpisz numer działki, np. 143203_2.0027.112/11 lub Szczytno 112/11')}
           className={cn(
-            'h-12 w-full rounded-full border bg-surface pr-12 pl-12 text-base shadow-float outline-none placeholder:text-sm placeholder:text-text-muted/80',
+            'h-12 w-full rounded-full border border-transparent bg-surface pr-12 pl-12 text-base shadow-float outline-none placeholder:text-sm placeholder:text-text-muted/80',
             'focus-visible:border-brand focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-brand',
             error && 'border-danger/60',
           )}
@@ -107,7 +107,7 @@ export function SearchBar({
       )}
 
       {open && (
-        <div className="absolute inset-x-0 top-full z-10 mt-2 overflow-hidden rounded-xl border bg-surface shadow-float">
+        <div className="absolute inset-x-0 top-full z-10 mt-2 overflow-hidden rounded-xl bg-surface shadow-float">
           <p className="border-b px-4 py-2 text-sm text-text-muted">
             {t('Znaleziono {n} działek – wybierz swoją', { n: total })}
             {total > candidates.length && ` ${t('(pokazano {n})', { n: candidates.length })}`}

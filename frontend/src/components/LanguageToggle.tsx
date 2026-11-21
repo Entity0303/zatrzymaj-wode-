@@ -12,7 +12,7 @@ const LANGS: { id: Lang; label: string; name: string }[] = [
  * telefon (`compact`): jeden okrągły przycisk 48 px z kodem drugiego języka.
  * Nazwy języków celowo nie są tłumaczone – każdy widzi swój język po swojemu.
  */
-export function LanguageToggle({ compact, className }: { compact?: boolean; className?: string }) {
+export function LanguageToggle({ compact, bare, className }: { compact?: boolean; bare?: boolean; className?: string }) {
   const { lang, setLang, t } = useLang()
   if (compact) {
     const other = LANGS.find((l) => l.id !== lang)!
@@ -23,7 +23,7 @@ export function LanguageToggle({ compact, className }: { compact?: boolean; clas
         aria-label={`${t('Język')}: ${other.name}`}
         lang={other.id}
         className={cn(
-          'flex size-12 shrink-0 items-center justify-center rounded-full border bg-surface text-sm font-semibold text-brand shadow-float hover:bg-ok-soft',
+          'flex size-12 shrink-0 items-center justify-center rounded-full bg-surface text-sm font-semibold text-brand shadow-float hover:bg-ok-soft',
           className,
         )}
       >
@@ -35,7 +35,11 @@ export function LanguageToggle({ compact, className }: { compact?: boolean; clas
     <div
       role="radiogroup"
       aria-label={t('Język')}
-      className={cn('flex h-12 shrink-0 items-center gap-1 rounded-full border bg-surface p-1 pl-3 shadow-float', className)}
+      className={cn(
+        'flex h-12 shrink-0 items-center gap-1 rounded-full bg-surface p-1 pl-3 shadow-float',
+        bare && 'bg-transparent shadow-none',
+        className,
+      )}
     >
       <Languages className="size-5 shrink-0 text-brand" aria-hidden />
       {LANGS.map((l) => (

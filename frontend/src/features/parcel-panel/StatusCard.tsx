@@ -1,4 +1,5 @@
 import type { AnalysisResponse, CropId } from '@/api/types'
+import { ChevronRight } from 'lucide-react'
 import { StatusBadge } from '@/components/StatusBadge'
 import { STATUS } from '@/theme/status'
 import { cn } from '@/lib/utils'
@@ -11,13 +12,13 @@ export function StatusCard({ crop, analysis }: { crop: CropId | null; analysis?:
   const s = STATUS.no_data
   const Icon = s.icon
   return (
-    <div className={cn('flex gap-3 rounded-xl border border-nodata/50 p-4', s.bg)}>
-      <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-surface text-text-muted">
+    <div className={cn('flex gap-3.5 rounded-xl border border-nodata/50 p-4', s.bg)}>
+      <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-surface text-text-muted">
         <Icon className="size-6" aria-hidden />
       </span>
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
-          <p className="text-base leading-6 font-semibold">{t('Brak danych – analiza w budowie')}</p>
+          <p className="text-lg leading-6 font-semibold">{t('Brak danych – analiza w budowie')}</p>
         </div>
         <p className="mt-0.5 text-sm leading-5 text-text-muted">
           {t(
@@ -39,15 +40,17 @@ function AnalysisStatusCard({ analysis }: { analysis: AnalysisResponse }) {
   const s = STATUS[level]
   const Icon = s.icon
   return (
-    <div className={cn('flex gap-3 rounded-xl border p-4', level === 'no_data' && 'border-nodata/50', s.bg)}>
-      <span className={cn('flex size-10 shrink-0 items-center justify-center rounded-full bg-surface', s.fg)}>
+    <div className={cn('flex items-start gap-3.5 rounded-xl p-4', level === 'no_data' && 'border border-nodata/50', s.bg)}>
+      <span className={cn('flex size-11 shrink-0 items-center justify-center rounded-full bg-surface', s.fg)}>
         <Icon className="size-6" aria-hidden />
       </span>
-      <div className="min-w-0">
-        <p className="text-base leading-6 font-semibold">{t(headline)}</p>
+      <div className="min-w-0 flex-1">
+        <p className="text-lg leading-6 font-semibold">{t(headline)}</p>
         <p className="mt-0.5 text-sm leading-5 text-text">{t(summary)}</p>
         <StatusBadge status={level} size="sm" className="mt-2" />
       </div>
+      {/* › prowadzi do paszportu wodnego (SPEC 6.3) – paszport jeszcze w budowie */}
+      <ChevronRight className="mt-2.5 size-5 shrink-0 text-text-muted" aria-hidden />
     </div>
   )
 }

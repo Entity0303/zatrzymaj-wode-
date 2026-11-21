@@ -5,7 +5,15 @@ import type { LayerKey, Parcel } from '@/api/types'
 export type { LayerKey }
 
 export type LegendSpec =
-  | { kind: 'gradient'; colors: string[]; left: string; right: string; note?: string }
+  | {
+      kind: 'gradient'
+      colors: string[]
+      left: string
+      right: string
+      /** osobna próbka obok paska (ref-mobile: „Chmury”) */
+      extra?: { color: string; label: string }
+      note?: string
+    }
   | { kind: 'classes'; items: { color: string; label: string }[]; note?: string }
   | { kind: 'symbols'; items: { symbol: 'arrow' | 'spot' | 'outflow' | 'line' | 'pin'; label: string }[] }
 

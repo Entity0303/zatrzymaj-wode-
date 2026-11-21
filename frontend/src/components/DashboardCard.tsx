@@ -21,7 +21,7 @@ export function DashboardCard({
   return (
     <section
       aria-label={t(title)}
-      className={cn('flex h-full min-w-0 flex-col rounded-xl border bg-surface px-4 py-3 shadow-card', className)}
+      className={cn('flex h-full min-w-0 flex-col rounded-xl border bg-surface px-4 py-3', className)}
     >
       <header className="mb-1.5 flex items-center gap-2">
         <Icon className="size-5 text-brand" aria-hidden />

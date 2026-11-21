@@ -1,4 +1,4 @@
-import { ChartNoAxesCombined, Droplets, Gauge, Leaf } from 'lucide-react'
+import { ArrowDown, ArrowUp, ChartNoAxesCombined, Droplets, Gauge, Leaf } from 'lucide-react'
 import { MetricCard } from '@/components/MetricCard'
 import { ScoreRing } from '@/components/ScoreRing'
 import type { AnalysisResponse, Indicator } from '@/api/types'
@@ -16,11 +16,11 @@ export function KeyMetrics({ loading, analysis }: { loading?: boolean; analysis?
   return (
     <div className="grid grid-cols-2 gap-3">
       <MetricCard icon={Droplets} title="Woda w glebie" value={null} unit="%" tone="water" source="szacunek_modelu" loading={loading}>
-        <div className="h-2 rounded-full bg-surface-2" aria-hidden />
+        <div className="h-1.5 rounded-full bg-surface-2" aria-hidden />
       </MetricCard>
       <MetricCard icon={Gauge} title="Ryzyko na 7 dni" value={null} tone="warn" source="prognoza" loading={loading} />
       <MetricCard icon={Leaf} title="Kondycja upraw" value={null} tone="brand" source="satelita" loading={loading}>
-        {!loading && <ScoreRing value={null} size={48} stroke={5} className="self-start" />}
+        {!loading && <ScoreRing value={null} size={56} stroke={6} className="self-start" />}
       </MetricCard>
       <MetricCard
         icon={ChartNoAxesCombined}
@@ -50,7 +50,7 @@ function AnalysisMetrics({ analysis }: { analysis: AnalysisResponse }) {
         sourceDate={tagDate(water)}
       >
         {water.value !== null && (
-          <div className="h-2 overflow-hidden rounded-full bg-surface-2" aria-hidden>
+          <div className="h-1.5 overflow-hidden rounded-full bg-surface-2" aria-hidden>
             <div className="h-full rounded-full bg-water" style={{ width: `${Math.max(0, Math.min(100, water.value))}%` }} />
           </div>
         )}
@@ -73,7 +73,7 @@ function AnalysisMetrics({ analysis }: { analysis: AnalysisResponse }) {
         source={health.source_tag.kind}
         sourceDate={tagDate(health)}
       >
-        <ScoreRing value={health.value} size={48} stroke={5} className="self-start" />
+        <ScoreRing value={health.value} size={56} stroke={6} className="self-start" />
       </MetricCard>
       <MetricCard
         icon={ChartNoAxesCombined}
@@ -81,6 +81,13 @@ function AnalysisMetrics({ analysis }: { analysis: AnalysisResponse }) {
         value={num(balance, 0, true)}
         unit={balance.unit ?? 'mm'}
         tone={balance.value !== null && balance.value < 0 ? 'danger' : 'water'}
+        valuePrefix={
+          balance.value === null || balance.value === 0 ? undefined : balance.value < 0 ? (
+            <ArrowDown className="size-6 self-center text-danger" strokeWidth={2.25} aria-hidden />
+          ) : (
+            <ArrowUp className="size-6 self-center text-water" strokeWidth={2.25} aria-hidden />
+          )
+        }
         source={balance.source_tag.kind}
         sourceDate={tagDate(balance)}
       >

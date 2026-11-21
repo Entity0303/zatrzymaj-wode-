@@ -62,15 +62,21 @@ export function LegendCard({
     <section
       aria-label={t('Legenda: {title}', { title: t(title) })}
       style={style}
-      className={cn('w-60 rounded-xl bg-legend/90 text-sm leading-5 text-white shadow-float', compact ? 'p-2.5' : 'p-3', className)}
+      className={cn('w-64 rounded-lg bg-legend/90 text-sm leading-5 text-white shadow-float', compact ? 'px-3 py-2.5' : 'px-3.5 py-3', className)}
     >
       <h3 className={cn('text-sm font-semibold', compact ? 'mb-1.5' : 'mb-2')}>{t(title)}</h3>
       {legend.kind === 'gradient' && (
         <>
-          <div className="h-2.5 rounded-full" style={{ background: `linear-gradient(90deg, ${legend.colors.join(',')})` }} />
+          <div className="flex gap-1.5">
+            <div className="h-1.5 flex-1 rounded-full" style={{ background: `linear-gradient(90deg, ${legend.colors.join(',')})` }} />
+            {legend.extra && <div className="h-1.5 w-10 rounded-full" style={{ background: legend.extra.color }} />}
+          </div>
           <div className="mt-1.5 flex justify-between gap-2 text-xs leading-4 text-white/85">
             <span>{t(legend.left)}</span>
-            <span className="text-right">{t(legend.right)}</span>
+            <span className="flex gap-3 text-right">
+              {t(legend.right)}
+              {legend.extra && <span className="w-10 text-center">{t(legend.extra.label)}</span>}
+            </span>
           </div>
           {legend.note && !compact && <p className="mt-1 text-xs leading-4 text-white/70">{t(legend.note)}</p>}
         </>
@@ -79,7 +85,7 @@ export function LegendCard({
         <ul className="space-y-1">
           {legend.items.map((it) => (
             <li key={it.label} className="flex items-center gap-2 text-xs leading-4">
-              <span className="size-3.5 shrink-0 rounded-[4px] ring-1 ring-white/25" style={{ background: it.color }} />
+              <span className="size-3 shrink-0 rounded-full ring-1 ring-white/25" style={{ background: it.color }} />
               {t(it.label)}
             </li>
           ))}

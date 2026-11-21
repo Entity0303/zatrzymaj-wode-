@@ -31,7 +31,7 @@ export function RecommendationCard({
   const c = REC_CATEGORY[category]
   const Icon = c.icon
   return (
-    <div className={cn('rounded-xl border bg-surface p-3.5 shadow-card', noData && 'hatch-nodata')}>
+    <div className={cn('rounded-xl border bg-surface p-3.5', noData && 'hatch-nodata')}>
       <div className="flex gap-3">
         <span className={cn('flex size-9 shrink-0 items-center justify-center rounded-lg', noData ? 'bg-surface-2 text-text-muted' : c.cls)}>
           <Icon className="size-5" aria-hidden />

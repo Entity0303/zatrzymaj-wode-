@@ -279,6 +279,7 @@ export default function Start() {
       error={forecastState === 'error'}
       where={where}
       compact={compact}
+      bare={!compact}
     />
   )
 
@@ -354,7 +355,7 @@ export default function Start() {
               legend={legend.legend}
               status={isMobile ? 'Brak danych – w budowie' : 'Brak danych dla działki – warstwa w budowie'}
               compact={isMobile}
-              className={isMobile ? 'absolute left-3 z-[1000] w-48' : 'absolute right-[372px] z-[1000] xl:right-[412px]'}
+              className={isMobile ? 'absolute left-3 z-[1000] w-56' : 'absolute right-[372px] z-[1000] xl:right-[412px]'}
               style={{ bottom: isMobile ? sheetVisible + 32 : FLOAT_BOTTOM }}
             />
           )}
@@ -363,7 +364,7 @@ export default function Start() {
           {!isMobile && (
             <aside
               aria-label={t('Panel działki')}
-              className="absolute top-[128px] right-4 z-[1100] flex w-[340px] flex-col overflow-hidden rounded-xl border bg-surface shadow-float xl:w-[380px]"
+              className="absolute top-[128px] right-4 z-[1100] flex w-[340px] flex-col overflow-hidden rounded-xl bg-surface shadow-float xl:w-[380px]"
               style={{ bottom: FLOAT_BOTTOM }}
             >
               <div className="min-h-0 flex-1 overflow-y-auto p-5">

@@ -63,6 +63,8 @@ export const EN: Record<string, string> = {
   'Słaba roślinność': 'Poor vegetation',
   Bujna: 'Lush',
   'Białe = chmury lub brak zdjęcia': 'White = clouds or no image',
+  Chmury: 'Clouds',
+  'na 100': 'of 100',
   'Wilgotność roślin': 'Plant moisture',
   Wilgotność: 'Moisture',
   Sucho: 'Dry',

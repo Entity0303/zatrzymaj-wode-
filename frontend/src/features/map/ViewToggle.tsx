@@ -5,7 +5,7 @@ import { useLang } from '@/lib/i18n'
 export function ViewToggle() {
   const { t } = useLang()
   return (
-    <div role="radiogroup" aria-label={t('Widok mapy')} className="flex h-10 shrink-0 items-center rounded-full border bg-surface p-1 shadow-float">
+    <div role="radiogroup" aria-label={t('Widok mapy')} className="flex h-10 shrink-0 items-center rounded-full bg-surface p-1 shadow-float">
       <button type="button" role="radio" aria-checked className="h-8 rounded-full bg-brand px-3.5 text-sm font-semibold text-white">
         2D
       </button>

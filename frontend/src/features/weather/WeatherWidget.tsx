@@ -12,12 +12,15 @@ export function WeatherWidget({
   error,
   where,
   compact,
+  bare,
 }: {
   forecast: Forecast | null
   loading: boolean
   error: boolean
   where: string
   compact?: boolean
+  /** bez własnego tła i cienia – w grupie górnego paska */
+  bare?: boolean
 }) {
   const { t } = useLang()
   const now = forecast?.teraz
@@ -35,8 +38,9 @@ export function WeatherWidget({
           tabIndex={0}
           aria-label={label}
           className={cn(
-            'flex h-12 shrink-0 items-center gap-2 rounded-full border bg-surface px-4 shadow-float',
-            compact && 'h-11 px-3 shadow-none',
+            'flex h-12 shrink-0 items-center gap-2 rounded-full bg-surface px-4 shadow-float',
+            compact && 'h-11 border px-3 shadow-none',
+            bare && 'rounded-none bg-transparent shadow-none',
           )}
         >
           {loading && !now ? (

@@ -10,6 +10,7 @@ export function ScoreRing({
   size = 64,
   stroke = 7,
   color = 'var(--color-ok)',
+  track = 'var(--color-ok-soft)',
   caption,
   className,
 }: {
@@ -17,6 +18,8 @@ export function ScoreRing({
   size?: number
   stroke?: number
   color?: string
+  /** tor okręgu – jasny odcień koloru (ref-style) */
+  track?: string
   caption?: string
   className?: string
 }) {
@@ -37,7 +40,7 @@ export function ScoreRing({
           cy={size / 2}
           r={r}
           fill="none"
-          stroke={value === null ? 'var(--color-nodata)' : 'var(--color-surface-2)'}
+          stroke={value === null ? 'var(--color-nodata)' : track}
           strokeWidth={stroke}
           strokeDasharray={value === null ? '4 5' : undefined}
         />
@@ -55,7 +58,7 @@ export function ScoreRing({
         )}
       </svg>
       <span className="absolute inset-0 flex flex-col items-center justify-center leading-none">
-        <span className={cn('tabular font-semibold', size >= 80 ? 'text-2xl' : 'text-base', value === null && 'text-text-muted')}>
+        <span className={cn('tabular font-semibold', size >= 120 ? 'text-[40px]' : size >= 80 ? 'text-2xl' : 'text-base', value === null && 'text-text-muted')}>
           {value === null ? '—' : Math.round(v)}
         </span>
         {caption && <span className="mt-0.5 text-xs text-text-muted">{t(caption)}</span>}
