@@ -1,58 +1,75 @@
 # Wodoskop – prześwietl swoją działkę pod kątem suszy
 
-**HackNation 2026 · zadanie KOWR „Zatrzymaj wodę”**
+*Szkic opisu zgłoszenia (HackNation 2026, zadanie KOWR „Zatrzymaj wodę”). Dominik zatwierdza przed użyciem. Przy liczbach podany plik źródłowy.*
 
-## Problem
-Rolnik nie wie, ile wody ma jego pole, czy susza to wyjątek, czy norma tego miejsca, ani co realnie może zrobić. Dane są publiczne (IMGW, GUGiK, IUNG, GUS, satelity), ale rozproszone i wymagają wiedzy GIS.
+## 1. Problem
+- **Susza powtarza się co roku.** Dane, które mogą pomóc (opady, gleby, teren, plony), są publiczne, ale rozproszone i wymagają wiedzy GIS.
+- **Rolnik nie wie, czy susza na jego polu to wyjątek,** czy norma tego miejsca.
+- **Brakuje odpowiedzi na trzy pytania:** co siać, żeby mniej tracić, i co zrobić z wodą bez kosztownych inwestycji i pozwoleń.
 
-## Rozwiązanie
-Aplikacja w przeglądarce, bez instalacji, działa też na telefonie.
-- **Wejście:** rolnik podaje działkę (numer, klik na mapie albo GPS), uprawę i datę.
-- **Wynik w kilka sekund:**
-  - **werdykt działki:** jedno zdanie i 4–6 zdań z liczbami (gleba, opady, teren, co siać, a czego nie),
-  - **stan wody** w glebie dziś i na tle 10 lat, ryzyko na 7 dni,
-  - **„Co tu posiać?”:** ranking 17 upraw policzony na pogodzie z 10 lat (typowy plon, słaby rok, ryzyko suszy, płodozmian),
-  - **rekomendacje w kolejności KOWR:** retencja → agrotechnika → nawadnianie, z formalnościami (Wody Polskie) i ekoschematami (ARiMR),
-  - **teren:** górki, dołki, kierunki spływu, miejsce, gdzie woda ucieka z pola, propozycje oczka i pasa buforowego,
-  - **raport PDF** (werdykt, ranking, źródła, ograniczenia).
+## 2. Dla kogo
+- **Rolnik z jedną lub kilkoma działkami,** bez wiedzy GIS i hydrologii. Wystarczy telefon albo komputer z przeglądarką.
+- **Doradca rolniczy:** dostaje raport PDF ze źródłami i ograniczeniami.
 
-## Jak to działa (wszystko liczone, nic nie jest gotowym tekstem)
-- **Bilans wody:** model FAO-56 dzień po dniu, ET0 Penman-Monteith, KBW = opad − ET0, pojemność wodna gleby z IUNG.
-- **Plon:** FAO-33, 1 − Ya/Ym = Ky·(1 − ETa/ETc). Plon potencjalny z plonów GUS województwa z 10 lat.
-- **Teren:** model terenu GUGiK. Wypełnianie zagłębień, kierunki spływu D8 i D-infinity, wskaźnik wilgotności TWI. Własny kod w numpy, bez bibliotek GPL.
-- **Gleba:** kategoria IUNG, mapa glebowo-rolnicza GUGiK (kompleks, gatunek), SoilGrids (uziarnienie, przepuszczalność).
-- **Rekomendacje:** reguły YAML (warunek → zalecenie → dane, które je uruchomiły). LLM nic nie liczy.
+## 3. Jak działa
+1. **Wyszukanie działki:** numer ewidencyjny, „obręb numer”, klik na mapie albo GPS. Bez dokładnych granic – analiza dla 1 ha wokół punktu, z ostrzeżeniem.
+2. **Stan działki bez wybierania uprawy:** woda w glebie dziś na tle tej samej daty w 10 latach i bilans 30 dni.
+3. **Werdykt w prostych zdaniach:** nagłówek i 4–6 zdań z liczbami (gleba, opady, teren, co siać, a czego nie).
+4. **„Co tu posiać?”:** 17 upraw. Dla każdej typowy plon, plon w słabym roku (z rokiem), ryzyko suszy „X na 10 lat” i płodozmian.
+5. **Teren:** górki (przesychają najszybciej), stoki, obniżenia i zagłębienia bez odpływu, kierunki spływu, miejsce, gdzie woda ucieka z pola.
+6. **Co zrobić z wodą:**
+   - **kolejność:** retencja → agrotechnika → nawadnianie,
+   - **najpierw bez pozwoleń:** międzyplony, resztki pożniwne, mniej uprawek, pas buforowy,
+   - **z formalnościami:** oczko, zastawka – „może wymagać zgłoszenia wodnoprawnego”; nawadnianie – „pozwolenie wodnoprawne, Wody Polskie”.
+7. **Raport PDF:** werdykt na str. 1, ranking na str. 2, potem stan wody, 10 lat, przyczyny, rekomendacje, źródła z datami, pewność, ograniczenia.
 
-## Dane i wiarygodność – co sprawdziliśmy sami
-- **Opady z kilku źródeł.** Porównaliśmy model satelitarny NASA POWER (siatka ~50 km) ze stacjami IMGW (posterunki opadowe, klimatologiczne i synoptyczne, ważenie odległością) na 4 działkach w 4 województwach, 2016–2025:
-  - **NASA zawyża opad o 16–23 % rocznie na nizinach, w każdym z 10 lat**, a w górach jest blisko stacji (−3 %),
-  - lokalnej burzy NASA nie widzi: **15.07.2021 na Podlasiu stacja IMGW zmierzyła 58 mm, NASA podaje 3,5 mm**,
-  - wniosek: **IMGW głównym źródłem opadu** (wdrażane w backendzie – A7), a modele służą do porównania. Rolnik dostaje jedno zdanie, czy źródła są zgodne.
-- **Kalibracja z GUS.**
-  - Model wody i plonu porównany ze średnimi plonami GUS z 10 lat: **różnica od −13 % do +11 % (±7–13 %)** dla upraw polowych w województwach podlaskim, lubelskim i wielkopolskim.
-  - Wrażliwość upraw na suszę sprawdziliśmy na spadkach plonów GUS w latach suchych 2015, 2018 i 2019.
-  - Uczciwie: GUS miesza efekt gatunku z efektem gleby (żyto rośnie na najsłabszych piaskach), więc kalibracja jest tylko kierunkowa. Glebę model liczy osobno.
-- **Test słabej ziemi.** Puszcza Notecka (piasek słabogliniasty, kompleks żytni słaby, kat. IUNG I): **❌ nie siej pszenicy ani rzepaku, ✅ siej żyto i łubin.** Wynik zgodny z agrotechniką i potwierdzony też na piaskach Kurpi.
-- **Przy każdym wyniku:** źródło, data danych, ograniczenia i pewność. Braki danych mówimy wprost (np. „obszar przybliżony – brak granic działki”).
+## 4. Źródła danych
+| Dane | Źródło | Do czego |
+|---|---|---|
+| Granice działki | ULDK GUGiK | obrys, powierzchnia |
+| Gleba | IUNG (kategorie podatności na suszę), mapa glebowo-rolnicza GUGiK (kompleks, gatunek), SoilGrids, EGiB/KIEG | pojemność wodna, przydatność dla uprawy |
+| Teren | NMT GUGiK | spadki, górki, obniżenia, spływ |
+| Pogoda 10 lat | NASA POWER (dziś); **IMGW – stacje** (wdrażane, A7) | bilans wody, ET0 |
+| Prognoza | Open-Meteo | ryzyko na 7 dni |
+| Plony | GUS BDL (16 województw × 10 lat) | plon potencjalny w rankingu |
+| Wody (rowy, cieki) | BDOT10k | **w przygotowaniu** |
 
-## Innowacyjność
-- **Werdykt i ranking upraw** z symulacji 10 lat pogody dla konkretnej działki, a nie średnia dla gminy.
-- **Teren w skali pola:** gdzie woda ucieka i gdzie warto ją zatrzymać (oczko, pas buforowy).
-- **Kontrola zgodności opadów** z 3 niezależnych źródeł zamiast ślepego zaufania jednemu modelowi.
+## 5. Metody
+- **Bilans wody w glebie:** FAO-56. Model dzień po dniu, ET0 Penman-Monteith (Hargreaves, gdy brakuje danych), KBW = opad − ET0, profil 1 m, pojemność wodna z kategorii IUNG.
+- **Plon:** FAO-33, 1 − Ya/Ym = Ky·(1 − ETa/ETc).
+- **Symulacja 10 lat:** każda z 17 upraw na pogodzie z 10 pełnych sezonów, plon potencjalny z GUS województwa × przydatność gleby (D61).
+- **Kalibracja z GUS:** model porównany ze średnimi plonami GUS (D61). Wrażliwość upraw na suszę sprawdzona na latach suchych 2015, 2018 i 2019 (`research/data/drought_report.md`).
+- **Teren:** wypełnianie zagłębień (priority-flood), spływ D8 i D-infinity, wskaźnik TWI – własny kod w numpy, bez bibliotek GPL (`research/terrain/`).
+- **Rekomendacje i werdykt:** reguły YAML (warunek → zalecenie → dane, które je uruchomiły). LLM nic nie liczy.
 
-## Ograniczenia (mówimy wprost)
-- **Rozdzielczość:** siatka terenu 3–15 m, gleby z map 1:25 000 sprzed lat.
-- **Czego model nie zna:** drenażu, rowów ani przepustów.
-- **Wartości szacunkowe:** Ky części upraw i część zaleceń agrotechnicznych. Oznaczone w danych, czekają na weryfikację agronoma.
-- **Niezawodność usług publicznych:** usługi GUGiK i Open-Meteo bywają przeciążone, dlatego mamy cache i tryb offline dla demo.
+## 6. Wiarygodność – co sprawdziliśmy
+- **Opady.**
+  - NASA POWER zawyża opad o **16–23 % rocznie względem stacji IMGW na nizinach** (podlaskie, lubelskie, kujawsko-pomorskie), w każdym z 10 lat. W górach (małopolskie) jest −3 % (`research/precip/REPORT.md`).
+  - Przykład lokalnej burzy: **15.07.2021, Podlasie – IMGW 58 mm, NASA 3,5 mm** (`research/precip/out/big_differences.csv`).
+  - Dlatego głównym źródłem opadu będą stacje IMGW (A7).
+- **Plony.** Model kontra średnie plony GUS: **od −13 % do +11 % (±7–13 %) dla upraw polowych** w podlaskim, lubelskim i wielkopolskim (`.ai/decisions.md`, D61).
+- **Test słabej ziemi:** Puszcza Notecka (piasek słabogliniasty, kompleks 6, kat. IUNG I). Wynik: **❌ pszenica, rzepak (i jęczmienie, kukurydza); ✅ żyto, łubin** (D70; punkt w `research/demo/out/candidates.json`).
+- **Test dobrej działki:** Podlasie, działka 201305_2.0038.6/1 (kat. III, kompleks 2). Wynik: **polecane rzepak 3,5 t/ha i pszenica ozima 4,5 t/ha** (słaby rok 2018: 3,8 t/ha, ryzyko 1 na 10) (`.ai/log/a-backend.md`).
+- **Uczciwie o kalibracji:** GUS miesza efekt gatunku z efektem gleby, bo żyto rośnie na najsłabszych piaskach. Kalibracja jest więc tylko kierunkowa, a glebę model liczy osobno (`research/data/drought_report.md`).
 
-## Technologia i licencje
-- **Backend:** Python, FastAPI, numpy, WeasyPrint.
-- **Frontend:** React, Vite, Leaflet.
-- **Uruchomienie:** `docker compose up`.
-- **Licencje:** tylko permisywne (MIT/BSD/Apache, czcionka Inter – OFL). Żadnych danych osobowych.
+## 7. Zasady
+- **Zbóż w Polsce się nie nawadnia** – liczy się zatrzymanie wody w glebie. Plan dawek tylko dla upraw, które w Polsce się nawadnia (warzywa, sady, truskawki) (D48, D64; `research/data/crops.csv`, kolumna `irrigation_practice`).
+- **Tylko potwierdzone ekoschematy ARiMR**, bez kwot dopłat (D51).
+- **Bez danych osobowych:** bez kont i logowania.
+- **Licencje:** tylko MIT/BSD/Apache (czcionka Inter – OFL), bez GPL/AGPL.
+- **Przy każdym wyniku** źródło, data danych, pewność i ograniczenia. Braki mówimy wprost.
 
-## Zespół
-- **A – Dominik:** backend.
-- **B – Mefju:** frontend.
-- **C – Mikołaj:** badania i dane – teren, uprawy, GUS, opady, działki demo.
+## 8. Ograniczenia
+- **Rozdzielczość:** teren w siatce 3–15 m, mapy glebowe sprzed lat, NASA POWER ~50 km (lokalne burze niewidoczne).
+- **Szacunki agrotechniczne do weryfikacji:** Ky części upraw, przerwy w płodozmianie, przedplony, przydatność gleb – oznaczone „szac.” w `research/data/crops.csv`, pytania do mentora w `research/data/do_mentora.md`.
+- **Brak publicznych deklaracji upraw:** rolnik sam podaje, co rośnie i co rosło wcześniej.
+- **Model nie zna** drenażu, rowów ani przepustów.
+- **Jeszcze nie ma:** danych satelitarnych (Sentinel-2) i hydrologicznych (BDOT10k) – patrz `research/submission/wymagania.md`.
+- **Usługi publiczne bywają przeciążone:** ULDK i NMT odsyłają 302. Dlatego mamy cache, tryb offline i nigdy nie podążamy za przekierowaniami.
+
+## 9. Plan rozwoju
+1. Opady ze stacji IMGW jako źródło główne, ERA5-Land do porównania (A7, `research/precip/`).
+2. Sentinel-2 (NDVI/NDMI) – zgodność modelu z satelitą jako miara pewności.
+3. BDOT10k – najbliższy rów, ciek albo zbiornik i propozycje zastawek.
+4. Weryfikacja agrotechniki z agronomem (mentor KOWR), potem korekta `crops.csv`.
+5. Wiele działek gospodarstwa, tryb doradcy, symulator „co jeśli” (międzyplony → mniej dni stresu).
