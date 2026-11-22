@@ -4,6 +4,10 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-22 07:25 · `main` · F31: nowe dane w aplikacji i PDF (tło EDO, okres bez deszczu, upał, próchnica w Doradcy)
+Zadanie frontendowe zrobione w sesji backendu (D115): kafel EDO w panelu i paszporcie, przyczyny `informational` jako „informacyjnie”, wiersze „Najdłuższy okres bez deszczu” i „Upał” (oba progi) w „Woda na tle 10 lat”, nota satelity i próchnica tylko w trybie Doradca; PDF: piąty kafel, zdanie EDO pod werdyktem, okres bez deszczu w „Opady”, w pełnym – sekcja EDO, okresy bez deszczu, upał. PDF skrócone (201305 dziś i 30.06.2018, Pożarowo 10.07.2018, Żuławy dziś) – po 2 strony; pełny 201305 – 13 stron. Bez kafla wód gruntowych – brak endpointu A27 w repo. Testy: 675 bez sieci, `tsc`, build, oxlint bez nowych ostrzeżeń.
+**Pliki:** `backend/app/report/{builder.py,report.css,templates/report.html}`, `backend/app/routers/analysis.py`, `backend/tests/test_f31_report.py`, `frontend/src/features/drought/*`, `api/client.ts`, `features/parcel-panel/{FieldOverview,SatelliteCard,SoilCard,WhatToDo}.tsx`, `features/passport/{ActionsSection,SatelliteSection,VerdictSection,WaterHistorySection}.tsx`. **Kontrakt:** bez zmian (ograniczenie o próchnicy zniknęło z `limitations`).
+
 ## 2026-11-22 07:10 · `main` · A26: tło suszowe z Europejskiego Obserwatorium Suszy (EDO)
 Nowy endpoint `/api/drought-context` (D114): CDI, anomalia wilgotności gleby, ryzyko dla rolnictwa z WMS EDO (kolor piksela GetMap – GetFeatureInfo nie działa), zdanie porównujące z naszą oceną. Na żywo: 201305 dziś – brak suszy (dekada 1–10.11.2026); 201305 30.06.2018 – ostrzeżenie, bardzo sucho (dekada 11–20.06.2018); Pożarowo 10.07.2018 – ostrzeżenie, bardzo sucho, ryzyko średnie (dekada 21–30.06.2018). Testy: 671 bez sieci.
 **Pliki:** `backend/app/sources/edo.py`, `analysis/drought_context.py`, `routers/drought.py`, `schemas/drought.py`, `main.py` (rejestracja), `tests/test_a26.py`, `frontend/src/api/types.ts`. **Kontrakt:** tak – nowy endpoint.
