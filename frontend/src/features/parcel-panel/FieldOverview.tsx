@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils'
 import { STATUS } from '@/theme/status'
 import { ChoiceCard } from './ChoiceCard'
 import { RankingCard } from './RankingCard'
+import { requestPassportJump } from '@/features/passport/jump'
 import { RefineCard } from './RefineCard'
 import { SatelliteCard } from './SatelliteCard'
 import { HydroCard } from './HydroCard'
@@ -98,6 +99,7 @@ export function FieldOverview({
   steps?: Step[]
   onOpenPassport?: () => void
 }) {
+  const { t } = useLang()
   const [settings] = useSettings()
   const advisor = settings.mode === 'doradca'
   const s = analysis.suggestions
@@ -146,6 +148,18 @@ export function FieldOverview({
           <DetailSection title="Co tu posiać?" hint="Ranking upraw z plonem i przychodem z pola" icon={Sprout}>
             <ChoiceCard suggestions={s} priceNow={analysis.price_now} />
             {s.groups.some((g) => g.items.length) && <RankingCard suggestions={s} priceNow={analysis.price_now} />}
+            {onOpenPassport && (
+              <button
+                type="button"
+                onClick={() => {
+                  requestPassportJump('pp-ceny')
+                  onOpenPassport()
+                }}
+                className="flex min-h-11 items-center text-sm font-semibold text-brand-dark underline-offset-2 hover:underline"
+              >
+                {t('Ceny i pogoda na tle lat →')}
+              </button>
+            )}
           </DetailSection>
         )}
         {analysis.recommendations.length > 0 && (

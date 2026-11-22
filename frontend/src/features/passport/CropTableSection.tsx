@@ -5,6 +5,7 @@ import type { AnalysisResponse, CropSuggestion, SuggestionCategory, VerdictState
 import { RevenueCell, type RevenueExtras } from '@/features/parcel-panel/RevenueCell'
 import { RankingCard } from '@/features/parcel-panel/RankingCard'
 import { CropLine } from '@/features/parcel-panel/CropLine'
+import { PriceWeatherCard } from './PriceWeatherCard'
 import { formatNum } from '@/lib/format'
 import { useLang } from '@/lib/i18n'
 import { priceSourceList } from '@/lib/revenue'
@@ -156,6 +157,8 @@ export function CropTableSection({ analysis, refineForm }: { analysis: AnalysisR
         {sources.length > 0 && <>{t('Ceny: {src}.', { src: sources.join('; ') })} </>}
         {t('Przychód bez kosztów i dopłat.')} {seasons && t('Plony bez nawadniania, na pogodzie z sezonów {s}.', { s: seasons })}
       </p>
+      {/* F32: porównanie regionalne – ceny skupu, plon i opady na tle lat */}
+      <PriceWeatherCard analysis={analysis} />
       {settings.mode === 'doradca' && (
         <div>
           <button type="button" aria-expanded={details} onClick={() => setDetails((d) => !d)} className="inline-flex min-h-11 items-center gap-1 text-sm font-semibold text-pp-brand">

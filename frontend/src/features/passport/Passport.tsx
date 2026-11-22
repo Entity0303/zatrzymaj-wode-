@@ -7,6 +7,7 @@ import { ErrorNotice } from '@/components/ErrorNotice'
 import { LogoMark } from '@/components/LogoMark'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { REPORT_KINDS } from '@/features/reports/reportKinds'
+import { consumePassportJump } from './jump'
 import { BRAND_NAME } from '@/lib/brand'
 import { cropLabel } from '@/lib/crops'
 import { formatDatePl, formatArea, shortCounty } from '@/lib/format'
@@ -137,6 +138,13 @@ export function Passport({
   }, [print, analysis])
 
   const jump = (id: string) => scroller.current?.querySelector(`#${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  // F32: paszport otwarty linkiem z panelu („Ceny i pogoda na tle lat →”) – od razu w tej sekcji
+  useEffect(() => {
+    const id = consumePassportJump()
+    if (!id) return
+    const timer = setTimeout(() => scroller.current?.querySelector(`#${id}`)?.scrollIntoView({ block: 'start' }), 150)
+    return () => clearTimeout(timer)
+  }, [])
 
   if (print)
     return (
