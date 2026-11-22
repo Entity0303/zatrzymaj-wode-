@@ -80,16 +80,15 @@
   },
   "confidence": "wysoka",
   "limitations": [
-    "Teren z zapisanego wyniku analizy NMT z 21.11.2026 (NMT GUGiK nie odpowiadał – ukształtowanie terenu się nie zmienia).",
     "Siatka 4.5 m – formy mniejsze niż ~9 m (bruzdy, koleiny, rowki) są niewidoczne.",
     "Wysokości podawane co 0,1 m – przy małych spadkach kierunek spływu jest niepewny; stosujemy wygładzenie σ = 6 m.",
     "Bufor 100 m: zlewnia sięgająca dalej (długie stoki) jest niedoszacowana.",
-    "Model nie zna drenażu, rowów, przepustów, dróg ani orki wzdłuż/w poprzek stoku – rzeczywisty odpływ może iść inaczej.",
+    "Model nie zna drenażu, rowów, przepustów, dróg ani kierunku orki – rzeczywisty odpływ może iść inaczej.",
     "Objętości zagłębień i dopływu to szacunek rzędu wielkości, nie projekt."
   ],
   "source_tag": {
     "kind": "pomiar",
-    "date": null,
+    "date": "2026-11-22",
     "source": "NMT GUGiK (wysokości ±0,1 m) + obliczenia"
   }
 }

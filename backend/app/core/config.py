@@ -62,7 +62,8 @@ class Settings(BaseSettings):
     # NMT GUGiK (A6): POST GetHByPointList, paczki po 1000 punktów; łączny limit całej siatki
     nmt_url: str = "https://services.gugik.gov.pl/nmt/"
     nmt_timeout_s: float = 12.0
-    nmt_total_timeout_s: float = 15.0
+    nmt_total_timeout_s: float = 25.0     # A9: teren liczony w tle / GET /api/terrain – nie w budżecie analizy
+    terrain_background: bool = True       # A9: analiza bez terenu w cache → {status: pending} + liczenie w tle
     nmt_retry_delay_s: float = 0.3
     # A8: najwyżej 2 paczki naraz (GUGiK spokojnie); 1 = po kolei z przerwą nmt_chunk_pause_s (warm_demo: 1 / 1,0 s).
     # „Brak 51% wysokości” nie był winą równoległości, tylko dopasowania współrzędnych (nmt.match_heights).

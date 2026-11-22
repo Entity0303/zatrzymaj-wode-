@@ -17,14 +17,14 @@ import datetime as dt
 from fastapi import APIRouter, Query
 
 from app.analysis import terrain_interpret
-from app.analysis.terrain import terrain_for_parcel
+from app.analysis import terrain as terrain_mod
 from app.core.http import SourceError, http_error, not_implemented
 from app.routers.parcel import resolve_parcel
-from app.schemas.analysis import SourceTag
+from app.schemas.analysis import AnalysisRequest, SourceTag
 from app.schemas.layers import LayerKey, LayerResponse, LegendStop, PointValue, RasterOverlay
 
 router = APIRouter(prefix="/api/layers", tags=["warstwy"])
-TERRAIN_LIMIT_S = 20.0
+TERRAIN_LIMIT_S = 30.0  # A9: teren liczony na żywo (gdy analiza zwróciła pending) – do ok. 20 s
 
 
 @router.get("/{layer}", response_model=LayerResponse, responses={501: {"description": "W budowie"},
@@ -38,7 +38,7 @@ async def get_layer(layer: LayerKey, parcel_id: str = Query(), date: dt.date | N
         raise not_implemented(f"Warstwa „{layer}”")
     try:
         p = await resolve_parcel(parcel_id, None, None)
-        res = await asyncio.wait_for(terrain_for_parcel(p.geom_2180, p.id), TERRAIN_LIMIT_S)
+        res = await asyncio.wait_for(terrain_mod.live(p.geom_2180, p.id), TERRAIN_LIMIT_S)  # A9: wspólne zadanie
     except SourceError as exc:
         raise http_error(exc) from exc
     except asyncio.TimeoutError as exc:
@@ -63,7 +63,18 @@ async def get_layer(layer: LayerKey, parcel_id: str = Query(), date: dt.date | N
 SAT_LEGEND = {"kondycja": ("NDVI – kondycja roślin", (0.0, 0.9)), "wilgotnosc": ("NDMI – wilgotność roślin", (-0.4, 0.4))}
 
 
-async def satellite_layer(layer: str, parcel_id: str, date: dt.date | None) -> LayerResponse:
+@router.post("/{layer}", response_model=LayerResponse, responses={404: {"description": "Brak zdjęcia"}})
+async def post_layer(layer: LayerKey, req: AnalysisRequest) -> LayerResponse:
+    """A9: warstwy satelitarne dla pola narysowanego – treść `{geometry, date}` (albo parcel_id / lon+lat)."""
+    from app.routers.satellite import resolve_any
+
+    if layer not in ("kondycja", "wilgotnosc"):
+        raise not_implemented(f"Warstwa „{layer}” (POST)")
+    p = await resolve_any(req.parcel_id, req.lon, req.lat, req.geometry)
+    return await satellite_layer(layer, p.id, req.date, parcel=p)
+
+
+async def satellite_layer(layer: str, parcel_id: str, date: dt.date | None, parcel=None) -> LayerResponse:
     """Kondycja upraw (NDVI) / Wilgotność roślin (NDMI): PNG z ostatniej czystej sceny (A11). Brak sceny → 404
     (frontend: „warstwa niedostępna”), nie 5xx."""
     from fastapi import HTTPException
@@ -71,7 +82,7 @@ async def satellite_layer(layer: str, parcel_id: str, date: dt.date | None) -> L
     from app.analysis import satellite as satellite_mod
 
     try:
-        p = await resolve_parcel(parcel_id, None, None)
+        p = parcel or await resolve_parcel(parcel_id, None, None)
     except SourceError as exc:
         raise http_error(exc) from exc
     on = date or dt.date.today()

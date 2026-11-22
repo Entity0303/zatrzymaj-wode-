@@ -645,6 +645,12 @@ class TerrainDetails(Contract):
     method: str = Field(description="Np. 'priority-flood (Barnes 2014), D8 + D-infinity (TWI), spadek: Horn 3×3'")
 
 
+class TerrainPending(Contract):
+    """A9: teren liczony w tle – dociągnij GET /api/terrain (albo POST z geometry)."""
+
+    status: Literal["pending"] = "pending"
+
+
 class Terrain(Contract):
     """Teren i spływ wody z NMT GUGiK (A6) – strefy, spadki, odpływ, zagłębienia, ocena z glebą, zdania dla rolnika."""
 
@@ -911,7 +917,9 @@ class AnalysisResponse(Contract):
     irrigation: IrrigationPlan | None = Field(description="null bez uprawy")
     soil: Soil
     field_state: FieldState | None = Field(None, description="Stan działki bez względu na uprawę (null: grunt nierolny / brak danych)")
-    terrain: Terrain | None = Field(None, description="Teren i spływ wody z NMT (null = brak danych, powód w terrain_note)")
+    terrain: Terrain | TerrainPending | None = Field(
+        None, description="Teren i spływ wody z NMT (null = brak danych, powód w terrain_note); A9: {status: pending} – "
+                          "liczony w tle, GET /api/terrain")
     verdict: Verdict | None = Field(None, description="Werdykt działki (null: grunt nierolny / brak danych)")
     approximate_area: ApproximateArea | None = Field(None, description="Obszar przybliżony zamiast działki (analiza po punkcie)")
     terrain_note: str | None = Field(None, description="Dlaczego brak analizy terenu, np. 'NMT GUGiK nie odpowiada'")

@@ -33,6 +33,7 @@ from app.analysis import satellite as satellite_mod
 from app.analysis import verdict as verdict_mod
 from app.analysis import suggestions as sugg
 from app.analysis import terrain_interpret
+from app.analysis import terrain as terrain_mod
 from app.analysis.terrain import terrain_for_parcel
 from app.analysis.facts import CROP_OFF_PHASES, IN_SEASON_PHASES, build_facts, field_facts
 from app.analysis.recommendations import Evaluation, evaluate
@@ -56,6 +57,7 @@ from app.core.config import settings
 from app.core.http import SourceError, http_error, in_poland
 from app.routers.parcel import parcel_out, resolve_parcel
 from app.schemas.analysis import (
+    TerrainPending,
     AnalysisRequest,
     ApproximateArea,
     PrecipSources,
@@ -86,6 +88,8 @@ from app.schemas.analysis import (
 )
 from app.schemas.parcel import ErrorDetail
 from app.sources import iung, kieg, soil_map, soilgrids, weather_openmeteo, weather_power
+
+TERRAIN_PENDING = "liczony w tle"  # A9: znacznik – teren nie był w cache, liczenie uruchomione w tle
 
 router = APIRouter(prefix="/api", tags=["analiza"])
 
@@ -688,6 +692,23 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
         return res, int((perf_counter() - st) * 1000)
 
     is_today = analysis_date == today
+
+    async def _terrain_step(p, timed):
+        """A9: teren z cache (bez czekania na NMT); brak → liczenie w tle i `terrain = {status: pending}`."""
+        if not settings.terrain_background:
+            return await timed("NMT GUGiK", terrain_for_parcel(p.geom_2180, p.id))
+        st = perf_counter()
+        try:
+            res = await terrain_mod.cached_terrain(p.geom_2180, p.id)
+        except SourceError as exc:
+            res = exc
+        except Exception as exc:  # noqa: BLE001 – teren nie wywraca analizy
+            res = SourceError("NMT GUGiK", f"błąd analizy terenu ({exc.__class__.__name__})")
+        if res is None:
+            terrain_mod.start_background(p.geom_2180, p.id)
+            res = SourceError("NMT GUGiK", TERRAIN_PENDING)
+        return res, int((perf_counter() - st) * 1000)
+
     (
         (w_res, w_ms), (iung_res, iung_ms), (kieg_res, kieg_ms), (fc_res, fc_ms), (sg_res, sg_ms), (sm_res, sm_ms),
         (tr_res, tr_ms),
@@ -699,8 +720,9 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
         timed("Open-Meteo (prognoza)", _forecast_days(c.x, c.y)) if is_today else asyncio.sleep(0, result=(None, 0)),
         timed(soilgrids.SOURCE, soilgrids.texture_at(rp.x, rp.y)),
         timed(soil_map.SOURCE, soil_map.soil_map_for_parcel(p.geom_2180)),
-        timed("NMT GUGiK", terrain_for_parcel(p.geom_2180, p.id)),
+        _terrain_step(p, timed),
     )
+    tr_pending = isinstance(tr_res, SourceError) and tr_res.message == TERRAIN_PENDING
     if isinstance(w_res, SourceError):  # bez pogody nic nie da się policzyć
         raise http_error(w_res)
     w = w_res.weather
@@ -729,8 +751,9 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
                        note=(f"scena z {sat.date:%d.%m.%Y}" if sat.status == "ok" else
                              "pobierane osobno – GET /api/satellite" if sat.status == "pending" else sat.warning)))
     tr_saved = None if isinstance(tr_res, SourceError) else tr_res.facts.get("saved_note")
-    steps.append(_step("terrain", "Analizuję teren (NMT GUGiK)", state(tr_res),
-                       note=err(tr_res) or ("zapisany wynik analizy NMT" if tr_saved else None), ms=tr_ms))
+    steps.append(_step("terrain", "Analizuję teren (NMT GUGiK)", "pending" if tr_pending else state(tr_res),
+                       note=("liczony w tle – GET /api/terrain" if tr_pending else
+                             err(tr_res) or ("zapisany wynik analizy NMT" if tr_saved else None)), ms=tr_ms))
 
     # ── 3. obliczenia ──
     s = perf_counter()
@@ -778,7 +801,9 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
     # teren z NMT (A6): sekcja kontraktu + fakty dla reguł (requires: terrain)
     terrain_c, terrain_note = None, None
     soil_cat = cons.category_used if cons.contract else soil_a.dominant_mineral
-    if isinstance(tr_res, SourceError):
+    if tr_pending:
+        terrain_note = None
+    elif isinstance(tr_res, SourceError):
         terrain_note = f"Brak analizy terenu – {tr_res.source}: {tr_res.message}"
     else:
         terrain_c = terrain_interpret.to_contract(tr_res.facts, soil_prof.group, data_date=today if not tr_saved else None,
@@ -810,7 +835,8 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
         stale=list(stale_hits),
         soil_conflict=cons.conflict, approximate=approx is not None, drawn=drawn,
         satellite=sat.status == "ok", satellite_date=sat.date, satellite_status=sat.status,
-        terrain=terrain_c is not None, terrain_error=None if terrain_c is not None else terrain_note,
+        terrain=terrain_c is not None,
+        terrain_error=None if terrain_c is not None else ("liczony w tle" if tr_pending else terrain_note),
         terrain_saved=bool(tr_saved), terrain_limitations=terrain_c.limitations if terrain_c else [],
         soil_basis_label=soil_consistency.LABELS[cons.contract.basis] if cons.substituted and cons.contract else None,
     ))
@@ -878,7 +904,8 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
             chosen = (crop_obj.label, out.crop_season.phase_label, status, crop_off)
         verdict = verdict_mod.build(soil_prof, soil_a.wod_mm, w, last_usable_day(analysis_date), terrain_c, suggestions,
                                     evaluation.recommendations, field_c.status if field_c else None, chosen,
-                                    measured_precip=bool(w_res.precip and w_res.precip.main != "nasa"), satellite=sat)
+                                    measured_precip=bool(w_res.precip and w_res.precip.main != "nasa"), satellite=sat,
+                                    terrain_pending=tr_pending)
     steps.append(_step("total", "Cała analiza", "done", ms=int((perf_counter() - t0) * 1000)))
 
     return AnalysisResponse(
@@ -897,7 +924,7 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
         irrigation=out.irrigation if out and crop_active else None,  # A5e: zero nawadniania poza sezonem uprawy
         soil=soil_c,
         field_state=field_c,
-        terrain=terrain_c,
+        terrain=terrain_c if terrain_c is not None else (TerrainPending() if tr_pending else None),
         terrain_note=terrain_note,
         verdict=verdict,
         approximate_area=approx,

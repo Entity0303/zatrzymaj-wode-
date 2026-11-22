@@ -35,7 +35,7 @@ NMT_URL = "https://services.gugik.gov.pl/nmt/"
 DEFAULT_PARAMS: dict[str, Any] = {
     # siatka / pobieranie
     "buffer_m": 100.0,            # bufor wokół działki – zlewnia z sąsiednich pól i miejsce odpływu
-    "max_points": 6000,           # max punktów NMT (6 zapytań POST po 1000, równolegle – sources/nmt.py)
+    "max_points": 5000,           # A9: max punktów NMT (5 paczek po 1000, 2 naraz – sources/nmt.py); cel < 20 s
     "min_step_m": 3.0,
     "max_step_m": 40.0,
     # wygładzenie mikrorzeźby (NMT podaje wysokości co 0,1 m → szum spadku 0,1/krok)
@@ -1266,6 +1266,56 @@ def _memo_lookup(parcel_id: str) -> TerrainResult | None:
     return saved_result(parcel_id)
 
 
+# ── A9: teren w tle (jak satelita) ─────────────────────────────────────────────────────────
+
+_tasks: dict[tuple, asyncio.Task] = {}
+
+
+async def cached_terrain(geom_2180: Any, parcel_id: str | None = None) -> TerrainResult | None:
+    """Teren BEZ czekania na NMT: wynik z pamięci / siatka wysokości z cache (obliczenia < 1 s); NMT wyłączony,
+    w trybie offline albo z otwartym bezpiecznikiem – zapisany wynik albo SourceError. None = trzeba pobrać NMT
+    (analiza zwraca `terrain = {status: "pending"}` i liczy w tle)."""
+    from app.core.cache import breaker, offline
+    from app.sources import nmt
+
+    prep = prepare(geom_2180)
+    if prep.key in _memo or nmt._cache.get(prep.key) is not None or offline(nmt.SOURCE)             or breaker(nmt._cache.name).open:
+        return await terrain_for_parcel(geom_2180, parcel_id)
+    return None
+
+
+def _task_key(geom_2180: Any) -> tuple:
+    return ("terrain", prepare(geom_2180).key)
+
+
+async def live(geom_2180: Any, parcel_id: str | None = None) -> TerrainResult:
+    """Teren na żywo (GET /api/terrain, warstwy, raport): jedno liczenie na działkę naraz (wspólne zadanie)."""
+    key = _task_key(geom_2180)
+    task = _tasks.get(key)
+    if task is None or task.done():
+        task = asyncio.ensure_future(terrain_for_parcel(geom_2180, parcel_id))
+        _tasks[key] = task
+    try:
+        return await asyncio.shield(task)
+    finally:
+        if task.done():
+            _tasks.pop(key, None)
+
+
+def start_background(geom_2180: Any, parcel_id: str | None = None) -> None:
+    """Analiza bez terenu w cache uruchamia NMT w tle (frontend i tak dociągnie GET /api/terrain)."""
+    key = _task_key(geom_2180)
+    if key in _tasks and not _tasks[key].done():
+        return
+    try:
+        t = asyncio.ensure_future(terrain_for_parcel(geom_2180, parcel_id))
+    except RuntimeError:
+        return
+    _tasks[key] = t
+    t.add_done_callback(lambda tt: tt.exception() if not tt.cancelled() else None)
+
+
 def clear_memo() -> None:
+    _tasks.clear()
     _by_parcel.clear()
     _memo.clear()

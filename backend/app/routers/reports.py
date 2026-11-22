@@ -7,6 +7,7 @@ Kontrakt: app/schemas/reports.py. Układ raportu: design/SPEC_UI.md 10.2. Genero
 TODO (osoba A): WeasyPrint, A4 pionowo, 2–3 strony, kod QR do analizy online.
 """
 
+import asyncio
 import datetime as dt
 from typing import Literal
 from time import perf_counter
@@ -37,17 +38,31 @@ async def get_report_pdf(report_id: str):
 pdf_router = APIRouter(prefix="/api", tags=["raporty"])
 
 
+def _no_pending(a):
+    """Teren / woda „w tle” w raporcie PDF = brak (raport najpierw liczy teren, więc to rzadkie)."""
+    from app.schemas.analysis import TerrainPending
+
+    upd = {}
+    if isinstance(a.terrain, TerrainPending):
+        upd["terrain"] = None
+    return a.model_copy(update=upd) if upd else a
+
+
 async def _satellite_first(parcel_id, lon, lat, geometry, date) -> None:
     """A11: raport to nie analiza na żywo – najpierw zdjęcie satelitarne (budżet ok. 15 s, potem cache), żeby PDF miał
     sekcję „Z satelity”, a analiza wzięła je z cache. Błąd satelity nie blokuje raportu."""
     from app.analysis import satellite as satellite_mod
     from app.routers.satellite import resolve_any
 
+    from app.analysis import terrain as terrain_mod
+
     try:
         p = await resolve_any(parcel_id, lon, lat, geometry)
-        await satellite_mod.live(p.geom_4326, date or dt.date.today())
     except Exception:  # noqa: BLE001 – brak działki itp. zgłosi run_analysis z właściwym kodem HTTP
         return
+    # A9: teren i zdjęcie równolegle (raport może poczekać – analiza nie); błąd któregoś nie blokuje raportu
+    await asyncio.gather(asyncio.wait_for(terrain_mod.live(p.geom_2180, p.id), 30),
+                         satellite_mod.live(p.geom_4326, date or dt.date.today()), return_exceptions=True)
 
 
 @pdf_router.get("/report.pdf", response_class=Response,
@@ -69,8 +84,8 @@ async def get_report_pdf_now(
     """Liczy analizę (jak GET /api/analysis) i zwraca „Paszport wodny działki” w PDF (A4, do druku)."""
     t0 = perf_counter()
     await _satellite_first(parcel_id, lon, lat, None, date)
-    a = await run_analysis(parcel_id, crop, date, previous_crop, crop_history, cultivated_area_ha, lon, lat,
-                           planned_crops=planned_crops)
+    a = _no_pending(await run_analysis(parcel_id, crop, date, previous_crop, crop_history, cultivated_area_ha, lon,
+                                       lat, planned_crops=planned_crops))
     pdf = await build_pdf(a, report_type)
     return Response(pdf, media_type="application/pdf", headers={
         "Content-Disposition": f'attachment; filename="{filename(a, report_type)}"',
@@ -86,8 +101,8 @@ async def post_report_pdf_now(req: AnalysisRequest) -> Response:
     """Raport PDF dla własnego obrysu pola (`geometry`) albo działki – parametry w treści (jak POST /api/analysis)."""
     t0 = perf_counter()
     await _satellite_first(req.parcel_id, req.lon, req.lat, req.geometry, req.date)
-    a = await run_analysis(req.parcel_id, req.crop, req.date, req.previous_crop, req.crop_history,
-                           req.cultivated_area_ha, req.lon, req.lat, req.geometry, req.planned_crops)
+    a = _no_pending(await run_analysis(req.parcel_id, req.crop, req.date, req.previous_crop, req.crop_history,
+                                       req.cultivated_area_ha, req.lon, req.lat, req.geometry, req.planned_crops))
     rt = req.report_type or "short"
     pdf = await build_pdf(a, rt)
     return Response(pdf, media_type="application/pdf", headers={

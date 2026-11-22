@@ -60,6 +60,7 @@ verdict:
     none: "Co zrobić z wodą: zostaw na polu resztki roślin i nie zostawiaj gołej ziemi – woda wsiąknie zamiast spłynąć."
 
   terrain_missing: "Brak danych o ukształtowaniu terenu – nie wiemy, gdzie na działce jest sucho, a gdzie mokro."
+  terrain_pending: "Liczę ukształtowanie terenu (wysokości z NMT) – za chwilę pokażę, gdzie na działce jest sucho, a gdzie mokro."
 
   chosen_crop: "{crop} ({phase}): {headline}."
   # A5e (D79): przed siewem / po zbiorze uprawy nie ma w polu – zdanie mówi o stanie działki, nie o uprawie
