@@ -13,9 +13,9 @@ export type PanelReport = {
 }
 
 /**
- * Przyciski pod formularzem „Twoja działka” (F-MASTER A3): [Pobierz raport PDF] – główny, kolor marki (skrócony,
- * obok mały wybór „pełny”), [Otwórz paszport wodny] – drugorzędny, obramowany. Komputer obok siebie,
- * telefon jeden pod drugim.
+ * Przyciski pod formularzem „Twoja działka” (F-MASTER A3): [Raport PDF] – główny, kolor marki (skrócony, pod nim
+ * mały link „albo pełny raport”), [Paszport wodny] – drugorzędny, obramowany. Dopisek: container query na kontenerze –
+ * węższy niż ok. 440 px = jeden pod drugim na całą szerokość, szerszy – obok siebie po 50%; etykiety w jednej linii.
  */
 export function ReportActions({ report, onOpenPassport }: { report?: PanelReport; onOpenPassport?: () => void }) {
   const { t } = useLang()
@@ -24,26 +24,27 @@ export function ReportActions({ report, onOpenPassport }: { report?: PanelReport
   return (
     <div className="space-y-2">
       {report?.error && <ErrorNotice {...report.error} onRetry={report.error.retryable ? () => get('short') : undefined} />}
-      <div className="grid gap-2 sm:grid-cols-2">
+      <div className="@container">
+      <div className="grid gap-2 @min-[440px]:grid-cols-2">
         {report && (
           <div className="flex min-w-0 flex-col gap-1">
             <button
               type="button"
               onClick={() => get('short')}
               disabled={report.busy}
-              className="flex h-12 items-center justify-center gap-2 rounded-md bg-brand-dark px-3 text-base font-semibold text-white hover:bg-brand disabled:opacity-60"
+              className="flex h-12 items-center justify-center gap-2 rounded-md bg-brand-dark px-3 text-base font-semibold whitespace-nowrap text-white hover:bg-brand disabled:opacity-60"
             >
-              {report.busy ? <Loader2 className="size-5 animate-spin" aria-hidden /> : <FileDown className="size-5" aria-hidden />}
-              {t(report.busy ? 'Przygotowuję raport…' : 'Pobierz raport PDF')}
+              {report.busy ? <Loader2 className="size-5 shrink-0 animate-spin" aria-hidden /> : <FileDown className="size-5 shrink-0" aria-hidden />}
+              {t(report.busy ? 'Przygotowuję…' : 'Raport PDF')}
             </button>
             {report.downloadType && (
               <button
                 type="button"
                 onClick={() => get('full')}
                 disabled={report.busy}
-                className="self-center text-sm font-medium text-brand underline-offset-2 hover:underline disabled:opacity-60"
+                className="self-start text-sm font-medium whitespace-nowrap text-brand underline-offset-2 hover:underline disabled:opacity-60"
               >
-                {t('albo pełny (szczegółowy)')}
+                {t('albo pełny raport')}
               </button>
             )}
           </div>
@@ -52,11 +53,12 @@ export function ReportActions({ report, onOpenPassport }: { report?: PanelReport
           <button
             type="button"
             onClick={onOpenPassport}
-            className="flex h-12 items-center justify-center gap-2 rounded-md border border-brand/50 bg-surface px-3 text-base font-semibold text-brand-dark hover:bg-sage-soft"
+            className="flex h-12 items-center justify-center gap-2 rounded-md border border-brand/50 bg-surface px-3 text-base font-semibold whitespace-nowrap text-brand-dark hover:bg-sage-soft"
           >
-            <BookOpenText className="size-5 text-brand" aria-hidden /> {t('Otwórz paszport wodny')}
+            <BookOpenText className="size-5 shrink-0 text-brand" aria-hidden /> {t('Paszport wodny')}
           </button>
         )}
+      </div>
       </div>
     </div>
   )

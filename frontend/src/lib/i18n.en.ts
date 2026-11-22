@@ -1257,4 +1257,7 @@ export const EN: Record<string, string> = {
   'siew {d}': 'sowing {d}',
   'okres': 'period',
   'data siewu, okres, plan, wcześniejsze lata, powierzchnia': 'sowing date, period, plan, earlier years, area',
+  // Dopisek: przyciski raportu
+  'albo pełny raport': 'or the full report',
+  'Przygotowuję…': 'Preparing…',
 }
