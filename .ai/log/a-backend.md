@@ -4,6 +4,12 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-22 03:00 · `main` · A13-prep (hosting, seed) i A14 (poprawki danych z przeglądu F5)
+**A13:** `core/cache.load_seed`, `scripts/export_seed.py` → `app/data/seed/cache_seed.sqlite.gz` (6,2 MB, 743 wpisy); `CORS_ORIGIN_REGEX`, `CACHE_SEED`; `DEPLOY.md` (punkty 1, 5, 6, 8); `warm_demo.py` – teren, satelita, woda po kolei, szereg tylko dla przykładów (pomija gotowe), krótki bezpiecznik Overpass; przykłady – krótkie tytuły i miejscowości. Rozgrzewkę dwa razy przerwał restart kontenera (mój `docker compose restart` i przebudowa frontendu o 02:43) – braki dociągnięte; 3 szeregi Sentinel-2 pominięte (VPN ok. 1,9 GB z 2 GB). Test: świeży cache + seed, bez sieci → analiza 201305 0,9 s z terenem, satelitą i wodą.
+**A14:** nagłówek werdyktu spójny z rankingiem (Mrągowo, Lasotka), stacje opadowe z danymi z ostatnich 12 mies. (Pogórze bez Dynowa), `core/format.py` (liczby, objętości, daty), objętość zagłębienia „ok. 22 tys. m³ … ok. 110 ha w ulewie 20 mm”, `stress_ratio` z polską etykietą. Kontrola 15 działek: 0 ułamków z kropką.
+**Pliki:** `backend/app/{core/{cache,config,format}.py, main.py, demo.py, analysis/{verdict,precip,confidence,facts,recommendations,terrain,terrain_interpret,causes,suggestions,drawn_field,water_balance,field_state}.py, analysis/rules/{verdict,precip}.yaml, routers/analysis.py, sources/imgw.py, data/seed/cache_seed.sqlite.gz}`, `backend/scripts/{export_seed,warm_demo}.py`, testy (`test_a13.py`, `test_a14.py`, `conftest.py`), `DEPLOY.md`.
+**Kontrakt:** nie.
+
 ## 2026-11-22 18:00 · `main` · A9+: teren w tle, adresy, woda w okolicy, zgłoszenia
 **Co:** (VPN, GUGiK z limitem; satelity nie pobierano)
 - **Cz. 1 – teren w tle** (D92): `terrain = {status: pending}` + liczenie w tle, `GET/POST /api/terrain`, wspólne zadanie dla warstw, siatka ≤ 5000 pkt, POST `/api/layers/kondycja|wilgotnosc` z geometry. Na żywo: 201305 i Pożarowo – teren z cache (analiza 0,04–0,26 s); Drwinia 876 – pending (analiza 0,47 s), `/api/terrain` 4,7 s, po restarcie z cache.
