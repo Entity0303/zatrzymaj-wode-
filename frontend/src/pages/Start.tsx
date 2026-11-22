@@ -193,6 +193,7 @@ export default function Start() {
     area,
     plannedCrops: planned,
     period: periodUsed,
+    sowingDate: sowing,
   })
   const analysis = run.phase === 'done' ? run.analysis : null
   const runKey = run.phase === 'done' ? run.key : null
@@ -638,7 +639,7 @@ export default function Start() {
   // ── raport PDF: te same parametry co analiza ─────────────────────────────────────────────
   const report = useReportDownload(
     parcel && analysis
-      ? { parcelId: parcel.id, point: approxPoint, geometry: drawnGeom, numer: drawnGeom ? 'pole-narysowane' : approxPoint ? 'obszar' : parcel.numer, crop: analysis.crop, date: asOf, cropHistory: history, area, plannedCrops: planned, period: periodUsed }
+      ? { parcelId: parcel.id, point: approxPoint, geometry: drawnGeom, numer: drawnGeom ? 'pole-narysowane' : approxPoint ? 'obszar' : parcel.numer, crop: analysis.crop, date: asOf, cropHistory: history, area, plannedCrops: planned, period: periodUsed, sowingDate: sowing }
       : null,
   )
   // „Pobierz raport” otwiera formularz „Przygotuj raport” (skrócony / szczegółowy)

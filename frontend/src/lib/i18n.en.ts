@@ -1251,4 +1251,10 @@ export const EN: Record<string, string> = {
   'Nie znamy poziomu wód gruntowych – model liczy wodę z opadów i parowania w strefie korzeni.': 'We do not know the groundwater level – the model counts water from rain and evaporation in the root zone.',
   'Teren opisujemy z modelu GUGiK; nie zmienia on obliczonego bilansu wody w glebie.': 'We describe the terrain from the GUGiK model; it does not change the calculated soil water balance.',
   'Typowy plon to wynik symulacji na pogodzie z 10 lat – nie prognoza tegorocznych zbiorów.': 'The typical yield is a simulation on 10 years of weather – not a forecast of this year\'s harvest.',
+  // F18: data analizy dd.mm.rrrr, formularz na telefonie
+  'Wybierz datę analizy z kalendarza': 'Pick the analysis date from the calendar',
+  'Data analizy (dd.mm.rrrr)': 'Analysis date (dd.mm.yyyy)',
+  'siew {d}': 'sowing {d}',
+  'okres': 'period',
+  'data siewu, okres, plan, wcześniejsze lata, powierzchnia': 'sowing date, period, plan, earlier years, area',
 }

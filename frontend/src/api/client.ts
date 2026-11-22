@@ -79,6 +79,8 @@ export type AnalysisQuery = {
   reportType?: 'short' | 'full'
   /** F3: okres (znacznik z lib/period.ts) → period= albo date_from/date_to */
   period?: string | null
+  /** F18: data siewu wpisana przez rolnika → sowing_date= (backend dodaje parametr; dopóki go nie zna – ignoruje) */
+  sowingDate?: string | null
 }
 
 /** Samo miejsce: działka albo punkt (teren, woda w okolicy). */
@@ -100,6 +102,8 @@ function analysisBody(q: AnalysisQuery): AnalysisRequest {
     report_type: q.reportType ?? null,
     // F8: okres także dla pola narysowanego (POST /api/analysis i /api/report.pdf przyjmują period / date_from / date_to)
     ...(periodParams(q.period, q.date) as Pick<AnalysisRequest, 'period' | 'date_from' | 'date_to'>),
+    // F18: pole spoza kontraktu (typ lokalny) – backend dodaje je w swoim zadaniu
+    ...(q.sowingDate ? ({ sowing_date: q.sowingDate } as object) : {}),
   }
 }
 
@@ -116,6 +120,7 @@ function analysisParams(q: AnalysisQuery): Record<string, string | number> {
   if (q.plannedCrops?.length) params.planned_crops = q.plannedCrops.slice(0, 3).join(',')
   if (q.reportType) params.report_type = q.reportType
   Object.assign(params, periodParams(q.period, q.date))
+  if (q.sowingDate) params.sowing_date = q.sowingDate
   return params
 }
 

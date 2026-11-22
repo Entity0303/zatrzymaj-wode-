@@ -59,9 +59,11 @@ export function useAnalysis(
     plannedCrops?: string[]
     /** F3: okres (lib/period.ts) */
     period?: string | null
+    /** F18: data siewu wpisana przez rolnika → sowing_date */
+    sowingDate?: string | null
   } = {},
 ) {
-  const extra = `${opts.point?.join(',') ?? ''}|${opts.geometry ? JSON.stringify(opts.geometry.coordinates) : ''}|${(opts.cropHistory ?? []).join(',')}|${opts.area ?? ''}|${(opts.plannedCrops ?? []).join(',')}|${opts.period ?? ''}`
+  const extra = `${opts.point?.join(',') ?? ''}|${opts.geometry ? JSON.stringify(opts.geometry.coordinates) : ''}|${(opts.cropHistory ?? []).join(',')}|${opts.area ?? ''}|${(opts.plannedCrops ?? []).join(',')}|${opts.period ?? ''}|${opts.sowingDate ?? ''}`
   const [attempt, setAttempt] = useState(0)
   // wynik przypisany do konkretnego przebiegu; inny klucz = nowe przeliczenie (stan „ładowanie” liczony w renderze)
   const [result, setResult] = useState<{ key: string; run: AnalysisRun } | null>(null)
@@ -97,6 +99,7 @@ export function useAnalysis(
       area: opts.area,
       plannedCrops: opts.plannedCrops,
       period: opts.period,
+      sowingDate: opts.sowingDate,
     }
     const request = mock
       ? runMockAnalysis((steps) => publish({ phase: 'loading', steps, key }), ctrl.signal, opts.point, opts.period)

@@ -18,7 +18,7 @@ const CAT_LEVEL: Record<SuggestionCategory, VerdictStatementLevel> = { polecane:
  * F6: zakres lat z dużą stratą, gdy backend go poda (pole opcjonalne – typ lokalny; dziś jest tylko liczba).
  * Przykład: [1, 3] → „1–3 na 10 lat”.
  */
-type RiskRange = CropSuggestion & { drought_risk_range?: [number, number] | null }
+type RiskRange = CropSuggestion & { drought_risk_range?: [number, number] | null; risk_years_range?: [number, number] | null }
 
 /** Ryzyko suszy jako 10 kresek (wypełnione = lata ze stratą > 20%). */
 function RiskTicks({ n, of }: { n: number; of: number }) {
@@ -84,7 +84,8 @@ export function CropTableSection({ analysis, refineForm }: { analysis: AnalysisR
         </div>
         <ul className="divide-y divide-paper-line">
           {shown.map((it) => {
-            const r = (it as RiskRange).drought_risk_range
+            // F18: nazwa pola z backendu – drought_risk_range, a gdyby inaczej – risk_years_range
+            const r = (it as RiskRange).drought_risk_range ?? (it as RiskRange).risk_years_range
             const risk = r && r[0] !== r[1] ? `${r[0]}–${r[1]}` : String(it.drought_risk_years)
             return (
               <li key={it.crop_id} className="grid gap-2 px-5 py-3.5 md:grid-cols-[minmax(0,2.2fr)_1fr_1fr_1.25fr_1.3fr] md:items-start md:gap-4">

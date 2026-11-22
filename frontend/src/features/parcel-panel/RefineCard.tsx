@@ -7,6 +7,7 @@ import { HISTORY_CROPS, HISTORY_UNKNOWN, historyLabel } from '@/lib/crops'
 import { formatArea, formatDatePl, formatDayMonth, formatHa } from '@/lib/format'
 import { useLang } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
+import { useMediaQuery } from '@/lib/hooks'
 import { CropField } from './CropField'
 
 const YEARS = ['rok temu', '2 lata temu', '3 lata temu'] as const
@@ -135,10 +136,13 @@ export function RefineCard({
 }) {
   const { t } = useLang()
   const [more, setMore] = useState(false)
+  const phone = useMediaQuery('(max-width: 767.98px)')
   const extras = [
     planned.length ? t('plan: {n}', { n: planned.map((id) => planOptions.find((o) => o.id === id)?.label ?? id).map((l) => t(l)).join(', ') }) : null,
     history.slice(1).some((h) => h && h !== HISTORY_UNKNOWN) ? t('wcześniejsze lata') : null,
     area ? formatArea(area.value_ha) : null,
+    phone && sowing ? t('siew {d}', { d: formatDatePl(sowing) }) : null,
+    phone && period ? t('okres') : null,
   ].filter(Boolean)
 
   const setYear = (i: number, v: string) => {
@@ -149,24 +153,10 @@ export function RefineCard({
     onHistoryChange(next)
   }
 
-  return (
-    <section
-      aria-label={t('Twoja działka')}
-      className={cn('space-y-3.5 rounded-xl border bg-surface p-4', !crop && 'border-brand/60 bg-ok-soft/60 ring-1 ring-brand/20')}
-    >
-      <h3 className="flex items-center gap-2 text-base leading-6 font-semibold">
-        <Sprout className="size-5 shrink-0 text-brand" aria-hidden /> {t('Twoja działka')}
-      </h3>
-      {!crop && <p className="-mt-2 text-sm leading-5 font-medium text-brand-dark">{t('Wybierz uprawę – wynik będzie dokładniejszy')}</p>}
-
-      <Field label={t(historical ? 'Co rosło w dniu analizy?' : 'Co rośnie teraz?')}>
-        <CropField crop={crop} onChange={onCropChange} optional />
-      </Field>
-
-      <Field label={t('Co rosło w poprzednim sezonie?')} hint={!history[0] && rotationHint ? t(rotationHint) : undefined}>
-        <HistorySelect value={history[0] || HISTORY_UNKNOWN} onChange={(v) => setYear(0, v)} label={t('Co rosło w poprzednim sezonie?')} />
-      </Field>
-
+  // F18: telefon – w formularzu tylko uprawa i przedplon; data siewu i okres w „Dodatkowe” (status + formularz + PDF
+  // bez przewijania); komputer bez zmian
+  const sowingAndPeriod = (
+    <>
       {onSowingChange && (
         <Field
           label={t('Data siewu (opcjonalnie)')}
@@ -215,6 +205,28 @@ export function RefineCard({
           />
         </Field>
       )}
+    </>
+  )
+
+  return (
+    <section
+      aria-label={t('Twoja działka')}
+      className={cn('space-y-3.5 rounded-xl border bg-surface p-4', !crop && 'border-brand/60 bg-ok-soft/60 ring-1 ring-brand/20')}
+    >
+      <h3 className="flex items-center gap-2 text-base leading-6 font-semibold">
+        <Sprout className="size-5 shrink-0 text-brand" aria-hidden /> {t('Twoja działka')}
+      </h3>
+      {!crop && <p className="-mt-2 text-sm leading-5 font-medium text-brand-dark">{t('Wybierz uprawę – wynik będzie dokładniejszy')}</p>}
+
+      <Field label={t(historical ? 'Co rosło w dniu analizy?' : 'Co rośnie teraz?')}>
+        <CropField crop={crop} onChange={onCropChange} optional />
+      </Field>
+
+      <Field label={t('Co rosło w poprzednim sezonie?')} hint={!history[0] && rotationHint ? t(rotationHint) : undefined}>
+        <HistorySelect value={history[0] || HISTORY_UNKNOWN} onChange={(v) => setYear(0, v)} label={t('Co rosło w poprzednim sezonie?')} />
+      </Field>
+
+      {!phone && sowingAndPeriod}
 
       {/* drugorzędne – jedna zwijana linia na dole karty */}
       <div className="border-t pt-2">
@@ -226,12 +238,13 @@ export function RefineCard({
         >
           <span className="shrink-0">{t('Dodatkowe')}</span>
           <span className="min-w-0 flex-1 truncate font-normal text-text-muted">
-            {extras.length ? extras.join(' · ') : t('plan upraw, wcześniejsze lata, powierzchnia')}
+            {extras.length ? extras.join(' · ') : t(phone ? 'data siewu, okres, plan, wcześniejsze lata, powierzchnia' : 'plan upraw, wcześniejsze lata, powierzchnia')}
           </span>
           <ChevronDown className={cn('size-4 shrink-0 transition-transform', more && 'rotate-180')} aria-hidden />
         </button>
         {more && (
           <div className="space-y-4 pt-2">
+            {phone && sowingAndPeriod}
             {onPlannedChange && planOptions.length > 0 && (
               <Field label={t('Co planujesz posiać?')} hint={t('Ocenimy Twój wybór i podpowiemy lepsze możliwości.')}>
                 <div className="flex flex-wrap gap-1.5">
