@@ -274,6 +274,9 @@ def test_pond_thresholds():
 def _with_terrain(f_terrain: dict, **kw):
     v = dict(facts(**kw).values)
     v.update(TI.rule_facts(f_terrain, 3))
+    from app.analysis.hydro import rule_facts as hydro_facts
+
+    v.update(hydro_facts(None))  # A9: woda w okolicy jeszcze nie sprawdzona – jak w analizie przed /api/hydro
     return type(facts())(v)
 
 
