@@ -17,14 +17,23 @@ const RATING: Record<TerrainRating, { label: string; dot: string }> = {
  * kolor z odpowiedzi – ten sam co na mapie), podsumowanie, zdania o strefach z oceną,
  * „Dla dociekliwych” – szczegóły metody. Brak terenu → `terrain_note` szarym tekstem.
  */
-export function TerrainCard({ terrain: input, note }: { terrain: Terrain | TerrainPending | null | undefined; note?: string | null }) {
+export function TerrainCard({
+  terrain: input,
+  note,
+  bare,
+}: {
+  terrain: Terrain | TerrainPending | null | undefined
+  note?: string | null
+  /** F6: bez własnej ramki i tła – wewnątrz karty paszportu */
+  bare?: boolean
+}) {
   const { t } = useLang()
   const [open, setOpen] = useState(false)
 
   // F3: teren liczony w tle (analysis.terrain = { status: 'pending' }) – dociąga go useAnalysis
   if (input && 'status' in input && input.status === 'pending')
     return (
-      <section aria-label={t('Teren działki')} aria-busy className="rounded-xl border bg-surface p-3.5">
+      <section aria-label={t('Teren działki')} aria-busy className={bare ? '' : 'rounded-xl border bg-surface p-3.5'}>
         <p className="flex items-center gap-2 text-sm font-medium">
           <Mountain className="size-4 text-earth" aria-hidden /> {t('Teren działki')}
         </p>
@@ -37,7 +46,7 @@ export function TerrainCard({ terrain: input, note }: { terrain: Terrain | Terra
 
   if (!terrain)
     return (
-      <section aria-label={t('Teren działki')} className="hatch-nodata rounded-xl border p-3.5">
+      <section aria-label={t('Teren działki')} className={bare ? '' : 'hatch-nodata rounded-xl border p-3.5'}>
         <p className="flex items-center gap-2 text-sm font-medium">
           <Mountain className="size-4 text-earth" aria-hidden /> {t('Teren działki')}
         </p>
@@ -48,7 +57,7 @@ export function TerrainCard({ terrain: input, note }: { terrain: Terrain | Terra
   const zones = terrain.zones.filter((z) => z.share_pct > 0)
   const d = terrain.details
   return (
-    <section aria-label={t('Teren działki')} className="rounded-xl border bg-surface p-3.5">
+    <section aria-label={t('Teren działki')} className={bare ? '' : 'rounded-xl border bg-surface p-3.5'}>
       <div className="flex items-start gap-3">
         <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-surface-2 text-earth">
           <Mountain className="size-[18px]" aria-hidden />

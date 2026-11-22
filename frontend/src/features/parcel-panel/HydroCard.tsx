@@ -22,7 +22,10 @@ export function HydroCard({
   hydro: h,
   passport,
   historicalDate,
+  bare,
 }: {
+  /** F6: bez własnej ramki – wewnątrz karty paszportu */
+  bare?: boolean
   hydro?: Hydro | null
   passport?: boolean
   /** F-MASTER B1: data analizy, gdy historyczna – bez wodowskazu mówimy wprost, że nie ma stanu z tego dnia */
@@ -30,7 +33,7 @@ export function HydroCard({
 }) {
   const { t } = useLang()
   const { failed, retry } = useHydroRetry()
-  const box = cn('space-y-2.5 rounded-xl bg-surface', passport ? 'p-4 shadow-card' : 'border p-3.5')
+  const box = cn('space-y-2.5', !bare && 'rounded-xl bg-surface', !bare && (passport ? 'p-4 shadow-card' : 'border p-3.5'))
   const head = (
     <div className="flex items-center gap-2">
       <Droplets className="size-5 shrink-0 text-water" aria-hidden />

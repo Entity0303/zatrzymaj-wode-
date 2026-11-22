@@ -15,13 +15,12 @@ import { NonAgriculturalCard } from '@/features/parcel-panel/NonAgriculturalCard
 import { SoilCard } from '@/features/parcel-panel/SoilCard'
 import { TerrainCard } from '@/features/parcel-panel/TerrainCard'
 import { ApproxAreaBanner } from '@/features/parcel-panel/ApproxAreaBanner'
-import { HydroCard } from '@/features/parcel-panel/HydroCard'
-import { SatelliteCard } from '@/features/parcel-panel/SatelliteCard'
-import { PassportSection } from './PassportSection'
 import { CropTableSection } from './CropTableSection'
 import { WaterHistorySection } from './WaterHistorySection'
-import { SectionD } from './SectionD'
-import { SectionE } from './SectionE'
+import { ActionsSection } from './ActionsSection'
+import { SatelliteSection } from './SatelliteSection'
+import { SourcesSection } from './SourcesSection'
+import { TerrainSection } from './TerrainSection'
 import { VerdictSection } from './VerdictSection'
 
 /** Zakładki-kotwice (F6) – te same nazwy co nagłówki sekcji. */
@@ -48,7 +47,6 @@ export type PassportPeriod = {
 
 /** Treść paszportu – wspólna dla ekranu i wydruku (F6: nowy układ sekcji). */
 function Content({ analysis, print, onShowOnMap, refineForm }: { analysis: AnalysisResponse; print?: boolean; onShowOnMap?: (g: GeoJSON.Geometry) => void; refineForm?: ReactNode }) {
-  const { t } = useLang()
   const approx = (analysis.parcel.source === 'approximate' || analysis.approximate_area) && <ApproxAreaBanner />
   if (analysis.soil.non_agricultural)
     // SPEC 15.1: grunt nierolny – bez oceny suszy, tylko gleba, teren i wiarygodność danych
@@ -58,29 +56,21 @@ function Content({ analysis, print, onShowOnMap, refineForm }: { analysis: Analy
         <NonAgriculturalCard soil={analysis.soil} />
         <SoilCard soil={analysis.soil} />
         <TerrainCard terrain={analysis.terrain} note={analysis.terrain_note} />
-        <SectionE analysis={analysis} />
+        <SourcesSection analysis={analysis} />
       </>
     )
   return (
     <>
       {approx}
       <VerdictSection analysis={analysis} />
-      {/* sekcje 5–7: dotychczasowa treść w nowych kotwicach – wymieniana w kolejnym kroku F6 */}
       <CropTableSection analysis={analysis} refineForm={refineForm} />
       <WaterHistorySection analysis={analysis} chartWidth={print ? 680 : undefined} />
-      <PassportSection id="pp-teren" title={t('Teren i okolica')}>
-        <TerrainCard terrain={analysis.terrain} note={analysis.terrain_note} />
-        <HydroCard hydro={analysis.hydro} passport historicalDate={analysis.historical ? analysis.analysis_date : null} />
-      </PassportSection>
-      <PassportSection id="pp-satelita" title={t('Z satelity')}>
-        {analysis.satellite ? <SatelliteCard satellite={analysis.satellite} passport chartWidth={print ? 680 : undefined} /> : <p className="text-sm text-text-muted">{t('Brak zdjęcia satelitarnego')}</p>}
-      </PassportSection>
-      <div id="pp-dzialania">
-        <SectionD analysis={analysis} onShowOnMap={print ? undefined : onShowOnMap} />
+      <div className="grid gap-7 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+        <TerrainSection analysis={analysis} />
+        <SatelliteSection analysis={analysis} chartWidth={print ? 680 : undefined} />
       </div>
-      <div id="pp-zrodla">
-        <SectionE analysis={analysis} />
-      </div>
+      <ActionsSection analysis={analysis} onShowOnMap={print ? undefined : onShowOnMap} />
+      <SourcesSection analysis={analysis} />
     </>
   )
 }

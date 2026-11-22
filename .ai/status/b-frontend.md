@@ -1,8 +1,9 @@
 # Status – osoba B (Mefju), frontend
 
-_Stan na: 2026-11-22 (F-MASTER – A za B, `main`)_
+_Stan na: 2026-11-22 (F6 paszport – A za B, `main`)_
 
 ## Zrobione
+- **F6 (A za B)**: nowy układ paszportu wodnego – papierowe tło, karty z ramką, pasek z okresem i „Raport PDF”, 7 zakładek-kotwic; Werdykt + 3 kafle, tabela „Co tu posiać”, Woda na tle 10 lat (słupki, przyczyny, źródła opadów), Teren i okolica, Z satelity, Co mogę zrobić? (3 karty z formalnościami), Skąd dane (kafle, pewność, ograniczenia); Doradca – „Szczegóły” z dawnymi wykresami.
 - **F-MASTER (A za B)**: A – panel: status → formularz „Twoja działka” (od razu rozwinięty: uprawa, przedplon, data siewu, okres; „Dodatkowe”) → [Pobierz raport PDF] [Otwórz paszport wodny] → zwijane sekcje szczegółów; B – data historyczna (wodowskaz z datą, pasek pogody, „W dniu analizy:”, „pobrano”); C – bez dymka (F17).
 - **F17 (A za B)**: bez stałego dymka na wybranej działce – obrys w kolorze statusu; podpowiedzi po najechaniu (kandydaci) tylko z myszą.
 - **F14 (A za B)**: karta startowa bez rozjazdów – nagłówek w 2 liniach, wiersz [pole z lupą i lokalizacją | data | „Sprawdź”] jako siatka 48 px, chipy zawijane, karta maks. 760 px.
