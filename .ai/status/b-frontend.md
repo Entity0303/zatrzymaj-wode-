@@ -3,6 +3,7 @@
 _Stan na: 2026-11-22 (F1 – A za B)_
 
 ## Zrobione
+- **F4 (A za B)**: karta powitalna chowa się przy przybliżaniu/przeciąganiu; publiczny link (VITE_API_URL, vercel.json, render.yaml, DEPLOY.md); README.md.
 - **F3 (A za B)** na mockach: adresy w wyszukiwarce, teren i woda w okolicy liczone w tle, warstwa i karta „Woda w okolicy”, przychód z pola i ceny, „Okres” (zakres dat) z kartą i wykresem, satelita POST dla pola narysowanego. Czeka na backend F3.
 - **F2 (A za B)**: przykłady tylko z `/api/demo/examples`, „Narysuj swoje pole” (POST z `geometry`), stany ładowania/błędów przed wyborem działki, poprawki 390 px (tabele w paszporcie).
 - **F1 (A za B)**: baner obszaru przybliżonego, źródła opadów IMGW (A7) w werdykcie i paszporcie, satelita (A11): karta „Z satelity”, dociąganie `/api/satellite`, warstwy Kondycja / Wilgotność z legendą z serwera, „Rośliny” w werdykcie; jedna liczba sezonu w „Bilans wody” i paszporcie; „Teraz: …” przy statusie.
@@ -31,6 +32,8 @@ _Stan na: 2026-11-22 (F1 – A za B)_
 1. Widok 3D – zrobiony (B21) na kaflach ~30 m; dokładniej po endpoincie siatki NMT od A (propozycja w dzienniku B21).
 
 ## Blokery / pytania do drugiej osoby
+- **Licencja:** react-leaflet 5 i @react-leaflet/core 3 = Hippocratic-2.1 (niepermisywna) – decyzja: zamiana na własną warstwę nad Leafletem (BSD-2)?
+- Backend (opcjonalnie, DEPLOY.md pkt 8): regex CORS dla podglądów Vercela, seed cache w obrazie dla planu free Render.
 - A: słupki 10 lat – zrobione przez A (`seasonal_balance_by_year`, A5e), frontend podpięty (B28).
 - A: wyszukiwanie miejsc – zrobione przez A (`/api/search`), frontend podpięty (B26).
 - A: pole `irrigation_practice` (np. `"not_practiced"` dla zbóż i rzepaku) w odpowiedzi analizy – frontend ma na razie listę lokalną (`lib/crops.ts` `IRRIGATION_NOT_PRACTICED`); gdzie będzie pole (np. `crop_season` / `irrigation`)?

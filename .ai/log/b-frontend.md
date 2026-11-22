@@ -4,6 +4,12 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-22 · `main` · F4 cz. 3 (A za B): README.md (wymagania KOWR B.1–B.9)
+**Co:** README w katalogu głównym: opis i problem, uruchomienie (docker compose, porty, `OFFLINE_SOURCES` / `DEMO_OFFLINE` – PowerShell i bash), architektura (schemat tekstowy), dane (na bieżąco / zapisane w repo z datami i warunkami), biblioteki z licencjami (z node_modules i requirements), narzędzia AI, licencja projektu (do uzupełnienia – propozycja MIT), ograniczenia (m.in. brak wód gruntowych), weryfikacja (IMGW vs NASA +15,7…+23,2%, IUNG SMSR 99,8% / 96,9%, kalibracja GUS ≤ 14%, test słabej ziemi), koszty, zespół. Hydrologia, adresy, ceny opisane jako „w trakcie”.
+**Uwaga – licencja:** react-leaflet 5.0.0 i @react-leaflet/core 3.0.0 mają licencję Hippocratic-2.1 (nie MIT/BSD/Apache) – do decyzji: zastąpienie własną warstwą nad Leafletem (BSD-2). Opisane w README pkt 5.
+**Pliki:** `README.md`.
+**Kontrakt API:** nie.
+
 ## 2026-11-22 · `main` · F4 cz. 2 (A za B): publiczny link – Vercel + Render (konfiguracja i instrukcja)
 **Co:** adres API z `VITE_API_URL` (`api/client.ts` – `apiUrl()`; wszystkie zapytania i pobieranie PDF idą przez klienta; pusty = względne `/api` jak w Dockerze), typ w `src/vite-env.d.ts`; `frontend/vercel.json` (Vite, `dist`, SPA → `index.html`, długi cache `/assets`); `render.yaml` w katalogu głównym (web service Docker z `backend/Dockerfile`, Frankfurt, plan free, `PORT=8000`, health check `/api/health` – nie `/api/status`, bo ten odpytuje wszystkie źródła; `DEMO_OFFLINE=false`, `OFFLINE_SOURCES=""`, `CACHE_DB`, `DEMO_WARMUP`, `CORS_ORIGINS` i `PUBLIC_URL` do wpisania; dysk tylko w planie płatnym – zakomentowany); `DEPLOY.md` – klik po kliku (Render → Vercel → CORS), 3 linki testowe, budzenie przed oceną, konsekwencje planu free, rozwiązywanie problemów, propozycja dla backendu (regex CORS dla podglądów Vercela, seed cache w obrazie). Backendu nie zmieniano.
 **Pliki:** `frontend/src/api/client.ts`, `frontend/src/vite-env.d.ts`, `frontend/vercel.json`, `render.yaml`, `DEPLOY.md`.
