@@ -914,6 +914,15 @@ export default function Start() {
     />
   )
 
+  // F26: zdanie o ryzyku na 7 dni pod prognozą (z analizy wybranej działki)
+  const risk7 = analysis?.indicators.risk_7d ?? null
+  const riskSentence = !risk7
+    ? null
+    : risk7.days_to_stress != null
+      ? t('Według prognozy wody wystarczy na ok. {n} dni', { n: risk7.days_to_stress })
+      : risk7.label
+        ? `${t('Ryzyko braku wody w 7 dni:')} ${t(risk7.label)}${risk7.note ? ` – ${t(risk7.note)}` : ''}`
+        : null
   const weather = (compact?: boolean) => (
     <WeatherWidget
       forecast={forecast}
@@ -923,6 +932,7 @@ export default function Start() {
       compact={compact}
       bare={!compact}
       historical={historical}
+      risk={riskSentence}
     />
   )
 
@@ -1067,7 +1077,6 @@ export default function Start() {
             asOf={asOf}
             onAsOfChange={setAsOf}
             layerButton={isMobile ? layerMenu('bottom') : undefined}
-            period={!isMobile && parcel ? <PeriodPicker value={period} onChange={setPeriod} hasCrop={!!crop} asOf={asOf} bare /> : undefined}
           />
 
           {/* telefon: przy pełnej szufladzie napis zasłaniałby nagłówek działki */}
@@ -1328,6 +1337,7 @@ export default function Start() {
               onShowOnMap={showOnMap}
               period={{
                 picker: (
+                  <span title={t('Za jaki czas podsumować opady i parowanie – nie zmienia oceny działki ani rankingu upraw.')}>
                   <PeriodPicker
                     value={period}
                     onChange={changePeriodInPassport}
@@ -1337,6 +1347,7 @@ export default function Start() {
                     emptyLabel={t('od {d} (sezon uprawy)', { d: formatDatePl(passportAnalysis.history.season_start) })}
                     disabled={passportLoading}
                   />
+                  </span>
                 ),
                 loading: passportLoading,
                 error: passportError,

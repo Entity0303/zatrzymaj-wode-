@@ -85,9 +85,12 @@ export function DateField({
       >
         <CalendarDays className="size-5 text-amber" aria-hidden />
       </button>
-      <span className={cn('text-sm whitespace-nowrap text-text-muted', compact ? 'max-[419px]:hidden' : 'hidden 2xl:inline')}>
-        {t('Data analizy')}
-      </span>
+      {/* F26: na karcie startowej (`field`) etykieta jest NAD polem – w polu sama data, zawsze w całości */}
+      {!field && (
+        <span className={cn('text-sm whitespace-nowrap text-text-muted', compact ? 'max-[419px]:hidden' : 'hidden 2xl:inline')}>
+          {t('Data analizy')}
+        </span>
+      )}
       <input
         type="text"
         inputMode="numeric"
@@ -97,7 +100,7 @@ export function DateField({
         onChange={(e) => setText(e.target.value)}
         onBlur={commit}
         onKeyDown={(e) => e.key === 'Enter' && (e.currentTarget as HTMLInputElement).blur()}
-        className={cn('tabular bg-transparent text-base font-semibold outline-none', compact || field ? 'min-w-0 flex-1' : 'w-[6.5rem] shrink-0')}
+        className={cn('tabular bg-transparent text-base font-semibold outline-none', compact ? 'min-w-0 flex-1' : field ? 'w-[6.5rem] min-w-[6.5rem] flex-1' : 'w-[6.5rem] shrink-0')}
       />
       {/* kalendarz przeglądarki – ukryty, otwierany ikoną */}
       <input

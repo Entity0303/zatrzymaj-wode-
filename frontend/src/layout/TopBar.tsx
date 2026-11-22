@@ -5,6 +5,7 @@ import { LanguageToggle } from '@/components/LanguageToggle'
 /**
  * Górny pasek nad mapą – JEDEN wiersz (przeprojektowanie ekranu mapy): po lewej wyszukiwarka
  * (z „Moja lokalizacja” w środku pola), po prawej data analizy (pełna, nigdy ucięta), pogoda (znika,
+ * F26: okres analizy wybiera się w karcie „Twoja działka” i w paszporcie – nie w pasku; pogoda rozwija prognozę 7 dni.
  * gdy niedostępna) i język. Bez „Wróć do mapy” – działkę zamyka ✕ w jej panelu.
  * Warstwy mapy są w osobnym przycisku „Warstwa: …” (LayerMenu), nie w pasku.
  */
@@ -15,10 +16,7 @@ export function TopBar({
   asOf,
   onAsOfChange,
   layerButton,
-  period,
 }: {
-  /** F3: przycisk „Okres” (PeriodPicker) obok daty */
-  period?: ReactNode
   isMobile: boolean
   /** <SearchBar trailing={<LocateButton inField />} /> */
   search: ReactNode
@@ -45,7 +43,6 @@ export function TopBar({
       {/* data · pogoda · język – jedna pigułka; elementy bez danych znikają */}
       <div className="glass ml-auto flex h-12 shrink-0 items-center divide-x divide-line rounded-full pr-1 shadow-float">
         <DateField value={asOf} onChange={onAsOfChange} bare />
-        {period && <div className="px-1">{period}</div>}
         {weather}
         <LanguageToggle compact className="ml-1 size-10 bg-transparent shadow-none" />
       </div>

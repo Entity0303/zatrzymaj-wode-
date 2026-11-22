@@ -70,9 +70,13 @@ export function IntroHero({
         </div>
 
         {/* wiersz wyszukiwania: jedna siatka, bez nakładania */}
-        <div className="mt-6 grid grid-cols-2 gap-3 @min-[640px]:grid-cols-[minmax(0,1fr)_200px_auto]">
+        {/* F26: data nigdy ucięta – kolumna 240 px, etykieta „Data analizy” mała nad polem; wąska karta: data (szeroka) + „Sprawdź” pod wyszukiwarką */}
+        <div className="mt-6 grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3 @min-[640px]:grid-cols-[minmax(0,1fr)_240px_auto]">
           <div className="col-span-2 min-w-0 @min-[640px]:col-span-1">{search}</div>
-          <div className="min-w-0">{date}</div>
+          <div className="min-w-[11rem]">
+            <span className="mb-1 block pl-1 text-xs leading-4 text-text-muted">{t('Data analizy')}</span>
+            {date}
+          </div>
           <button
             type="submit"
             form={HERO_SEARCH_FORM}

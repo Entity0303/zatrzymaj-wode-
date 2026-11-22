@@ -196,7 +196,7 @@ export function RefineCard({
       {onPeriodChange && asOf && (
         <Field
           label={t('Okres analizy')}
-          hint={sowing && period === 'od_siewu' ? t('od siewu {d}', { d: formatDatePl(sowing) }) : undefined}
+          hint={(sowing && period === 'od_siewu' ? `${t('od siewu {d}', { d: formatDatePl(sowing) })}. ` : '') + t('Za jaki czas podsumować opady i parowanie – nie zmienia oceny działki ani rankingu upraw.')}
         >
           <PeriodPicker
             value={period}

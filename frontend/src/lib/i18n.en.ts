@@ -1313,4 +1313,15 @@ export const EN: Record<string, string> = {
   'Szukaj działki': 'Find a parcel',
   'Poprzednie analizy': 'Previous analyses',
   'obręb {obreb}': 'district {obreb}',
+  // F26: prognoza 7 dni, opis okresu
+  'Za jaki czas podsumować opady i parowanie – nie zmienia oceny działki ani rankingu upraw.': 'The time span for summing rainfall and evaporation – it does not change the parcel rating or the crop ranking.',
+  'Prognoza na 7 dni': '7-day forecast',
+  'Prognoza dotyczy dziś – nie daty analizy': 'The forecast is for today – not for the analysis date',
+  'Brak prognozy dla tego miejsca': 'No forecast for this place',
+  'min / max': 'min / max',
+  'Bez opadu i gorąco – gleba szybko traci wodę': 'No rain and hot – the soil loses water quickly',
+  'Wyróżnione: dni bez opadu z temperaturą od 25°C.': 'Highlighted: days without rain at 25°C or more.',
+  'Źródło: Open-Meteo': 'Source: Open-Meteo',
+  'Według prognozy wody wystarczy na ok. {n} dni': 'According to the forecast, water will last for about {n} days',
+  'Ryzyko braku wody w 7 dni:': 'Risk of water shortage in 7 days:',
 }
