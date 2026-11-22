@@ -204,8 +204,9 @@ def crops_statement(sug: CropSuggestions | None, light: bool):
     best_rev = next((i for i in good if getattr(i, "revenue", None) is not None), None)
     if best_rev is not None:  # A12: tylko gdy jest cena skupu
         r = best_rev.revenue
+        src = "ceny skupu GUS" if r.price_source.startswith("GUS") else r.price_source.split(" (")[0]  # A12b: ZSRIR
         text += (f" Przychód z {num(r.for_area_ha, 2)} ha ({best_rev.label.lower()}): ok. {num(r.typical_zl, 0)} zł "
-                 f"w typowym roku, ok. {num(r.weak_year_zl, 0)} zł w słabym (ceny skupu GUS).")
+                 f"w typowym roku, ok. {num(r.weak_year_zl, 0)} zł w słabym ({src}).")
     st = VerdictStatement(kind="uprawy", level=level, text=text.strip(),
                           numbers={"polecane": n_good, "odradzane": n_bad, "mozliwe": len(field) - n_good - n_bad})
     return st, [VerdictCrop(crop_id=i.crop_id, label=i.label) for i in good], bad_out

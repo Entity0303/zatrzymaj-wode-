@@ -19,6 +19,7 @@ from app.core.format import date_pl, num
 from app.schemas.analysis import PeriodDay, PeriodSummary
 
 PRESETS = ("30d", "since_sowing", "season")
+MAX_DAYS = 366  # A9b: własny zakres najwyżej rok (bez tysięcy dni w `daily`)
 MIN_VALID = 0.9  # rok porównawczy liczy się, gdy ma ≥ 90% dni z danymi
 
 
@@ -68,6 +69,8 @@ def resolve(preset: str | None, date_from: date | None, date_to: date | None, an
         raise PeriodError("Koniec zakresu (date_to) nie może być późniejszy niż data analizy.")
     if date_from > date_to:
         raise PeriodError("Początek zakresu (date_from) jest po jego końcu (date_to).")
+    if (date_to - date_from).days + 1 > MAX_DAYS:
+        raise PeriodError("Wybierz okres nie dłuższy niż rok.")
     return Window("custom", date_from, min(date_to, last))
 
 

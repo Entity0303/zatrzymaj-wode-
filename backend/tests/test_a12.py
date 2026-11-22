@@ -18,7 +18,7 @@ def test_revenue_rounded_to_100_and_none_without_price():
     zl = P.price("pszenica_ozima", "podlaskie")[0]
     assert r.typical_zl == round(4.2 * 0.58 * zl, -2) and r.weak_year_zl == round(3.5 * 0.58 * zl, -2)
     assert r.typical_zl % 100 == 0 and r.for_area_ha == 0.58 and r.price_zl_t == zl
-    assert P.revenue("rzepak", 3.3, 2.6, 0.58, "podlaskie") is None
+    assert P.revenue("burak_cukrowy", 64.7, 44.1, 0.58, "podlaskie") is None  # A12b: rzepak ma cenę ZSRIR
     assert P.revenue("pszenica_ozima", None, None, 0.58, "podlaskie") is None
 
 
@@ -101,3 +101,28 @@ def test_30d_window_ends_at_last_data_day():
     win = PR.resolve("30d", None, None, date(2026, 11, 22), None)
     p = PR.build(W, win)
     assert p.to == date(2026, 11, 18) and len(p.daily) == 30 and p.label.startswith("Ostatnie 30 dni (20.10–18.11.2026")
+
+
+# ── A12b: cena ZSRIR przy braku GUS, powód braku ceny; A9b: okres najwyżej rok ──────────────
+
+
+def test_zsrir_fallback_for_rapeseed_and_no_price_reasons(tmp_path, monkeypatch):
+    f = tmp_path / "prices_zsrir_latest.csv"
+    f.write_text('crop_id,zl_t,week,date,source,url\nrzepak,2319,05.07.2026,2026-07-05,"ZSRIR MRiRW, biuletyn",\n',
+                 encoding="utf-8")
+    monkeypatch.setattr(P, "ZSRIR_FILES", (f,))
+    r = P.revenue("rzepak", 3.3, 2.6, 0.58, "podlaskie")
+    assert r.price_zl_t == 2319 and r.price_source == "ZSRIR, lipiec 2026 (notowanie 05.07.2026)"
+    assert r.typical_zl == round(3.3 * 0.58 * 2319, -2)
+    g = P.revenue("pszenica_ozima", 4.2, 3.5, 0.58, "podlaskie")  # GUS jest – bez zmian
+    assert g.price_source.startswith("GUS – ceny skupu, woj. podlaskie")
+    assert P.price_now()[0].source == "ZSRIR MRiRW, biuletyn"
+    assert P.no_price_reason("kukurydza_kiszonka") == "pasza na własne potrzeby, brak ceny skupu"
+    assert P.no_price_reason("burak_cukrowy") == "cena z umowy z cukrownią"
+    assert P.no_price_reason("lubin") == "brak ceny skupu w danych publicznych"
+
+
+def test_custom_period_max_one_year():
+    with pytest.raises(PR.PeriodError, match="Wybierz okres nie dłuższy niż rok"):
+        PR.resolve(None, date(2024, 1, 1), date(2026, 6, 30), date(2026, 11, 22), None)
+    assert PR.resolve(None, date(2025, 7, 1), date(2026, 6, 30), date(2026, 11, 22), None) is not None  # 365 dni

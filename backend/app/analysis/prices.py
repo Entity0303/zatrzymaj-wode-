@@ -6,12 +6,15 @@ Cena do przychodu: średnia z 3 ostatnich dostępnych lat dla województwa dzia�
 krajowa z dopiskiem. Rzepak i buraki cukrowe – w BDL tylko do 2018 r. (temat P1458) → bez ceny (revenue = null).
 Przychód: typowy plon (t/ha) × powierzchnia uprawy × cena, zaokrąglony do 100 zł; słaby rok – analogicznie.
 „Cena teraz” (ZSRIR MRiRW): tylko gdy jest plik prices_zsrir_latest.csv (przepisany ręcznie z biuletynu) – bez zgadywania.
+A12b: brak średniej GUS, a jest notowanie ZSRIR → przychód z ceny ZSRIR (źródło „ZSRIR, lipiec 2026 (notowanie
+05.07.2026)”); cena GUS jest – bez zmian (ZSRIR tylko jako price_now). Brak każdej ceny → `revenue_note` z powodem.
 """
 
 from __future__ import annotations
 
 import csv
 from collections import defaultdict
+from datetime import date
 from functools import lru_cache
 from pathlib import Path
 
@@ -28,6 +31,34 @@ PRODUCT_CROPS = {
     "pszenżyto": ["pszenzyto_ozime"], "kukurydza": ["kukurydza_ziarno"], "ziemniaki": ["ziemniak"],
 }
 CROP_PRODUCT = {c: p for p, cs in PRODUCT_CROPS.items() for c in cs}
+MONTH_NOM = ("styczeń", "luty", "marzec", "kwiecień", "maj", "czerwiec", "lipiec", "sierpień", "wrzesień", "październik",
+             "listopad", "grudzień")
+# A12b: dlaczego nie ma ceny (brak GUS i ZSRIR) – pole revenue_note
+NO_PRICE = {"kukurydza_kiszonka": "pasza na własne potrzeby, brak ceny skupu",
+            "burak_cukrowy": "cena z umowy z cukrownią"}
+NO_PRICE_DEFAULT = "brak ceny skupu w danych publicznych"
+
+
+def no_price_reason(crop_id: str) -> str:
+    return NO_PRICE.get(crop_id, NO_PRICE_DEFAULT)
+
+
+def zsrir_price(crop_id: str) -> tuple[float, str] | None:
+    """(zł/t, źródło) z notowania ZSRIR – „ZSRIR, lipiec 2026 (notowanie 05.07.2026)”."""
+    rows = {r.get("crop_id"): r for r in _zsrir_rows()}
+    r = rows.get(crop_id)
+    if r is None:
+        return None
+    try:
+        zl = float(r["zl_t"])
+    except (KeyError, ValueError):
+        return None
+    try:
+        d = date.fromisoformat((r.get("date") or "").strip())
+        when = f"{MONTH_NOM[d.month - 1]} {d.year}"
+    except ValueError:
+        when = "notowanie bieżące"
+    return round(zl), f"ZSRIR, {when} (notowanie {r.get('week', '').strip()})"
 
 
 @lru_cache(maxsize=1)
@@ -69,7 +100,7 @@ def _round100(x: float) -> float:
 
 def revenue(crop_id: str, typical_t_ha: float | None, weak_t_ha: float | None, area_ha: float | None,
             voivodeship: str | None) -> CropRevenue | None:
-    p = price(crop_id, voivodeship)
+    p = price(crop_id, voivodeship) or zsrir_price(crop_id)  # A12b: GUS, a gdy brak – notowanie ZSRIR
     if p is None or typical_t_ha is None or not area_ha:
         return None
     zl_t, src = p
@@ -89,8 +120,9 @@ def attach(sug: CropSuggestions | None, voivodeship: str | None) -> CropSuggesti
         items = []
         for it in g.items:
             yields[it.crop_id] = (it.yield_typical_t_ha, it.yield_weak_t_ha)
-            items.append(it.model_copy(update={"revenue": revenue(it.crop_id, it.yield_typical_t_ha,
-                                                                  it.yield_weak_t_ha, area, voivodeship)}))
+            rv = revenue(it.crop_id, it.yield_typical_t_ha, it.yield_weak_t_ha, area, voivodeship)
+            items.append(it.model_copy(update={"revenue": rv,
+                                               "revenue_note": None if rv is not None else no_price_reason(it.crop_id)}))
         groups.append(g.model_copy(update={"items": items}))
 
     def rev(crop_id: str) -> CropRevenue | None:
@@ -102,21 +134,26 @@ def attach(sug: CropSuggestions | None, voivodeship: str | None) -> CropSuggesti
     return sug.model_copy(update={"groups": groups, "choice": choice, "alternatives": alts})
 
 
-def price_now() -> list[PriceNow] | None:
-    """Bieżące ceny ZSRIR – tylko z ręcznie przepisanego pliku (kolumny: crop_id, zl_t, week, url); brak → None."""
+def _zsrir_rows() -> list[dict]:
     for f in ZSRIR_FILES:
-        if not f.exists():
+        if f.exists():
+            with open(f, encoding="utf-8") as fh:
+                return list(csv.DictReader(fh))
+    return []
+
+
+def price_now() -> list[PriceNow] | None:
+    """Bieżące ceny ZSRIR – tylko z ręcznie przepisanego pliku (kolumny: crop_id, zl_t, week, [date, source], url);
+    brak pliku → None."""
+    out = []
+    for r in _zsrir_rows():
+        try:
+            out.append(PriceNow(crop_id=r["crop_id"], zl_t=float(r["zl_t"]), week=r["week"].strip(),
+                                source=(r.get("source") or "").strip() or "ZSRIR MRiRW",
+                                url=(r.get("url") or "").strip() or None))
+        except (KeyError, ValueError, AttributeError):
             continue
-        out = []
-        with open(f, encoding="utf-8") as fh:
-            for r in csv.DictReader(fh):
-                try:
-                    out.append(PriceNow(crop_id=r["crop_id"], zl_t=float(r["zl_t"]), week=r["week"],
-                                        source="ZSRIR MRiRW", url=r.get("url") or None))
-                except (KeyError, ValueError):
-                    continue
-        return out or None
-    return None
+    return out or None
 
 
 def clear() -> None:
