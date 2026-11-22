@@ -4,6 +4,10 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-22 08:25 · `main` · F37: łamanie stron w raporcie pełnym (13 → 10 stron)
+Raport pełny płynie bez wymuszonych nowych stron między sekcjami (skrócony bez zmian – 2 strony): znikła prawie pusta str. 2 i samotne ramki na ostatniej stronie; ramki „Uziarnienie” i „Teren – szczegóły” przed wykresami; pojedynczy wykres „Deszcz w miesiącach” na pół szerokości (był na pół strony); pasek „Teren” cienki jak w skróconym; wykresy, karty i wiersze tabel nie są dzielone między strony. 201305 dziś: 13 → 10 stron, 30.06.2018: 9 stron; każda strona obejrzana jako obraz. Testy: `pytest -k "report or pdf"` 38.
+**Pliki:** `backend/app/report/templates/report.html`, `backend/app/report/report.css`. **Kontrakt:** bez zmian.
+
 ## 2026-11-22 08:10 · `main` · F35: czytelność wykresów (jednostki nad osiami, średnia poza słupkami)
 „Ceny i pogoda”: jednostki „mm” i „zł/t” nad osiami z odstępem od najwyższej wartości (frontend i PDF). „Woda na tle 10 lat”: podpis średniej przy prawej krawędzi poza słupkami (frontend – jak w PDF), wartość słupka, na którą wypadłaby linia średniej, odsunięta pod / nad linię, wartości rysowane po linii. PDF obejrzany jako obraz (skrócony 201305 30.06.2018 – 2 strony, pełny – 13). Testy: `pytest -k "report or chart or a28"` 45, `tsc`, build; oxlint – 2 nowe ostrzeżenia w `PassportSection.tsx` (nie z tej zmiany).
 **Pliki:** `frontend/src/features/passport/PriceWeatherCard.tsx`, `frontend/src/features/passport/charts/SeasonBars.tsx`, `backend/app/report/charts.py`. **Kontrakt:** bez zmian.
