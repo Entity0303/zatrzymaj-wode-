@@ -4,6 +4,7 @@ import type { AnalysisResponse } from '@/api/types'
 import { SatelliteCard } from '@/features/parcel-panel/SatelliteCard'
 import { formatDatePl } from '@/lib/format'
 import { useLang } from '@/lib/i18n'
+import { usePassportId } from './passportId'
 import { useSettings } from '@/lib/storage'
 import { cn } from '@/lib/utils'
 import { PassportCard } from './PassportCard'
@@ -27,6 +28,7 @@ function Tile({ title, value, lastYear, muted }: { title: string; value: string;
  * liczby w trybie Doradca pod „Szczegóły” (dotychczasowa karta z wykresem i tabelą).
  */
 export function SatelliteSection({ analysis, chartWidth }: { analysis: AnalysisResponse; chartWidth?: number }) {
+  const sectionId = usePassportId('pp-satelita')
   const { t } = useLang()
   const [settings] = useSettings()
   const [open, setOpen] = useState(false)
@@ -35,8 +37,8 @@ export function SatelliteSection({ analysis, chartWidth }: { analysis: AnalysisR
   const series = (s?.series ?? []).filter((p) => p.ndvi != null)
   const maxNdvi = Math.max(0.01, ...series.map((p) => p.ndvi ?? 0))
   return (
-    <div id="pp-satelita" className="grid content-start gap-4">
-      <h3 id="pp-satelita-h" className="font-display text-[22px] leading-7 font-bold">
+    <div id={sectionId} className="grid content-start gap-4">
+      <h3 id={`${sectionId}-h`} className="font-display text-[22px] leading-7 font-bold">
         {t('Z satelity')}
       </h3>
       <PassportCard

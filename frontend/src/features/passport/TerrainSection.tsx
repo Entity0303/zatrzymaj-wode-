@@ -3,6 +3,7 @@ import { HydroCard } from '@/features/parcel-panel/HydroCard'
 import { TerrainCard } from '@/features/parcel-panel/TerrainCard'
 import { formatArea } from '@/lib/format'
 import { useLang } from '@/lib/i18n'
+import { usePassportId } from './passportId'
 import { PassportCard } from './PassportCard'
 
 /**
@@ -11,13 +12,14 @@ import { PassportCard } from './PassportCard'
  * i o wodzie, która dopływa spoza działki. Pod spodem rowy i zbiorniki w okolicy (500 m, wodowskaz).
  */
 export function TerrainSection({ analysis }: { analysis: AnalysisResponse }) {
+  const sectionId = usePassportId('pp-teren')
   const { t } = useLang()
   const ter = analysis.terrain && 'zones' in analysis.terrain ? analysis.terrain : null
   const inflowHa = ter?.inflow_from_outside_m2 ? ter.inflow_from_outside_m2 / 10_000 : 0
   const outlet = ter?.outlets?.[0]
   return (
-    <div id="pp-teren" className="grid content-start gap-4">
-      <h3 id="pp-teren-h" className="font-display text-[22px] leading-7 font-bold">
+    <div id={sectionId} className="grid content-start gap-4">
+      <h3 id={`${sectionId}-h`} className="font-display text-[22px] leading-7 font-bold">
         {t('Teren i okolica')}
       </h3>
       <PassportCard title={t('Teren działki')}>

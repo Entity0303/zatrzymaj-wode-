@@ -999,7 +999,7 @@ export default function Start() {
                     variant: 'field',
                     formId: HERO_SEARCH_FORM,
                     // telefon: krótszy tekst – pole ma całą szerokość karty, ale obok są przyciski w polu
-                    placeholder: t(isMobile ? 'Numer działki lub adres' : 'Wpisz numer działki lub adres'),
+                    placeholder: t('Numer działki lub adres'), // F34: dłuższy tekst był ucinany w polu karty startowej
                     trailing: <LocateButton locating={locating} onClick={locate} inField />,
                   })}
                   // F12: data analizy na karcie powitalnej – ten sam stan co w górnym pasku (paska nie ma przy karcie)
@@ -1268,8 +1268,10 @@ export default function Start() {
                 </div>
               ) : (
               <div className="space-y-5">
-                <div className="flex gap-2 [&>label]:min-w-0 [&>label]:flex-1">
-                  <DateField value={asOf} onChange={setAsOf} compact />
+                <div className="flex items-center gap-2">
+                  <div className="min-w-0 flex-1">
+                    <DateField value={asOf} onChange={setAsOf} compact />
+                  </div>
                   {weather(true)}
                 </div>
                 {parcel && <PeriodPicker value={period} onChange={setPeriod} hasCrop={!!crop} asOf={asOf} align="left" />}

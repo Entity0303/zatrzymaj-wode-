@@ -31,7 +31,18 @@ export function DateField({
   compact,
   bare,
   field,
+  label,
+  min: minProp,
+  max: maxProp,
+  optional,
 }: {
+  /** F34: inna data niż data analizy (np. „Data siewu”) – nazwa pola dla czytników i w podpowiedzi przycisku */
+  label?: string
+  /** własny zakres (RRRR-MM-DD); domyślnie dziś − 10 lat … dziś */
+  min?: string
+  max?: string
+  /** pole może być puste – wyczyszczenie tekstu oddaje '' */
+  optional?: boolean
   value: string
   onChange: (v: string) => void
   compact?: boolean
@@ -48,9 +59,14 @@ export function DateField({
     setSeen(value)
     setText(toPl(value))
   }
-  const min = minAnalysisIso()
-  const max = todayIso()
+  const min = minProp ?? minAnalysisIso()
+  const max = maxProp ?? todayIso()
+  const name = label ?? 'Data analizy'
   const commit = () => {
+    if (optional && !text.trim()) {
+      if (value) onChange('')
+      return
+    }
     const iso = fromPl(text)
     if (iso && iso >= min && iso <= max) {
       setText(toPl(iso))
@@ -79,14 +95,14 @@ export function DateField({
       <button
         type="button"
         onClick={openPicker}
-        aria-label={t('Wybierz datę analizy z kalendarza')}
-        title={t('Wybierz datę analizy z kalendarza')}
+        aria-label={label ? t('{pole} – wybierz z kalendarza', { pole: t(label) }) : t('Wybierz datę analizy z kalendarza')}
+        title={label ? t('{pole} – wybierz z kalendarza', { pole: t(label) }) : t('Wybierz datę analizy z kalendarza')}
         className="-ml-1 flex size-8 shrink-0 items-center justify-center rounded-full hover:bg-surface-2"
       >
         <CalendarDays className="size-5 text-amber" aria-hidden />
       </button>
       {/* F26: na karcie startowej (`field`) etykieta jest NAD polem – w polu sama data, zawsze w całości */}
-      {!field && (
+      {!field && !label && (
         <span className={cn('text-sm whitespace-nowrap text-text-muted', compact ? 'max-[419px]:hidden' : 'hidden 2xl:inline')}>
           {t('Data analizy')}
         </span>
@@ -95,7 +111,7 @@ export function DateField({
         type="text"
         inputMode="numeric"
         placeholder="dd.mm.rrrr"
-        aria-label={t('Data analizy (dd.mm.rrrr)')}
+        aria-label={label ? `${t(name)} (dd.mm.rrrr)` : t('Data analizy (dd.mm.rrrr)')}
         value={text}
         onChange={(e) => setText(e.target.value)}
         onBlur={commit}
@@ -111,7 +127,7 @@ export function DateField({
         value={value}
         min={min}
         max={max}
-        onChange={(e) => e.target.value && e.target.value >= min && e.target.value <= max && onChange(e.target.value)}
+        onChange={(e) => (e.target.value ? e.target.value >= min && e.target.value <= max && onChange(e.target.value) : optional && onChange(''))}
         className="pointer-events-none absolute bottom-0 left-3 h-0 w-0 opacity-0"
       />
     </div>

@@ -2,6 +2,7 @@ import { ChevronDown, ChevronUp, Leaf, Loader2, X } from 'lucide-react'
 import type { Parcel } from '@/api/types'
 import { ErrorNotice } from '@/components/ErrorNotice'
 import { useLang } from '@/lib/i18n'
+import { DrawnParcels } from './DrawnParcels'
 import { cn } from '@/lib/utils'
 import { ApproxAreaBanner } from './ApproxAreaBanner'
 import { FieldOverview, type RefineProps } from './FieldOverview'
@@ -58,6 +59,8 @@ export function ParcelSummary({
         <div className="min-w-0 flex-1">
           <h2 className="font-name line-clamp-2 text-xl leading-7 font-bold">{title}</h2>
           <p className="text-sm leading-5 text-text-muted">{sub}</p>
+          {/* F34: działki ewidencyjne pod polem narysowanym (F30) – ten nagłówek jest używany na komputerze */}
+          <DrawnParcels parcel={parcel} className="mt-0.5 text-sm leading-5 text-text-muted" />
         </div>
         {onCollapse && (
           <button

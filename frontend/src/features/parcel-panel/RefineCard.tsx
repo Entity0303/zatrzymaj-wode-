@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, Sele
 import { PeriodPicker } from '@/features/period/PeriodPicker'
 import { HISTORY_CROPS, HISTORY_UNKNOWN, historyLabel } from '@/lib/crops'
 import { formatArea, formatDatePl, formatDayMonth, formatHa } from '@/lib/format'
+import { DateField } from '@/components/DateField'
 import { useLang } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
 import { useMediaQuery } from '@/lib/hooks'
@@ -169,26 +170,22 @@ export function RefineCard({
               : t('Po wpisaniu liczymy okres „od siewu” od tej daty.')
           }
         >
-          <label className="flex h-11 w-full items-center gap-2 rounded-md border bg-surface-2 px-3 focus-within:border-brand">
-            <input
-              type="date"
-              value={sowing ?? ''}
-              max={asOf}
-              onChange={(e) => onSowingChange(e.target.value || null)}
-              aria-label={t('Data siewu')}
-              className="tabular min-w-0 flex-1 bg-transparent text-base outline-none"
-            />
+          {/* F34: ten sam komponent i format co data analizy – dd.mm.rrrr, kalendarz pod ikoną */}
+          <div className="flex items-center gap-1">
+            <div className="min-w-0 flex-1">
+              <DateField value={sowing ?? ''} onChange={(v) => onSowingChange(v || null)} compact optional label="Data siewu" max={asOf} />
+            </div>
             {sowing && (
               <button
                 type="button"
                 onClick={() => onSowingChange(null)}
                 aria-label={t('Usuń datę siewu')}
-                className="flex size-8 items-center justify-center rounded-full text-text-muted hover:bg-surface"
+                className="flex size-10 shrink-0 items-center justify-center rounded-full text-text-muted hover:bg-surface-2"
               >
                 <X className="size-4" />
               </button>
             )}
-          </label>
+          </div>
           {sowing && sowingNote && <p className="mt-1 text-sm leading-5 text-[#875a12]">{t(sowingNote)}</p>}
         </Field>
       )}

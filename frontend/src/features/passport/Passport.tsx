@@ -8,6 +8,7 @@ import { LogoMark } from '@/components/LogoMark'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { REPORT_KINDS } from '@/features/reports/reportKinds'
 import { consumePassportJump } from './jump'
+import { PassportPrintContext } from './passportId'
 import { BRAND_NAME } from '@/lib/brand'
 import { cropLabel } from '@/lib/crops'
 import { formatDatePl, formatArea, shortCounty } from '@/lib/format'
@@ -157,7 +158,9 @@ export function Passport({
           <p className="text-sm text-text-muted">{sub}</p>
           {analysis.period && <p className="text-sm text-text-muted">{t('Okres: {label}', { label: t(analysis.period.label) })}</p>}
         </header>
-        <Content analysis={analysis} print />
+        <PassportPrintContext.Provider value>
+          <Content analysis={analysis} print />
+        </PassportPrintContext.Provider>
       </article>
     )
 
