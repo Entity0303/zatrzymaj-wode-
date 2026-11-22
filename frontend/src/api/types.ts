@@ -1388,3 +1388,28 @@ export type StatusResponse = {
 }
 
 // GET /api/report.pdf?parcel_id=&crop=&date=&previous_crop= – plik PDF (application/pdf)
+
+/** A26 – GET / POST /api/drought-context: tło suszowe z Europejskiego Obserwatorium Suszy (EDO, Copernicus). */
+export type CdiClass = 'brak' | 'obserwacja' | 'ostrzeżenie' | 'alarm' | 'regeneracja'
+
+export interface DroughtContext {
+  /** true – usługa nie odpowiedziała albo nie ma danych; wtedy `note_pl`, a pola wskaźników są puste */
+  unavailable: boolean
+  note_pl?: string | null
+  cdi?: { class: CdiClass; label_pl: string; date: string; decade_label: string } | null
+  soil_moisture_anomaly?: {
+    value?: number | null
+    class?: 'w_normie' | 'sucho' | 'bardzo_sucho' | 'wilgotno' | null
+    label_pl: string
+    date: string
+  } | null
+  agri_risk?: { class: 'brak' | 'niskie' | 'srednie' | 'wysokie'; label_pl: string; date: string } | null
+  /** Zdanie dla rolnika; gdy podano `our_status` – porównanie z naszą oceną */
+  sentence?: string | null
+  agrees?: boolean | null
+  resolution_note: string
+  source: string
+  source_url: string
+  fetched_at?: string | null
+  analysis_date?: string | null
+}
