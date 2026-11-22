@@ -52,7 +52,7 @@ export function RevenueCell({
     <span className={cn('block text-sm leading-5', className)}>
       <span className="block">
         {label}
-        <b className="tabular">{t('ok. {zl}', { zl: fmtZlRange(r) })}</b>
+        <b className="tabular whitespace-nowrap">{t('ok. {zl}', { zl: fmtZlRange(r) })}</b>
       </span>
       {okZl(r.weak_year_zl) && (
         <span className="block text-text-muted">{t('słaby rok: ok. {zl}', { zl: formatZl(r.weak_year_zl) })}</span>

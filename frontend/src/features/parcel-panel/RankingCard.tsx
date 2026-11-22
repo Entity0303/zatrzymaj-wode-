@@ -27,7 +27,7 @@ function YieldLine({ s, area }: { s: CropSuggestion | PerennialSuggestion; area:
   if (!typ) return <span className="text-text-muted">{t('Brak danych o plonie')}</span>
   return (
     <span>
-      {t('typowo')} <b className="tabular">{typ} t/ha</b>
+      {t('typowo')} <b className="tabular whitespace-nowrap">{typ} t/ha</b>
       {s.total_typical_t != null && area != null && <span className="text-text-muted"> · {t('≈ {t} t z pola', { t: num(s.total_typical_t) ?? '' })}</span>}
     </span>
   )

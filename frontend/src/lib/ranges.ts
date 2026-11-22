@@ -13,7 +13,8 @@ export function span(r: readonly number[] | null | undefined): Span | null {
   return { min: Math.min(r[0], r[1]), max: Math.max(r[0], r[1]) }
 }
 
-const join = (a: string, b: string) => (a === b ? a : `${a}–${b}`)
+/** Zakres w jednym nierozdzielnym bloku: łącznik wyrazów (U+2060) po obu stronach kreski – przeglądarka nie łamie po „–”. */
+const join = (a: string, b: string) => (a === b ? a : `${a}\u2060–\u2060${b}`)
 
 /** „3,4–3,9” albo „3,6” (1 miejsce po przecinku). */
 export function fmtNumRange(r: readonly number[] | null | undefined, value: number | null | undefined, digits = 1): string | null {
@@ -26,9 +27,9 @@ export function fmtNumRange(r: readonly number[] | null | undefined, value: numb
 export function fmtZlRange(rev: CropRevenue): string {
   const s = span(rev.revenue_range)
   if (!s) return formatZl(rev.typical_zl)
-  const a = formatZl(s.min).replace(/ zł$/, '')
-  const b = formatZl(s.max).replace(/ zł$/, '')
-  return a === b ? formatZl(s.min) : `${a}–${b} zł`
+  const a = formatZl(s.min).replace(/\u00a0zł$/, '')
+  const b = formatZl(s.max).replace(/\u00a0zł$/, '')
+  return a === b ? formatZl(s.min) : `${join(a, b)}\u00a0zł`
 }
 
 /** Ryzyko suszy: lata ze stratą > 20% – zakres [min, max] (F18: też dawna nazwa risk_years_range). */

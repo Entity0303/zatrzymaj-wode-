@@ -107,12 +107,12 @@ export function CropTableSection({ analysis, refineForm }: { analysis: AnalysisR
                 </div>
                 <div className="tabular text-sm leading-5">
                   
-                  {typ ? <b className="font-semibold">{typ} t/ha</b> : <span className="text-text-muted">{t('brak danych')}</span>}
+                  {typ ? <b className="font-semibold whitespace-nowrap">{typ} t/ha</b> : <span className="text-text-muted">{t('brak danych')}</span>}
                   {it.total_typical_t != null && <span className="block text-text-muted">{t('≈ {t} t z pola', { t: num(it.total_typical_t) ?? '' })}</span>}
                 </div>
                 <div className="tabular text-sm leading-5">
                   
-                  {weak ? <>{weak} t/ha</> : <span className="text-text-muted">—</span>}
+                  {weak ? <span className="whitespace-nowrap">{weak} t/ha</span> : <span className="text-text-muted">—</span>}
                   {it.weak_year ? <span className="block text-text-muted">{t('({rok})', { rok: it.weak_year })}</span> : null}
                 </div>
                 <div className="text-sm leading-5">
