@@ -4,6 +4,10 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-22 06:00 · `main` · A15: poprawki z weryfikacji V1
+Nagłówek „Trudna” (Stryjno, Szczytno 126/3 → „Dobra ziemia, ale w suche lata brakuje wody”), zboża na dobrej glebie bez „gleba nie pasuje” (zdanie o kompleksie z mapy), kompleksy górskie 10/11 w `crops.csv` (Bruśnik: jęczmień ozimy, pszenica, owies – polecane), satelita „brak zdjęcia” 12 h i bez słowa „scena” (5 działek przeliczonych), notatki kondycji / wilgotności słowami, ograniczenie FAO prostym językiem (D101). V1 ponownie: zniknęły nagłówki sprzeczne z glebą, odradzanie zbóż na dobrej glebie, „wszystko możliwe” w Bruśniku, 25 s czekania na satelitę, NDVI / NDMI w notatkach. Testy: 544 bez sieci (`test_a15.py` – 5).
+**Pliki:** `backend/app/{analysis/{suggestions,satellite,verdict}.py, analysis/rules/verdict.yaml, data/crops/crops.csv, routers/analysis.py}`, `backend/tests/test_a15.py`. **Kontrakt:** nie.
+
 ## 2026-11-22 05:00 · `main` · A12 (ceny skupu, przychód) i A9b (okres analizy)
 **A12:** `scripts/build_prices.py` → `app/data/prices/{gus_prices,gus_price_variables}.csv` (GUS BDL P2967, 7 produktów, 595 wartości, 40 s; rzepak / buraki – tylko do 2018 → brak ceny), `analysis/prices.py` (cena 3 lat woj. / kraj, przychód do 100 zł, `price_now` z pliku ZSRIR), `revenue` w rankingu / wyborze / alternatywach, zdanie w werdykcie; mock `prices.sample.json` – prawdziwe wartości dla 201305.
 **A9b:** `analysis/period.py`, parametry `period` / `date_from` / `date_to` w `/api/analysis` i `/api/report.pdf` (GET, POST), `water_balance.stress_dates`, `PeriodSummary` (alias `from`), mock `period.sample.json` – prawdziwy 30d dla 201305; test kontraktu – pola z aliasem.
