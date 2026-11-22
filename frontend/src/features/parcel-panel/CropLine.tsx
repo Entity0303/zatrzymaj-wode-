@@ -6,7 +6,7 @@ import { okZl, priceNowSource } from '@/lib/revenue'
 import type { RevenueExtras } from './RevenueCell'
 
 /** ✅ / 🟡 / ❌ – te same kolory co werdykt i raport PDF. */
-export const CROP_CAT: Record<SuggestionCategory, { icon: LucideIcon; color: string; label: string }> = {
+const CROP_CAT: Record<SuggestionCategory, { icon: LucideIcon; color: string; label: string }> = {
   polecane: { icon: CircleCheck, color: '#5BB37F', label: 'polecane' },
   mozliwe: { icon: CircleAlert, color: '#E8B931', label: 'możliwe' },
   odradzane: { icon: CircleX, color: '#C8453B', label: 'odradzane' },

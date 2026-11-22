@@ -18,6 +18,7 @@ import { layerByKey, type LayerKey } from './layers'
 import { STATUS } from '@/theme/status'
 import { useMediaQuery } from '@/lib/hooks'
 import { SoilParcelOverlay, type SoilImageStatus } from './SoilSusceptibilityLayer'
+import { removeSoilOverlays } from './soilOverlayDom'
 import { InfraPins } from '@/features/infra-reports/InfraPins'
 import { useLang } from '@/lib/i18n'
 
@@ -47,6 +48,15 @@ function IntroView({ active }: { active: boolean }) {
     const w = map.getSize().x
     if (w >= 1024) map.panBy([-Math.round(w * 0.2), 0], { animate: false })
   }, [active, map])
+  return null
+}
+
+/** Sprząta osierocone obrazy gleby, gdy warstwa „Gleba” nie jest aktywna albo zmieniła się działka. */
+function SoilSweep({ active, parcelKey }: { active: boolean; parcelKey: string | null }) {
+  const map = useMap()
+  useEffect(() => {
+    if (!active) removeSoilOverlays(map)
+  }, [active, parcelKey, map])
   return null
 }
 
@@ -233,7 +243,8 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
         <>
           {/* aktywna warstwa danych przycięta do obrysu (features/map/layers/*) – pod białym obrysem */}
           {/* pole narysowane: serwer nadaje własny identyfikator (narysowane_…) – dane i tak są z tego obrysu */}
-          {ActiveOverlay && layerData && (layerData.parcel_id === parcel.id || parcel.source === 'drawn') && (
+          {/* dokładnie jedna warstwa tematyczna: dane tylko tej warstwy i tej działki (spóźniona odpowiedź poprzedniej – pomijana) */}
+          {ActiveOverlay && layerData && layerData.layer === layer && (layerData.parcel_id === parcel.id || parcel.source === 'drawn') && (
             <ActiveOverlay parcel={parcel} analysisDate={analysisDate} data={layerData} />
           )}
           {/* F10: gleba IUNG – jeden obraz WMS przycięty do obrysu (nowa działka = nowy obraz) */}
@@ -310,6 +321,7 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
       )}
 
       <IntroView active={intro} />
+      <SoilSweep active={layer === 'gleba' && !!parcel} parcelKey={parcel?.id ?? null} />
       <InfraPins bbox={infraBox} refresh={infraRefresh} />
 
       <FitTo parcel={parcel} candidates={candidates} insets={insets} reducedMotion={reducedMotion} />

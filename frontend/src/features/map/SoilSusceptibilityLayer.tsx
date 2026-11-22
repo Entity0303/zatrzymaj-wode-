@@ -1,6 +1,7 @@
 import L from 'leaflet'
 import { useEffect, useRef } from 'react'
 import { useMap } from './leaflet'
+import { SOIL_ATTR, removeSoilOverlays } from './soilOverlayDom'
 import { SOIL_COLOR } from '@/theme/soil'
 
 /**
@@ -105,6 +106,7 @@ export function SoilParcelOverlay({ geometry, onStatus }: { geometry: Geom; onSt
 
     const id = `soil-clip-${++clipSeq}`
     const svg = document.createElementNS(SVG_NS, 'svg')
+    svg.setAttribute(SOIL_ATTR, '')
     svg.setAttribute('viewBox', `0 0 ${w} ${h}`)
     svg.setAttribute('preserveAspectRatio', 'none')
     const defs = document.createElementNS(SVG_NS, 'defs')
@@ -125,16 +127,23 @@ export function SoilParcelOverlay({ geometry, onStatus }: { geometry: Geom; onSt
     img.setAttribute('preserveAspectRatio', 'none')
     img.setAttribute('clip-path', `url(#${id})`)
     img.setAttribute('style', 'image-rendering: pixelated')
-    img.addEventListener('load', () => status.current?.('ok'))
-    img.addEventListener('error', () => status.current?.('error'))
+    // obraz, który przyjdzie po zdjęciu nakładki (zmiana warstwy / działki) – bez zmiany stanu legendy
+    let live = true
+    img.addEventListener('load', () => live && status.current?.('ok'))
+    img.addEventListener('error', () => live && status.current?.('error'))
     img.setAttribute('href', url)
     svg.appendChild(img)
 
     status.current?.('loading')
     const layer = L.svgOverlay(svg, bounds, { opacity: 0.8, interactive: false, attribution: SOIL_ATTRIBUTION })
+    removeSoilOverlays(map) // nigdy dwa obrazy gleby naraz
     map.addLayer(layer)
     return () => {
+      live = false
       map.removeLayer(layer)
+      // przerwij pobieranie i usuń element razem z <clipPath> (Leaflet zdejmuje tylko z panelu)
+      img.removeAttribute('href')
+      svg.remove()
     }
     // obraz zależy tylko od kształtu działki (nie od przesunięć i zoomu)
     // eslint-disable-next-line react-hooks/exhaustive-deps
