@@ -4,6 +4,10 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-22 07:00 · `main` · A24: okresy bez opadu, upał, próchnica (informacyjnie)
+`analysis/extremes.py` + przyczyny informacyjne, zdanie w werdykcie „Opady”, reguła próchnicy, pola kontraktu (D113). 201305: 2018 – 23 dni bez deszczu (zwykle 14), 18 dni > 25°C (zwykle 6); dziś – 19 dni, 13 dni > 30°C (zwykle 4); próchnica 6,4% wg SoilGrids (podejrzanie wysoka – ograniczenie). Testy: 659 bez sieci.
+**Pliki:** `backend/app/analysis/{extremes,causes,period}.py`, `rules/retencja.yaml`, `routers/analysis.py`, `schemas/analysis.py`, `frontend/src/api/types.ts`, `tests/test_a24.py`. **Kontrakt:** tak – pola opcjonalne.
+
 ## 2026-11-22 06:10 · `main` · A23 cd.: kolejka zadań w tle, A17 (okres z Open-Meteo), jedna liczba zapasu wody, niepełny NMT
 Szczegóły: D112. Testy: 645 bez sieci. Na żywo lokalnie: nowe działki – analiza ok. 7 s, teren po 11–12 s; 201305_2.0038.8/5 – komplet terenu.
 **Pliki:** `backend/app/core/{background,config}.py`, `analysis/{terrain,terrain_interpret,satellite,hydro,variants,period}.py`, `sources/{soilgrids,nmt}.py`, `routers/analysis.py`, `schemas/analysis.py`, `frontend/src/api/types.ts` (pola okresu), testy `test_background`, `test_a17`, `test_a23`, `test_a23_nmt` (+ a5, a6, a22). **Kontrakt:** tak – `PeriodSummary.requested_to / data_until / filled_days / note`.

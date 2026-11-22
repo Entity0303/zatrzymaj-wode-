@@ -305,3 +305,10 @@ Weryfikacja: `tsc -b` przechodzi; `vite build` – lokalnie i w kontenerze brak 
 
 **Dla Mefju:** typ lokalny w `PeriodCard.tsx` można zastąpić polami z `PeriodSummary`. Gdy `filled_days > 0`, `to` = koniec wybrany przez rolnika, a `note` mówi, które dni są z modelu.
 **Łamie zgodność:** nie.
+
+### 2026-11-22 · `main` · A24 – okres bez opadu, upał, próchnica
+- `AnalysisResponse.dry_spell: DrySpellStats | null`, `AnalysisResponse.heat: Heat | null`, `PeriodSummary.dry_spell`, `Soil.organic_matter: OrganicMatter | null`, `Cause.informational: boolean` (typy dodane w `types.ts`, wszystko opcjonalne).
+- Nowe przyczyny informacyjne (udział 0): „Okres bez deszczu” (factor `opady`), „Upał” (`parowanie`), „Mało próchnicy” (`gleba`).
+
+**Dla Mefju:** w „Dlaczego?” traktuj `informational === true` tak jak dziś `factor === 'teren'` (napis „informacyjnie”, bez paska) – inaczej nowe pozycje pokażą „0%”. `soil.organic_matter.sentence` do karty gleby; przy próchnicy pokaż ograniczenie (SoilGrids bywa zawyżony).
+**Łamie zgodność:** nie.
