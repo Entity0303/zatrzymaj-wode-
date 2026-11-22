@@ -248,7 +248,9 @@ trwałego dysku – cache SQLite odtwarza się po restarcie, usługę utrzymuje 
 
 ## 7. Licencje (4.2.7)
 
-- **Kod projektu:** do ustalenia – w repozytorium nie ma jeszcze pliku `LICENSE`.
+Kod rozwiązania udostępniamy na licencji MIT – plik [LICENSE](LICENSE).
+
+- **Kod projektu:** licencja MIT – plik `LICENSE` w katalogu głównym repozytorium.
 - **Dane:** pozostają na warunkach dostawców – kolumna „Licencja / warunki” w punkcie 4. Aplikacja podaje źródło
   przy każdym wyniku i atrybucję na mapie.
 - **Kontrola licencji wszystkich zależności (22.11.2026):** żadna zależność nie jest wyłącznie na GPL / AGPL, nie ma
