@@ -23,7 +23,10 @@ def _num(v: float) -> str:
 def _ticks(lo: float, hi: float, n: int = 5) -> list[float]:
     span = max(hi - lo, 1.0)
     raw = span / n
-    step = next(s for s in (1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000) if s >= raw)
+    # większe zakresy (np. cena rzepaku > 3000 zł/t) – kolejne „okrągłe” kroki; bez domyślnej wartości next() rzucał
+    # StopIteration i raport pełny kończył się błędem 500
+    step = next((s for s in (1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000, 2000, 2500, 5000, 10000) if s >= raw),
+                10 ** len(str(int(raw))))
     start = (lo // step) * step
     out, v = [], start
     while v <= hi + 1e-9:

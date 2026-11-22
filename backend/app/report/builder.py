@@ -524,6 +524,25 @@ async def edo_context(a: AnalysisResponse):
     return None if ctx.unavailable or ctx.cdi is None else ctx
 
 
+async def groundwater_context(a: AnalysisResponse):
+    """A27: „Wody gruntowe i wsiąkanie” dla raportu – te same obliczenia co GET /api/groundwater (pogoda, gleba i teren
+    z pamięci po analizie; PIG-PIB do 8 s). Brak / błąd → None (raport bez zdania i sekcji)."""
+    try:
+        from app.routers.groundwater import context_for_parcel
+        from app.routers.satellite import resolve_any
+
+        if getattr(a.parcel, "source", None) in (None, "uldk"):
+            p = await resolve_any(a.parcel.id, None, None, None)
+        else:
+            g = a.parcel.geometria
+            poly = g if g["type"] == "Polygon" else {"type": "Polygon", "coordinates": g["coordinates"][0]}
+            p = await resolve_any(None, None, None, poly)
+        ctx = await context_for_parcel(p, a.analysis_date)
+    except Exception:  # noqa: BLE001 – dodatek; jego brak nie może wywrócić raportu
+        return None
+    return None if ctx.unavailable else ctx
+
+
 def edo_tile(edo) -> dict:
     cls = edo.cdi.class_
     sma = edo.soil_moisture_anomaly
@@ -532,10 +551,12 @@ def edo_tile(edo) -> dict:
             "color": EDO_COLOR.get(cls, "#B8BDB9"), "bar": None}
 
 
-def point_text(st, a: AnalysisResponse, clip: int = 0) -> str:
+def point_text(st, a: AnalysisResponse, clip: int = 0, gw=None) -> str:
     """Tekst punktu werdyktu. F31: w punkcie „Opady” zdanie o najdłuższym okresie bez deszczu (A24) zostaje w całości
-    także w raporcie skróconym – skracamy tylko część przed nim."""
+    także w raporcie skróconym – skracamy tylko część przed nim. A27: w punkcie „Gleba” jedno zdanie o wsiąkaniu."""
     text = st.text
+    if st.kind == "gleba" and gw is not None and gw.infiltration is not None:
+        return (whole(text, clip) if clip else text).rstrip() + " " + gw.infiltration.short_pl
     if st.kind != "opady" or DRY_MARK not in text:
         return whole(text, clip) if clip else text
     base = text.split(DRY_MARK)[0]
@@ -697,7 +718,7 @@ COMPACT = [
 
 
 def render_html(a: AnalysisResponse, ortho: str | None, generated: dt.datetime | None = None,
-                report_type: str = "short", compact: int = 0, edo=None) -> str:
+                report_type: str = "short", compact: int = 0, edo=None, gw=None) -> str:
     a = farmer_view(a)
     cp = COMPACT[max(0, min(compact, len(COMPACT) - 1))]
     full_rep = report_type == "full"
@@ -758,7 +779,8 @@ def render_html(a: AnalysisResponse, ortho: str | None, generated: dt.datetime |
         # F19: układ w stylu paszportu
         "tiles": tiles(a, edo),
         "edo": edo, "edo_color": EDO_COLOR.get(edo.cdi.class_, "#B8BDB9") if edo is not None else None,
-        "point_text": lambda st, clip=0: point_text(st, a, clip),
+        "point_text": lambda st, clip=0: point_text(st, a, clip, gw),
+        "gw": gw,
         "points": verdict_points(a) if full_rep else verdict_points(a, cp["pt_n"]),
         "cp": cp,
         "now_label": ("W dniu analizy" if a.historical else "Teraz"),
@@ -809,8 +831,8 @@ def short_pdf(render) -> bytes:
 
 async def build_pdf(a: AnalysisResponse, report_type: str = "short") -> bytes:
     bbox, _ = map_frame(a.parcel.geometria)
-    ortho, edo = await asyncio.gather(ortho_image(bbox), edo_context(a))
+    ortho, edo, gw = await asyncio.gather(ortho_image(bbox), edo_context(a), groundwater_context(a))
     if report_type != "full":
-        return await asyncio.to_thread(short_pdf, lambda level: render_html(a, ortho, None, report_type, level, edo))
-    html = render_html(a, ortho, report_type=report_type, edo=edo)
+        return await asyncio.to_thread(short_pdf, lambda level: render_html(a, ortho, None, report_type, level, edo, gw))
+    html = render_html(a, ortho, report_type=report_type, edo=edo, gw=gw)
     return await asyncio.to_thread(html_to_pdf, html)

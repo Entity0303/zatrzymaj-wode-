@@ -191,6 +191,16 @@
   <p class="muted">{{ edo.resolution_note }} Źródło: {{ edo.source }}.</p>
   {% endif %}
 
+  {% if gw %}
+  <h2>Wody gruntowe i wsiąkanie</h2>
+  <table class="kv">
+    {% if gw.infiltration %}<tr><td>Wsiąkanie</td><td><b>{{ gw.infiltration.label_pl }}</b> – {{ gw.infiltration.sentence_pl }}</td></tr>
+    <tr><td>Opad i parowanie</td><td>30 dni: {{ gw.infiltration.precip_30d_mm|num(0, 'mm') }} opadu, {{ gw.infiltration.et0_30d_mm|num(0, 'mm') }} parowania{% if gw.infiltration.precip_60d_mm is not none %} · 60 dni: {{ gw.infiltration.precip_60d_mm|num(0, 'mm') }} opadu, {{ gw.infiltration.et0_60d_mm|num(0, 'mm') }} parowania{% endif %} · dane do {{ gw.infiltration.data_until|date_pl }}</td></tr>{% endif %}
+    <tr><td>Obszary zagrożone podtopieniami</td><td>{% if gw.source_pig.unavailable %}brak danych ({{ gw.source_pig.note_pl }}){% else %}{{ gw.interpretation_pl }}{% endif %}</td></tr>
+  </table>
+  <p class="muted">{{ gw.limitation_pl }}{% if not gw.source_pig.unavailable and gw.source_pig.note_pl %} {{ gw.source_pig.note_pl }}{% endif %} Źródło: {{ gw.source }}.</p>
+  {% endif %}
+
   {% if a.precip_sources %}{% set ps = a.precip_sources %}
   <h2>Źródła opadów</h2>
   <p>{{ ps.sentence }}{% if ps.agreement != 'brak_danych' %} Zgodność źródeł: {{ ps.agreement_label }}.{% endif %}</p>
