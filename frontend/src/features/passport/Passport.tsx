@@ -1,3 +1,4 @@
+import { parcelShortName } from '@/features/parcel-panel/parcelTitle'
 import { ArrowLeft, FileDown, Link2, Loader2, MoreHorizontal, Printer } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type { ErrorInfo } from '@/api/client'
@@ -86,10 +87,10 @@ export function Passport({
   const { t } = useLang()
   const p = analysis.parcel
   const crop = cropLabel(analysis.crop)
-  const approx = p.source === 'approximate'
+  const approx = p.source === 'approximate' || p.source === 'drawn'
   const title = (
     approx
-      ? [t('Obszar przybliżony'), `${formatHa(p.powierzchnia_ha)} ha`, crop?.toLowerCase()]
+      ? [parcelShortName(p), `${formatHa(p.powierzchnia_ha)} ha`, crop?.toLowerCase()]
       : [t('Działka {numer}', { numer: p.numer }), p.obreb, `${formatHa(p.powierzchnia_ha)} ha`, crop?.toLowerCase()]
   )
     .filter(Boolean)

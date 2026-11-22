@@ -1,3 +1,4 @@
+import { parcelShortName } from '@/features/parcel-panel/parcelTitle'
 import { ChartNoAxesCombined } from 'lucide-react'
 import { useMemo } from 'react'
 import type { AnalysisResponse } from '@/api/types'
@@ -53,7 +54,7 @@ export function BalanceCard({ analysis }: { analysis: AnalysisResponse | null })
   const dev = h.balance_deviation_mm
   // ta sama liczba co w paszporcie i raporcie (słupek bieżącego roku)
   const { mm: now, kind: season, from } = seasonBalance(analysis)
-  const whose = analysis.parcel.source === 'approximate' ? t('Obszar przybliżony') : t('Działka {numer}', { numer: analysis.parcel.numer })
+  const whose = parcelShortName(analysis.parcel)
   return (
     <Card icon={ChartNoAxesCombined} title="Bilans wody" aside={<span className="text-xs text-text-muted">{whose}</span>}>
       {now != null && (

@@ -108,14 +108,14 @@ export function PrecipSourceNote({ sources: ps, compact, className }: { sources:
           </button>
           {open && (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[420px] text-left text-sm">
+              <table className="w-full text-left text-sm">
                 <thead className="text-text-muted">
                   <tr className="border-b">
                     <th className="py-2 pr-3 font-medium">{t('Okres')}</th>
                     <th className="py-2 pr-3 text-right font-medium">IMGW</th>
                     <th className="py-2 pr-3 text-right font-medium">NASA</th>
                     <th className="py-2 pr-3 text-right font-medium">{t('Różnica')}</th>
-                    <th className="py-2 font-medium">{t('Ocena')}</th>
+                    <th className="py-2 font-medium max-sm:hidden">{t('Ocena')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -130,7 +130,7 @@ export function PrecipSourceNote({ sources: ps, compact, className }: { sources:
                       <td className="tabular py-2 pr-3 text-right">{w.imgw_mm != null ? `${formatNum(w.imgw_mm, 0)} mm` : '—'}</td>
                       <td className="tabular py-2 pr-3 text-right">{w.nasa_mm != null ? `${formatNum(w.nasa_mm, 0)} mm` : '—'}</td>
                       <td className="tabular py-2 pr-3 text-right">{w.difference_pct != null ? `${formatSigned(w.difference_pct, 0)}%` : '—'}</td>
-                      <td className="py-2">
+                      <td className="py-2 max-sm:hidden">
                         <AgreementBadge agreement={w.rating} />
                       </td>
                     </tr>

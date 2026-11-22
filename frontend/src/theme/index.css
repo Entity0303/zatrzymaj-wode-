@@ -222,6 +222,12 @@
   }
 }
 /* ParcelLabel – pigułka bez domyślnego dymka Leaflet */
+/* rysowanie pola: celownik zamiast łapki */
+.drawing .leaflet-container,
+.drawing .leaflet-grab {
+  cursor: crosshair !important;
+}
+
 /* warstwy z satelity: piksele 10 m bez rozmycia */
 .layer-pixelated {
   image-rendering: pixelated;

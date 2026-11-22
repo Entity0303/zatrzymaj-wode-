@@ -1,9 +1,10 @@
-import { ChevronDown, FileText, Languages, Map as MapIcon, Menu as MenuIcon, MousePointerClick, Settings, Sparkles, X, type LucideIcon } from 'lucide-react'
+import { ChevronDown, FileText, Languages, Loader2, Map as MapIcon, Menu as MenuIcon, MousePointerClick, PenLine, Settings, Sparkles, X, type LucideIcon } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { LogoMark } from '@/components/LogoMark'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { EXAMPLES, type Example } from '@/features/parcel-panel/examples'
+import type { Example } from '@/features/parcel-panel/examples'
+import type { DemoExamples } from './useDemoExamples'
 import { BRAND_NAME } from '@/lib/brand'
 import { useLang } from '@/lib/i18n'
 import { goTo, type PageKey } from '@/lib/router'
@@ -37,14 +38,17 @@ export function ExploreBar({
   search,
   locate,
   onExample,
-  examples = EXAMPLES,
+  examples,
+  onDraw,
 }: {
   isMobile: boolean
   search: ReactNode
   locate: ReactNode
   onExample: (e: Example) => void
   /** lista z /api/demo/examples */
-  examples?: Example[]
+  examples: DemoExamples
+  /** „Narysuj swoje pole” – przycisk drugorzędny */
+  onDraw?: () => void
 }) {
   const { t, lang, setLang } = useLang()
   const [menu, setMenu] = useState(false)
@@ -83,7 +87,13 @@ export function ExploreBar({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="z-[1500] w-80 rounded-xl">
             <DropdownMenuLabel className="text-xs tracking-wider text-text-muted uppercase">{t('Zobacz przykład')}</DropdownMenuLabel>
-            {examples.map((e) => (
+            {examples.state === 'loading' && (
+              <p className="flex items-center gap-2 px-2 py-2 text-sm text-text-muted">
+                <Loader2 className="size-4 animate-spin" aria-hidden /> {t('Wczytuję przykłady…')}
+              </p>
+            )}
+            {examples.state === 'error' && <p className="px-2 py-2 text-sm text-text-muted">{t('Przykłady są chwilowo niedostępne.')}</p>}
+            {examples.examples.map((e) => (
               <DropdownMenuItem key={e.id} className="min-h-11 text-sm" onSelect={() => onExample(e)}>
                 <span className={`flex size-7 items-center justify-center rounded-full ${e.tone}`}>
                   <e.icon className="size-4" />
@@ -96,7 +106,26 @@ export function ExploreBar({
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
+        {onDraw && !isMobile && (
+          <button
+            type="button"
+            onClick={onDraw}
+            className="flex h-12 shrink-0 items-center gap-2 rounded-full bg-surface px-4 text-sm font-medium text-text-muted shadow-float hover:bg-sage-soft hover:text-text"
+          >
+            <PenLine className="size-4" aria-hidden /> {t('Narysuj swoje pole')}
+          </button>
+        )}
       </div>
+      {/* telefon: w górnym rzędzie brak miejsca – mała pigułka pod nim, po prawej */}
+      {onDraw && isMobile && (
+        <button
+          type="button"
+          onClick={onDraw}
+          className="absolute top-[68px] right-3 z-[1200] flex h-10 items-center gap-1.5 rounded-full bg-surface px-3.5 text-sm font-medium text-text-muted shadow-float"
+        >
+          <PenLine className="size-4" aria-hidden /> {t('Narysuj pole')}
+        </button>
+      )}
 
       {/* lewa kolumna (zamiast ☰): strony i język – zawsze widoczne, z podpisami */}
       <nav aria-label={t('Nawigacja główna')} className="pointer-events-auto absolute top-[72px] left-3 z-[1100] flex flex-col items-start gap-2 md:top-[76px] md:left-4">

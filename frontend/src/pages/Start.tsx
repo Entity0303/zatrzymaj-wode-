@@ -1,7 +1,9 @@
+import { parcelShortName } from '@/features/parcel-panel/parcelTitle'
 import type { Map as LeafletMap } from 'leaflet'
 import { Suspense, cloneElement, lazy, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { ChevronUp } from 'lucide-react'
+import { ChevronUp, Loader2 } from 'lucide-react'
+import { ErrorNotice } from '@/components/ErrorNotice'
 import L from 'leaflet'
 import { ApiError, api, describeError } from '@/api/client'
 import type { CropId, Parcel, ParcelCandidates, SearchResult } from '@/api/types'
@@ -26,6 +28,9 @@ import { LocateButton } from '@/features/search/LocateButton'
 import { Passport } from '@/features/passport/Passport'
 import { exampleDate, type Example } from '@/features/parcel-panel/examples'
 import { InfraReportWizard } from '@/features/infra-reports/InfraReportWizard'
+import { DrawLayer } from '@/features/draw/DrawLayer'
+import { DrawToolbar } from '@/features/draw/DrawToolbar'
+import { drawProblem, ringAreaHa, toPolygon } from '@/lib/geoArea'
 import type { SearchPhase } from '@/features/parcel-panel/types'
 import { useAnalysis } from '@/features/parcel-panel/useAnalysis'
 import { SearchBar } from '@/features/search/SearchBar'
@@ -91,6 +96,9 @@ export default function Start() {
   const [reportFormOpen, setReportFormOpen] = useState(false)
   // obszar przybliżony (brak działki w ULDK): punkt kliknięcia – analiza liczona po lon/lat
   const [approxPoints, setApproxPoints] = useState<Record<string, [number, number]>>({})
+  // „Narysuj swoje pole” (A5c): punkty w trakcie rysowania (null = nie rysujemy) i obrysy gotowych pól
+  const [draw, setDraw] = useState<[number, number][] | null>(null)
+  const [drawnGeoms, setDrawnGeoms] = useState<Record<string, GeoJSON.Polygon>>({})
   // link z adresu (?dzialka=&uprawa=&data=) – czytany raz przy wejściu
   const [link] = useState(readLink)
   const [asOf, setAsOf] = useState(link.data ?? todayIso())
@@ -140,7 +148,8 @@ export default function Start() {
   const area = parcel ? (areas[parcel.id] ?? null) : null
   const planned = parcel ? (plans[parcel.id] ?? NO_HISTORY) : NO_HISTORY
   const approxPoint = parcel ? (approxPoints[parcel.id] ?? null) : null
-  const { run, retry: retryAnalysis } = useAnalysis(parcel?.id ?? null, crop, asOf, { point: approxPoint, cropHistory: history, area, plannedCrops: planned })
+  const drawnGeom = parcel ? (drawnGeoms[parcel.id] ?? null) : null
+  const { run, retry: retryAnalysis } = useAnalysis(parcel?.id ?? null, crop, asOf, { point: approxPoint, geometry: drawnGeom, cropHistory: history, area, plannedCrops: planned })
   const analysis = run.phase === 'done' ? run.analysis : null
   const runKey = run.phase === 'done' ? run.key : null
   // A11: zdjęcie satelitarne liczone osobno – warstwy Kondycja / Wilgotność odświeżamy, gdy przyjdzie
@@ -302,6 +311,10 @@ export default function Start() {
   function onMapClick(lon: number, lat: number) {
     userActed.current = true
     setHero(false)
+    if (draw) {
+      setDraw((d) => (d ? [...d, [lon, lat]] : d))
+      return
+    }
     if (infra?.picking) {
       setInfra({ point: [lon, lat], picking: false })
       if (isMobile) setSnap('full')
@@ -320,6 +333,52 @@ export default function Start() {
     }
     searchByPoint(lon, lat)
   }
+
+  // ── „Narysuj swoje pole” ───────────────────────────────────────────────────────────────────
+  function startDraw() {
+    userActed.current = true
+    setHero(false)
+    setInsidePopup(null)
+    setPassportFor(null)
+    setInfra(null)
+    setView('2d')
+    setDraw([])
+    if (isMobile) setSnap('collapsed')
+  }
+  const cancelDraw = () => setDraw(null)
+  function finishDraw() {
+    if (!draw || draw.length < 3 || drawProblem(draw)) return
+    const geometry = toPolygon(draw)
+    // tymczasowa „działka” z obrysu – nazwę, gminę i dokładną powierzchnię poda analizy (POST /api/analysis)
+    const c = draw.reduce((a, p) => [a[0] + p[0] / draw.length, a[1] + p[1] / draw.length], [0, 0])
+    const id = `narysowane_${c[0].toFixed(5)}_${c[1].toFixed(5)}_${draw.length}`
+    const p: Parcel = {
+      id,
+      wojewodztwo: '',
+      powiat: '',
+      gmina: '',
+      obreb: '',
+      numer: '—',
+      teryt_gminy: '',
+      powierzchnia_ha: Math.round(ringAreaHa(draw) * 10000) / 10000,
+      geometria: geometry,
+      zrodlo: { nazwa: 'Obrys narysowany przez rolnika', url: '', pobrano: new Date().toISOString(), uwagi: null },
+      source: 'drawn',
+      name: 'Pole narysowane przez rolnika',
+    }
+    reqId.current++
+    setDrawnGeoms((m) => ({ ...m, [id]: geometry }))
+    setCandidates([])
+    setDraw(null)
+    setSearch({ phase: 'parcel', parcel: p })
+    if (isMobile) setSnap('half')
+  }
+  useEffect(() => {
+    if (!draw) return
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setDraw(null)
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [draw])
 
   function locate() {
     userActed.current = true
@@ -390,8 +449,8 @@ export default function Start() {
   // adres w pasku = bieżąca działka, uprawa i data (można go skopiować wprost z przeglądarki)
   useEffect(() => {
     // obszar przybliżony nie ma identyfikatora działki – link bez niego
-    if (parcel && !approxPoint) writeLink({ dzialka: parcel.id, uprawa: crop, data: asOf, historia: history, plan: planned })
-  }, [parcel, crop, asOf, history, planned, approxPoint])
+    if (parcel && !approxPoint && !drawnGeom) writeLink({ dzialka: parcel.id, uprawa: crop, data: asOf, historia: history, plan: planned })
+  }, [parcel, crop, asOf, history, planned, approxPoint, drawnGeom])
 
   function copyLink() {
     if (!parcel) return
@@ -478,7 +537,7 @@ export default function Start() {
   // ── raport PDF: te same parametry co analiza ─────────────────────────────────────────────
   const report = useReportDownload(
     parcel && analysis
-      ? { parcelId: parcel.id, point: approxPoint, numer: approxPoint ? 'obszar' : parcel.numer, crop: analysis.crop, date: asOf, cropHistory: history, area, plannedCrops: planned }
+      ? { parcelId: parcel.id, point: approxPoint, geometry: drawnGeom, numer: drawnGeom ? 'pole-narysowane' : approxPoint ? 'obszar' : parcel.numer, crop: analysis.crop, date: asOf, cropHistory: history, area, plannedCrops: planned }
       : null,
   )
   // „Pobierz raport” otwiera formularz „Przygotuj raport” (skrócony / szczegółowy)
@@ -571,6 +630,7 @@ export default function Start() {
     onShowOnMap: showOnMap,
     onReportInfra: openInfra,
     onExample: openExample,
+    examples: demoExamples,
     onClose: backToExplore,
   }
 
@@ -595,6 +655,7 @@ export default function Start() {
       }
       canUse3d={!!parcel}
       side={side}
+      onDraw={startDraw}
     />
   )
 
@@ -625,7 +686,7 @@ export default function Start() {
       total={search.phase === 'candidates' ? search.total : candidates.length}
       onSearch={onSearch}
       onPick={pickCandidate}
-      selected={parcel ? (parcel.source === 'approximate' ? t('Obszar przybliżony') : `${parcel.obreb} ${parcel.numer}`) : null}
+      selected={parcel ? (parcel.source === 'approximate' || parcel.source === 'drawn' ? parcelShortName(parcel) : `${parcel.obreb} ${parcel.numer}`) : null}
       placeholder={isMobile ? t('Numer działki') : undefined}
       onDismiss={() => {
         if (candidates.length) {
@@ -654,7 +715,7 @@ export default function Start() {
         {!intro && <Sidebar />}
         <main
           ref={mainRef}
-          className="relative min-w-0 flex-1 overflow-hidden"
+          className={`relative min-w-0 flex-1 overflow-hidden ${draw ? 'drawing' : ''}`}
           style={{ ['--map-bottom' as string]: `${intro ? 0 : isMobile ? sheetVisible + 4 : MAP_BOTTOM_DESKTOP}px` }}
         >
           <ParcelMap
@@ -679,7 +740,19 @@ export default function Start() {
             onMoveEnd={onMoveEnd}
             onSelectCandidate={pickCandidate}
             onClosePopup={() => setInsidePopup(null)}
-          />
+          >
+            {draw && <DrawLayer points={draw} onClose={finishDraw} />}
+          </ParcelMap>
+
+          {draw && (
+            <DrawToolbar
+              points={draw}
+              onUndo={() => setDraw((d) => (d ? d.slice(0, -1) : d))}
+              onCancel={cancelDraw}
+              onDone={finishDraw}
+              className={`absolute z-[1460] ${intro || isMobile ? 'left-1/2 -translate-x-1/2' : 'left-4'} ${intro ? 'top-[76px]' : isMobile ? 'top-[120px]' : 'top-[128px]'}`}
+            />
+          )}
 
           {intro ? (
             <>
@@ -689,6 +762,8 @@ export default function Start() {
                   locate={<LocateButton locating={locating} onClick={locate} iconOnly />}
                   examples={demoExamples}
                   onExample={openExample}
+                  onDraw={startDraw}
+                  isMobile={isMobile}
                 />
               ) : (
                 <ExploreBar
@@ -696,8 +771,23 @@ export default function Start() {
                   search={searchBar}
                   locate={<LocateButton locating={locating} onClick={locate} iconOnly />}
                   onExample={openExample}
+                  onDraw={startDraw}
                   examples={demoExamples}
                 />
+              )}
+              {/* przed wybraniem działki nie ma panelu – stan wyszukiwania i błąd z „co teraz” nad mapą */}
+              {search.phase === 'loading' && !draw && (
+                <div role="status" className="pointer-events-none absolute inset-x-3 bottom-20 z-[1300] flex justify-center">
+                  <p className="flex items-center gap-2 rounded-full bg-surface px-4 py-2.5 text-sm font-medium shadow-float">
+                    <Loader2 className="size-4 animate-spin text-brand" aria-hidden />
+                    {t(search.kind === 'point' ? 'Szukam działki w tym miejscu…' : 'Szukam działki…')}
+                  </p>
+                </div>
+              )}
+              {search.phase === 'error' && userActed.current && !hero && !draw && (
+                <div className="absolute inset-x-3 bottom-20 z-[1300] mx-auto max-w-md">
+                  <ErrorNotice {...search.error} onRetry={search.error.retryable ? retry : undefined} className="shadow-float" />
+                </div>
               )}
               {/* legenda mapy startowej: podatność gleb na suszę (IUNG) – tylko gdy warstwa jest widoczna (zoom ≤ 11) */}
               {zoom <= 11 && (

@@ -79,7 +79,7 @@ export function ParcelSummary({
         <div className="space-y-2 rounded-xl bg-surface-2/60 p-3.5">
           <p className="flex items-center gap-2 text-sm font-medium">
             <Loader2 className="size-4 animate-spin text-brand" aria-hidden />
-            {t('Sprawdzam działkę: gleba, pogoda z 10 lat, teren…')}
+            {t('Liczę analizę: gleba, pogoda z 10 lat, teren…')}
           </p>
           <div className="h-1.5 overflow-hidden rounded-full bg-surface-2" aria-hidden>
             <div className="h-full rounded-full bg-brand transition-all" style={{ width: `${(done / Math.max(1, steps.length)) * 100}%` }} />

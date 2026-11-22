@@ -19,6 +19,7 @@ import { KeyMetrics as Metrics } from './KeyMetrics'
 import { NonAgriculturalCard } from './NonAgriculturalCard'
 import { PanelEmpty } from './PanelEmpty'
 import type { Example } from './examples'
+import type { DemoExamples } from '@/features/intro/useDemoExamples'
 import { ParcelHeader } from './ParcelHeader'
 import { SectionTitle } from './SectionTitle'
 import { SoilCard } from './SoilCard'
@@ -51,8 +52,11 @@ export function ParcelPanel({
   onShowOnMap,
   onReportInfra,
   onExample,
+  examples,
   onClose,
 }: {
+  /** przykłady z /api/demo/examples (pusty panel) */
+  examples?: DemoExamples
   state: SearchPhase
   /** uprawa (opcjonalna), historia pola, powierzchnia – „Doprecyzuj” */
   refine: RefineProps
@@ -88,7 +92,7 @@ export function ParcelPanel({
   const [ui, setUi] = useUiPrefs()
   // tryb doradcy: szczegóły zawsze rozwinięte
   const showDetails = ui.details || settings.mode === 'doradca'
-  if (state.phase === 'idle') return <PanelEmpty onFocusSearch={onFocusSearch} onLocate={onLocate} onExample={onExample} />
+  if (state.phase === 'idle') return <PanelEmpty onFocusSearch={onFocusSearch} onLocate={onLocate} onExample={onExample} examples={examples} />
 
   if (state.phase === 'loading')
     return (

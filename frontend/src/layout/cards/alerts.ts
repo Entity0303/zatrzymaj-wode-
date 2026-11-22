@@ -1,3 +1,4 @@
+import { parcelShortName } from '@/features/parcel-panel/parcelTitle'
 import { ShowerHead, TriangleAlert, type LucideIcon } from 'lucide-react'
 import type { AnalysisResponse } from '@/api/types'
 import { irrigationShown } from '@/lib/crops'
@@ -11,7 +12,7 @@ export type Alert = { icon: LucideIcon; text: string; tone: string }
  */
 export function analysisAlerts(analysis: AnalysisResponse | null): Alert[] {
   if (!analysis || analysis.soil.non_agricultural) return []
-  const name = analysis.parcel.source === 'approximate' ? tr('Obszar przybliżony') : tr('Działka {numer}', { numer: analysis.parcel.numer })
+  const name = parcelShortName(analysis.parcel)
   const alerts: Alert[] = []
   const risk = analysis.indicators.risk_7d
   if (risk.status && ['warn', 'risk', 'danger'].includes(risk.status) && (risk.note || risk.label))

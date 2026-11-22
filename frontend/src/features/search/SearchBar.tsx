@@ -208,7 +208,7 @@ export function SearchBar({
       )}
 
       {error && !showList && !showCandidates && !busy && (
-        <p className="absolute top-full left-4 z-10 mt-1.5 rounded-full bg-surface px-3 py-1 text-sm whitespace-nowrap text-danger shadow-card" role="alert">
+        <p className="absolute top-full left-4 z-10 mt-1.5 max-w-[calc(100vw-48px)] rounded-xl bg-surface px-3 py-1 text-sm text-danger shadow-card md:whitespace-nowrap" role="alert">
           {error}
         </p>
       )}

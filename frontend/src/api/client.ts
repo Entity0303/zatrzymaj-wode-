@@ -1,5 +1,6 @@
 /** Klient API: zapytania do backendu i tłumaczenie błędów na prosty polski. Typy: ./types.ts */
 import type {
+  AnalysisRequest,
   AnalysisResponse,
   CropId,
   DemoExample,
@@ -38,11 +39,12 @@ async function get<T>(path: string, params: Record<string, string | number>, sig
   return body as T
 }
 
-async function post<T>(path: string, body: unknown): Promise<T> {
+async function post<T>(path: string, body: unknown, signal?: AbortSignal): Promise<T> {
   let res: Response
   try {
-    res = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
-  } catch {
+    res = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal })
+  } catch (e) {
+    if ((e as Error).name === 'AbortError') throw e
     throw new ApiError(0, null, 'Brak połączenia z serwerem aplikacji.')
   }
   const data = await res.json().catch(() => null)
@@ -54,6 +56,8 @@ async function post<T>(path: string, body: unknown): Promise<T> {
 export type AnalysisQuery = {
   parcelId?: string | null
   point?: [number, number] | null
+  /** A5c: pole narysowane przez rolnika (GeoJSON Polygon WGS84) – zapytania idą POST-em */
+  geometry?: GeoJSON.Polygon | null
   crop?: CropId | null
   date: string
   /** 1–3 lata wstecz (pierwsza = rok temu), puste = „nie wiem” */
@@ -63,6 +67,20 @@ export type AnalysisQuery = {
   plannedCrops?: string[]
   /** A5e: raport PDF – skrócony (2 strony) / szczegółowy */
   reportType?: 'short' | 'full'
+}
+
+/** Treść POST (pole narysowane): te same pola co w GET, `geometry` zamiast działki / punktu. */
+function analysisBody(q: AnalysisQuery): AnalysisRequest {
+  const p = analysisParams({ ...q, parcelId: null, point: null })
+  return {
+    geometry: q.geometry,
+    date: q.date,
+    crop: q.crop ?? null,
+    crop_history: (p.crop_history as string | undefined) ?? null,
+    cultivated_area_ha: q.area && q.area > 0 ? q.area : null,
+    planned_crops: q.plannedCrops?.length ? q.plannedCrops.slice(0, 3) : null,
+    report_type: q.reportType ?? null,
+  }
 }
 
 /** Zapytanie analizy / raportu: działka albo punkt, uprawa, historia pola, powierzchnia. */
@@ -90,12 +108,16 @@ export const api = {
    * GET /api/analysis – działka (`parcelId`) albo punkt bez granic działki (`point` → obszar przybliżony);
    * uprawa opcjonalna (bez uprawy = „Stan działki” + ranking „Co tu posiać?”).
    */
-  analysis: (q: AnalysisQuery, signal?: AbortSignal) => get<AnalysisResponse>('/api/analysis', analysisParams(q), signal),
+  analysis: (q: AnalysisQuery, signal?: AbortSignal) =>
+    q.geometry
+      ? post<AnalysisResponse>('/api/analysis', analysisBody({ ...q, reportType: undefined }), signal)
+      : get<AnalysisResponse>('/api/analysis', analysisParams(q), signal),
   /**
    * GET /api/satellite (A11) – zdjęcie Sentinel-2 dla działki albo punktu; liczone na żywo (ok. 6–15 s), potem z cache.
    * Brak sceny / awaria = 200 ze `status: "brak_danych"`.
    */
   satellite: (q: AnalysisQuery, signal?: AbortSignal) => {
+    if (q.geometry) return post<Satellite>('/api/satellite', { geometry: q.geometry, date: q.date }, signal)
     const p = analysisParams({ parcelId: q.parcelId, point: q.point, date: q.date })
     return get<Satellite>('/api/satellite', p, signal)
   },
@@ -122,7 +144,9 @@ export const api = {
     const params = Object.entries(analysisParams(q)).map(([k, v]) => [k, String(v)])
     let res: Response
     try {
-      res = await fetch(`/api/report.pdf?${new URLSearchParams(params)}`)
+      res = q.geometry
+        ? await fetch('/api/report.pdf', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(analysisBody(q)) })
+        : await fetch(`/api/report.pdf?${new URLSearchParams(params)}`)
     } catch {
       throw new ApiError(0, null, 'Brak połączenia z serwerem aplikacji.')
     }
@@ -180,7 +204,13 @@ export function describeError(e: unknown, kind: 'number' | 'point'): ErrorInfo {
       retryable: true,
       vars: { source: detail?.source ?? 'zewnętrzna', detail: detail?.message ?? 'błąd usługi' },
     }
-  return { title: 'Błąd serwera', message: 'Serwer zwrócił błąd {status}.', stillWorks, retryable: true, vars: { status: e.status } }
+  // bez surowego kodu błędu – co się stało i co zrobić
+  return {
+    title: 'Serwer chwilowo nie odpowiada poprawnie',
+    message: e.status === 504 || e.status === 503 ? 'Liczenie trwało zbyt długo. Spróbuj ponownie za chwilę.' : 'Coś poszło nie tak po stronie serwera. Spróbuj ponownie za chwilę.',
+    stillWorks,
+    retryable: true,
+  }
 }
 
 /** Błąd GET /api/analysis po polsku – mapa, dane działki i prognoza działają dalej. */
@@ -191,6 +221,20 @@ export function describeAnalysisError(e: unknown): ErrorInfo {
   const detail = e.detail as { source?: string; message?: string } | null
   if (e.status === 0)
     return { title: 'Brak połączenia', message: 'Nie można połączyć się z serwerem aplikacji. Sprawdź internet.', retryable: true }
+  if (e.status === 422 && detail?.message)
+    return {
+      title: 'Nie można policzyć tego pola',
+      message: detail.message,
+      stillWorks: 'Kliknij „Narysuj swoje pole” i popraw obrys albo wybierz działkę z mapy.',
+      retryable: false,
+    }
+  if (e.status === 404)
+    return {
+      title: 'Brak danych dla tego miejsca',
+      message: detail?.message ?? 'Serwer nie znalazł danych dla tego miejsca.',
+      stillWorks: 'Kliknij inne pole na mapie albo wpisz numer działki.',
+      retryable: false,
+    }
   if (e.status === 501)
     return {
       title: 'Ocena sytuacji wodnej jest jeszcze w budowie',
@@ -206,5 +250,11 @@ export function describeAnalysisError(e: unknown): ErrorInfo {
       retryable: true,
       vars: { source: detail?.source ?? 'zewnętrzna' },
     }
-  return { title: 'Błąd serwera', message: 'Serwer zwrócił błąd {status}.', stillWorks, retryable: true, vars: { status: e.status } }
+  // bez surowego kodu błędu – co się stało i co zrobić
+  return {
+    title: 'Serwer chwilowo nie odpowiada poprawnie',
+    message: e.status === 504 || e.status === 503 ? 'Liczenie trwało zbyt długo. Spróbuj ponownie za chwilę.' : 'Coś poszło nie tak po stronie serwera. Spróbuj ponownie za chwilę.',
+    stillWorks,
+    retryable: true,
+  }
 }

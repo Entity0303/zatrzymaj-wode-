@@ -1,5 +1,5 @@
 import L, { type LeafletMouseEvent, type Map as LeafletMap } from 'leaflet'
-import { forwardRef, useEffect, useMemo, useRef } from 'react'
+import { forwardRef, useEffect, useMemo, useRef, type ReactNode } from 'react'
 import {
   CircleMarker,
   GeoJSON,
@@ -122,6 +122,8 @@ type Props = {
   insets: MapInsets
   reducedMotion: boolean
   onMapClick: (lon: number, lat: number) => void
+  /** dodatkowe warstwy wewnątrz mapy (np. rysowane pole) */
+  children?: ReactNode
   onMoveEnd: (lon: number, lat: number, zoom: number) => void
   onSelectCandidate: (p: Parcel) => void
   onClosePopup: () => void
@@ -157,6 +159,7 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
     intro = false,
     soil = false,
     infraRefresh = 0,
+    children,
   },
   ref,
 ) {
@@ -233,7 +236,7 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
           {labelPos && (
             <Marker position={labelPos} icon={anchorIcon} interactive={false} keyboard={false}>
               <Tooltip permanent direction="center" className="parcel-label" opacity={1}>
-                <ParcelLabel number={parcel.numer} status={parcelStatus} approx={parcel.source === 'approximate'} />
+                <ParcelLabel number={parcel.numer} status={parcelStatus} source={parcel.source} />
               </Tooltip>
             </Marker>
           )}
@@ -298,6 +301,7 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
       <InfraPins bbox={infraBox} refresh={infraRefresh} />
 
       <FitTo parcel={parcel} candidates={candidates} insets={insets} reducedMotion={reducedMotion} />
+      {children}
       <Events onClick={onMapClick} onMoveEnd={onMoveEnd} />
     </MapContainer>
   )

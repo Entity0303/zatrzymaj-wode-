@@ -69,7 +69,7 @@ function ParcelHead({
   onClose?: () => void
 }) {
   const { t } = useLang()
-  const { approx, title } = useParcelTitle(parcel)
+  const { approx, drawn, title } = useParcelTitle(parcel)
   return (
       <div className="space-y-1">
         <div className="flex items-center gap-2.5">
@@ -95,7 +95,9 @@ function ParcelHead({
           )}
         </div>
         <p className="truncate pl-[46px] text-sm leading-5 text-text-muted">
-          {approx
+          {drawn
+            ? t('obrys narysowany na mapie')
+            : approx
             ? t('wokół wskazanego punktu')
             : `${t('gm. {gmina}, obręb {obreb}', { gmina: parcel.gmina, obreb: parcel.obreb })} · ${shortCounty(parcel.powiat)}`}
         </p>

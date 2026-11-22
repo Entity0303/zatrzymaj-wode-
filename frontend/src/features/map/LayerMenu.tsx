@@ -1,4 +1,4 @@
-import { Check, ChevronDown, Layers } from 'lucide-react'
+import { Check, ChevronDown, Layers, PenLine } from 'lucide-react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { useLang } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
@@ -26,6 +26,7 @@ export function LayerMenu({
   notes,
   canUse3d = true,
   side = 'top',
+  onDraw,
   className,
 }: {
   /** gdzie otwiera się menu: nad przyciskiem (komputer, przycisk na dole) albo pod nim (telefon) */
@@ -40,6 +41,8 @@ export function LayerMenu({
   notes?: Partial<Record<LayerKey, string>>
   /** 3D tylko przy wybranej działce */
   canUse3d?: boolean
+  /** „Narysuj swoje pole” – opcja dodatkowa w menu mapy */
+  onDraw?: () => void
   className?: string
 }) {
   const { t } = useLang()
@@ -92,6 +95,18 @@ export function LayerMenu({
             )
           })}
         </DropdownMenuGroup>
+        {onDraw && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={onDraw} className="min-h-12 gap-3 rounded-lg px-2.5 py-2">
+              <PenLine className="size-5 shrink-0 text-text-muted" aria-hidden />
+              <span className="min-w-0">
+                <span className="block text-sm leading-5 font-semibold">{t('Narysuj swoje pole')}</span>
+                <span className="block text-sm leading-5 text-text-muted">{t('Gdy działka z ewidencji nie pasuje do pola')}</span>
+              </span>
+            </DropdownMenuItem>
+          </>
+        )}
         <DropdownMenuSeparator />
         <div className="flex items-center justify-between gap-3 px-2.5 py-2">
           <span className="text-sm">

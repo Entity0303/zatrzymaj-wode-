@@ -22,7 +22,7 @@ export function ParcelHeader({
   onClose?: () => void
 }) {
   const { t } = useLang()
-  const { approx, title } = useParcelTitle(parcel)
+  const { approx, drawn, title } = useParcelTitle(parcel)
   return (
     <div className="space-y-1">
       <div className="flex items-center gap-3">
@@ -58,7 +58,9 @@ export function ParcelHeader({
       </div>
       <div className="flex items-start gap-2 pl-[52px]">
         <p className="min-w-0 flex-1 pt-1 text-sm leading-5 text-text-muted">
-          {approx
+          {drawn
+            ? t('obrys narysowany na mapie')
+            : approx
             ? t('wokół wskazanego punktu')
             : `${t('gm. {gmina}, obręb {obreb}', { gmina: parcel.gmina, obreb: parcel.obreb })} · ${shortCounty(parcel.powiat)}`}
         </p>

@@ -43,9 +43,9 @@ export function useAnalysis(
   parcelId: string | null,
   crop: CropId | null,
   date: string,
-  opts: { point?: [number, number] | null; cropHistory?: string[]; area?: number | null; plannedCrops?: string[] } = {},
+  opts: { point?: [number, number] | null; geometry?: GeoJSON.Polygon | null; cropHistory?: string[]; area?: number | null; plannedCrops?: string[] } = {},
 ) {
-  const extra = `${opts.point?.join(',') ?? ''}|${(opts.cropHistory ?? []).join(',')}|${opts.area ?? ''}|${(opts.plannedCrops ?? []).join(',')}`
+  const extra = `${opts.point?.join(',') ?? ''}|${opts.geometry ? JSON.stringify(opts.geometry.coordinates) : ''}|${(opts.cropHistory ?? []).join(',')}|${opts.area ?? ''}|${(opts.plannedCrops ?? []).join(',')}`
   const [attempt, setAttempt] = useState(0)
   // wynik przypisany do konkretnego przebiegu; inny klucz = nowe przeliczenie (stan „ładowanie” liczony w renderze)
   const [result, setResult] = useState<{ key: string; run: AnalysisRun } | null>(null)
@@ -57,8 +57,8 @@ export function useAnalysis(
     const publish = (run: AnalysisRun) => {
       if (!ctrl.signal.aborted) setResult({ key, run })
     }
-    const mock = import.meta.env.DEV && mockRequested()
-    const q: AnalysisQuery = { parcelId, point: opts.point, crop, date, cropHistory: opts.cropHistory, area: opts.area, plannedCrops: opts.plannedCrops }
+    const mock = import.meta.env.DEV && mockRequested() && !opts.geometry
+    const q: AnalysisQuery = { parcelId, point: opts.point, geometry: opts.geometry, crop, date, cropHistory: opts.cropHistory, area: opts.area, plannedCrops: opts.plannedCrops }
     const request = mock
       ? runMockAnalysis((steps) => publish({ phase: 'loading', steps, key }), ctrl.signal, opts.point)
       : api.analysis(q, ctrl.signal)
