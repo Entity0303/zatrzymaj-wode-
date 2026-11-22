@@ -247,3 +247,17 @@ Weryfikacja: `tsc -b` przechodzi; `vite build` – lokalnie i w kontenerze brak 
 - Wyszukiwarka: grupa „Adresy” pod „Działki”, ikona domu; klik adresu = przybliżenie do `bbox` (bez analizy – rolnik klika pole); pod listą `attribution` drobnym tekstem.
 - Warstwa „Rowy i zbiorniki” = `woda`: linie w `color` (rów jaśniejszy niebieski, rzeka ciemny), zbiorniki – wypełnienie; dymek `label`; `toward_outflow` – można pogrubić.
 **Łamie zgodność:** nie (pola i endpointy dodane; nazwy jak w typach F3).
+
+### 2026-11-22 · `main` · A12 + A9b – przychód z pola (ceny skupu GUS) i okres analizy
+**Zmiany (addytywne, nazwy jak w typach F3; `backend/app/schemas/analysis.py` ↔ `frontend/src/api/types.ts`):**
+- `CropSuggestion.revenue`, `ChoiceItem.revenue`, `AlternativeItem.revenue`: `CropRevenue | null` = `{price_zl_t, price_source: "GUS – ceny skupu, woj. X, RRRR–RRRR", typical_zl, weak_year_zl, for_area_ha}`; null = brak ceny (rzepak, burak, kiszonka, łubin, strączkowe, warzywa).
+- `AnalysisResponse.price_now: PriceNow[] | null` (`{crop_id, zl_t, week, source: "ZSRIR MRiRW", url}`) – dziś null (brak pliku z biuletynu).
+- `AnalysisResponse.period: PeriodSummary | null` = `{from, to, label, precip_mm, et0_mm, balance_mm, normal_balance_mm, percentile, sentence, stress_days, daily[{date, precip_mm, et0_mm, balance_cum_mm}]}`; zapytanie: `period=30d|since_sowing|season` albo `date_from` + `date_to` (GET i POST, także `/api/report.pdf`); `AnalysisRequest` + `period`, `date_from`, `date_to` (types.ts uzupełniony).
+- Błędny okres → HTTP 422 z komunikatem po polsku (np. „Okres „od siewu” wymaga wybranej uprawy (parametr crop).”).
+
+**Dla Mefju:**
+- `mocks/prices.sample.json` – prawdziwe przychody dla 201305 (0,58 ha, woj. podlaskie; tylko uprawy z ceną), `price_now: null`; te same pola są już w `/api/analysis` – doklejanie z mocka można zastąpić odpowiedzią API.
+- `mocks/period.sample.json` – prawdziwa odpowiedź `period=30d` dla 201305 („Ostatnie 30 dni (20.10–18.11.2026)” – koniec = ostatni dzień z danymi, nie dzień analizy).
+- Przy `revenue = null` pokaż „brak ceny skupu” (szaro), nie 0 zł. Pod kwotą `price_source` drobnym tekstem; to przychód bez kosztów i dopłat.
+- „Od siewu” – tylko z wybraną uprawą (bez niej backend zwraca 422 – przycisk wyszarzony, jak w `PERIOD_OPTIONS.needsCrop`).
+**Łamie zgodność:** nie.
