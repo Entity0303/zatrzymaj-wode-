@@ -30,25 +30,29 @@ class Example:
 
 
 EXAMPLES: tuple[Example, ...] = (
-    # A8: 6 działek do pokazu (kandydaci osoby C + 201305), każda pokazuje co innego; analiza na dziś, zboża ozime
+    # A8/A13: 6 działek do pokazu – krótkie tytuły (2–3 słowa), miejscowość w opisie; analiza na dziś, zboża ozime
     Example("dobra-dzialka", "Dobra działka",
-            "Podlasie: gleba średnia, trzyma wodę; 1/3 działki to wilgotne obniżenie – co siać i gdzie zatrzymać wodę.",
+            "Wnory-Wandy (Podlasie): gleba średnia, trzyma wodę; 1/3 działki to wilgotne obniżenie – co siać i gdzie "
+            "zatrzymać wodę.",
             "201305_2.0038.6/1", "zboza_ozime", None),
     Example("slaba-ziemia", "Słaba ziemia",
-            "Puszcza Notecka: piasek, najbardziej podatny na suszę – pszenica i rzepak odradzane, bezpieczniej żyto i łubin.",
+            "Pożarowo (Puszcza Notecka): piasek, najbardziej podatny na suszę – pszenica i rzepak odradzane, "
+            "bezpieczniej żyto i łubin.",
             "302408_5.0017.70/4", "zboza_ozime", None),
     Example("stok-pogorze", "Stok na Pogórzu",
-            "Pogórze Dynowskie: 78% działki to stok, u góry sucha górka – woda spływa i zabiera glebę.",
+            "Bachórz (Pogórze Dynowskie): 78% działki to stok, u góry sucha górka – woda spływa i zabiera glebę.",
             "181605_2.0001.1552/2", "zboza_ozime", None),
     Example("obnizenie-pojezierze", "Obniżenie z oczkiem",
-            "Pojezierze Mrągowskie: pagórki i obniżenia, w których zbiera się woda – gdzie zatrzymać ją na polu.",
+            "Muntowo (Pojezierze Mrągowskie): pagórki i obniżenia, w których zbiera się woda – gdzie zatrzymać ją na "
+            "polu.",
             "281003_2.0015.79/5", "zboza_ozime", None),
     Example("susza-kujawy", "Susza na Kujawach",
-            "Dobra gleba w najsuchszym regionie Polski – plon ogranicza woda, nie gleba; opady ze stacji IMGW 6 km obok.",
+            "Krusza Duchowna (k. Inowrocławia): dobra gleba w najsuchszym regionie Polski – plon ogranicza woda, nie "
+            "gleba; stacja IMGW 6 km obok.",
             "040704_2.0019.57", "zboza_ozime", None),
-    Example("less-drzewce", "Less – Drzewce-Kolonia 203 (gm. Nałęczów)",
-            "Stok i erozja na lessie: górka i stok na 86% działki – woda spływa i zabiera glebę, pas zieleni w poprzek "
-            "stoku.",
+    Example("less-drzewce", "Stok na lessie",
+            "Drzewce-Kolonia (gm. Nałęczów): stok i erozja na lessie – górka i stok na 86% działki, woda spływa i "
+            "zabiera glebę; pas zieleni w poprzek stoku.",
             "061408_5.0008.203", "zboza_ozime", None),
 )
 
