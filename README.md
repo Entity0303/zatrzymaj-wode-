@@ -111,7 +111,7 @@ Testy: `docker compose exec backend pytest` (bez sieci; 5 testów na żywo: `pyt
 - podkład: ortofotomapa GUGiK.
 
 **Dokumenty i inne**
-- paszport wodny działki (pełny widok wyników) i raport PDF: skrócony (2 strony) i pełny,
+- paszport wodny działki (pełny widok wyników) i raport PDF: skrócony (zwykle 2 strony) i pełny,
 - zgłoszenia stanu rowów i zbiorników: formularz, mapa zgłoszeń, potwierdzenia, pismo do pobrania (ciek → Wody
   Polskie, rów → właściciel / spółka wodna); nic nie jest wysyłane automatycznie, formularz nie zbiera danych osobowych,
 - tryb Rolnik (prosty język) i Doradca (więcej liczb i uzasadnień od razu) – w Ustawieniach,
@@ -166,6 +166,9 @@ sekcje dochodzą po chwili. Wynik rankingu jest pamiętany, więc zmiana uprawy 
 | GUS BDL | plony z 1 ha wg województw (2016–2025), ceny skupu (temat P2967, 2013–2025) | województwa i Polska | plon potencjalny i przychód w rankingu | dane GUS, z podaniem źródła |
 | ZSRIR (MRiRW) | cena skupu rzepaku – notowanie z 05.07.2026 | Polska | przychód dla rzepaku (GUS nie podaje ceny) | informacja publiczna MRiRW |
 | Podkłady dodatkowe | EOX Sentinel-2 cloudless, AWS Terrain Tiles, kafle OSM | — | podkład poza zasięgiem ortofotomapy, rzeźba w widoku 3D | CC BY 4.0 (EOX) / dane otwarte / ODbL |
+
+**Open-Meteo:** darmowe API Open-Meteo jest przeznaczone do użytku niekomercyjnego; przy wdrożeniu produkcyjnym –
+płatny plan albo własna instancja (serwer Open-Meteo jest open source).
 
 **BDOT10k nie jest używane** – rowy i zbiorniki pochodzą z OpenStreetMap. Moduł `sources/bdot.py` został w repo, ale
 jest domyślnie wyłączony (`OFFLINE_SOURCES=bdot`).
@@ -226,15 +229,26 @@ mapy to własna cienka warstwa nad Leafletem (bez react-leaflet). Krój pisma �
 - **Kod projektu:** do ustalenia – w repozytorium nie ma jeszcze pliku `LICENSE`.
 - **Dane:** pozostają na warunkach dostawców – kolumna „Licencja / warunki” w punkcie 4. Aplikacja podaje źródło
   przy każdym wyniku i atrybucję na mapie.
-- **Komponenty:** zależności frontendu sprawdzone w `package-lock.json` (22.11.2026, 286 pakietów): MIT 209, ISC 27,
-  Apache-2.0 23, MPL-2.0 12, BSD-3-Clause 7, BSD-2-Clause 3, 0BSD 2, BlueOak-1.0.0 2, „MIT AND ISC AND BSD-3-Clause” 1.
-  Bez GPL / AGPL.
-- **Wyjątek MPL-2.0:** `lightningcss` (12 pakietów dla różnych systemów) – tylko narzędzie budowania używane przez
-  Tailwind CSS; nie trafia do aplikacji, a wynikowy CSS nie podlega MPL.
-- **Backend – zależności przechodnie i systemowe:** `certifi` (MPL-2.0, przez httpx), `Pyphen` (GPL / LGPL / MPL do
-  wyboru, przez WeasyPrint – korzystamy z MPL), biblioteki systemowe Pango i GLib (LGPL, łączone dynamicznie
-  w obrazie Dockera), czcionki w raporcie PDF: DejaVu Sans i Inter z pakietów systemowych obrazu (licencja Bitstream
-  Vera / SIL OFL 1.1).
+- **Kontrola licencji wszystkich zależności (22.11.2026):** żadna zależność nie jest wyłącznie na GPL / AGPL, nie ma
+  licencji Hippocratic, „non-commercial”, nieznanych ani braku licencji – licencje komponentów pozwalają przejąć
+  i wykorzystywać rozwiązanie. Sprawdzone: backend – 52 pakiety zainstalowane w obrazie (metadane pakietów),
+  frontend – 286 pakietów z `package-lock.json` (163 produkcyjne: MIT 124, ISC 26, BSD 9, Apache-2.0 1, 0BSD 1,
+  BlueOak-1.0.0 1, „MIT AND ISC AND BSD-3-Clause” 1; 123 tylko do budowania). Wyjątki od licencji MIT / BSD / Apache:
+
+  | Pakiet | Licencja | Rola | Uwagi |
+  |---|---|---|---|
+  | `lightningcss` (12 pakietów dla różnych systemów) | MPL-2.0 | tylko narzędzie budowania frontendu (przez Tailwind CSS) | nie trafia do aplikacji; wynikowy CSS nie podlega MPL |
+  | `certifi` | MPL-2.0 | backend, produkcyjna (przez httpx – lista certyfikatów) | używana bez zmian; MPL dotyczy tylko plików tej biblioteki |
+  | `Pyphen` | GPL-2.0+ / LGPL-2.1+ / MPL-1.1 do wyboru | backend, produkcyjna (przez WeasyPrint – dzielenie wyrazów w PDF) | korzystamy na warunkach MPL-1.1 |
+  | Pango, GLib (biblioteki systemowe obrazu Dockera) | LGPL | backend, produkcyjne (skład PDF) | łączone dynamicznie, niezmieniane |
+  | obraz bazowy `python:3.12-slim` (Debian) | m.in. GPL (narzędzia systemu) | system operacyjny kontenera | nie są częścią kodu rozwiązania |
+
+- **Czcionki:** interfejs – krój systemowy; raport PDF – DejaVu Sans i Inter z pakietów systemowych obrazu (licencja
+  Bitstream Vera / SIL OFL 1.1).
+- **Warunki usług, które trzeba uwzględnić przy przejęciu rozwiązania** (to nie licencje kodu): Open-Meteo – darmowe
+  API tylko niekomercyjnie; OpenStreetMap – ODbL (atrybucja, pochodne bazy danych na tej samej licencji) i zasady
+  korzystania z publicznych serwerów Overpass / Nominatim / kafli (bez masowego ruchu); podkład EOX Sentinel-2
+  cloudless – używamy warstwy na CC BY 4.0 (nowsze roczniki tego podkładu mają licencję niekomercyjną).
 
 ## 8. Znane ograniczenia (4.2.8)
 
@@ -263,7 +277,8 @@ mapy to własna cienka warstwa nad Leafletem (bez react-leaflet). Krój pisma �
   datę pobrania.
 - **Limity zewnętrznych usług:** zapytania do GUGiK idą najwyżej 2 naraz z odstępem 0,5 s; przy awarii źródła
   działa bezpiecznik (przerwa w zapytaniach) i dane z cache. Gdy ewidencja gruntów nie odpowiada, analiza dotyczy
-  obszaru ok. 1 ha wokół punktu. Pierwsza analiza nowej działki trwa zwykle 7–13 s, kolejne poniżej 1 s.
+  obszaru ok. 1 ha wokół punktu. Pierwsza analiza nowej działki trwa zwykle 7–13 s lokalnie i 7–22 s na
+  serwerze, kolejne ok. 1 s (tuż po pierwszej – do kilku sekund, gdy w tle liczą się jeszcze widełki rankingu).
 - **Nasz bilans wody wychodzi łagodniejszy niż w systemie IUNG SMSR** (ok. 30 mm na 60-dniowe okno –
   [`research/validation/smsr.md`](research/validation/smsr.md)).
 
@@ -289,8 +304,10 @@ mapy to własna cienka warstwa nad Leafletem (bez react-leaflet). Krój pisma �
 - **Zgodność z metodyką IUNG SMSR** ([`research/validation/smsr.md`](research/validation/smsr.md)): klimatyczny
   bilans wody z 60-dniowych okien porównany z oceną suszy IUNG dla gminy – 4 działki, lata 2020–2025, 15 upraw.
   Zgodność 99,8% (1725 z 1728 porównań) dla kategorii gleby działki i 96,9% dla wszystkich kategorii (6744
-  porównania). Tę liczbę trzeba czytać z kontekstem: większość porównań to okresy bez suszy. Na najsłabszych
-  glebach (kat. I) wykrywamy 61 ze 171 okresów suszy ogłoszonych przez IUNG.
+  porównania). **Te liczby trzeba czytać z kontekstem:** prawie wszystkie porównania to okresy bez suszy. W teście dla
+  kategorii gleby działki IUNG ogłosił suszę tylko 3 razy i nie wykryliśmy żadnego z tych okresów. We wszystkich
+  kategoriach wykrywamy 71 z 243 okresów suszy ogłoszonych przez IUNG (29%), na najsłabszych glebach (kat. I)
+  61 ze 171 – nasz bilans jest łagodniejszy niż IUNG (punkt 8).
 - **Kalibracja rankingu** (`backend/scripts/calibrate_ranking.py`): średni plon z symulacji na przeciętnej glebie
   porównany ze średnią GUS w 4 województwach.
 - **Test słabej ziemi:** na piasku w Pożarowie (`302408_5.0017.70/4`) pszenica, rzepak, jęczmień i kukurydza wychodzą
@@ -319,8 +336,9 @@ mapy to własna cienka warstwa nad Leafletem (bez react-leaflet). Krój pisma �
   niekomercyjnie),
 - monitoring źródeł (dziś `/api/status`).
 
-**Czas odpowiedzi** (pomiar 22.11.2026): ponowna analiza, zmiana uprawy albo okresu – ok. 0,1 s lokalnie i 0,6–0,9 s
-na serwerze; pierwsza analiza nowej działki – 7–13 s (zależy od usług GUGiK i SoilGrids).
+**Czas odpowiedzi** (pomiar 22.11.2026): ponowna analiza, zmiana uprawy albo okresu – ok. 0,1 s lokalnie i 0,8–1,5 s
+na serwerze (do kilku sekund, gdy w tle liczą się jeszcze widełki rankingu); pierwsza analiza nowej działki – 7–13 s
+lokalnie, 7–22 s na serwerze (zależy od usług GUGiK i SoilGrids); raport PDF – 5–10 s na serwerze.
 
 **Koszty:** źródła danych są bezpłatne. Frontend na Vercel – plan darmowy. Backend na Render – płatny plan z trwałym
 dyskiem 1 GB (kilka USD miesięcznie); przy większym ruchu większa instancja – kilkadziesiąt USD miesięcznie. Dla
