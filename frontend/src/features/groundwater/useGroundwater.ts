@@ -11,7 +11,7 @@ function polygonOf(g: GeoJSON.Polygon | GeoJSON.MultiPolygon): GeoJSON.Polygon {
 }
 
 /**
- * A27: „Wody gruntowe i wsiąkanie” – pobierane w tle po analizie (jak tło suszowe EDO). `null` = jeszcze nie ma albo
+ * A27: „Wody gruntowe i zapas z opadów” – pobierane w tle po analizie (jak tło suszowe EDO). `null` = jeszcze nie ma albo
  * zapytanie się nie udało (kafel ukryty – nigdy błąd); `unavailable` = nie udało się nic policzyć (szary kafel z notą).
  * Teren liczy się w tle – dopóki go nie ma, wynik jest bez spadku i obniżeń; nie zapamiętujemy go wtedy na stałe.
  */

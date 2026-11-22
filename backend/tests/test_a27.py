@@ -1,4 +1,4 @@
-"""A27 – „Wody gruntowe i wsiąkanie”: progi wsiąkania (reguły YAML), okna 30 / 60 dni tylko sprzed daty analizy,
+"""A27 – „Wody gruntowe i zapas z opadów”: progi wsiąkania (reguły YAML), okna 30 / 60 dni tylko sprzed daty analizy,
 obszar podtopień PIG-PIB (atrapa usługi), `unavailable` przy błędzie PIG, kształt odpowiedzi endpointu. Bez sieci."""
 
 import asyncio
@@ -29,16 +29,19 @@ def _series(precip_30: float, et0_30: float, precip_prev: float | None = None, e
 
 def test_light_soil_and_little_rain_is_very_weak():
     inf = GW.infiltration(*_series(18, 42), D, soil_code=2)
-    assert inf.level == "bardzo_slabe" and inf.label_pl == "bardzo słabe wsiąkanie"
-    assert inf.sentence_pl == ("Lekka gleba i 18 mm opadu w 30 dni przy 42 mm parowania – woda szybko schodzi w głąb "
-                               "albo paruje, mało zostaje dla roślin.")
-    assert inf.short_pl == "Wsiąkanie: bardzo słabe (18 mm opadu w 30 dni przy 42 mm parowania)."
+    assert inf.level == "bardzo_slabe" and inf.label_pl == "bardzo mało"
+    assert inf.sentence_pl == ("18 mm opadu w 30 dni przy 42 mm parowania – dla roślin zostaje z tego bardzo mało. "
+                               "Lekka gleba szybko przepuszcza wodę w głąb i mało jej zatrzymuje.")
+    assert inf.short_pl == "Z opadów zostaje w glebie bardzo mało (18 mm opadu w 30 dni przy 42 mm parowania)."
+    assert "wsiąk" not in (inf.sentence_pl + inf.short_pl + inf.label_pl).lower()
     assert inf.precip_30d_mm == 18.0 and inf.et0_30d_mm == 42.0 and inf.data_until == date(2018, 6, 29)
 
 
 def test_heavy_soil_and_much_rain_is_good():
     inf = GW.infiltration(*_series(80, 40), D, soil_code=4)
-    assert inf.level == "dobre" and "Ciężka gleba i 80 mm opadu" in inf.sentence_pl and inf.sentence_pl.endswith("uzupełnia zapas wody w glebie.")
+    assert inf.level == "dobre" and inf.label_pl == "dużo" and "Ciężka gleba i 80 mm opadu" in inf.sentence_pl
+    assert inf.sentence_pl.endswith("uzupełnia zapas wody w glebie.") and "Lekka gleba szybko przepuszcza" not in inf.sentence_pl
+    assert inf.short_pl == "Z opadów zostaje w glebie dużo (80 mm opadu w 30 dni przy 40 mm parowania)."
 
 
 def test_levels_follow_soil_slope_and_60_days():
@@ -188,12 +191,14 @@ def test_report_has_infiltration_sentence_and_section(client, long_weather):
                     pig.UNAVAILABLE_NOTE)
     soil_point = next(s for s in a.verdict.statements if s.kind == "gleba")
     assert point_text(soil_point, a, 150, gw).endswith(inf.short_pl) and point_text(soil_point, a, 150) == point_text(soil_point, a, 150, None)
-    assert "Wsiąkanie:" not in render_html(a, ortho=None)  # bez danych raport jak dotąd
+    assert "Z opadów zostaje w glebie" not in render_html(a, ortho=None)  # bez danych raport jak dotąd
     short = render_html(a, ortho=None, gw=gw)
-    assert inf.short_pl in short and "Wody gruntowe i wsiąkanie" not in short  # skrócony: jedno zdanie, bez sekcji i kafla
+    assert inf.short_pl in short and "Wody gruntowe i zapas z opadów" not in short  # skrócony: jedno zdanie, bez sekcji i kafla
+    assert "wsiąkanie" not in short.lower()
     assert 'class="tiles tiles5"' not in short
     full = render_html(a, ortho=None, report_type="full", gw=gw)
-    assert "<h2>Wody gruntowe i wsiąkanie</h2>" in full and inf.sentence_pl in full and "ryzyko podtopień po ulewie" in full
+    assert "<h2>Wody gruntowe i zapas z opadów</h2>" in full and inf.sentence_pl in full and "ryzyko podtopień po ulewie" in full
+    assert "Ile opadu zostaje w glebie" in full and "wsiąkanie" not in full.lower().replace("wsiąkanie wody", "")
     assert "PIG-PIB" in full and "progi orientacyjne" in full
     down = GW.combine(inf, None, True, None, D, pig.DEPTH_NOTE, pig.UNAVAILABLE_NOTE)
     assert "brak danych (usługa PIG niedostępna)" in render_html(a, ortho=None, report_type="full", gw=down)

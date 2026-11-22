@@ -4,7 +4,7 @@ import { useLang } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
 import { useGroundwater } from './useGroundwater'
 
-/** Kolor poziomu wsiąkania: kropka w kolorze poziomu, napis w ciemniejszym odcieniu (czytelność). */
+/** Kolor poziomu (ile opadu zostaje w glebie): kropka w kolorze poziomu, napis w ciemniejszym odcieniu (czytelność). */
 const LEVEL_STYLE: Record<InfiltrationLevel, { dot: string; text: string }> = {
   dobre: { dot: 'bg-pp-ok', text: 'text-ok' },
   slabe: { dot: 'bg-pp-risk', text: 'text-risk' },
@@ -14,7 +14,7 @@ const LEVEL_STYLE: Record<InfiltrationLevel, { dot: string; text: string }> = {
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
 /**
- * A27: kafel „Wody gruntowe i wsiąkanie” – poziom wsiąkania (ile wody z opadu zostaje w glebie dla roślin; liczone
+ * A27: kafel „Wody gruntowe i zapas z opadów” – „Ile opadu zostaje w glebie: dużo / mało / bardzo mało” (liczone
  * z opadu, parowania, kategorii gleby i spadku terenu) ze zdaniem dla rolnika, obok – czy działka leży na obszarze
  * zagrożonym podtopieniami (PIG-PIB). Przy płytkiej wodzie gruntowej ikona kropli i dopisek „susza może być mniejsza
  * niż z bilansu”. Brak odpowiedzi = kafel ukryty; nic nie policzono = szary kafel z notą. `passport` – wersja szeroka.
@@ -23,7 +23,7 @@ export function GroundwaterTile({ analysis, passport }: { analysis: AnalysisResp
   const { t } = useLang()
   const ctx = useGroundwater(analysis)
   if (!ctx) return null
-  const title = t('Wody gruntowe i wsiąkanie')
+  const title = t('Wody gruntowe i zapas z opadów')
   const box = cn('min-w-0 bg-surface', passport ? 'rounded-[18px] border border-paper-line p-4 md:p-5' : 'rounded-xl border p-3.5')
   const head = (
     <p className="flex items-center gap-2 text-sm leading-5 font-semibold text-text-muted">
@@ -48,6 +48,7 @@ export function GroundwaterTile({ analysis, passport }: { analysis: AnalysisResp
         <div className="space-y-1">
           {inf && style ? (
             <>
+              <p className="text-sm leading-5 text-text-muted">{t('Ile opadu zostaje w glebie:')}</p>
               <p className={cn('flex items-center gap-2 font-bold', style.text, passport ? 'text-[24px] leading-8' : 'text-xl leading-7')}>
                 <span className={cn('size-3 shrink-0 rounded-full', style.dot)} aria-hidden />
                 {cap(t(inf.label_pl))}
@@ -55,7 +56,7 @@ export function GroundwaterTile({ analysis, passport }: { analysis: AnalysisResp
               <p className="text-sm leading-5">{t(inf.sentence_pl)}</p>
             </>
           ) : (
-            <p className="text-sm leading-5 text-text-muted">{t('Brak danych pogodowych z ostatnich 30 dni – wsiąkania nie liczymy.')}</p>
+            <p className="text-sm leading-5 text-text-muted">{t('Brak danych pogodowych z ostatnich 30 dni – nie liczymy, ile opadu zostaje w glebie.')}</p>
           )}
         </div>
         <div className={cn('space-y-1.5', !passport && 'mt-2 border-t pt-2')}>

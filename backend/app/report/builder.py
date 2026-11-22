@@ -525,7 +525,7 @@ async def edo_context(a: AnalysisResponse):
 
 
 async def groundwater_context(a: AnalysisResponse):
-    """A27: „Wody gruntowe i wsiąkanie” dla raportu – te same obliczenia co GET /api/groundwater (pogoda, gleba i teren
+    """A27: „Wody gruntowe i zapas z opadów” dla raportu – te same obliczenia co GET /api/groundwater (pogoda, gleba i teren
     z pamięci po analizie; PIG-PIB do 8 s). Brak / błąd → None (raport bez zdania i sekcji)."""
     try:
         from app.routers.groundwater import context_for_parcel
@@ -553,7 +553,7 @@ def edo_tile(edo) -> dict:
 
 def point_text(st, a: AnalysisResponse, clip: int = 0, gw=None) -> str:
     """Tekst punktu werdyktu. F31: w punkcie „Opady” zdanie o najdłuższym okresie bez deszczu (A24) zostaje w całości
-    także w raporcie skróconym – skracamy tylko część przed nim. A27: w punkcie „Gleba” jedno zdanie o wsiąkaniu."""
+    także w raporcie skróconym – skracamy tylko część przed nim. A27: w punkcie „Gleba” jedno zdanie o tym, ile opadu zostaje w glebie."""
     text = st.text
     if st.kind == "gleba" and gw is not None and gw.infiltration is not None:
         return (whole(text, clip) if clip else text).rstrip() + " " + gw.infiltration.short_pl

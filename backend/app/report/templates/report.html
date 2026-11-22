@@ -192,9 +192,9 @@
   {% endif %}
 
   {% if gw %}
-  <h2>Wody gruntowe i wsiąkanie</h2>
+  <h2>Wody gruntowe i zapas z opadów</h2>
   <table class="kv">
-    {% if gw.infiltration %}<tr><td>Wsiąkanie</td><td><b>{{ gw.infiltration.label_pl }}</b> – {{ gw.infiltration.sentence_pl }}</td></tr>
+    {% if gw.infiltration %}<tr><td>Ile opadu zostaje w glebie</td><td><b>{{ gw.infiltration.label_pl }}</b> – {{ gw.infiltration.sentence_pl }}</td></tr>
     <tr><td>Opad i parowanie</td><td>30 dni: {{ gw.infiltration.precip_30d_mm|num(0, 'mm') }} opadu, {{ gw.infiltration.et0_30d_mm|num(0, 'mm') }} parowania{% if gw.infiltration.precip_60d_mm is not none %} · 60 dni: {{ gw.infiltration.precip_60d_mm|num(0, 'mm') }} opadu, {{ gw.infiltration.et0_60d_mm|num(0, 'mm') }} parowania{% endif %} · dane do {{ gw.infiltration.data_until|date_pl }}</td></tr>{% endif %}
     <tr><td>Obszary zagrożone podtopieniami</td><td>{% if gw.source_pig.unavailable %}brak danych ({{ gw.source_pig.note_pl }}){% else %}{{ gw.interpretation_pl }}{% endif %}</td></tr>
   </table>

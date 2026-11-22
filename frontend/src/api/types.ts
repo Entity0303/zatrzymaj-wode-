@@ -1446,14 +1446,14 @@ export type PriceWeather = {
   price_excluded_years?: number[]
 }
 
-/** A27 – GET / POST /api/groundwater: „Wody gruntowe i wsiąkanie” (PIG-PIB + obliczenia z naszych danych). */
+/** A27 – GET / POST /api/groundwater: „Wody gruntowe i zapas z opadów” (PIG-PIB + obliczenia z naszych danych). */
 export type InfiltrationLevel = 'dobre' | 'slabe' | 'bardzo_slabe'
 
 export interface GroundwaterContext {
-  /** true – nie udało się policzyć wsiąkania ani sprawdzić PIG-PIB; wtedy `note_pl`, reszta pusta */
+  /** true – nie udało się policzyć zapasu z opadów ani sprawdzić PIG-PIB; wtedy `note_pl`, reszta pusta */
   unavailable: boolean
   note_pl?: string | null
-  /** wsiąkanie = ile wody z opadu zostaje w glebie dla roślin (nie szybkość przesiąkania) */
+  /** ile opadu zostaje w glebie dla roślin (nie szybkość przesiąkania); A27c: nazwa pola została */
   infiltration?: {
     level: InfiltrationLevel
     label_pl: string

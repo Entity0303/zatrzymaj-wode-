@@ -131,7 +131,7 @@ export function FieldOverview({
           {analysis.status.level !== 'ok' && analysis.status.level !== 'no_data' && <NowLine analysis={analysis} />}
           {/* F31: niezależne tło suszowe dla okolicy (EDO) – pobierane w tle po analizie */}
           <DroughtTile analysis={analysis} />
-          {/* A27: wsiąkanie (z naszych danych) i obszary zagrożone podtopieniami (PIG-PIB) */}
+          {/* A27: ile opadu zostaje w glebie (z naszych danych) i obszary zagrożone podtopieniami (PIG-PIB) */}
           <GroundwaterTile analysis={analysis} />
         </DetailSection>
         {full && (

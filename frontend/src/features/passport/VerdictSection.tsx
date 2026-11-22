@@ -186,7 +186,7 @@ export function VerdictSection({ analysis }: { analysis: AnalysisResponse }) {
       </div>
       {/* F31: tło suszowe w okolicy (EDO) – pod kaflami werdyktu, na całą szerokość */}
       <DroughtTile analysis={analysis} passport />
-      {/* A27: wody gruntowe i wsiąkanie – pod kaflem EDO */}
+      {/* A27: wody gruntowe i zapas z opadów – pod kaflem EDO */}
       <GroundwaterTile analysis={analysis} passport />
     </PassportSection>
   )

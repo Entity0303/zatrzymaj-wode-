@@ -1,4 +1,4 @@
-"""Kontrakt GET / POST /api/groundwater (A27) – „Wody gruntowe i wsiąkanie”."""
+"""Kontrakt GET / POST /api/groundwater (A27) – „Wody gruntowe i zapas z opadów”."""
 
 from __future__ import annotations
 
@@ -15,12 +15,13 @@ class _M(BaseModel):
 
 
 class Infiltration(_M):
-    """Wsiąkanie liczone z naszych danych: ile wody z opadu zostaje w glebie dla roślin (nie szybkość przesiąkania)."""
+    """Ile opadu zostaje w glebie dla roślin – liczone z naszych danych (nie szybkość przesiąkania). A27c: nazwa pola
+    `infiltration` została, rolnik widzi „Ile opadu zostaje w glebie: dużo / mało / bardzo mało”."""
 
     level: InfiltrationLevel
-    label_pl: str = Field(description="dobre / słabe / bardzo słabe wsiąkanie")
+    label_pl: str = Field(description="Ile opadu zostaje w glebie: dużo / mało / bardzo mało")
     sentence_pl: str = Field(description="Jedno zdanie dla rolnika")
-    short_pl: str = Field(description="Krótka forma do raportu: 'Wsiąkanie: … (… mm opadu w 30 dni przy … mm parowania).'")
+    short_pl: str = Field(description="Krótka forma do raportu: 'Z opadów zostaje w glebie … (… mm opadu w 30 dni przy … mm parowania).'")
     precip_30d_mm: float
     et0_30d_mm: float
     precip_60d_mm: float | None = None
@@ -44,7 +45,7 @@ class SourcePig(_M):
 
 
 class GroundwaterContext(_M):
-    """`unavailable = true` – nie udało się policzyć ani wsiąkania, ani sprawdzić PIG-PIB (reszta pól pusta)."""
+    """`unavailable = true` – nie udało się policzyć zapasu z opadów ani sprawdzić PIG-PIB (reszta pól pusta)."""
 
     unavailable: bool = False
     note_pl: str | None = None
@@ -55,7 +56,7 @@ class GroundwaterContext(_M):
     flood_after_rain: bool = Field(False, description="Obszar podtopień + mokre obniżenia na działce → ryzyko podtopień po ulewie")
     may_reduce_drought: bool = Field(False, description="Płytka woda gruntowa może zasilać korzenie – susza może być mniejsza niż z bilansu")
     interpretation_pl: str | None = None
-    limitation_pl: str = ("Wsiąkanie to nasz szacunek z opadu, parowania, kategorii gleby i spadku terenu – progi orientacyjne; "
+    limitation_pl: str = ("„Ile opadu zostaje w glebie” to nasz szacunek z opadu, parowania, kategorii gleby i spadku terenu – progi orientacyjne; "
                           "bilans wody nie uwzględnia wód gruntowych.")
     source: str = "PIG-PIB (obszary zagrożone podtopieniami) · obliczenia własne z opadu, parowania, gleby IUNG i terenu"
     source_url: str = "https://cbdgmapa.pgi.gov.pl/"

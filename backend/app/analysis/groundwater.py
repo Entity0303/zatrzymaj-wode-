@@ -1,8 +1,9 @@
-"""„Wody gruntowe i wsiąkanie” (A27) – obliczenia. Część B: wsiąkanie z naszych danych (opad i parowanie z 30 i 60 dni
-przed datą analizy, kategoria gleby IUNG, średni spadek terenu); połączenie z częścią A (PIG-PIB: obszary zagrożone
-podtopieniami). Progi i teksty: `rules/groundwater.yaml`. Bez AI, bez nowych zapytań do źródeł.
+"""„Wody gruntowe i zapas z opadów” (A27) – obliczenia. Część B: ile opadu zostaje w glebie – z naszych danych (opad
+i parowanie z 30 i 60 dni przed datą analizy, kategoria gleby IUNG, średni spadek terenu); połączenie z częścią A
+(PIG-PIB: obszary zagrożone podtopieniami). Progi i teksty: `rules/groundwater.yaml`. Bez AI, bez nowych zapytań.
 
-„Wsiąkanie” = ile wody z opadu zostaje w glebie dla roślin, nie szybkość przesiąkania (patrz komentarz w regułach).
+Wskaźnik mówi, ile wody z opadu zostaje w glebie dla roślin – to nie szybkość przesiąkania (A27c: dawniej „wsiąkanie”;
+nazwy pól kontraktu – `infiltration` – zostały).
 """
 
 from __future__ import annotations
@@ -18,7 +19,7 @@ from app.schemas.groundwater import FloodZone, GroundwaterContext, Infiltration,
 
 RULES = Path(__file__).parent / "rules" / "groundwater.yaml"
 SOIL_CODES = (1, 2, 3, 4, 5)
-UNAVAILABLE_NOTE = "Nie udało się policzyć wsiąkania ani sprawdzić danych PIG-PIB – spróbuj ponownie za chwilę."
+UNAVAILABLE_NOTE = "Nie udało się policzyć, ile opadu zostaje w glebie, ani sprawdzić danych PIG-PIB – spróbuj ponownie za chwilę."
 
 
 @lru_cache
@@ -54,7 +55,7 @@ def dominant_soil(shares: dict[int, float] | None) -> int | None:
 
 def infiltration(dates: np.ndarray, precip: np.ndarray, et0: np.ndarray, analysis_date: date,
                  soil_code: int | None = None, slope_mean_pct: float | None = None) -> Infiltration | None:
-    """Poziom wsiąkania i zdanie dla rolnika. None – brak danych pogodowych z ostatnich 30 dni."""
+    """Ile opadu zostaje w glebie (poziom) i zdanie dla rolnika. None – brak danych pogodowych z ostatnich 30 dni."""
     c = cfg()
     w30 = window_sums(dates, precip, et0, analysis_date, 30, c["min_valid_share"])
     if w30 is None:
@@ -80,13 +81,17 @@ def infiltration(dates: np.ndarray, precip: np.ndarray, et0: np.ndarray, analysi
     lv = c["levels"]
     level = "dobre" if index >= lv["dobre_min"] else "slabe" if index >= lv["slabe_min"] else "bardzo_slabe"
     tail_key = "bardzo_slabe_heavy" if level == "bardzo_slabe" and key in (3, 4, 5) else level
-    sentence = c["sentence"].format(soil=c["soil_words"][key], p30=_mm(w30[0]), e30=_mm(w30[1]), tail=c["tails"][tail_key])
+    light = key in c["light_soil_codes"]
+    sentence = c["sentence_light" if light else "sentence"].format(
+        soil=c["soil_words"][key], p30=_mm(w30[0]), e30=_mm(w30[1]), tail=c["tails"][tail_key])
+    if light:
+        sentence += c["light_soil_note"]
     if steep:
         sentence += c["slope_note"].format(s=f"{slope_mean_pct:.0f}")
     label = c["labels"][level]
     return Infiltration(
         level=level, label_pl=label, sentence_pl=sentence,
-        short_pl=c["short"].format(label=label.replace(" wsiąkanie", ""), p30=_mm(w30[0]), e30=_mm(w30[1])),
+        short_pl=c["short"].format(label=label, p30=_mm(w30[0]), e30=_mm(w30[1])),
         precip_30d_mm=round(w30[0], 1), et0_30d_mm=round(w30[1], 1),
         precip_60d_mm=round(w60[0], 1) if w60 else None, et0_60d_mm=round(w60[1], 1) if w60 else None,
         soil_code=soil_code if soil_code in SOIL_CODES else None,
@@ -96,7 +101,7 @@ def infiltration(dates: np.ndarray, precip: np.ndarray, et0: np.ndarray, analysi
 
 def combine(inf: Infiltration | None, zone, pig_failed: bool, wet_hollow_pct: float | None,
             analysis_date: date, depth_note: str, pig_unavailable_note: str) -> GroundwaterContext:
-    """Składa wynik: wsiąkanie (B) + obszar podtopień PIG-PIB (A). `zone` – `sources.pig.FloodZone` albo None."""
+    """Składa wynik: zapas z opadów (B) + obszar podtopień PIG-PIB (A). `zone` – `sources.pig.FloodZone` albo None."""
     c = cfg()
     if inf is None and (pig_failed or zone is None):
         return GroundwaterContext(unavailable=True, note_pl=UNAVAILABLE_NOTE, analysis_date=analysis_date,

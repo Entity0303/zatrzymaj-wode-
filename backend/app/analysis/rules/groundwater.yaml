@@ -1,8 +1,10 @@
-# A27: „Wody gruntowe i wsiąkanie” – progi i teksty. Deterministycznie, bez AI.
+# A27: „Wody gruntowe i zapas z opadów” – progi i teksty. Deterministycznie, bez AI.
 #
-# „Wsiąkanie” w tym kaflu = ile wody z opadu zostaje w glebie dla roślin (zasilanie zapasu), a NIE szybkość
-# przesiąkania: na lekkiej glebie woda wsiąka szybko, ale ucieka w głąb – dla roślin zostaje mało, więc poziom jest
-# „słabe / bardzo słabe”. Progi są ORIENTACYJNE (własne, z zadania A27) – do weryfikacji z agronomem.
+# Wskaźnik „Ile opadu zostaje w glebie” = jaka część wody z opadu zostaje w glebie dla roślin (zasilanie zapasu),
+# a NIE szybkość przesiąkania: lekka gleba przepuszcza wodę szybko, ale mało jej zatrzymuje – dla roślin zostaje mało.
+# A27c: dawna nazwa „wsiąkanie” była myląca, dlatego rolnik widzi „dużo / mało / bardzo mało”; klucze poziomów
+# (dobre / slabe / bardzo_slabe) i nazwy pól kontraktu zostały. Progi są ORIENTACYJNE (własne, z zadania A27) –
+# do weryfikacji z agronomem.
 groundwater:
   windows_days: [30, 60]        # okna przed datą analizy (tylko dane sprzed daty)
   min_valid_share: 0.8          # mniej ważnych dni w oknie – nie liczymy
@@ -16,7 +18,7 @@ groundwater:
     4: 1.00     # kat. IV – ciężka
     5: 1.00     # gleba organiczna
     unknown: 0.85
-  # spadek terenu (średni w obrysie): część wody spływa po powierzchni, zanim wsiąknie
+  # spadek terenu (średni w obrysie): część wody spływa po powierzchni, zanim gleba ją przyjmie
   slope:
     moderate_pct: 3.0
     moderate_factor: 0.95
@@ -26,10 +28,11 @@ groundwater:
   levels:
     dobre_min: 0.80
     slabe_min: 0.45             # niżej – „bardzo słabe”
+  indicator: "Ile opadu zostaje w glebie"
   labels:
-    dobre: "dobre wsiąkanie"
-    slabe: "słabe wsiąkanie"
-    bardzo_slabe: "bardzo słabe wsiąkanie"
+    dobre: "dużo"
+    slabe: "mało"
+    bardzo_slabe: "bardzo mało"
   soil_words:
     1: "Bardzo lekka gleba"
     2: "Lekka gleba"
@@ -37,15 +40,19 @@ groundwater:
     4: "Ciężka gleba"
     5: "Gleba organiczna"
     unknown: "Gleba bez określonej kategorii"
-  # zdanie: „{soil} i {p30} mm opadu w 30 dni przy {e30} mm parowania – {tail}”
+  # zdanie: „{soil} i {p30} mm opadu w 30 dni przy {e30} mm parowania – {tail}”; na lekkiej glebie (kat. I–II) bez
+  # nazwy gleby na początku, za to z dopiskiem `light_soil_note`
   sentence: "{soil} i {p30} mm opadu w 30 dni przy {e30} mm parowania – {tail}"
+  sentence_light: "{p30} mm opadu w 30 dni przy {e30} mm parowania – {tail}"
+  light_soil_codes: [1, 2]
+  light_soil_note: " Lekka gleba szybko przepuszcza wodę w głąb i mało jej zatrzymuje."
   tails:
-    bardzo_slabe: "woda szybko schodzi w głąb albo paruje, mało zostaje dla roślin."
+    bardzo_slabe: "dla roślin zostaje z tego bardzo mało."
     bardzo_slabe_heavy: "prawie cały opad wyparowuje, mało zostaje dla roślin."
     slabe: "tylko część wody zostaje w glebie dla roślin."
     dobre: "opad uzupełnia zapas wody w glebie."
   slope_note: " Na stoku (średni spadek {s}%) część wody spływa po powierzchni."
-  short: "Wsiąkanie: {label} ({p30} mm opadu w 30 dni przy {e30} mm parowania)."
+  short: "Z opadów zostaje w glebie {label} ({p30} mm opadu w 30 dni przy {e30} mm parowania)."
   # połączenie z PIG-PIB (obszary zagrożone podtopieniami = doliny rzek z płytką wodą gruntową)
   wet_hollow_min_pct: 10.0      # od tylu % „mokrego dołka” w obrysie mówimy o ryzyku podtopień po ulewie
   interpretation:

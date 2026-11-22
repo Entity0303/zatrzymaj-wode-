@@ -1,7 +1,7 @@
-"""GET / POST /api/groundwater (A27) – „Wody gruntowe i wsiąkanie”: wsiąkanie liczone z naszych danych (opad i
+"""GET / POST /api/groundwater (A27) – „Wody gruntowe i zapas z opadów”: ile opadu zostaje w glebie – z naszych danych (opad i
 parowanie z 30 i 60 dni przed datą analizy, kategoria gleby IUNG, spadek terenu – wszystko z pamięci po analizie) oraz
 obszary zagrożone podtopieniami PIG-PIB. Osobny endpoint – analiza na niego nie czeka; limit 8 s; awaria = HTTP 200
-z `unavailable: true` albo z `source_pig.unavailable` (wtedy samo wsiąkanie)."""
+z `unavailable: true` albo z `source_pig.unavailable` (wtedy sam zapas z opadów)."""
 
 import asyncio
 import datetime as dt
@@ -46,7 +46,7 @@ async def context_for_parcel(p, analysis_date: dt.date) -> GroundwaterContext:
         slope = facts.get("slope_mean_pct") if facts else None
         try:
             inf = gw.infiltration(w.dates, w.precip, w.et0, analysis_date, soil_code, slope)
-        except Exception:  # noqa: BLE001 – brak wsiąkania nie może zabrać części PIG
+        except Exception:  # noqa: BLE001 – brak zapasu z opadów nie może zabrać części PIG
             inf = None
     pig_failed = isinstance(zone, BaseException)
     if pig_failed and isinstance(zone, SourceError):

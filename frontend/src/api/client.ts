@@ -178,8 +178,8 @@ export const api = {
       ? post<DroughtContext>('/api/drought-context', { geometry: q.geometry, date: q.date, our_status: ourStatus }, signal)
       : get<DroughtContext>('/api/drought-context', { ...placeParams(q), date: q.date, ...(ourStatus ? { our_status: ourStatus } : {}) }, signal),
   /**
-   * A27: „Wody gruntowe i wsiąkanie” – GET /api/groundwater?parcel_id=&date= albo POST { geometry, date } dla pola
-   * narysowanego. Awaria = 200 z `unavailable: true` albo `source_pig.unavailable` (wtedy samo wsiąkanie).
+   * A27: „Wody gruntowe i zapas z opadów” – GET /api/groundwater?parcel_id=&date= albo POST { geometry, date } dla pola
+   * narysowanego. Awaria = 200 z `unavailable: true` albo `source_pig.unavailable` (wtedy sam zapas z opadów).
    */
   groundwater: (q: AnalysisQuery, signal?: AbortSignal) =>
     q.geometry
