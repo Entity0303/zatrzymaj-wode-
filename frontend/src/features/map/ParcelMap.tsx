@@ -11,7 +11,7 @@ import {
   useMap,
   useMapEvents,
 } from 'react-leaflet'
-import type { LayerResponse, Parcel } from '@/api/types'
+import type { LayerResponse, Parcel, VerdictLevel } from '@/api/types'
 import type { Status } from '@/theme/status'
 import { parcelBounds, type MapInsets } from './geo'
 import { layerByKey, type LayerKey } from './layers'
@@ -115,6 +115,8 @@ type Props = {
   analysisDate: string
   parcel: Parcel | null
   parcelStatus: Status
+  /** werdykt działki – „Na dłuższą metę: …” w etykiecie */
+  parcelRisk?: VerdictLevel | null
   candidates: Parcel[]
   pendingPoint: [number, number] | null
   userPoint: [number, number] | null
@@ -145,6 +147,7 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
     analysisDate,
     parcel,
     parcelStatus,
+    parcelRisk = null,
     candidates,
     pendingPoint,
     userPoint,
@@ -237,7 +240,7 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
           {labelPos && (
             <Marker position={labelPos} icon={anchorIcon} interactive={false} keyboard={false}>
               <Tooltip permanent direction="center" className="parcel-label" opacity={1}>
-                <ParcelLabel number={parcel.numer} status={parcelStatus} source={parcel.source} />
+                <ParcelLabel number={parcel.numer} status={parcelStatus} source={parcel.source} longTerm={parcelRisk} />
               </Tooltip>
             </Marker>
           )}

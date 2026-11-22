@@ -757,6 +757,7 @@ export default function Start() {
             baseMap={baseMap}
             parcel={parcel}
             parcelStatus={analysis?.status.level ?? 'no_data'}
+            parcelRisk={analysis?.verdict?.level ?? null}
             layer={layer}
             layerData={layerState.phase === 'ok' ? layerState.data : null}
             analysisDate={asOf}

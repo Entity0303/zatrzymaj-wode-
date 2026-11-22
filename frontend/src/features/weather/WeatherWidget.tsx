@@ -9,14 +9,14 @@ import { useLang } from '@/lib/i18n'
 export function WeatherWidget({
   forecast,
   loading,
-  error,
   where,
   compact,
   bare,
 }: {
   forecast: Forecast | null
   loading: boolean
-  error: boolean
+  /** błąd pobrania – widżet i tak znika, gdy brak pogody (zostaje w typie dla zgodności wywołań) */
+  error?: boolean
   where: string
   compact?: boolean
   /** bez własnego tła i cienia – w grupie górnego paska */
@@ -24,8 +24,9 @@ export function WeatherWidget({
 }) {
   const { t } = useLang()
   const now = forecast?.teraz
-  // brak pogody – element znika (mniej komunikatów o błędach na ekranie)
-  if (!now && (error || !loading)) return null
+  // brak pogody (np. /api/forecast → 502, gdy pogody dla środka mapy nie ma w cache) – element znika bez komunikatu;
+  // pokazuje się dopiero, gdy pogoda przyjdzie (bez migania szkieletu przy każdym przesunięciu mapy)
+  if (!now) return null
   const label = now
     ? t('Pogoda teraz {where}: {temp}, {opis}. Źródło: Open-Meteo.', {
         where,

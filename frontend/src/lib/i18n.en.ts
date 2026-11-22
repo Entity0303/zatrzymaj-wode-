@@ -1035,4 +1035,14 @@ export const EN: Record<string, string> = {
   'zostało od początku okresu': 'left since the start of the period',
   'Słupki – deszcz w danym dniu; linia – ile wody zostało od początku okresu (spadło minus wyparowało).': 'Bars – rain on the day; line – water left since the start of the period (rain minus evaporation).',
   'Opad (IMGW / NASA) minus parowanie (FAO-56) – dzień po dniu': 'Rain (IMGW / NASA) minus evaporation (FAO-56) – day by day',
+  // F3b: „Teraz / Na dłuższą metę”
+  'Na dłuższą metę:': 'In the long run:',
+  'woda w normie': 'water normal',
+  'mało wody': 'little water',
+  'brakuje wody': 'water shortage',
+  'susza': 'drought',
+  'niskie ryzyko suszy': 'low drought risk',
+  'średnie ryzyko suszy': 'medium drought risk',
+  'wysokie ryzyko suszy': 'high drought risk',
+  'Prognoza chwilowo niedostępna – spróbujemy ponownie po wybraniu działki': 'Forecast temporarily unavailable – we will retry when you pick a parcel',
 }

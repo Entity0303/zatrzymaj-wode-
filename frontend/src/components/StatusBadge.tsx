@@ -1,4 +1,4 @@
-import { STATUS, type Status } from '@/theme/status'
+import { NOW_LABEL, STATUS, type Status } from '@/theme/status'
 import { cn } from '@/lib/utils'
 import { useLang } from '@/lib/i18n'
 
@@ -31,7 +31,7 @@ export function StatusBadge({
       )}
     >
       <Icon className={size === 'sm' ? 'size-3.5' : 'size-4'} aria-hidden />
-      {now ? `${t('Teraz:')} ${t(label ?? s.label).toLocaleLowerCase()}` : t(label ?? s.label)}
+      {now ? `${t('Teraz:')} ${t(label ?? NOW_LABEL[status])}` : t(label ?? s.label)}
     </span>
   )
 }

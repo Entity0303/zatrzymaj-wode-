@@ -22,6 +22,7 @@ export function SectionA({ analysis, chartWidth }: { analysis: AnalysisResponse;
   const { t } = useLang()
   const { status, indicators: ind } = analysis
   const s = STATUS[status.level]
+  const moistureOffSeason = !!ind.plant_moisture.label && (analysis.satellite?.in_season === false || (analysis.satellite?.status === 'ok' && !analysis.satellite.ndmi_class))
   return (
     <PassportSection id="pass-a" letter="A" title={t('Stan obecny')}>
       <div className="flex flex-wrap items-center gap-5 rounded-xl bg-surface p-4 shadow-card">
@@ -78,8 +79,9 @@ export function SectionA({ analysis, chartWidth }: { analysis: AnalysisResponse;
         <MetricCard
           icon={Droplet}
           title="Wilgotność roślin"
+          // A11: poza sezonem (IV–IX) lub przy rzadkim łanie backend daje etykietę zamiast oceny – pokazujemy ją, nie liczbę
           value={ind.plant_moisture.label ? t(ind.plant_moisture.label) : val(ind.plant_moisture)}
-          tone="water"
+          tone={moistureOffSeason ? 'muted' : 'water'}
           source={ind.plant_moisture.source_tag.kind}
           sourceDate={tagDate(ind.plant_moisture)}
           noDataText={ind.plant_moisture.note ?? 'Brak danych'}

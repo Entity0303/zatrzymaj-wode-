@@ -48,7 +48,7 @@ export function ForecastCard({
           ))}
         </div>
       ) : error || !forecast ? (
-        <NoData text="Prognoza niedostępna (Open-Meteo nie odpowiada)" />
+        <NoData text="Prognoza chwilowo niedostępna – spróbujemy ponownie po wybraniu działki" />
       ) : (
         <>
           <ol className="grid flex-1 grid-cols-7 gap-0.5 text-center">
