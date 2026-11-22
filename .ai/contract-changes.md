@@ -327,3 +327,10 @@ Weryfikacja: `tsc -b` przechodzi; `vite build` – lokalnie i w kontenerze brak 
 - Karty nie ma w `analysis.sample.json` (osobny endpoint, poza odpowiedzią analizy).
 
 **Łamie zgodność:** nie (nowy endpoint; pole `price_excluded_years` dodane, opcjonalne po stronie frontendu).
+
+### 2026-11-22 · `main` · A27 – „Wody gruntowe i wsiąkanie”: `GET / POST /api/groundwater`
+- Parametry: `parcel_id` | `lon` + `lat` | (POST) `geometry`; `date` (domyślnie dziś).
+- Odpowiedź `GroundwaterContext` (typ w `types.ts`): `unavailable`, `note_pl`, `infiltration {level: dobre | slabe | bardzo_slabe, label_pl, sentence_pl, short_pl, precip_30d_mm, et0_30d_mm, precip_60d_mm, et0_60d_mm, soil_code, slope_mean_pct, index, data_until}`, `flood_zone {in_zone, label_pl, water_region}`, `depth_m` (dziś zawsze `null`), `source_pig {unavailable, note_pl, depth_available}`, `flood_after_rain`, `may_reduce_drought`, `interpretation_pl`, `limitation_pl`, `source`, `source_url`, `fetched_at`, `analysis_date`.
+
+**Dla Mefju:** kafel `features/groundwater/GroundwaterTile.tsx` + `useGroundwater.ts` już jest (panel: „Dlaczego?”, paszport: pod kaflem EDO). Wynik zależy od terenu (spadek, obniżenia) – hook pyta ponownie, gdy `analysis.terrain` przestaje być `pending`. `useAnalysis.ts` nie był zmieniany.
+**Łamie zgodność:** nie (nowy endpoint).

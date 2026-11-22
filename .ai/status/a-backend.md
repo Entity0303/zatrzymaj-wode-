@@ -1,6 +1,6 @@
 # Status – osoba A (Dominik), backend
 
-_Stan na: 2026-11-22 07:25 (F31)_
+_Stan na: 2026-11-22 07:45 (A27)_
 
 ## Zrobione
 - **A19:** wyszukiwanie „gmina + numer” (obręby gminy z PRNG → ULDK sekwencyjnie, maks. 10, cache) i gmina jako filtr obrębu; `CORS_ORIGINS` JSON albo przecinki (błąd nie wywraca startu), `CORS_ORIGIN_REGEX` domyślnie *.vercel.app.
@@ -97,7 +97,8 @@ _Stan na: 2026-11-22 07:25 (F31)_
 - **A24:** okresy bez opadu, upał, próchnica – informacyjnie (D113).
 - **A26:** `/api/drought-context` – tło suszowe EDO (D114).
 - **F31:** tło EDO, okres bez deszczu, upał w aplikacji i PDF; próchnica tylko w Doradcy (D115). Brak kafla wód gruntowych (nie ma `/api/groundwater`).
-- Testy: **675 bez sieci** + 5 live.
+- **A27:** `/api/groundwater` – podtopienia PIG-PIB + wsiąkanie z naszych danych, kafel i PDF (D116); głębokości zwierciadła brak (PIG nie ma usługi punktowej).
+- Testy: **686 bez sieci** + 5 live.
 
 ## W trakcie (gałąź)
 - **INT3 (22.11 ok. 00:55): `c/research`, `a/backend`, `b/frontend` scalone do `main` (bez konfliktów) i wypchnięte.** Od 22.11 00:45 praca bezpośrednio na `main` (zasady w CLAUDE.md); gałęzie `a/backend` itp. już nieużywane. Główny folder `zatrzymaj-wode-` przełączony na `main`, kontenery przebudowane.
