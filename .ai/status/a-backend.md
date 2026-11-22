@@ -88,7 +88,7 @@ _Stan na: 2026-11-22 11:30 (A20)_
 - **A15:** poprawki z weryfikacji V1 – nagłówek „Trudna”, zboża na dobrej glebie, kompleksy górskie, satelita 12 h i słowami (D101).
 - **A16:** plon i ceny tylko sprzed daty analizy, trend plonów GUS (Theil–Sen), flaga rozjazdu opadu IMGW / NASA (D103).
 - **A16b:** rozjazd opadu – „nasa” / „station” wg sąsiednich stacji; ceny GUS 2013–2020 (D104). render.yaml czeka na commit A18.
-- **A20:** jedne progi stopnia braku wody, daty źródeł ≤ data analizy, krótkie zdanie opadu (D105).
+- **A20:** jedne progi stopnia braku wody, daty źródeł ≤ data analizy, krótkie zdanie opadu (D107).
 - Testy: **600 bez sieci** + 5 live.
 
 ## W trakcie (gałąź)
