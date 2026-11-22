@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { api, describeAnalysisError, type AnalysisQuery } from '@/api/client'
 import type { AnalysisResponse, CropId, Satellite, Terrain, TerrainPending } from '@/api/types'
 import type { Step } from '@/components/LoadingSteps'
@@ -18,6 +18,9 @@ const REAL_STEPS: Step[] = [
 ].map((label) => ({ label, state: 'active' }))
 
 const IDLE: AnalysisRun = { phase: 'idle' }
+
+/** Overpass (woda w okolicy) bywa wolny – po tylu ms przestajemy czekać i pokazujemy „Ponów”. */
+const HYDRO_TIMEOUT_MS = 75_000
 
 const isPending = (t: Terrain | TerrainPending | null | undefined): t is TerrainPending => !!t && 'status' in t && t.status === 'pending'
 
@@ -60,6 +63,8 @@ export function useAnalysis(
   // wynik przypisany do konkretnego przebiegu; inny klucz = nowe przeliczenie (stan „ładowanie” liczony w renderze)
   const [result, setResult] = useState<{ key: string; run: AnalysisRun } | null>(null)
   const key = parcelId ? `${parcelId}|${crop ?? ''}|${date}|${extra}|${attempt}` : null
+  // „Ponów” w karcie „Woda w okolicy” – ponawia tylko /api/hydro w bieżącym przebiegu
+  const retryHydroRef = useRef<(() => void) | null>(null)
 
   useEffect(() => {
     if (!parcelId || !key) return
@@ -86,10 +91,12 @@ export function useAnalysis(
 
     // bieżący wynik – części liczone w tle (satelita, teren, woda) dopisują się do niego po kolei
     let current: AnalysisResponse | null = null
+    // F6: woda w okolicy nie przyszła (502 / ponad 75 s) – karta pokazuje „Ponów” (retryHydro)
+    let hydroFailed = false
     const update = (patch: (a: AnalysisResponse) => AnalysisResponse) => {
       if (!current || ctrl.signal.aborted) return
       current = patch(current)
-      publish({ phase: 'done', analysis: current, key: key! })
+      publish({ phase: 'done', analysis: current, key: key!, hydroFailed })
     }
 
     async function loadSatellite(first: AnalysisResponse) {
@@ -122,20 +129,47 @@ export function useAnalysis(
       try {
         const terrain = mock ? await runMockBackground('terrain', ctrl.signal) : await api.terrain(q, ctrl.signal)
         update((a) => ({ ...a, terrain }))
+        if (mock) return
+        // teren jest już w cache serwera – analiza jeszcze raz (werdykt „Teren”, reguły zastawki / oczka korzystają z terenu);
+        // satelita i woda, które już doszły, zostają
+        const fresh = await api.analysis(q, ctrl.signal).catch((err) => {
+          if (aborted(err)) throw err
+          return null
+        })
+        if (fresh && !isPending(fresh.terrain))
+          update((a) => ({
+            ...fresh,
+            satellite: fresh.satellite?.status === 'pending' ? a.satellite : fresh.satellite,
+            hydro: fresh.hydro?.status === 'pending' ? a.hydro : fresh.hydro,
+          }))
       } catch (e) {
         if (!aborted(e)) update((a) => ({ ...a, terrain: null, terrain_note: 'Nie udało się policzyć ukształtowania terenu. Pozostała analiza jest kompletna.' }))
       }
     }
 
-    // F3: woda w okolicy w tle – awaria / brak endpointu = karta znika (bez komunikatu błędu)
+    // F3/F6: woda w okolicy w tle (Overpass bywa wolny – do ok. 60 s). Awaria albo brak odpowiedzi w 75 s =
+    // „Nie udało się sprawdzić wody w okolicy” + „Ponów”; reszta panelu działa dalej.
     async function loadHydro() {
+      hydroFailed = false
+      update((a) => ({ ...a, hydro: { status: 'pending' } }))
+      const hc = new AbortController()
+      const stop = () => hc.abort()
+      ctrl.signal.addEventListener('abort', stop)
+      const timer = window.setTimeout(stop, HYDRO_TIMEOUT_MS)
       try {
-        const hydro = mock ? await runMockBackground('hydro', ctrl.signal) : await api.hydro(q, ctrl.signal)
+        const hydro = mock ? await runMockBackground('hydro', hc.signal) : await api.hydro(q, hc.signal)
         update((a) => ({ ...a, hydro }))
-      } catch (e) {
-        if (!aborted(e)) update((a) => ({ ...a, hydro: null }))
+      } catch {
+        // przerwane przez nową analizę – nic; awaria albo limit czasu – „Ponów”
+        if (ctrl.signal.aborted) return
+        hydroFailed = true
+        update((a) => ({ ...a, hydro: null }))
+      } finally {
+        window.clearTimeout(timer)
+        ctrl.signal.removeEventListener('abort', stop)
       }
     }
+    retryHydroRef.current = () => void loadHydro()
 
     request.then(
       (analysis) => {
@@ -147,7 +181,10 @@ export function useAnalysis(
       },
       (e) => publish({ phase: 'error', error: describeAnalysisError(e) }),
     )
-    return () => ctrl.abort()
+    return () => {
+      ctrl.abort()
+      retryHydroRef.current = null
+    }
     // opts zawarte w `key`
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [parcelId, crop, date, key])
@@ -157,5 +194,5 @@ export function useAnalysis(
     : result?.key === key
       ? result.run
       : { phase: 'loading', steps: REAL_STEPS, key }
-  return { run, retry: () => setAttempt((n) => n + 1) }
+  return { run, retry: () => setAttempt((n) => n + 1), retryHydro: () => retryHydroRef.current?.() }
 }

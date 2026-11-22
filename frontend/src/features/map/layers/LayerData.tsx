@@ -70,7 +70,13 @@ const DEFAULT_STYLE: FeatureStyler = (p, kind) => ({
  * Wspólne rysowanie warstwy z GET /api/layers/{layer}: raster PNG w granicach bbox (przycięty do obrysu
  * działki na płótnie – useClippedImage) + obiekty GeoJSON (strzałki, rowy, strefy) z dymkiem `label` / `name`.
  */
-export function LayerData({ data, parcel, style = DEFAULT_STYLE, opacity = 0.85 }: LayerOverlayProps & { style?: FeatureStyler; opacity?: number }) {
+export function LayerData({
+  data,
+  parcel,
+  style = DEFAULT_STYLE,
+  opacity = 0.85,
+  attribution,
+}: LayerOverlayProps & { style?: FeatureStyler; opacity?: number; /** atrybucja źródła w stopce mapy (np. OSM – ODbL) */ attribution?: string }) {
   const r = data.raster
   const clipped = useClippedImage(r, parcel.geometria)
   return (
@@ -92,6 +98,7 @@ export function LayerData({ data, parcel, style = DEFAULT_STYLE, opacity = 0.85 
         <GeoJSON
           key={`${data.layer}-${data.analysis_date}-${data.features.features?.length ?? 0}`}
           data={data.features}
+          attribution={attribution}
           style={(f) => style((f?.properties ?? null) as FeatureProps, f?.geometry.type.includes('Line') ? 'line' : 'area')}
           pointToLayer={(f, latlng) => {
             const s = style((f.properties ?? null) as FeatureProps, 'area')

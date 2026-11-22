@@ -1,6 +1,7 @@
-import { ArrowDownRight, Droplets, Gauge, Loader2 } from 'lucide-react'
+import { ArrowDownRight, Droplets, Gauge, Loader2, RotateCw } from 'lucide-react'
 import type { Hydro, HydroGauge } from '@/api/types'
 import { formatDistance, HYDRO_KIND } from '@/lib/hydro'
+import { useHydroRetry } from './hydroRetry'
 import { SourceTag } from '@/components/SourceTag'
 import { formatDatePl, formatNum } from '@/lib/format'
 import { useLang } from '@/lib/i18n'
@@ -19,7 +20,7 @@ const GAUGE: Record<HydroGauge['state'], { label: string; cls: string }> = {
  */
 export function HydroCard({ hydro: h, passport }: { hydro?: Hydro | null; passport?: boolean }) {
   const { t } = useLang()
-  if (!h) return null
+  const { failed, retry } = useHydroRetry()
   const box = cn('space-y-2.5 rounded-xl bg-surface', passport ? 'p-4 shadow-card' : 'border p-3.5')
   const head = (
     <div className="flex items-center gap-2">
@@ -27,12 +28,33 @@ export function HydroCard({ hydro: h, passport }: { hydro?: Hydro | null; passpo
       <h4 className={cn('min-w-0 flex-1 font-semibold', passport ? 'text-lg leading-7' : 'text-base leading-6')}>{t('Woda w okolicy')}</h4>
     </div>
   )
+  // F6: Overpass nie odpowiedział (502 / ponad 75 s) – komunikat i „Ponów”; reszta panelu działa dalej
+  if (!h) {
+    if (!failed) return null
+    return (
+      <section aria-label={t('Woda w okolicy')} className={box}>
+        {head}
+        <p className="text-sm leading-5 text-text-muted">{t('Nie udało się sprawdzić wody w okolicy – spróbuj za chwilę.')}</p>
+        {retry && !passport && (
+          <button
+            type="button"
+            onClick={retry}
+            className="inline-flex min-h-11 items-center gap-1.5 rounded-md border px-3 text-sm font-medium hover:bg-surface-2"
+          >
+            <RotateCw className="size-4" aria-hidden /> {t('Ponów')}
+          </button>
+        )}
+      </section>
+    )
+  }
   if (h.status === 'pending')
     return (
       <section aria-label={t('Woda w okolicy')} aria-busy className={box}>
         {head}
         <p className="flex items-center gap-2 text-sm leading-5 text-text-muted" role="status">
-          <Loader2 className="size-4 animate-spin text-brand" aria-hidden /> {t('Sprawdzam wodę w okolicy…')}
+          <Loader2 className="size-4 animate-spin text-brand" aria-hidden /> {t('Szukam wody w okolicy…')}
+        </p>
+        <p className="text-xs leading-4 text-text-muted">{t('Mapa rowów i cieków (OpenStreetMap) bywa wolna – to może potrwać do minuty. Reszta wyników jest już gotowa.')}
         </p>
       </section>
     )
@@ -59,7 +81,7 @@ export function HydroCard({ hydro: h, passport }: { hydro?: Hydro | null; passpo
                   </span>
                 )}
               </span>
-              <span className="tabular shrink-0 font-medium">{formatDistance(f.distance_m)}</span>
+              <span className="tabular shrink-0 font-medium">{f.distance_m < 5 ? t('przy samej działce') : formatDistance(f.distance_m)}</span>
             </li>
           ))}
         </ul>
@@ -76,19 +98,23 @@ export function HydroCard({ hydro: h, passport }: { hydro?: Hydro | null; passpo
           </span>
         </div>
       )}
-      {(h.sources ?? []).length > 0 && (
-        <p className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs leading-4 text-text-muted">
-          <SourceTag kind="pomiar" />
-          {(h.sources ?? []).map((s, i) => (
-            <span key={s.name}>
-              {i > 0 && '· '}
-              <a href={s.url} target="_blank" rel="noreferrer" className="underline-offset-2 hover:underline">
-                {s.name}
-              </a>
-            </span>
-          ))}
-        </p>
-      )}
+      <p className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs leading-4 text-text-muted">
+        <SourceTag kind="pomiar" />
+        {(h.sources ?? []).map((s, i) => (
+          <span key={s.name}>
+            {i > 0 && '· '}
+            <a href={s.url} target="_blank" rel="noreferrer" className="underline-offset-2 hover:underline">
+              {s.name}
+            </a>
+          </span>
+        ))}
+        {/* licencja ODbL wymaga atrybucji przy danych OSM – dopisujemy, gdy źródła jej nie zawierają */}
+        {!(h.sources ?? []).some((s) => s.name.includes('© autorzy OpenStreetMap')) && (
+          <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer" className="underline-offset-2 hover:underline">
+            {(h.sources ?? []).length > 0 && '· '}© {t('autorzy OpenStreetMap')} (ODbL)
+          </a>
+        )}
+      </p>
     </section>
   )
 }

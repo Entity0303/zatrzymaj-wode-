@@ -1045,4 +1045,12 @@ export const EN: Record<string, string> = {
   'średnie ryzyko suszy': 'medium drought risk',
   'wysokie ryzyko suszy': 'high drought risk',
   'Prognoza chwilowo niedostępna – spróbujemy ponownie po wybraniu działki': 'Forecast temporarily unavailable – we will retry when you pick a parcel',
+  // F6: woda w okolicy – ponawianie
+  'Szukam wody w okolicy…': 'Looking for water nearby…',
+  'szukam…': 'searching…',
+  'Nie udało się sprawdzić wody w okolicy – spróbuj za chwilę.': 'Could not check water nearby – try again in a moment.',
+  'Ponów': 'Retry',
+  'Mapa rowów i cieków (OpenStreetMap) bywa wolna – to może potrwać do minuty. Reszta wyników jest już gotowa.': 'The ditch and stream map (OpenStreetMap) can be slow – this may take up to a minute. The rest of the results is ready.',
+  'przy samej działce': 'right at the parcel',
+  'autorzy OpenStreetMap': 'OpenStreetMap contributors',
 }

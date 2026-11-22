@@ -3,8 +3,9 @@ import { LayerData, type FeatureStyler } from './LayerData'
 import type { MapLayer } from './types'
 
 /**
- * Woda w okolicy (F3) – rzeki, cieki, rowy, kanały i zbiorniki wokół działki z GET /api/layers/woda
- * (GeoJSON: LineString / Polygon, properties kind / color / label – kolor z odpowiedzi, dymek z `label`).
+ * Woda w okolicy (F3/F6) – rzeki, cieki, rowy, kanały i zbiorniki wokół działki z GET /api/layers/woda
+ * (GeoJSON: LineString / Polygon, properties kind / color / label / toward_outflow – kolor z odpowiedzi, dymek z `label`).
+ * Legenda – klasy z odpowiedzi (`legend`), zapasowo poniższe.
  */
 const KIND_COLOR: Record<string, string> = {
   rzeka: '#1D5D96',
@@ -15,9 +16,11 @@ const KIND_COLOR: Record<string, string> = {
 }
 const waterStyle: FeatureStyler = (p, kind) => {
   const c = p?.color ?? (p?.kind ? KIND_COLOR[p.kind] : undefined) ?? '#2F80C9'
+  // w stronę odpływu wody z działki – grubsza linia (tam warto szukać miejsca na zastawkę)
+  const out = (p as { toward_outflow?: boolean } | null)?.toward_outflow ? 2 : 0
   return {
     color: c,
-    weight: kind === 'line' ? (p?.kind === 'rzeka' ? 5 : p?.kind === 'row' ? 3 : 4) : 1.5,
+    weight: (kind === 'line' ? (p?.kind === 'rzeka' ? 5 : p?.kind === 'row' ? 3 : 4) : 1.5) + out,
     opacity: 0.95,
     dashArray: p?.kind === 'row' ? '6 4' : undefined,
     fillColor: c,
@@ -40,7 +43,8 @@ const WaterNearby: MapLayer = {
       { color: KIND_COLOR.zbiornik, label: 'Staw, zbiornik' },
     ],
   },
-  Overlay: (props) => <LayerData {...props} style={waterStyle} opacity={0.95} />,
+  // licencja ODbL: atrybucja w stopce mapy, gdy warstwa jest widoczna (legenda pokazuje `note` z serwera)
+  Overlay: (props) => <LayerData {...props} style={waterStyle} opacity={0.95} attribution="Woda w okolicy: © autorzy OpenStreetMap (ODbL)" />,
 }
 
 export default WaterNearby

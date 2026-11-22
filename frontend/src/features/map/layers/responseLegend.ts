@@ -11,8 +11,14 @@ const SATELLITE_LAYERS: LayerKey[] = ['kondycja', 'wilgotnosc']
  * Tytuł zostaje nasz („Kondycja upraw”) – termin techniczny (NDVI / NDMI) tylko w szczegółach.
  */
 export function layerLegend(base: MapLayer, state: LayerState): LegendSpec {
-  if (state.phase !== 'ok' || !state.data.legend?.length || base.legend.kind !== 'gradient') return base.legend
+  if (state.phase !== 'ok' || !state.data.legend?.length) return base.legend
   const d = state.data
+  // F6: klasy z opisami (np. „woda”: rzeka, ciek, rów, kanał, zbiornik – kolory jak na mapie)
+  if (base.legend.kind === 'classes') {
+    const items = (d.legend ?? []).filter((s) => s.label).map((s) => ({ color: s.color, label: s.label! }))
+    return items.length ? { ...base.legend, items } : base.legend
+  }
+  if (base.legend.kind !== 'gradient') return base.legend
   const stops = [...(d.legend ?? [])].sort((a, b) => a.value - b.value)
   return {
     ...base.legend,

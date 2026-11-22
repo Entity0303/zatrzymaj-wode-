@@ -33,6 +33,7 @@ import { DrawToolbar } from '@/features/draw/DrawToolbar'
 import { drawProblem, ringAreaHa, toPolygon } from '@/lib/geoArea'
 import type { SearchPhase } from '@/features/parcel-panel/types'
 import { useAnalysis } from '@/features/parcel-panel/useAnalysis'
+import { HydroRetryContext } from '@/features/parcel-panel/hydroRetry'
 import { SearchBar } from '@/features/search/SearchBar'
 import { useForecast } from '@/features/weather/useForecast'
 import { WeatherWidget } from '@/features/weather/WeatherWidget'
@@ -165,7 +166,7 @@ export default function Start() {
   const drawnGeom = parcel ? (drawnGeoms[parcel.id] ?? null) : null
   // F3: „od siewu” ma sens tylko z uprawą
   const periodUsed = period === 'od_siewu' && !crop ? null : period
-  const { run, retry: retryAnalysis } = useAnalysis(parcel?.id ?? null, crop, asOf, {
+  const { run, retry: retryAnalysis, retryHydro } = useAnalysis(parcel?.id ?? null, crop, asOf, {
     point: approxPoint,
     geometry: drawnGeom,
     cropHistory: history,
@@ -189,7 +190,7 @@ export default function Start() {
       : terrainLayer && terrainPending
         ? 'Liczę ukształtowanie terenu…'
         : layer === 'woda' && hydroStatus === 'pending'
-          ? 'Sprawdzam wodę w okolicy…'
+          ? 'Szukam wody w okolicy…'
           : null
   // „Spróbuj ponownie” w legendzie: nowy numer próby = to samo zapytanie warstwy jeszcze raz
   const [layerAttempt, setLayerAttempt] = useState(0)
@@ -724,7 +725,7 @@ export default function Start() {
             ? { kondycja: 'brak zdjęcia', wilgotnosc: 'brak zdjęcia' }
             : {}),
         ...(terrainPending ? { teren: 'liczę…', splyw: 'liczę…' } : {}),
-        ...(hydroStatus === 'pending' ? { woda: 'sprawdzam…' } : hydroStatus === 'none' ? { woda: 'brak w pobliżu' } : {}),
+        ...(hydroStatus === 'pending' ? { woda: 'szukam…' } : hydroStatus === 'none' ? { woda: 'brak w pobliżu' } : {}),
       }}
       canUse3d={!!parcel}
       side={side}
@@ -782,7 +783,11 @@ export default function Start() {
     />
   )
 
+  // F6: „Ponów” w karcie „Woda w okolicy”, gdy /api/hydro nie odpowiedział
+  const hydroRetry = { failed: run.phase === 'done' && !!run.hydroFailed, retry: retryHydro }
+
   return (
+    <HydroRetryContext.Provider value={hydroRetry}>
     <div className="flex h-dvh w-full flex-col overflow-hidden bg-bg print:hidden">
       <div className="flex min-h-0 flex-1">
         {!intro && <Sidebar onHome={goHome} />}
@@ -1179,5 +1184,6 @@ export default function Start() {
       </div>
       {!intro && <BottomTabs onHome={goHome} />}
     </div>
+    </HydroRetryContext.Provider>
   )
 }
