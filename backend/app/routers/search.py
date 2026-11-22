@@ -193,6 +193,15 @@ async def _addresses(locality: str, number: str, street: str | None, notices: li
     return [], None
 
 
+def _log_notices(notices: list[str]) -> None:
+    """P1: błąd źródła w wyszukiwaniu (wynik 200 z uwagą) – jedna linia logu na źródło, bez treści zapytania."""
+    from app.core.http import log_source_error
+
+    for n in dict.fromkeys(notices):
+        src, _, msg = n.partition(": ")
+        log_source_error("search", SourceError(src, msg))
+
+
 async def _search(pq: ParsedQuery) -> SearchResponse:
     deadline = time.monotonic() + settings.search_gmina_budget_s  # A19: budżet na sprawdzanie obrębów gminy
     notices: list[str] = []
@@ -276,6 +285,7 @@ async def _search(pq: ParsedQuery) -> SearchResponse:
         hint = hint or f"Dużo wyników – dopisz gminę, np. {pq.name}, {results[0].gmina or 'gmina'}."
     if not results and hint is None:
         hint = HINT
+    _log_notices(notices)
     return SearchResponse(query=pq.text, interpreted_as=pq.kind, results=results[:MAX_RESULTS], total=total,
                           truncated=truncated, hint=hint, notices=notices, attribution=attribution)
 

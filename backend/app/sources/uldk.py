@@ -152,7 +152,16 @@ async def _get(params: dict) -> str:
             last = exc.message
             continue
         except httpx.TimeoutException as exc:
-            raise SourceError(SOURCE, f"usługa nie odpowiada (przekroczono {settings.uldk_timeout_s:.0f} s)") from exc
+            # P1: jedno ponowienie z dłuższym limitem (ULDK bywa chwilowo wolne), potem błąd
+            try:
+                resp = await request("GET", settings.uldk_url, source=SOURCE, timeout_s=settings.uldk_retry_timeout_s,
+                                     params=params, headers={"Connection": "close"}, max_bytes=5_000_000)
+            except httpx.TimeoutException:
+                raise SourceError(SOURCE, f"usługa nie odpowiada (przekroczono {settings.uldk_timeout_s:.0f} s "
+                                          f"i {settings.uldk_retry_timeout_s:.0f} s)") from exc
+            except (RedirectBlocked, httpx.TransportError) as exc2:
+                last = getattr(exc2, "message", None) or f"brak połączenia z usługą ({exc2.__class__.__name__})"
+                continue
         except httpx.TransportError as exc:
             last = f"brak połączenia z usługą ({exc.__class__.__name__})"
             continue
@@ -240,7 +249,9 @@ async def _query(params: dict) -> list[Parcel]:
     async def download() -> list[Parcel]:
         return parse_response(await _get(params))
 
-    parcels = await cached_fetch(_cache, key, SOURCE, download, ttl_s=FOREVER, breaker_s=settings.uldk_breaker_s)
+    # P1: bezpiecznik ULDK dopiero po ≥ 5 błędach w 60 s, próbne zamknięcie po 30 s (nie na minuty)
+    parcels = await cached_fetch(_cache, key, SOURCE, download, ttl_s=FOREVER, breaker_s=settings.uldk_breaker_s,
+                                 breaker_after=settings.uldk_breaker_failures, breaker_window_s=settings.uldk_breaker_window_s)
     remember(parcels)
     return parcels
 

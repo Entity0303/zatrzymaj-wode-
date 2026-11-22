@@ -59,7 +59,7 @@ from app.analysis.water_balance import (
 from app.analysis.water_balance import to_contract as model_to_contract
 from app.core.cache import stale_scope
 from app.core.config import settings
-from app.core.http import SourceError, http_error, in_poland
+from app.core.http import NotFoundError, SourceError, http_error, in_poland, log_source_error
 from app.routers.parcel import parcel_out, resolve_parcel
 from app.schemas.analysis import (
     TerrainPending,
@@ -627,13 +627,17 @@ async def _resolve_point(lon: float, lat: float) -> tuple[uldk.Parcel, Approxima
     if not in_poland(lon, lat):
         raise HTTPException(status_code=404, detail={"source": None, "message": "Wskazany punkt leży poza Polską."})
     try:
-        return await asyncio.wait_for(uldk.by_point(lon, lat), timeout=settings.uldk_timeout_s * 2 + 1), None
+        return await asyncio.wait_for(uldk.by_point(lon, lat),
+                                      timeout=settings.uldk_timeout_s + settings.uldk_retry_timeout_s + 1), None
     except (SourceError, asyncio.TimeoutError) as exc:
         reason = (f"{exc.source}: {exc.message}" if isinstance(exc, SourceError) else "ULDK GUGiK: usługa nie odpowiada")
+        down = not isinstance(exc, NotFoundError)  # P1: awaria ULDK, nie „brak działki w tym miejscu”
+        if down:
+            log_source_error("obszar przybliżony", exc if isinstance(exc, SourceError) else SourceError(uldk.SOURCE, reason))
     p = approx_area.approximate_parcel(lon, lat)
     return p, ApproximateArea(
         center=[round(lon, 6), round(lat, 6)], side_m=approx_area.SIDE_M, area_ha=round(approx_area.SIDE_M ** 2 / 1e4, 2),
-        reason=reason, note=approx_area.NOTE,
+        reason=reason, note=approx_area.ULDK_DOWN_NOTE if down else approx_area.NOTE,
         voivodeship_note=f"Województwo przybliżone (najbliższy środek województwa): {p.voivodeship}.")
 
 

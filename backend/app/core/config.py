@@ -121,7 +121,10 @@ class Settings(BaseSettings):
     demo_parcels_preload: bool = True
     # ULDK: blokada (302 / 429 / HTML) – ponowienia po 1 s i 3 s, potem bezpiecznik na 60 s (D54)
     uldk_retry_delays_s: list[float] = [1.0, 3.0]
-    uldk_breaker_s: float = 60.0
+    uldk_breaker_s: float = 30.0  # P1: próbne zamknięcie po 30 s (było 60 s po pierwszym błędzie)
+    uldk_breaker_failures: int = 5  # P1: bezpiecznik ULDK dopiero po tylu błędach …
+    uldk_breaker_window_s: float = 60.0  # … w tym oknie
+    uldk_retry_timeout_s: float = 15.0  # P1: po przekroczeniu czasu jedno ponowienie z dłuższym limitem
 
     soilgrids_url: str = "https://rest.isric.org/soilgrids/v2.0/properties/query"
     soilgrids_timeout_s: float = 12.0

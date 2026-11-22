@@ -237,7 +237,7 @@ def test_point_analysis_falls_back_to_approximate_area(client):
     assert r.status_code == 200, r.text
     a = AnalysisResponse.model_validate(r.json())
     assert a.approximate_area is not None and a.approximate_area.area_ha == 1.0
-    assert "brak dokładnych granic działki" in a.approximate_area.note
+    assert a.approximate_area.note.startswith("Ewidencja gruntów chwilowo nie odpowiada")  # P1: ULDK nie odpowiada
     assert a.parcel.id.startswith("obszar_przyblizony")
     assert any("Obszar przybliżony" in x for x in a.reliability.limitations)
     assert a.verdict is not None and a.verdict.statements[-1].kind == "woda" and a.verdict.statements[-1].level == "info"
@@ -324,6 +324,6 @@ def test_pdf_approximate_area_has_no_technical_messages(client, long_weather):
     respx.get(settings.ortho_wms_url).mock(return_value=httpx.Response(503))
     _, text, _ = _pdf_text(client, {"lon": 22.6021, "lat": 53.0500, "date": "2018-11-21"})
     flat = " ".join(text.split())
-    assert "Obszar przybliżony – brak dokładnych granic działki. Analiza dla kwadratu 1 ha wokół wskazanego punktu." in flat
+    assert "Ewidencja gruntów chwilowo nie odpowiada – pokazuję obszar ok. 1 ha." in flat  # P1: nota przy awarii ULDK
     for bad in ("ponowna próba", "przekierowanie", "ogranicza ruch", "ULDK GUGiK: usługa"):
         assert bad not in flat, bad

@@ -146,19 +146,27 @@ def test_uldk_block_retries_twice_then_breaker(resp):
     assert not isinstance(e.value, NotFoundError) and "ogranicza" in e.value.message or "HTML" in e.value.message
     assert route.call_count == 3  # pierwsze zapytanie + 2 ponowienia (1 s, 3 s)
     b = breaker(uldk.SOURCE)
-    assert b.open and 55 <= b.until - time.time() <= 60
-    with pytest.raises(SourceError) as e2:  # bezpiecznik: przez 60 s ani jednego zapytania
+    assert not b.open  # P1: jeden błąd nie otwiera bezpiecznika ULDK (dopiero 5 w 60 s)
+    for k in range(4):  # kolejne 4 nieudane zapytania (inne działki) → 5 błędów w oknie → otwarty na 30 s
+        with pytest.raises(SourceError):
+            asyncio.run(uldk.by_id(f"061704_2.0011.38{k}/9"))
+    assert b.open and 25 <= b.until - time.time() <= 30
+    n = route.call_count
+    with pytest.raises(SourceError) as e2:  # otwarty: bez zapytań
         asyncio.run(uldk.by_id("143203_2.0027.112/11"))
-    assert route.call_count == 3 and "ponowna próba" in e2.value.message
-    b.until = time.time() - 1  # po 60 s – znowu pytamy
+    assert route.call_count == n and "ponowna próba" in e2.value.message
+    b.until = time.time() - 1  # po 30 s – próbne zapytanie
     route.mock(return_value=httpx.Response(200, text=ULDK_ONE))
-    assert asyncio.run(uldk.by_id(PID))[0].id == PID and route.call_count == 4
+    assert asyncio.run(uldk.by_id(PID))[0].id == PID and route.call_count == n + 1
+    assert not b.probing and not b.failures  # udane – zamknięty na dobre
 
 
 def test_retry_delays_are_1_and_3_seconds_by_default():
     from app.core.config import Settings
 
-    assert Settings().uldk_retry_delays_s == [1.0, 3.0] and Settings().uldk_breaker_s == 60.0
+    s = Settings()
+    assert s.uldk_retry_delays_s == [1.0, 3.0] and s.uldk_breaker_s == 30.0  # P1: próbne zamknięcie po 30 s
+    assert s.uldk_breaker_failures == 5 and s.uldk_breaker_window_s == 60.0 and s.uldk_retry_timeout_s == 15.0
 
 
 @respx.mock

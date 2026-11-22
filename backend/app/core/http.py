@@ -162,7 +162,31 @@ def http_error(exc: SourceError):
     from fastapi import HTTPException
 
     status = 404 if isinstance(exc, NotFoundError) else 502
+    if status >= 500:
+        log_source_error(status, exc)
     return HTTPException(status_code=status, detail={"source": exc.source, "message": exc.message})
+
+
+def log_source_error(status: int | str, exc: Exception, where: str = "") -> None:
+    """P1: jedna linia logu przy 502 / błędzie źródła – źródło, typ błędu, komunikat, czas, stan bezpiecznika.
+    Bez danych osobowych (bez treści zapytania wyszukiwania)."""
+    from app.core.cache import breaker_line
+
+    src = getattr(exc, "source", "?")
+    cause = exc.__cause__.__class__.__name__ if exc.__cause__ is not None else exc.__class__.__name__
+    log.warning("BŁĄD ŹRÓDŁA %s%s: źródło=%s typ=%s komunikat=%s czas=%s bezpiecznik=%s", status,
+                f" {where}" if where else "", src, cause, getattr(exc, "message", str(exc))[:160],
+                time.strftime("%H:%M:%S"), breaker_line(_breaker_name(src)))
+
+
+def _breaker_name(source: str) -> str:
+    """Nazwa bezpiecznika = nazwa cache źródła; dla ULDK – „uldk” (jak w sources/uldk.py)."""
+    from app.core.cache import BREAKERS
+
+    if source in BREAKERS:
+        return source
+    low = source.lower()
+    return next((k for k in BREAKERS if k.lower() in low or low in k.lower()), source)
 
 
 def not_implemented(what: str):

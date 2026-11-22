@@ -17,6 +17,9 @@ from app.sources.uldk import Parcel
 SIDE_M = 100.0
 APPROX_PREFIX = "obszar_przyblizony"
 NOTE = "Obszar przybliżony – brak dokładnych granic działki. Analiza dla kwadratu 1 ha wokół wskazanego punktu."
+# P1: ULDK nie odpowiada (awaria / limit czasu), a nie „brak działki” – komunikat wprost, co zrobić
+ULDK_DOWN_NOTE = ("Ewidencja gruntów chwilowo nie odpowiada – pokazuję obszar ok. 1 ha. "
+                  "Spróbuj kliknąć ponownie za chwilę.")
 # przybliżone środki geometryczne województw (lon, lat)
 VOIVODESHIP_CENTERS = {
     "dolnośląskie": (16.41, 51.09), "kujawsko-pomorskie": (18.49, 53.07), "lubelskie": (22.90, 51.22),

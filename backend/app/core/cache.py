@@ -25,7 +25,7 @@ from collections import OrderedDict
 from collections.abc import Awaitable, Callable, Iterator
 from contextlib import contextmanager
 from contextvars import ContextVar
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Generic, Hashable, TypeVar
 
@@ -178,6 +178,8 @@ def load_seed(seed_file: Path | None = None) -> int:
 class BreakerState:
     until: float = 0.0  # czas ścienny (time.time())
     reason: str = ""
+    failures: list[float] = field(default_factory=list)  # P1: chwile błędów w oknie (próg `breaker_after`)
+    probing: bool = False  # P1: po otwarciu – następne zapytanie jest próbne; błąd = od razu znowu otwarty
 
     @property
     def open(self) -> bool:
@@ -201,10 +203,34 @@ def breaker(source: str) -> BreakerState:
     return BREAKERS.setdefault(source, BreakerState())
 
 
-def trip(source: str, seconds: float, reason: str) -> None:
+def trip(source: str, seconds: float, reason: str, after: int = 1, window_s: float = 60.0) -> None:
+    """Otwarcie bezpiecznika na `seconds`. P1: `after` > 1 – dopiero po tylu błędach w `window_s` (np. ULDK: 5 w 60 s);
+    błąd próbnego zapytania po zamknięciu – od razu znowu otwarty."""
     b = breaker(source)
-    if not b.open:
-        b.until, b.reason = time.time() + seconds, reason
+    if b.open:
+        return
+    now = time.time()
+    b.failures = [t for t in b.failures if now - t <= window_s] + [now]
+    if after <= 1 or b.probing or len(b.failures) >= after:
+        b.until, b.reason, b.probing = now + seconds, reason, after > 1
+        b.failures = []
+
+
+def breaker_ok(source: str) -> None:
+    """P1: udane zapytanie – licznik błędów od zera, bezpiecznik zamknięty na dobre."""
+    b = BREAKERS.get(source)
+    if b is not None and (b.failures or b.probing):
+        b.failures, b.probing = [], False
+
+
+def breaker_line(source: str) -> str:
+    """P1: stan bezpiecznika do logu – „otwarty do 12:03:15” / „zamknięty (błędy 2 w 60 s)”."""
+    b = BREAKERS.get(source)
+    if b is None:
+        return "zamknięty"
+    if b.open:
+        return f"otwarty do {dt.datetime.fromtimestamp(b.until):%H:%M:%S}"
+    return f"zamknięty (błędy {len(b.failures)} w oknie{', po próbie' if b.probing else ''})"
 
 
 # ── cache źródła ────────────────────────────────────────────────────────────────────────────
@@ -404,6 +430,8 @@ async def cached_fetch(
     cache: TTLCache[V], key: Hashable, source: str, fetch: Callable[[], Awaitable[V]], ttl_s: float | None = None,
     timeout_s: float | None = None,
     breaker_s: float | None = None,
+    breaker_after: int = 1,
+    breaker_window_s: float = 60.0,
 ) -> V:
     """Świeży wpis z cache → (tryb offline: stary wpis albo czytelny błąd) → bezpiecznik → zapytanie do źródła
     (z łącznym limitem `timeout_s`) → przy błędzie lub przekroczeniu czasu przeterminowany wpis (z adnotacją)."""
@@ -429,12 +457,14 @@ async def cached_fetch(
         raise
     except SourceError as exc:
         if breaker_s:
-            trip(cache.name, breaker_s, exc.message)
+            trip(cache.name, breaker_s, exc.message, breaker_after, breaker_window_s)
         stale = cache.get_stale(key)
         if stale is None:
             raise
         value, stored_at = stale
         note_stale(source, stored_at, exc.message)
         return value
+    if breaker_after > 1:
+        breaker_ok(cache.name)
     cache.set(key, value, ttl_s)
     return value
