@@ -159,7 +159,7 @@ def field_state_model(
 def recent_note(rb: RecentBalance) -> str | None:
     if rb.balance_mm is None or rb.until is None:
         return None
-    txt = f"{rb.start:%d.%m}–{rb.until:%d.%m}"
+    txt = f"{rb.start:%d.%m}–{rb.until:%d.%m.%Y}"
     if rb.deviation_mm is None:
         return txt
     if abs(rb.deviation_mm) < 5:

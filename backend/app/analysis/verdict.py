@@ -12,6 +12,7 @@ from pathlib import Path
 import numpy as np
 import yaml
 
+from app.core.format import num, rain_area_ha, volume_m3
 from app.analysis.et0 import DailyWeather
 from app.analysis.soil_label import SoilProfile
 from app.schemas.analysis import (
@@ -52,14 +53,17 @@ def _cap(t: str) -> str:
 
 def soil_statement(prof: SoilProfile, wod_mm: float | None) -> VerdictStatement:
     c = cfg()["soil"]
-    rule = c.get(prof.group) or c["nieznana"]
+    group = prof.group
+    if group == "lekka" and wod_mm is not None and wod_mm >= cfg()["thresholds"]["soil_light_warn_wod_mm"]:
+        group = "lekka_warn"  # A14: lżejsza gleba, ale WOD działki przeciętny – jak w modelu i rankingu
+    rule = c.get(group) or c["nieznana"]
     wod = "brak danych" if wod_mm is None else f"{round(wod_mm)}"
     nums: dict = {"wod_mm": None if wod_mm is None else round(wod_mm), "grupa": prof.group,
                   "srednia_kategoria": prof.mean_category, "zrodlo": prof.source}
     if prof.two_soils:
         a, b = prof.parts[0], prof.parts[1]
         text = c["two_soils"].format(a_pct=round(100 * a.share), a_name=a.name, b_pct=round(100 * b.share), b_name=b.name)
-        tail = c["two_soils_tail"].get(prof.group)
+        tail = c["two_soils_tail"].get(group)
         if tail:
             text += " " + tail.format(wod=wod)
         nums.update(udzial_a=round(100 * a.share), udzial_b=round(100 * b.share))
@@ -135,7 +139,11 @@ def terrain_statement(t: Terrain | None, pending: bool = False) -> VerdictStatem
     level = max((RATING_LEVEL[z.rating] for z in big), key=LEVEL_ORDER.get, default="ok")
     text = " ".join(z.sentence for z in big)
     if t.depressions_count and t.largest_depression and t.largest_depression.volume_m3:
-        text += f" Jest tu zagłębienie bez odpływu – zmieści ok. {round(t.largest_depression.volume_m3)} m³ wody."
+        vol = t.largest_depression.volume_m3
+        text += f" Jest tu zagłębienie bez odpływu – zmieści orientacyjnie ok. {volume_m3(vol)} wody"
+        ha = rain_area_ha(vol)
+        text += (f" (tyle, ile spada na ok. {num(round(ha, -1) if ha >= 20 else round(ha))} ha w ulewie 20 mm)."
+                 if ha >= 2 else ".")
     return VerdictStatement(kind="teren", level=level, text=text,
                             numbers={z.key: round(z.share_pct) for z in t.zones})
 
@@ -230,7 +238,10 @@ def _water_statement(recs: list[Recommendation]) -> VerdictStatement:
 
 def _match(cond: dict, lv: dict[str, str], wet: float, dry: float) -> bool:
     for k, v in cond.items():
-        if k == "bad_count_gte":
+        if k == "uprawy_not":
+            if lv.get("uprawy") == v:
+                return False
+        elif k == "bad_count_gte":
             if sum(x == "bad" for x in lv.values()) < v:
                 return False
         elif k == "wet_pct_gte":

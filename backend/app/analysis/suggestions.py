@@ -24,6 +24,7 @@ from time import perf_counter
 import numpy as np
 import yaml
 
+from app.core.format import num
 from app.analysis.crops import ALL_CROPS, CEREAL_GROUPS, RANKING_CROPS, Crop
 from app.analysis.et0 import DailyWeather
 from app.analysis.water_balance import (
@@ -287,7 +288,7 @@ def rotation(crop: Crop, history: list[str]) -> RotationCheck:
 
 
 def _n(v: float, nd: int = 1) -> str:
-    return f"{v:.{nd}f}".replace(".", ",")
+    return num(v, nd)
 
 
 def category(suit: str, risk: int, median_rel: float, rot: RotationCheck) -> str:

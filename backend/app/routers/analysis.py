@@ -18,6 +18,7 @@ import numpy as np
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
 
+from app.core.format import date_pl, num
 from app.analysis.et0 import DailyWeather
 from app.analysis.crops import get_crop
 from app.analysis.soil import assess_soil
@@ -504,7 +505,7 @@ def _balance_indicator(wb) -> Indicator:
     if wb.deviation_mm is not None and wb.mean_balance_mm is not None:
         more = "mniej" if wb.deviation_mm < 0 else "więcej"
         mean = f"{wb.mean_balance_mm:.0f}".replace("-", "−")
-        note = f"o {abs(wb.deviation_mm):.0f} mm {more} niż zwykle (średnia 10 lat {mean} mm), od {wb.season_start:%d.%m}"
+        note = f"o {abs(wb.deviation_mm):.0f} mm {more} niż zwykle (średnia 10 lat {mean} mm), od {date_pl(wb.season_start)}"
     return Indicator(value=wb.current_balance_mm, unit="mm", status=status, note=note,
                      source_tag=wb.history.source_tag)
 
@@ -541,7 +542,7 @@ def _sat_indicator(sat, which: str, no_sat: SourceTag) -> SatelliteIndicator:
     label = sat.ndvi_label if which == "ndvi" else (sat.ndmi_label or "ocena tylko w sezonie przy gęstym łanie")
     return SatelliteIndicator(
         value=round(pts), unit="pkt", label=label, status=SAT_LEVEL_STATUS.get(sat.level or "info", "ok"),
-        note=f"{'NDVI' if which == 'ndvi' else 'NDMI'} {raw:.2f} · zdjęcie z {sat.date:%d.%m.%Y}", index_value=raw,
+        note=f"{'NDVI' if which == 'ndvi' else 'NDMI'} {num(raw, 2)} · zdjęcie z {date_pl(sat.date)}", index_value=raw,
         source_tag=SourceTag(kind="pomiar", date=sat.date, source="Sentinel-2 L2A"))
 
 
@@ -887,7 +888,7 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
             area_ha, area_est, area_note = cultivated_area_ha, False, "Powierzchnia uprawy podana przez rolnika."
         else:
             area_ha, area_est = round(p.area_ha * share, 2), True
-            area_note = (f"Oszacowanie: powierzchnia działki z geometrii ULDK ({p.area_ha:.2f} ha) × udział gruntów "
+            area_note = (f"Oszacowanie: powierzchnia działki z geometrii ULDK ({num(p.area_ha, 2)} ha) × udział gruntów "
                          f"rolnych wg IUNG ({round(100 * share)}%). Podaj własną powierzchnię uprawy, jeśli jest inna.")
         rep_map = map_sum.representative if map_sum else None
         ctx = sugg.Context(

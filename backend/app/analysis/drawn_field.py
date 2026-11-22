@@ -19,6 +19,7 @@ from typing import Any
 from shapely.geometry import Polygon
 from shapely.validation import explain_validity
 
+from app.core.format import num
 from app.analysis.approx_area import nearest_voivodeship
 from app.core.config import settings
 from app.core.geo import to_2180
@@ -37,7 +38,7 @@ class DrawnError(ValueError):
 
 
 def _pl(x: float, nd: int) -> str:
-    return f"{x:.{nd}f}".replace(".", ",")
+    return num(x, nd)
 
 
 def _ring(raw: Any, what: str) -> list[tuple[float, float]]:

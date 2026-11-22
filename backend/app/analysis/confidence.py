@@ -260,6 +260,8 @@ def reliability(i: ConfidenceInputs) -> tuple[Reliability, list[Premise], int]:
                           "przeliczone do poziomu stacji (archiwum IMGW publikuje dane z opóźnieniem).")
     elif i.weather_name and not i.weather_fallback:
         lim.insert(0, f"Pogoda uśredniona dla obszaru {i.weather_resolution} ({i.weather_name}).")
+        if i.precip is not None and getattr(i.precip, "outdated", None):  # A14: stacja bez aktualnych danych
+            lim.insert(1, i.precip.sentence)
     if i.wb:
         lim += i.wb.limitations
     if i.model:

@@ -17,6 +17,7 @@ import yaml
 from shapely.geometry import mapping, shape
 from shapely.geometry.base import BaseGeometry
 
+from app.core.format import num, volume_m3
 from app.schemas.analysis import (
     SourceTag,
     Terrain,
@@ -69,8 +70,7 @@ def zones(facts: dict, group: str | None) -> list[TerrainZone]:
 
 
 def _fmt(v: float, nd: int = 0) -> str:
-    txt = f"{v:.{nd}f}".replace(".", ",")
-    return txt
+    return num(v, nd)
 
 
 def summary(facts: dict) -> str:
@@ -106,7 +106,7 @@ def summary(facts: dict) -> str:
         vol = d.get("volume_m3")
         word = "zagłębienie" if n == 1 else "zagłębienia" if n < 5 else "zagłębień"
         parts.append(f"Na działce jest {n} {word} bez odpływu, gdzie zbiera się woda"
-                     + (f" (największe zmieści ok. {_fmt(vol)} m³)." if vol else "."))
+                     + (f" (największe zmieści orientacyjnie ok. {volume_m3(vol)})." if vol else "."))
     else:  # o zagłębieniach bez odpływu mówimy tylko, gdy są (D66); obniżenia (strefa) – osobno
         wet = (facts.get("zone_share_pct") or {}).get("mokry_dolek") or 0.0
         if wet >= 5:

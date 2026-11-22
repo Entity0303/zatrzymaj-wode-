@@ -16,7 +16,7 @@ Progi i zdania: rules/precip.yaml.
 from __future__ import annotations
 
 import dataclasses
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import date, timedelta
 from functools import lru_cache
 from pathlib import Path
@@ -26,6 +26,7 @@ import yaml
 
 from app.analysis.et0 import DailyWeather
 from app.core.config import settings
+from app.core.format import date_pl, num
 from app.sources import imgw
 
 RULES = Path(__file__).parent / "rules" / "precip.yaml"
@@ -67,6 +68,7 @@ class PrecipInfo:
     sentence: str = ""
     confidence_lowered: bool = False
     store_end: date | None = None
+    outdated: list[tuple[imgw.StationPick, date | None]] = field(default_factory=list)  # A14: stacje bez danych z ost. roku
 
 
 def rate(a: float, b: float) -> str:
@@ -97,6 +99,11 @@ def _km(d: float) -> str:
 
 def sentence(info: PrecipInfo) -> str:
     s, t = cfg()["sentences"], cfg()["thresholds"]
+    if info.main == "nasa" and info.outdated:
+        p, last = info.outdated[0]
+        key = "nasa_outdated_factor" if info.factor is not None else "nasa_outdated"
+        return s[key].format(station=p.name, km=_km(p.dist_km), last=date_pl(last),
+                             factor=num(info.factor, 2) if info.factor is not None else "")
     if info.main == "nasa":
         return s["nasa_only"] if info.store_end is not None else s["nasa_no_store"]
     names = [f"{p.name} ({_km(p.dist_km)})" for p, _w in info.stations]
@@ -111,7 +118,7 @@ def sentence(info: PrecipInfo) -> str:
     if info.agreement == "mocno_sie_roznia":
         txt += s["strong"]
     if info.filled_days > 0 and info.filled_from is not None:
-        txt += s["filled"].format(days=info.filled_days, from_=f"{info.filled_from:%d.%m}")
+        txt += s["filled"].format(days=info.filled_days, from_=date_pl(info.filled_from))
     return txt
 
 
@@ -129,7 +136,20 @@ def apply(w: DailyWeather, lon: float, lat: float, analysis_date: date) -> tuple
         main = "imgw_daleko"
         picks = imgw.nearest(st, lon, lat, w.dates, settings.imgw_max_stations, settings.imgw_fallback_km)
     if not picks:
-        info = PrecipInfo(main="nasa", store_end=store_end)
+        # A14: brak stacji z AKTUALNYMI danymi (≥ 80% dni z ostatnich 12 mies.) – NASA przeliczona do poziomu najbliższej
+        # stacji z danymi historycznymi (gdy jest), pewność niżej
+        old = imgw.nearest(st, lon, lat, w.dates, 1, settings.imgw_fallback_km, min_recent=0.0)
+        info = PrecipInfo(main="nasa", store_end=store_end, confidence_lowered=True)
+        if old:
+            series = st.series(old[0].idx, w.dates)
+            both = ~np.isnan(series) & ~np.isnan(w.precip)
+            t = cfg()["thresholds"]
+            if both.sum() >= t["factor_min_days"] and w.precip[both].sum() > 0:
+                info.factor = round(float(np.clip(series[both].sum() / w.precip[both].sum(), t["factor_min"],
+                                                  t["factor_max"])), 3)
+                info.common_days = int(both.sum())
+                w = replace(w, precip=w.precip * info.factor)
+            info.outdated = [(old[0], imgw.last_day(st, old[0].idx))]
         info.sentence = sentence(info)
         return w, info
 

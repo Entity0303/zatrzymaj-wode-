@@ -1133,9 +1133,9 @@ def analyze_surface(z: np.ndarray, step: float, inside: np.ndarray,
 # --------------------------------------------------------------------------------------
 
 LIMITATIONS = [
-    "Siatka {step:g} m – formy mniejsze niż ~{step2:g} m (bruzdy, koleiny, rowki) są niewidoczne.",
+    "Siatka {step} m – formy mniejsze niż ~{step2} m (bruzdy, koleiny, rowki) są niewidoczne.",
     "Wysokości podawane co 0,1 m – przy małych spadkach kierunek spływu jest niepewny; stosujemy wygładzenie "
-    "σ = {sigma:g} m.",
+    "σ = {sigma} m.",
     "Bufor {buffer:.0f} m: zlewnia sięgająca dalej (długie stoki) jest niedoszacowana.",
     "Model nie zna drenażu, rowów, przepustów, dróg ani kierunku orki – rzeczywisty odpływ może iść inaczej.",
     "Objętości zagłębień i dopływu to szacunek rzędu wielkości, nie projekt.",
@@ -1194,7 +1194,10 @@ def compute(prep: Prepared, heights: np.ndarray, nmt_info: dict, params: dict | 
     f["nmt_zero_values"] = nmt_info.get("zero_values", 0)
     f["nmt_spikes_removed"] = n_spikes
     f["confidence"] = "wysoka" if missing < 0.01 else ("srednia" if missing < 0.1 else "ograniczona")
-    f["limitations"] = [t.format(step=prep.step, step2=2 * prep.step, sigma=p["smooth_sigma_m"], buffer=p["buffer_m"])
+    from app.core.format import num as _num
+
+    f["limitations"] = [t.format(step=_num(prep.step), step2=_num(2 * prep.step), sigma=_num(p["smooth_sigma_m"]),
+                                 buffer=p["buffer_m"])
                         for t in LIMITATIONS]
     return res
 

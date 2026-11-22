@@ -10,6 +10,7 @@ Surowe wagi (D37):
 Udziały = wagi / suma wag (tylko czynniki z danymi), zaokrąglone, suma dokładnie 1.
 """
 
+from app.core.format import num
 from app.analysis.facts import Facts
 from app.schemas.analysis import Cause, SourceTag
 
@@ -21,7 +22,7 @@ TERRAIN_WEIGHT = 0.2
 
 
 def _fmt(v: float) -> str:
-    return f"{v:.0f}"
+    return num(v, 0)
 
 
 def build_causes(f: Facts) -> list[Cause]:
@@ -50,9 +51,9 @@ def build_causes(f: Facts) -> list[Cause]:
     if f.get("kc") is not None and f.get("phase_label"):
         if f.get("sensitive"):
             w = CROP_WEIGHT_PER_KC * f["kc"]
-            etc = f"{f['etc_mm_day']:.1f}".replace(".", ",") if f.get("etc_mm_day") else None
+            etc = num(f["etc_mm_day"], 1) if f.get("etc_mm_day") else None
             use = f", zużycie wody ok. {etc} mm dziennie" if etc else ""
-            kc = f"{f['kc']:.2f}".replace(".", ",")
+            kc = num(f["kc"], 2)
             desc = f"{f['crop_label'].lower()} – {f['phase_label']}{use} (Kc {kc})"
         else:
             w = CROP_WEIGHT_OFF

@@ -24,6 +24,7 @@ from pathlib import Path
 import numpy as np
 import yaml
 
+from app.core.format import date_pl, num
 from app.analysis.crops import PHASE_LABELS, Crop, DayInfo, no_irrigation_sentence
 from app.analysis.et0 import DailyWeather
 from app.schemas.analysis import (
@@ -599,7 +600,7 @@ def risk_class(days_to_stress: int | None) -> str:
 
 
 def _fmt_mm(v: float) -> str:
-    return f"{v:.1f}".replace(".", ",").replace(",0", "")
+    return num(v, 0) if abs(v - round(v)) < 0.05 else num(v, 1)
 
 
 @dataclass
@@ -858,7 +859,7 @@ def _irrigation_plan(
     else:
         interval = None if mean_net < 0.5 else int(min(14, max(MIN_DOSE_INTERVAL_DAYS, dose // mean_net)))
     total = float(max(5, round(need / 5) * 5)) if need > 0 else dose
-    when = "teraz" if first == analysis_date else f"ok. {first:%d.%m}"
+    when = "teraz" if first == analysis_date else f"ok. {date_pl(first)}"
     msg = f"{_fmt_mm(dose)} mm {when}"
     if len(doses) > 1:
         msg += f", powtórz za ok. {interval} dni (w 7 dniach {len(doses)} dawki, niedobór ok. {_fmt_mm(total)} mm)"
@@ -954,7 +955,7 @@ def to_contract(res: SoilWaterResult, crop: Crop, analysis_date: date, no_model_
             when="teraz", when_label="teraz", permit="required",
             permit_note="Wymaga pozwolenia wodnoprawnego (pobór wody) – Wody Polskie.",
             permit_url="https://www.gov.pl/web/wody-polskie",
-            title="Nawadnianie " + ("teraz" if irr.first_date == analysis_date else f"ok. {irr.first_date:%d.%m}"),
+            title="Nawadnianie " + ("teraz" if irr.first_date == analysis_date else f"ok. {date_pl(irr.first_date)}"),
             description=irr.message + ".",
             why=(
                 f"Woda w strefie korzeni {res.water_pct:.0f}% ({res.water_mm:.0f} mm). Rośliny odczuwają brak wody, "

@@ -28,6 +28,7 @@ from typing import Any
 
 import yaml
 
+from app.core.format import num
 from app.analysis.facts import FACT_META, Facts
 from app.schemas.analysis import EcoScheme, Evidence, Recommendation
 
@@ -196,8 +197,7 @@ def fmt_value(v: Any) -> str:
         return "tak" if v else "nie"
     if isinstance(v, (int, float)):
         # bez pozornej precyzji: od 10 w górę liczby całkowite; minus typograficzny
-        txt = f"{v:.0f}" if abs(v) >= 10 or abs(v - round(v)) < 0.05 else f"{v:.1f}".replace(".", ",")
-        return txt.replace("-", "−")
+        return num(v, 0) if abs(v) >= 10 or abs(v - round(v)) < 0.05 else num(v, 1)
     return str(v)
 
 
@@ -216,8 +216,8 @@ def evidence(conds: list[dict], facts: Facts) -> list[Evidence]:
     out, seen = [], set()
     for c in conds:
         name = DISPLAY_FACT.get(c["fact"], c["fact"])
-        if name in HIDDEN_FACTS or name in seen or facts.get(name) is None:
-            continue
+        if name in HIDDEN_FACTS or name in seen or facts.get(name) is None or name not in FACT_META:
+            continue  # A14: fakt bez polskiej etykiety nie trafia do uzasadnienia (żadnych nazw technicznych)
         seen.add(name)
         label, unit, source = FACT_META.get(name, (name, None, "analiza"))
         v = facts.get(name)

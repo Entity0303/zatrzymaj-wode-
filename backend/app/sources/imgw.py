@@ -177,9 +177,10 @@ def nice_name(name: str) -> str:
 
 
 def nearest(st: Store, lon: float, lat: float, dates: np.ndarray, n: int = 3, max_km: float = 30.0,
-            min_coverage: float = 0.8) -> list[StationPick]:
+            min_coverage: float = 0.8, min_recent: float = 0.8, recent_days: int = 365) -> list[StationPick]:
     """Najbliższe stacje z danymi: w promieniu `max_km`, z pomiarem w ≥ `min_coverage` dni części wspólnej okna
-    `dates` i magazynu. Najbliższe najpierw, najwyżej `n`."""
+    `dates` i magazynu ORAZ w ≥ `min_recent` dni ostatnich `recent_days` dni tej części (A14 – stacja zamknięta albo
+    z przerwą w ostatnim roku nie jest „aktualna”, np. Dynów kończy się 31.10.2024). Najbliższe najpierw, najwyżej `n`."""
     if len(dates) == 0:
         return []
     pos = (dates - st.start).astype(int)
@@ -192,12 +193,20 @@ def nearest(st: Store, lon: float, lat: float, dates: np.ndarray, n: int = 3, ma
         if dist[i] > max_km:
             break
         cov = float((st.data[pos[0]: pos[-1] + 1, i] >= 0).mean())
-        if cov >= min_coverage:
+        r0 = max(pos[0], pos[-1] - recent_days + 1)
+        recent = float((st.data[r0: pos[-1] + 1, i] >= 0).mean())
+        if cov >= min_coverage and recent >= min_recent:
             out.append(StationPick(int(i), str(st.codes[i]), nice_name(str(st.names[i])), str(st.kinds[i]),
                                    float(st.lon[i]), float(st.lat[i]), round(float(dist[i]), 1), round(cov, 3)))
             if len(out) >= n:
                 break
     return out
+
+
+def last_day(st: Store, idx: int) -> date | None:
+    """Ostatni dzień z pomiarem stacji w magazynie (do zdania „dane stacji kończą się …”)."""
+    have = np.flatnonzero(st.data[:, idx] >= 0)
+    return None if not have.size else (st.start + np.timedelta64(int(have[-1]), "D")).astype(object)
 
 
 def idw(series: list[np.ndarray], dist_km: list[float], power: float = 2.0) -> np.ndarray:

@@ -14,10 +14,14 @@ verdict:
     crops_good_max: 4
     crops_good_min: 2
     crops_bad_max: 4
+    # A14: gleba „lekka” z mapy (tekstura), ale WOD całej działki (z niego liczy się model i ranking) ≥ 150 mm (górna
+    # część kat. II wg IUNG) – ocena „uwaga”, nie „źle”; nagłówek nie może przeczyć rankingowi
+    soil_light_warn_wod_mm: 150
     water_actions_max: 3
 
   soil:
     lekka: {level: bad, text: "Ziemia słaba – {opis}, mało trzyma wody (ok. {wod} mm wody dostępnej dla roślin)."}
+    lekka_warn: {level: warn, text: "Ziemia lżejsza – {opis}; cała działka trzyma średnio ok. {wod} mm wody dostępnej dla roślin – przeciętnie."}
     srednia: {level: ok, text: "Ziemia dobra – {opis}, dobrze trzyma wodę (ok. {wod} mm wody dostępnej dla roślin)."}
     ciezka: {level: ok, text: "Ziemia mocna – {opis}, trzyma dużo wody (ok. {wod} mm), ale po długich deszczach wolno obsycha."}
     organiczna: {level: warn, text: "Gleba organiczna (torf, mursz) – dużo wody, ale latem przesycha i osiada; wymaga ostrożnej uprawy."}
@@ -25,6 +29,7 @@ verdict:
     two_soils: "Na działce są dwie gleby: {a_pct}% – {a_name} i {b_pct}% – {b_name}."
     two_soils_tail:
       lekka: "Przeważa gleba lekka – mało trzyma wody (ok. {wod} mm wody dostępnej dla roślin)."
+      lekka_warn: "Przeważa gleba lekka, ale cała działka trzyma średnio ok. {wod} mm wody dostępnej dla roślin – przeciętnie."
       srednia: "Przeważa gleba dobra – trzyma wodę (ok. {wod} mm wody dostępnej dla roślin)."
       ciezka: "Przeważa gleba mocna – trzyma dużo wody (ok. {wod} mm)."
 
@@ -68,9 +73,11 @@ verdict:
 
   # Nagłówek – pierwsza pasująca reguła (warunki: poziomy pozycji, liczba „źle”, udziały stref terenu)
   headlines:
-    - {if: {gleba: bad, opady: bad}, text: "Słaba, sucha działka – siej rośliny odporne na suszę"}
-    - {if: {gleba: bad}, text: "Słaba, piaszczysta działka – siej rośliny odporne na suszę"}
+    # A14: „Słaba…” tylko, gdy ranking coś odradza (uprawy ≠ ok) – inaczej nagłówek przeczyłby rankingowi
+    - {if: {gleba: bad, opady: bad, uprawy_not: ok}, text: "Słaba, sucha działka – siej rośliny odporne na suszę"}
+    - {if: {gleba: bad, uprawy_not: ok}, text: "Słaba, piaszczysta działka – siej rośliny odporne na suszę"}
     - {if: {bad_count_gte: 2}, text: "Trudna działka – mało wody dla wymagających upraw"}
+    - {if: {opady: bad, uprawy: [warn, bad]}, text: "Trudna działka – mało wody dla wymagających upraw"}  # A14
     - {if: {gleba: ok, opady: [ok, warn], dry_pct_gte: 30}, text: "Dobra działka z suchą górką"}
     - {if: {gleba: ok, opady: [ok, warn], wet_pct_gte: 15}, text: "Dobra działka z wilgotnym obniżeniem"}
     - {if: {gleba: ok, opady: ok}, text: "Dobra działka – trzyma wodę"}

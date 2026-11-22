@@ -49,6 +49,8 @@ FACT_META: dict[str, tuple[str, str | None, str]] = {
     "longest_dry_spell_days": ("Najdłuższy okres bez opadu w sezonie", "dni", "NASA POWER"),
     "days_to_stress": ("Dni do stresu wodnego roślin", "dni", "Model wody w glebie FAO-56"),
     "stress_days_season": ("Dni stresu wodnego w sezonie", "dni", "Model wody w glebie FAO-56"),
+    # A14: bez nazw technicznych w uzasadnieniach – „dni stresu: 2,7 raza więcej niż średnio w 10 latach”
+    "stress_ratio": ("Dni stresu względem średniej z 10 lat", "razy więcej niż średnio", "Model wody w glebie FAO-56"),
     "stress_days_mean": ("Średnia dni stresu (10 lat)", "dni", "Model wody w glebie FAO-56"),
     "irrigation_dose_mm": ("Dawka nawadniania", "mm", "Model wody w glebie FAO-56"),
     "irrigation_total_mm": ("Niedobór wody w 7 dniach", "mm", "Model wody w glebie FAO-56"),
@@ -270,5 +272,5 @@ def build_facts(
     v["irrigation_confidence"] = "srednia" if v["horizon_kind"] == "prognoza" else "ograniczona"
     if model and model.irrigation and model.irrigation.first_date:
         fd = model.irrigation.first_date
-        v["irrigation_when"] = "teraz" if fd == analysis_date else f"ok. {fd:%d.%m}"
+        v["irrigation_when"] = "teraz" if fd == analysis_date else f"ok. {fd:%d.%m.%Y}"
     return Facts(v)

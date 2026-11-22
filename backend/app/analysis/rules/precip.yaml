@@ -31,5 +31,7 @@ precip:
     nasa_same: " Dane satelitarno-modelowe NASA są zgodne z pomiarem (różnica {pct}%)."
     strong: " W tym sezonie źródła mocno się różnią – możliwe lokalne burze; sprawdź deszczomierz na polu."
     filled: " Ostatnie {days} dni (od {from_}) to dane NASA przeliczone do poziomu stacji – archiwum IMGW jeszcze ich nie ma."
+    nasa_outdated_factor: "Najbliższa stacja IMGW {station} ({km}) nie ma aktualnych danych (pomiary do {last}) – opady z danych satelitarno-modelowych NASA przeliczonych do poziomu tej stacji (×{factor}); pewność niższa."
+    nasa_outdated: "Najbliższa stacja IMGW {station} ({km}) nie ma aktualnych danych (pomiary do {last}) – opady z danych satelitarno-modelowych NASA (siatka ok. 50 km); pewność niższa."
     nasa_only: "W promieniu 50 km nie ma stacji IMGW z danymi – opady z danych satelitarno-modelowych NASA (siatka ok. 50 km); na nizinach zwykle zawyżają one opad o 15–20%."
     nasa_no_store: "Opady z danych satelitarno-modelowych NASA (siatka ok. 50 km) – dane ze stacji IMGW są niedostępne."
