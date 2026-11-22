@@ -4,6 +4,10 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-22 08:10 · `main` · F35: czytelność wykresów (jednostki nad osiami, średnia poza słupkami)
+„Ceny i pogoda”: jednostki „mm” i „zł/t” nad osiami z odstępem od najwyższej wartości (frontend i PDF). „Woda na tle 10 lat”: podpis średniej przy prawej krawędzi poza słupkami (frontend – jak w PDF), wartość słupka, na którą wypadłaby linia średniej, odsunięta pod / nad linię, wartości rysowane po linii. PDF obejrzany jako obraz (skrócony 201305 30.06.2018 – 2 strony, pełny – 13). Testy: `pytest -k "report or chart or a28"` 45, `tsc`, build; oxlint – 2 nowe ostrzeżenia w `PassportSection.tsx` (nie z tej zmiany).
+**Pliki:** `frontend/src/features/passport/PriceWeatherCard.tsx`, `frontend/src/features/passport/charts/SeasonBars.tsx`, `backend/app/report/charts.py`. **Kontrakt:** bez zmian.
+
 ## 2026-11-22 07:50 · `main` · A27c: „zapas z opadów” zamiast „wsiąkania”
 Zmiana nazw w tekstach dla rolnika (D117) – reguły, kafel, PDF; bez zmian w obliczeniach i kontrakcie. PDF skrócony 201305 30.06.2018 i Pożarowo 10.07.2018 – 2 strony, pełny 201305 – 13. Testy: 686 bez sieci, `tsc`, build, oxlint bez nowych ostrzeżeń.
 **Pliki:** `backend/app/analysis/{groundwater.py,rules/groundwater.yaml}`, `schemas/groundwater.py`, `routers/groundwater.py`, `report/{builder.py,templates/report.html}`, `tests/test_a27.py`, `frontend/src/features/groundwater/*`, `api/{client,types}.ts` (komentarze), `FieldOverview.tsx`, `VerdictSection.tsx` (komentarze). **Kontrakt:** kształt bez zmian, nowe teksty.
