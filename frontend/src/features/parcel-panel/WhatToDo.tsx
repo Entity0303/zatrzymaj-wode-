@@ -1,6 +1,7 @@
 import type { AnalysisResponse, RecommendationCategory } from '@/api/types'
 import { RecommendationCard } from '@/components/RecommendationCard'
 import { useLang } from '@/lib/i18n'
+import { useSettings } from '@/lib/storage'
 import { irrigationShown } from '@/lib/crops'
 import { RecommendationWhy } from './RecommendationWhy'
 
@@ -16,10 +17,15 @@ export function WhatToDo({
   onShowOnMap?: (g: GeoJSON.Geometry) => void
 }) {
   const { t } = useLang()
+  const [settings] = useSettings()
+  const advisor = settings.mode === 'doradca'
   if (analysis?.recommendations.length) {
     // backend wskazuje, co pokazać w panelu (`in_panel`, po jednej z kategorii); bez flag – wg priorytetu
     // zboża i rzepak: w Polsce się ich nie nawadnia – bez zaleceń nawadniania, zamiast nich retencja
-    const all = analysis.recommendations.filter((r) => r.category !== 'nawadnianie' || irrigationShown(analysis))
+    const all = analysis.recommendations
+      // F31: „Zwiększaj próchnicę” tylko w trybie Doradca (dane SoilGrids zawyżają próchnicę dla gleb ornych)
+      .filter((r) => advisor || r.id !== 'retencja.zwiekszaj_prochnice')
+      .filter((r) => r.category !== 'nawadnianie' || irrigationShown(analysis))
     const byOrder = (a: (typeof all)[number], b: (typeof all)[number]) =>
       ORDER.indexOf(a.category) - ORDER.indexOf(b.category) || (b.priority ?? 0) - (a.priority ?? 0)
     const flagged = all.filter((r) => r.in_panel)

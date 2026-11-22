@@ -6,6 +6,7 @@ import { RecommendationWhy } from '@/features/parcel-panel/RecommendationWhy'
 import { irrigationShown } from '@/lib/crops'
 import { formatDatePl } from '@/lib/format'
 import { useLang } from '@/lib/i18n'
+import { useSettings } from '@/lib/storage'
 import { cn } from '@/lib/utils'
 import { REC_CATEGORY } from '@/theme/recommendations'
 import { PassportSection } from './PassportSection'
@@ -99,7 +100,10 @@ function ActionCard({ r, first, whenLabel, onShowOnMap }: { r: Recommendation; f
 export function ActionsSection({ analysis, onShowOnMap }: { analysis: AnalysisResponse; onShowOnMap?: (g: GeoJSON.Geometry) => void }) {
   const { t } = useLang()
   const irrigation = irrigationShown(analysis)
+  const [settings] = useSettings()
   const recs = [...analysis.recommendations]
+    // F31: „Zwiększaj próchnicę” tylko w trybie Doradca (dane SoilGrids zawyżają próchnicę dla gleb ornych)
+    .filter((r) => settings.mode === 'doradca' || r.id !== 'retencja.zwiekszaj_prochnice')
     .filter((r) => r.category !== 'nawadnianie' || irrigation)
     .sort((a, b) => ORDER.indexOf(a.category) - ORDER.indexOf(b.category) || (b.priority ?? 0) - (a.priority ?? 0))
     .slice(0, MAX)

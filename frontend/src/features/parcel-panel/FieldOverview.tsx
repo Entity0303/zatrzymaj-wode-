@@ -14,6 +14,7 @@ import { RefineCard } from './RefineCard'
 import { SatelliteCard } from './SatelliteCard'
 import { HydroCard } from './HydroCard'
 import { PeriodCard } from '@/features/period/PeriodCard'
+import { DroughtTile } from '@/features/drought/DroughtTile'
 import { useSettings } from '@/lib/storage'
 import { CropSeasonCard } from './CropSeasonCard'
 import { DetailSection } from './DetailSection'
@@ -127,6 +128,8 @@ export function FieldOverview({
           <PeriodCard period={analysis.period} requested={!!refine.period} />
           {analysis.verdict && <VerdictCard verdict={analysis.verdict} bare hideCrops={!!s} precip={analysis.precip_sources} />}
           {analysis.status.level !== 'ok' && analysis.status.level !== 'no_data' && <NowLine analysis={analysis} />}
+          {/* F31: niezależne tło suszowe dla okolicy (EDO) – pobierane w tle po analizie */}
+          <DroughtTile analysis={analysis} />
         </DetailSection>
         {full && (
           <DetailSection title="Gleba i woda w glebie" hint="Zapas wody, faza uprawy, kategoria gleby" icon={Layers}>

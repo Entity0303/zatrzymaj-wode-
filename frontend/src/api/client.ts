@@ -4,6 +4,7 @@ import type {
   AnalysisResponse,
   CropId,
   DemoExample,
+  DroughtContext,
   Forecast,
   Hydro,
   Terrain,
@@ -175,6 +176,14 @@ export const api = {
     q.geometry
       ? post<Hydro>('/api/hydro', { geometry: q.geometry, date: q.date }, signal)
       : get<Hydro>('/api/hydro', { ...placeParams(q), date: q.date }, signal),
+  /**
+   * F31: tło suszowe z Europejskiego Obserwatorium Suszy (A26) – GET /api/drought-context?parcel_id=&date=&our_status=
+   * albo POST { geometry, date, our_status } dla pola narysowanego. Awaria usługi = 200 z `unavailable: true`.
+   */
+  droughtContext: (q: AnalysisQuery, ourStatus: string | null, signal?: AbortSignal) =>
+    q.geometry
+      ? post<DroughtContext>('/api/drought-context', { geometry: q.geometry, date: q.date, our_status: ourStatus }, signal)
+      : get<DroughtContext>('/api/drought-context', { ...placeParams(q), date: q.date, ...(ourStatus ? { our_status: ourStatus } : {}) }, signal),
   /** GET /api/search?q= – jedno pole wyszukiwania: identyfikator, „obręb numer” albo nazwa miejscowości (A5c) */
   search: (q: string, signal?: AbortSignal) => get<SearchResponse>('/api/search', { q }, signal),
   /** GET /api/layers/{layer} – warstwa przycięta do obrysu działki (raster PNG + bbox, GeoJSON) */

@@ -4,6 +4,7 @@ import type { Satellite, SatelliteTrend } from '@/api/types'
 import { SourceTag } from '@/components/SourceTag'
 import { formatDatePl, formatNum, formatSigned } from '@/lib/format'
 import { useLang } from '@/lib/i18n'
+import { useSettings } from '@/lib/storage'
 import { cn } from '@/lib/utils'
 import { SatelliteSeriesChart } from './SatelliteSeriesChart'
 
@@ -21,6 +22,8 @@ const TREND: Record<SatelliteTrend, { label: string; icon: LucideIcon; cls: stri
  */
 export function SatelliteCard({ satellite: s, passport, chartWidth }: { satellite: Satellite; passport?: boolean; chartWidth?: number }) {
   const { t } = useLang()
+  const [settings] = useSettings()
+  const advisor = settings.mode === 'doradca'
   const [open, setOpen] = useState(!!chartWidth)
   const head = (
     <div className="flex items-center gap-2">
@@ -61,6 +64,8 @@ export function SatelliteCard({ satellite: s, passport, chartWidth }: { satellit
     <section aria-label={t('Z satelity')} className={box}>
       {head}
       {s.sentence && <p className={cn('font-medium', passport ? 'text-lg leading-7' : 'text-base leading-6')}>{t(s.sentence)}</p>}
+      {/* F31: tryb Doradca – nota z typowym zakresem zieleni (NDVI) dla uprawy i miesiąca (A25) */}
+      {advisor && s.note && <p className="text-sm leading-5 text-text-muted">{t(s.note)}</p>}
       {trend && TrendIcon && (
         <p className={cn('flex items-center gap-1.5 text-sm leading-5', trend.cls)}>
           <TrendIcon className="size-4 shrink-0" aria-hidden />
@@ -125,7 +130,7 @@ export function SatelliteCard({ satellite: s, passport, chartWidth }: { satellit
             </>
           )}
           {s.series_note && <dd className="col-span-2 text-xs leading-4 text-text-muted">{t(s.series_note)}</dd>}
-          {s.note && <dd className="col-span-2 text-xs leading-4 text-text-muted">{t(s.note)}</dd>}
+          {s.note && !advisor && <dd className="col-span-2 text-xs leading-4 text-text-muted">{t(s.note)}</dd>}
           {s.scene_id && <dd className="col-span-2 text-xs leading-4 break-all text-text-muted">{s.scene_id}</dd>}
         </dl>
       )}

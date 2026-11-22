@@ -4,6 +4,7 @@ import { SourceTag } from '@/components/SourceTag'
 import { formatNum, formatShare } from '@/lib/format'
 import { soilColor } from '@/theme/soil'
 import { useLang } from '@/lib/i18n'
+import { useSettings } from '@/lib/storage'
 
 /**
  * Gleba działki (kontrakt `soil`, SPEC 15.3): kategoria podatności na suszę, ile wody zmieści gleba,
@@ -11,6 +12,9 @@ import { useLang } from '@/lib/i18n'
  */
 export function SoilCard({ soil }: { soil: Soil }) {
   const { t } = useLang()
+  const [settings] = useSettings()
+  // F31: próchnica tylko w trybie Doradca – szacunek SoilGrids jest zawyżony dla gleb ornych
+  const humus = settings.mode === 'doradca' ? soil.organic_matter : null
   const shares = [...soil.shares].sort((a, b) => b.share - a.share)
   return (
     <section aria-label={t('Gleba')} className="rounded-xl border bg-surface p-3.5">
@@ -71,6 +75,15 @@ export function SoilCard({ soil }: { soil: Soil }) {
             ? t(soil.classes_note)
             : t('Klasy gleby w ewidencji: brak danych')}
       </p>
+
+      {humus && (
+        <p className="mt-2 rounded-lg bg-surface-2 px-3 py-2 text-sm leading-5">
+          <b className="font-semibold">{t('Próchnica: ok. {n}% ({k})', { n: formatNum(humus.value_pct, 1), k: t(humus.class_label) })}</b>{' '}
+          <span className="text-text-muted">
+            – {t('szacunek modelu globalnego (SoilGrids, siatka ok. 250 m) – w naszych sprawdzeniach zawyżony dla gleb ornych; wiarygodną wartość da badanie gleby.')}
+          </span>
+        </p>
+      )}
 
       <div className="mt-2.5">
         <SourceTag kind={soil.source_tag.kind} title={soil.source_tag.source ?? 'IUNG-PIB'} />

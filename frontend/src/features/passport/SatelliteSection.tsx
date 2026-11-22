@@ -54,6 +54,8 @@ export function SatelliteSection({ analysis, chartWidth }: { analysis: AnalysisR
         ) : (
           <div className="space-y-3">
             {s.sentence && <p className="text-base leading-6 font-medium">{t(s.sentence)}</p>}
+            {/* F31: tryb Doradca – nota z typowym zakresem zieleni (NDVI) dla uprawy i miesiąca (A25) */}
+            {settings.mode === 'doradca' && s.note && <p className="text-sm leading-5 text-text-muted">{t(s.note)}</p>}
             <div className="grid gap-3 sm:grid-cols-2">
               <Tile
                 title={t('Kondycja upraw')}
