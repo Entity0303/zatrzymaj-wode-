@@ -4,6 +4,10 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-22 17:30 · `main` · A23: teren po IPv4, komplet mapy gleb, nagłówek zgodny z rankingiem, plony 2017–2018
+Przyczyna braku terenu lokalnie: DNS AAAA dla NMT GUGiK w Dockerze – klient HTTP tylko po IPv4. Mapa glebowo-rolnicza bez łącznego limitu 7,5 s i bez bezpiecznika po pierwszym błędzie; nagłówek „Lekka ziemia…” gdy ranking nic nie odradza; plony z własnego województwa także przy 1–2 latach; pamięć rankingu 256 (D111). Testy: 631 bez sieci.
+**Pliki:** `backend/app/core/{http,config}.py`, `analysis/{suggestions,variants,verdict}.py`, `rules/verdict.yaml`, `sources/soil_map.py`, `routers/analysis.py`, `tests/test_a23.py`. **Kontrakt:** nie.
+
 ## 2026-11-22 16:00 · `main` · A22: SoilGrids z budżetem 5 s, rozgrzewka po 120 s, próg widełek 4 lata
 `soilgrids.texture_budget` (5 s, reszta w tle do cache), `DEMO_WARMUP_DELAY_S` = 120 i pomijanie przykładów z pogodą w cache, `wide_risk_years` 3 → 4 (D110). Testy: 625 bez sieci.
 **Pliki:** `backend/app/sources/soilgrids.py`, `routers/analysis.py`, `core/config.py`, `demo.py`, `analysis/rules/ranking.yaml`, testy `test_a22.py`, `conftest.py`. **Kontrakt:** nie.
