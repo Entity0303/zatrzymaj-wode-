@@ -1,131 +1,131 @@
 # Wdrożenie – publiczny link do Wodoskopu
 
-Frontend (React) idzie na **Vercel**, backend (FastAPI w Dockerze) na **Render**. Konfiguracja jest już w repo:
-`render.yaml` (katalog główny) i `frontend/vercel.json`. Konta zakłada i klika właściciel repo – poniżej kolejność.
+Frontend (React) działa na **Vercel**, backend (FastAPI w Dockerze) na **Render**. Konfiguracja jest w repo:
+[`render.yaml`](render.yaml) i [`frontend/vercel.json`](frontend/vercel.json). Konta zakłada i klika właściciel repo.
 
 ```
 przeglądarka ──► Vercel (frontend, pliki statyczne)
       │
       └──► Render (backend /api/…) ──► źródła publiczne: GUGiK, IUNG, IMGW, NASA POWER, Open-Meteo, Earth Search…
+                 │
+                 └── trwały dysk /data (cache SQLite)
 ```
 
-Kolejność ma znaczenie: **najpierw Render** (potrzebny adres backendu), **potem Vercel**, **na końcu wracamy do Render**
-i wpisujemy adres Vercela (CORS i kod QR w PDF).
+Kolejność: **najpierw Render** (potrzebny adres backendu), **potem Vercel**, **na końcu wracamy do Render** i wpisujemy
+adres Vercela (CORS, kod QR i adres w stopce PDF).
 
 ---
 
 ## 1. Backend na Render
 
-1. Wejdź na <https://dashboard.render.com> → zaloguj się przez GitHub (konto z dostępem do repo).
-2. **New** → **Blueprint**.
-3. Wybierz repozytorium `zatrzymaj-wode-` (gałąź `main`). Render znajdzie `render.yaml` i pokaże usługę `wodoskop-api`
-   (Docker, region Frankfurt, plan Free).
-4. Render poprosi o dwie wartości (`sync: false`):
-   - `CORS_ORIGINS` – na razie wpisz `["http://localhost:5173"]` (poprawimy w kroku 3),
-   - `PUBLIC_URL` – na razie zostaw puste.
-5. **Apply**. Pierwsze budowanie obrazu trwa ok. 5–10 minut (WeasyPrint, rasterio, numpy).
-6. Gdy status jest **Live**, skopiuj adres usługi, np. `https://wodoskop-api.onrender.com`.
-7. Sprawdź: `https://wodoskop-api.onrender.com/api/health` → `{"status":"ok"}`.
+1. <https://dashboard.render.com> → zaloguj się przez GitHub (konto z dostępem do repo).
+2. **New** → **Blueprint** → repozytorium `zatrzymaj-wode-`, gałąź `main`. Render znajdzie `render.yaml` i pokaże
+   usługę `wodoskop-api`: Docker, region Frankfurt, **plan Starter (płatny)** z **trwałym dyskiem 1 GB** pod `/data`.
+3. Render poprosi o dwie wartości (`sync: false`):
+   - `CORS_ORIGINS` – na razie `http://localhost:5173` (poprawimy w kroku 3),
+   - `PUBLIC_URL` – na razie puste.
+4. **Apply**. Pierwsze budowanie obrazu trwa ok. 5–10 minut.
+5. Gdy status jest **Live**, skopiuj adres usługi, np. `https://wodoskop-api.onrender.com`.
+6. Sprawdź: `https://wodoskop-api.onrender.com/api/health` → `{"status":"ok"}`.
 
-Zmienne ustawione przez `render.yaml` (nie trzeba ich wpisywać):
+### Co ustawia `render.yaml`
+
+| Ustawienie | Wartość | Po co |
+|---|---|---|
+| `plan` | `starter` | bez usypiania; trwały dysk wymaga planu płatnego |
+| `disk` | `cache`, `/data`, 1 GB | cache SQLite przeżywa restarty i wdrożenia |
+| `healthCheckPath` | `/api/health` | lekki (bez zapytań do źródeł). **Nie** ustawiaj `/api/status` – ten adres odpytuje wszystkie źródła, a Render sprawdza zdrowie co kilka sekund |
+| `autoDeploy` | `true` | każde wypchnięcie na `main` wdraża backend – **na czas oceny wyłącz** (patrz punkt 5) |
+| `buildFilter` | `paths: backend/**, render.yaml`; `ignoredPaths: backend/tests/**, **/*.md` | budowanie tylko przy zmianach backendu (zmiany frontendu, testów i dokumentacji nie przebudowują obrazu) |
+
+### Zmienne środowiskowe
 
 | Zmienna | Wartość | Po co |
 |---|---|---|
-| `PORT` | `8000` | Dockerfile uruchamia serwer na 8000 – Render kieruje tam ruch |
-| `DEMO_OFFLINE` | `false` | dane na żywo (nie tylko z cache) |
-| `OFFLINE_SOURCES` | *(puste)* | w chmurze GUGiK nie jest zablokowany – wszystkie źródła włączone |
-| `CACHE_DB` | `/data/cache.sqlite` | cache SQLite (na planie Free – do restartu, patrz niżej) |
-| `DEMO_WARMUP` | `true` | po starcie w tle liczą się przykłady z ekranu startowego |
-| `CACHE_SEED` | *(domyślnie `true`, nie trzeba ustawiać)* | pusty cache po starcie / uśpieniu → wczytanie gotowych danych działek demo z obrazu (`backend/app/data/seed/cache_seed.sqlite.gz`) |
-| `CORS_ORIGIN_REGEX` | *(opcjonalnie, ręcznie)* | podglądy Vercela o zmiennych adresach, np. `https://wodoskop(-[a-z0-9-]+)?\.vercel\.app` |
-
-Health check to `/api/health` (lekki). **Nie** ustawiaj `/api/status` jako health check – ten adres przy każdym wywołaniu
-wysyła zapytania testowe do wszystkich źródeł (GUGiK, NASA, IMGW…), a Render sprawdza zdrowie co kilka sekund.
+| `PORT` | `8000` | Dockerfile uruchamia serwer na 8000 (jeden proces uvicorn) |
+| `DEMO_OFFLINE` | `false` | dane na żywo |
+| `OFFLINE_SOURCES` | `bdot` | wszystkie źródła na żywo poza nieużywanym BDOT10k; awaryjnie np. `uldk,nmt,bdot` (te źródła tylko z cache) |
+| `CACHE_DB` | `/data/cache.sqlite` | plik cache na trwałym dysku |
+| `CACHE_SEED` | domyślnie `true` (nie trzeba ustawiać) | gdy `/data/cache.sqlite` jest pusty (pierwszy start), wczytuje dane działek przykładowych z obrazu (`backend/app/data/seed/cache_seed.sqlite.gz`) |
+| `DEMO_WARMUP` | `true` | w tle liczą się przykłady z ekranu startowego (po kolei; przykłady z danymi na dziś w cache są pomijane) |
+| `DEMO_WARMUP_DELAY_S` | domyślnie `120` (nie trzeba ustawiać) | rozgrzewka startuje 2 minuty po uruchomieniu, żeby nie spowalniać pierwszych zapytań po wdrożeniu |
+| `CORS_ORIGINS` | wpisywane ręcznie | adresy frontendu – **lista JSON** `["https://wodoskop.vercel.app"]` albo **tekst z przecinkami** `https://wodoskop.vercel.app,http://localhost:5173`; bez ukośnika na końcu |
+| `CORS_ORIGIN_REGEX` | `^https://.*\.vercel\.app$` | podglądy Vercela o zmiennych adresach; pusty napis = wyłączone; błędne wyrażenie jest pomijane z ostrzeżeniem w logu |
+| `PUBLIC_URL` | wpisywane ręcznie | publiczny adres aplikacji – kod QR i stopka w raporcie PDF |
+| `FRONTEND_URL` | opcjonalnie | ma pierwszeństwo przed `PUBLIC_URL` w raporcie PDF; gdy obie puste – `https://wodoskop.vercel.app` |
+| `SENTINEL_ENABLED` | opcjonalnie `false` | awaryjnie: bez nowych zdjęć satelitarnych (tylko cache), gdy brakuje pamięci |
 
 ## 2. Frontend na Vercel
 
-1. Wejdź na <https://vercel.com> → zaloguj się przez GitHub.
-2. **Add New…** → **Project** → **Import** przy repozytorium `zatrzymaj-wode-`.
-3. **Root Directory** → **Edit** → wybierz `frontend`. Framework: Vite (wykryje się sam; ustawienia są w `frontend/vercel.json`).
-4. **Environment Variables** → dodaj:
-   - Name: `VITE_API_URL`
-   - Value: adres z Render **bez** ukośnika na końcu, np. `https://wodoskop-api.onrender.com`
-5. **Deploy**. Po ok. 1–2 minutach dostaniesz adres, np. `https://wodoskop.vercel.app` (nazwę można zmienić w
-   Settings → Domains).
+1. <https://vercel.com> → zaloguj się przez GitHub → **Add New…** → **Project** → **Import** repozytorium.
+2. **Root Directory** → `frontend`. Framework: Vite (ustawienia w `frontend/vercel.json`).
+3. **Environment Variables**: `VITE_API_URL` = adres z Render **bez** ukośnika na końcu, np.
+   `https://wodoskop-api.onrender.com`.
+4. **Deploy**. Po 1–2 minutach dostaniesz adres, np. `https://wodoskop.vercel.app` (nazwa: Settings → Domains).
 
-`VITE_API_URL` jest wpisywany do plików w chwili budowania – po jego zmianie trzeba zrobić **Redeploy**
-(Deployments → ⋯ → Redeploy).
+`VITE_API_URL` jest wpisywany do plików w chwili budowania – po jego zmianie zrób **Redeploy**.
 
-## 3. Powrót do Render: CORS i kod QR
+**Ignored Build Step** (żeby zmiany backendu nie budowały frontendu) – Settings → Git → Ignored Build Step → Custom:
+
+```bash
+git diff --quiet $VERCEL_GIT_PREVIOUS_SHA $VERCEL_GIT_COMMIT_SHA -- .
+```
+
+Polecenie działa w katalogu `frontend/` (Root Directory). Kod wyjścia 0 (brak zmian w `frontend/`) = pomiń budowanie,
+1 = buduj. To ustawienie jest w panelu Vercela, nie w repo.
+
+## 3. Powrót do Render: CORS i adres w PDF
 
 1. Render → `wodoskop-api` → **Environment**.
-2. `CORS_ORIGINS` = `["https://wodoskop.vercel.app"]` – dokładnie adres z Vercela, `https://`, bez ukośnika na końcu,
-   w nawiasach i cudzysłowach (to lista JSON). Kilka adresów: `["https://wodoskop.vercel.app","http://localhost:5173"]`.
-3. `PUBLIC_URL` = `https://wodoskop.vercel.app` (kod QR w raporcie PDF prowadzi do aplikacji).
-4. **Save Changes** – Render sam przebuduje i uruchomi usługę ponownie (ok. 1–3 min).
+2. `CORS_ORIGINS` = `https://wodoskop.vercel.app` (albo lista JSON; dokładny adres, `https://`, bez `/` na końcu).
+3. `PUBLIC_URL` = `https://wodoskop.vercel.app`.
+4. **Save Changes** – Render uruchomi usługę ponownie.
 
-## 4. Test po wdrożeniu (3 linki)
+## 4. Test po wdrożeniu
 
 1. `https://wodoskop-api.onrender.com/api/demo/examples` – lista 6 przykładów (JSON). Działa = backend żyje.
-2. `https://wodoskop.vercel.app/` – ekran startowy z kartami „Zobacz przykład” (karty przychodzą z backendu – jeśli są,
-   frontend rozmawia z backendem i CORS jest dobrze ustawiony).
-3. `https://wodoskop.vercel.app/?dzialka=201305_2.0038.6/1` – działka 6/1 Wnory-Wandy: werdykt, „Co tu posiać?”, potem
-   „Pobierz raport PDF” → plik się pobiera.
+2. `https://wodoskop.vercel.app/` – ekran startowy z przykładami (przychodzą z backendu – jeśli są, CORS jest dobrze
+   ustawiony).
+3. `https://wodoskop.vercel.app/?dzialka=201305_2.0038.6/1` – werdykt, „Co tu posiać?”, potem „Pobierz raport PDF”.
+4. `https://wodoskop.vercel.app/?dzialka=201305_2.0038.6/1&data=2018-06-30` – data historyczna.
 
-## 5. Przed oceną: obudzenie backendu
+## 5. Na czas oceny
 
-Plan Free usypia usługę po ok. **15 minutach bez ruchu**. Pierwsze zapytanie po uśpieniu czeka na start kontenera
-(zwykle **1–2 minuty**). Cache startuje z gotowego seeda (dane działek demo: działka, gleba, pogoda 10 lat, teren,
-zdjęcie satelitarne, woda w okolicy, ortofotomapa) – przykłady liczą się od razu, bez zapytań do źródeł.
+- **Wyłącz automatyczne wdrożenia backendu:** Render → `wodoskop-api` → Settings → Auto-Deploy → **Off** (albo
+  `autoDeploy: false` w `render.yaml`). Wdrożenie restartuje usługę i czyści pamięć wyników – pierwsze zapytania po
+  nim są wolniejsze.
+- Po ostatnim wdrożeniu otwórz aplikację i kliknij 2–3 przykłady oraz działki z README – trafią do cache.
+- `/api/status` pokazuje, które źródła odpowiadają (wysyła zapytania testowe – nie odświeżaj go w pętli).
 
-Ok. **10 minut przed oceną**:
-1. Otwórz `https://wodoskop-api.onrender.com/api/status` – obudzi usługę i sprawdzi źródła (pierwsze otwarcie może
-   trwać 1–2 min; odśwież, aż pokaże listę źródeł).
-2. Otwórz `https://wodoskop.vercel.app/` i kliknij 2–3 przykłady – policzą się i trafią do cache.
-3. Nie zostawiaj usługi bez ruchu na dłużej niż 15 minut przed pokazem (np. odśwież `/api/health` co kilka minut).
+## 6. Uwagi o planach
 
-Opcjonalnie: darmowy zewnętrzny „pinger” (np. cron-job.org) otwierający `/api/health` co 10 minut trzyma usługę
-w pogotowiu. Jedna usługa działająca całą dobę mieści się w darmowym limicie godzin Render.
-
-## 6. Konsekwencje planu Free
-
-- **Brak trwałego dysku.** Cache SQLite (`/data/cache.sqlite`) znika przy każdym restarcie, wdrożeniu i uśpieniu –
-  dlatego obraz ma **gotowy seed** (`backend/app/data/seed/cache_seed.sqlite.gz`, wczytywany przy starcie, gdy cache
-  jest pusty): działki demo i przykłady liczą się od razu. Nowe działki (spoza seeda) pobierają dane od zera –
-  zwykle 10–30 s; teren, woda w okolicy i zdjęcie satelitarne liczą się w tle (analiza nie czeka).
-  Prognozy i bieżących stanów wód w seedzie nie ma (wygasają w godzinę) – pobierają się przy pierwszej analizie.
-  Trwały cache: plan **Starter** + dysk 1 GB – odkomentuj sekcję `disk` w `render.yaml`.
-- **512 MB pamięci.** Liczenie zdjęcia satelitarnego (rasterio) i PDF (WeasyPrint) naraz może przekroczyć limit –
-  w logach Render będzie „Out of memory” i restart. Wtedy: w Environment dodaj `SENTINEL_ENABLED=false`
-  (bez nowych zdjęć satelitarnych, reszta działa) albo przejdź na plan Starter.
-- **Wolniejszy procesor** – analiza może trwać dłużej niż lokalnie.
+- **Plan Starter** (obecny): usługa nie usypia, cache jest na trwałym dysku. Pamięć 512 MB – liczenie zdjęcia
+  satelitarnego i PDF naraz może ją przekroczyć (w logach „Out of memory” i restart); wtedy `SENTINEL_ENABLED=false`
+  albo większa instancja.
+- **Plan Free** (nie używamy): usypia po ok. 15 minutach bez ruchu (pierwsze zapytanie czeka 1–2 minuty) i nie ma
+  trwałego dysku – cache znika przy każdym restarcie; aplikacja startuje wtedy z seeda (tylko działki przykładowe).
+  Żeby go użyć, usuń z `render.yaml` sekcję `disk` i zmień `plan` na `free`.
 
 ## 7. Gdy coś nie działa
 
 | Objaw | Co sprawdzić |
 |---|---|
-| Na stronie „Brak połączenia z serwerem aplikacji” | backend śpi (poczekaj 1–2 min i odśwież) albo zły `VITE_API_URL` (Vercel → Settings → Environment Variables → popraw → Redeploy) |
-| W konsoli przeglądarki (F12) błąd „CORS” / „blocked by CORS policy” | `CORS_ORIGINS` na Render: dokładny adres Vercela, `https://`, bez `/` na końcu, format `["…"]` |
-| Karty „Zobacz przykład” piszą „chwilowo niedostępne” | to samo co wyżej (CORS / backend śpi) |
-| Odświeżenie podstrony na Vercelu daje 404 | Root Directory = `frontend` (wtedy działa `vercel.json` z przekierowaniem na `index.html`) |
-| Render: „Health check failed” / usługa nie startuje | `PORT=8000` w Environment; logi: Render → wodoskop-api → **Logs** |
-| Render: build się nie udaje | Logs → szukaj błędu `pip install`; Dockerfile jest w `backend/` (`dockerContext: ./backend`) |
-| Analiza bardzo wolna / błędy GUGiK | `/api/status` pokaże, które źródło nie odpowiada; awaryjnie `OFFLINE_SOURCES=uldk,nmt` (tylko cache dla tych źródeł) |
-| Raport PDF się nie pobiera | Logs na Render (WeasyPrint); sprawdź też CORS (PDF idzie tym samym adresem) |
+| Na stronie „Brak połączenia z serwerem aplikacji” | trwa wdrożenie backendu (poczekaj 1–2 min) albo zły `VITE_API_URL` (Vercel → Settings → Environment Variables → popraw → Redeploy) |
+| W konsoli przeglądarki (F12) błąd „CORS” | `CORS_ORIGINS` na Render: dokładny adres Vercela, `https://`, bez `/` na końcu |
+| Przykłady na starcie „chwilowo niedostępne” | to samo co wyżej (CORS / backend niedostępny) |
+| Odświeżenie podstrony na Vercelu daje 404 | Root Directory = `frontend` (działa wtedy przekierowanie z `vercel.json`) |
+| Render: „Health check failed” | `PORT=8000`; logi: Render → wodoskop-api → **Logs** |
+| Render: build się nie udaje | Logs → błąd `pip install`; Dockerfile jest w `backend/` (`dockerContext: ./backend`) |
+| Zmiana w kodzie backendu nie wdrożyła się | `buildFilter` – zmiana musi być w `backend/**` (poza `backend/tests/**` i plikami `.md`) albo w `render.yaml`; sprawdź też, czy Auto-Deploy jest włączony |
+| Działka się nie wczytuje (502) | w logach linia `BŁĄD ŹRÓDŁA …` podaje źródło, typ błędu i stan bezpiecznika; `/api/status` pokaże, które źródło nie odpowiada; awaryjnie `OFFLINE_SOURCES=uldk,nmt,bdot` |
+| Raport PDF się nie pobiera | Logs na Render (WeasyPrint, pamięć); sprawdź też CORS |
 
-Wariant awaryjny bez CORS: zamiast `VITE_API_URL` można dodać w `frontend/vercel.json` przekierowanie
-`{"source": "/api/(.*)", "destination": "https://wodoskop-api.onrender.com/api/$1"}` (przed regułą na `index.html`)
-– przeglądarka widzi jeden adres. Minus: Vercel przerywa takie zapytania po kilkudziesięciu sekundach, a pierwsza
-analiza po wybudzeniu backendu może trwać dłużej.
+## 8. Seed cache
 
-## 8. Backend pod hosting – zrobione (A13)
-
-- **CORS** – `CORS_ORIGINS` (lista JSON) i opcjonalnie `CORS_ORIGIN_REGEX` dla podglądów Vercela
-  (`allow_origin_regex` w `backend/app/main.py`).
-- **Seed cache w obrazie** – `backend/scripts/export_seed.py` kopiuje z `/data/cache.sqlite` wszystkie wpisy poza
-  prognozą Open-Meteo i bieżącymi stanami wód IMGW do `backend/app/data/seed/cache_seed.sqlite.gz`; przy starcie
-  (`lifespan` → `load_seed()`), gdy tabela `cache` jest pusta, seed jest wczytywany przez `INSERT OR IGNORE`
-  (wpis z wolumenu zawsze wygrywa). Odświeżenie seeda przed wdrożeniem (na dobrej sieci):
-  `docker compose exec backend python scripts/warm_demo.py --no-pdf` → `docker compose exec backend python
-  scripts/export_seed.py` → commit pliku `.gz`. Zgłoszenia rolników (`infra.sqlite`) do seeda nie trafiają.
-- **`/api/health`** – lekki (`{"status":"ok"}`, bez zapytań zewnętrznych).
+`backend/scripts/export_seed.py` kopiuje z `/data/cache.sqlite` wpisy poza prognozą i bieżącymi stanami wód do
+`backend/app/data/seed/cache_seed.sqlite.gz`. Przy starcie (`load_seed()`), gdy tabela cache jest pusta, seed jest
+wczytywany do `/data/cache.sqlite` (wpis z dysku zawsze wygrywa). Na Renderze z trwałym dyskiem seed wczyta się więc
+tylko przy pierwszym uruchomieniu. Odświeżenie seeda: `docker compose exec backend python scripts/warm_demo.py
+--no-pdf` → `docker compose exec backend python scripts/export_seed.py` → commit pliku `.gz`. Uwaga: eksport obejmuje
+cały lokalny cache – przed eksportem warto zacząć od pustego wolumenu, żeby plik nie urósł. Zgłoszenia rolników do
+seeda nie trafiają.
