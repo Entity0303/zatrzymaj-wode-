@@ -1,6 +1,6 @@
 # Status – osoba A (Dominik), backend
 
-_Stan na: 2026-11-22 03:00 (A13, A14)_
+_Stan na: 2026-11-22 05:00 (A12, A9b)_
 
 ## Zrobione
 - Wyszukiwanie działki ULDK: pełny identyfikator, „obręb numer”, punkt; `GET /api/parcel` (409 lista kandydatów, 404, 502 z nazwą źródła), timeout 10 s + jedna ponowna próba, cache 24 h.
@@ -81,7 +81,9 @@ _Stan na: 2026-11-22 03:00 (A13, A14)_
   - zgłoszenia infra w SQLite (bez danych osobowych), przykład Less zamiast Żuław, ograniczenie o wodach gruntowych (D95).
 - **A13-prep:** seed cache w obrazie (6,2 MB, wczytywany do pustego cache), CORS z regexem, `warm_demo` z wodą i satelitą, krótkie tytuły przykładów (D97). Komplet w seedzie: teren 15/15, woda 15/15, zdjęcie satelitarne 9/15 (6 bez widocznej sceny w 60 dniach), szereg 12 mies. 3/6 przykładów (Muntowo, Kujawy, Drzewce – pominięte: limit VPN).
 - **A14:** spójny nagłówek werdyktu, stacje opadowe tylko aktualne, `core/format.py`, objętość zagłębienia po ludzku, bez nazw technicznych (D98).
-- Testy: **525 bez sieci** (`docker run --network none`) + 5 live; test „pusty cache + seed bez sieci” – OK.
+- **A12:** ceny skupu GUS BDL (P2967, 7 produktów, woj. + Polska, 2021–2025, `app/data/prices/`), przychód z pola w rankingu / wyborze / alternatywach, `price_now` z pliku ZSRIR (dziś null), zdanie o przychodzie w werdykcie (D99).
+- **A9b:** okres analizy `period=30d|since_sowing|season` / `date_from`+`date_to` – sumy, norma 10 lat, percentyl, zdanie, dni stresu, przebieg dzienny (D100).
+- Testy: **539 bez sieci** (`docker run --network none`) + 5 live.
 
 ## W trakcie (gałąź)
 - **INT3 (22.11 ok. 00:55): `c/research`, `a/backend`, `b/frontend` scalone do `main` (bez konfliktów) i wypchnięte.** Od 22.11 00:45 praca bezpośrednio na `main` (zasady w CLAUDE.md); gałęzie `a/backend` itp. już nieużywane. Główny folder `zatrzymaj-wode-` przełączony na `main`, kontenery przebudowane.
@@ -90,7 +92,7 @@ _Stan na: 2026-11-22 03:00 (A13, A14)_
 - **VPN włączony** (GUGiK dozwolony z limitem; UUG działa przez VPN – A9): `$env:DEMO_OFFLINE="false"; $env:OFFLINE_SOURCES="bdot"; docker compose up -d backend`
 - **VPN wyłączony** (GUGiK tylko z cache): `$env:DEMO_OFFLINE="false"; $env:OFFLINE_SOURCES="uldk,nmt,kieg,uug,bdot"; docker compose up -d backend`
 - **Prezentacja** (wszystko z cache): `$env:DEMO_OFFLINE="true"; docker compose up -d backend`
-- Teraz (22.11 18:00): VPN włączony – `OFFLINE_SOURCES=bdot`.
+- Teraz (22.11 05:00): VPN wyłączony (limit wyczerpany) – `OFFLINE_SOURCES=uldk,nmt,kieg,uug,bdot`.
 
 ## Przed prezentacją (na dobrej sieci; w Git Bash poprzedź komendy `MSYS_NO_PATHCONV=1`)
 1. `docker compose up -d --build` – backend z wolumenem cache (`/data/cache.sqlite`).

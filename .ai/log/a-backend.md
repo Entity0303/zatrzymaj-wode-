@@ -4,6 +4,13 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-22 05:00 · `main` · A12 (ceny skupu, przychód) i A9b (okres analizy)
+**A12:** `scripts/build_prices.py` → `app/data/prices/{gus_prices,gus_price_variables}.csv` (GUS BDL P2967, 7 produktów, 595 wartości, 40 s; rzepak / buraki – tylko do 2018 → brak ceny), `analysis/prices.py` (cena 3 lat woj. / kraj, przychód do 100 zł, `price_now` z pliku ZSRIR), `revenue` w rankingu / wyborze / alternatywach, zdanie w werdykcie; mock `prices.sample.json` – prawdziwe wartości dla 201305.
+**A9b:** `analysis/period.py`, parametry `period` / `date_from` / `date_to` w `/api/analysis` i `/api/report.pdf` (GET, POST), `water_balance.stress_dates`, `PeriodSummary` (alias `from`), mock `period.sample.json` – prawdziwy 30d dla 201305; test kontraktu – pola z aliasem.
+**Na żywo (z cache):** 201305 – pszenica ozima 876 zł/t (woj. podlaskie 2023–2025): ok. 2 100 zł / 1 800 zł z 0,58 ha; okresy: 30d, sezon, 1.05–30.06.2026, od siewu (zboża ozime: od 25.09.2026) – 0,05–0,65 s.
+**Pliki:** `backend/app/{analysis/{prices,period,verdict,water_balance}.py, schemas/analysis.py, routers/{analysis,reports}.py, data/prices/*}`, `backend/scripts/build_prices.py`, testy (`test_a12.py` – 18, `test_contract.py`), `frontend/src/api/types.ts` (AnalysisRequest: period, date_from, date_to), mocki `prices.sample.json`, `period.sample.json`.
+**Kontrakt:** TAK (addytywnie) – `contract-changes.md`, wpis A12 + A9b „Dla Mefju”.
+
 ## 2026-11-22 03:00 · `main` · A13-prep (hosting, seed) i A14 (poprawki danych z przeglądu F5)
 **A13:** `core/cache.load_seed`, `scripts/export_seed.py` → `app/data/seed/cache_seed.sqlite.gz` (6,2 MB, 743 wpisy); `CORS_ORIGIN_REGEX`, `CACHE_SEED`; `DEPLOY.md` (punkty 1, 5, 6, 8); `warm_demo.py` – teren, satelita, woda po kolei, szereg tylko dla przykładów (pomija gotowe), krótki bezpiecznik Overpass; przykłady – krótkie tytuły i miejscowości. Rozgrzewkę dwa razy przerwał restart kontenera (mój `docker compose restart` i przebudowa frontendu o 02:43) – braki dociągnięte; 3 szeregi Sentinel-2 pominięte (VPN ok. 1,9 GB z 2 GB). Test: świeży cache + seed, bez sieci → analiza 201305 0,9 s z terenem, satelitą i wodą.
 **A14:** nagłówek werdyktu spójny z rankingiem (Mrągowo, Lasotka), stacje opadowe z danymi z ostatnich 12 mies. (Pogórze bez Dynowa), `core/format.py` (liczby, objętości, daty), objętość zagłębienia „ok. 22 tys. m³ … ok. 110 ha w ulewie 20 mm”, `stress_ratio` z polską etykietą. Kontrola 15 działek: 0 ułamków z kropką.
