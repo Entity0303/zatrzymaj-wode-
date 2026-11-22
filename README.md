@@ -179,7 +179,7 @@ sekcje dochodzą po chwili. Wynik rankingu jest pamiętany, więc zmiana uprawy 
 | GUS BDL | plony z 1 ha wg województw (2016–2025), ceny skupu (temat P2967, 2013–2025) | województwa i Polska | plon potencjalny i przychód w rankingu | dane GUS, z podaniem źródła |
 | ZSRIR (MRiRW) | cena skupu rzepaku – notowanie z 05.07.2026 | Polska | przychód dla rzepaku w rankingu (ceny miesięczne GUS w temacie P2967 nie obejmują rzepaku) | informacja publiczna MRiRW |
 | GUS BDL – ceny rzepaku | średnia roczna cena skupu rzepaku (zmienna 4868, temat P1458), 2013–2025 | województwa i Polska | tylko porównanie „Ceny i pogoda na tle lat” | dane GUS, z podaniem źródła |
-| Europejskie Obserwatorium Suszy – EDO (Copernicus, JRC), WMS | łączny wskaźnik suszy CDI v4.1 (od 2012 r.), anomalia wilgotności gleby (od 1995 r.), ryzyko skutków suszy dla rolnictwa (od 2010 r.) | Europa, co dekadę, siatka ok. 5 km (w aplikacji podpis „ok. 5–10 km”) | tło suszowe dla okolicy działki i porównanie z naszą oceną; wartość odczytywana z koloru piksela mapy (usługa nie odpowiada na zapytanie o punkt) | informacje Copernicus – bezpłatne, pełne i otwarte (rozporządzenie UE 2021/696), z podaniem źródła |
+| Europejskie Obserwatorium Suszy – EDO (Copernicus, JRC), WMS | łączny wskaźnik suszy CDI v4.1 (od 2012 r.), anomalia wilgotności gleby (od 1995 r.), ryzyko skutków suszy dla rolnictwa (od 2010 r.) | Europa, co dekadę, siatka ok. 5 km | tło suszowe dla okolicy działki i porównanie z naszą oceną; wartość odczytywana z koloru piksela mapy (usługa nie odpowiada na zapytanie o punkt) | informacje Copernicus – bezpłatne, pełne i otwarte (rozporządzenie UE 2021/696), z podaniem źródła |
 | PIG-PIB (CBDG) – Mapa obszarów zagrożonych podtopieniami (MOZP) | obszary zagrożone powodzią od wód gruntowych w dolinach dużych rzek | Polska, warstwa poligonowa | czy środek działki leży w takim obszarze („Wody gruntowe i zapas z opadów”) | usługa publiczna PIG-PIB; metadane usługi nie podają warunków – **warunki licencji do potwierdzenia** |
 | Podkłady dodatkowe | EOX Sentinel-2 cloudless, AWS Terrain Tiles, kafle OSM | — | podkład poza zasięgiem ortofotomapy, rzeźba w widoku 3D | CC BY 4.0 (EOX) / dane otwarte / ODbL |
 
@@ -279,8 +279,9 @@ mapy to własna cienka warstwa nad Leafletem (bez react-leaflet). Krój pisma �
 - **Głębokość zwierciadła wód podziemnych jest niedostępna.** PIG-PIB nie udostępnia jej usługą, którą da się
   odpytać dla punktu działki – aplikacja jej nie podaje i nie zgaduje. „Ile opadu zostaje w glebie” to nasz
   szacunek z progami orientacyjnymi (do weryfikacji z agronomem).
-- **Tło suszowe EDO jest regionalne** (siatka ok. 5 km, dane co dekadę) – opisuje okolicę, nie samą działkę; gdy
-  różni się od naszej oceny, aplikacja mówi o tym wprost. Najnowsza dekada bywa opublikowana z opóźnieniem – wtedy
+- **Tło suszowe EDO jest regionalne.** Dane EDO mają siatkę ok. 5 km; aplikacja odczytuje wartość komórki siatki,
+  w której leży środek działki, więc to tło dla okolicy (rzędu 5–10 km), nie pomiar na polu. Gdy różni się od naszej
+  oceny, aplikacja mówi o tym wprost. Najnowsza dekada bywa opublikowana z opóźnieniem – wtedy
   pokazujemy wcześniejszą i podajemy, z której dekady pochodzi wskaźnik.
 - **Próchnica z SoilGrids jest zawyżona dla gleb ornych** (w 56 sprawdzonych punktach 3,3–10,5%, ani razu klasa
   „niska”), dlatego jest ukryta w trybie Rolnik i w PDF; w trybie Doradca widać ją z zastrzeżeniem. Nie wchodzi
@@ -354,7 +355,7 @@ mapy to własna cienka warstwa nad Leafletem (bez react-leaflet). Krój pisma �
   11–20.06.2018); Pożarowo na 10.07.2018 – „Bardzo mało wody”, EDO „ostrzeżenie”, „bardzo sucho”, ryzyko dla
   rolnictwa średnie (dekada 21–30.06.2018); 201305 na 22.11.2026 – „W normie”, EDO „brak suszy”. To kontrola na
   trzech przypadkach, nie walidacja statystyczna.
-- **Testy automatyczne:** 686 testów backendu bez sieci (pełny `pytest`, stan na 22.11.2026) i 5 na żywo
+- **Testy automatyczne:** 687 testów backendu bez sieci (pełny `pytest`, stan na 22.11.2026) i 5 na żywo
   (`pytest -m live`), w tym zgodność odpowiedzi z kontraktem API; frontend – kontrola typów i budowanie
   (`npm run build`).
 - **Przykładowe raporty PDF:** katalog [`reports/examples/`](reports/examples/).
