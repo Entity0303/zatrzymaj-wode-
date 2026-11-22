@@ -128,3 +128,13 @@ table.src td { padding: 2pt 4pt; border-bottom: 1pt solid #EFECE4; vertical-alig
 .nw { white-space: nowrap; }
 .tile .v .vr { display: block; white-space: nowrap; font-size: 12pt; }
 .tile .v .vr.vr10 { font-size: 10pt; }
+
+/* F31: pięć kafli (z tłem suszowym EDO) – węższe, wartości mogą się łamać; najmniejszy tekst 10 pt */
+.tiles5 { gap: 4pt; }
+.tiles5 .tile { padding: 4pt 5pt; border-left-width: 3pt; }
+.tiles5 .tile .v { font-size: 12pt; }
+.tiles5 .tile .v .nw { white-space: normal; }
+.tiles5 .tile .v .vr { font-size: 10.5pt; white-space: normal; }
+.tiles5 .tile .v .vr.vr10 { font-size: 10pt; }
+.edo { margin: 5pt 0 0; font-size: 10pt; }
+.edo .dot { display: inline-block; width: 7pt; height: 7pt; border-radius: 50%; margin-right: 4pt; }

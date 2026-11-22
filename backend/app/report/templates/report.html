@@ -42,7 +42,7 @@
   </div>
   {% if a.approximate_area %}<div class="approx">{{ a.approximate_area.note }}</div>{% endif %}
 
-  <div class="tiles">
+  <div class="tiles{% if tiles|length > 4 %} tiles5{% endif %}">
     {% for tl in tiles %}
     <div class="tile" style="border-left-color: {{ tl.color }}">
       <div class="t">{{ tl.title }}</div>
@@ -62,7 +62,7 @@
     {% if points %}
       {% for st in points %}
       <div class="point"><span class="ico" style="background: {{ LV[st.level][1] }}">{{ LV[st.level][0] }}</span>
-        <div><span class="k">{{ KIND[st.kind] }}:</span> {{ st.text if full else (st.text|whole(cp.pt_clip)) }}</div></div>
+        <div><span class="k">{{ KIND[st.kind] }}:</span> {{ point_text(st) if full else point_text(st, cp.pt_clip) }}</div></div>
       {% endfor %}
     {% else %}<p>{{ a.status.summary }}</p>{% endif %}
     {% if v %}
@@ -74,6 +74,7 @@
     </div>
     {% endif %}
   </div>
+  {% if edo and edo.sentence %}<p class="edo"><i class="dot" style="background: {{ edo_color }}"></i>{% if edo.agrees %}✓ {% endif %}{{ edo.sentence }}{% if full %} <span class="muted">{{ edo.resolution_note }}</span>{% endif %}</p>{% endif %}
   {% if sug and sug.choice and sug.choice_summary %}<p style="margin-top:5pt"><b>Twój wybór:</b> {{ sug.choice_summary }}</p>{% endif %}
   {% if chart_soil_season or chart_precip_norm %}
   <div class="charts2 nobreak">
@@ -172,12 +173,23 @@
   <h2 style="margin-top:0">Dlaczego?</h2>
   {% for c in a.causes %}
   <div class="cause">
-    <div class="row"><span>{{ c.title }}</span><span>{% if c.factor == 'teren' %}informacyjnie{% else %}{{ c.share|pct }}{% endif %}</span></div>
-    {% if c.factor != 'teren' %}<div class="cbar"><i style="width: {{ (c.share * 100)|round(0) }}%; background: {{ {'opady': '#2F80C9', 'parowanie': '#E8B931', 'gleba': '#8B6B4A', 'uprawa': '#5BB37F'}.get(c.factor, '#B8BDB9') }}"></i></div>{% endif %}
+    <div class="row"><span>{{ c.title }}</span><span>{% if c.factor == 'teren' or c.informational %}informacyjnie{% else %}{{ c.share|pct }}{% endif %}</span></div>
+    {% if c.factor != 'teren' and not c.informational %}<div class="cbar"><i style="width: {{ (c.share * 100)|round(0) }}%; background: {{ {'opady': '#2F80C9', 'parowanie': '#E8B931', 'gleba': '#8B6B4A', 'uprawa': '#5BB37F'}.get(c.factor, '#B8BDB9') }}"></i></div>{% endif %}
     <div class="muted">{{ c.description }}</div>
   </div>
   {% else %}<p class="muted">Brakuje danych pogodowych albo o glebie.</p>{% endfor %}
-  <p class="muted">Procent = waga przyczyny w opisie.</p>
+  <p class="muted">Procent = waga przyczyny w opisie. Pozycje „informacyjnie” (okres bez deszczu, upał, teren) nie zmieniają obliczonego bilansu.</p>
+
+  {% if edo %}
+  <h2>Tło suszowe w okolicy (Europejskie Obserwatorium Suszy)</h2>
+  <table class="kv">
+    <tr><td>Łączny wskaźnik suszy (CDI)</td><td><b style="color: {{ edo_color if edo.cdi.class_ != 'obserwacja' else '#8A6A0C' }}">{{ edo.cdi.label_pl }}</b> · {{ edo.cdi.decade_label }}</td></tr>
+    {% if edo.soil_moisture_anomaly %}<tr><td>Wilgotność gleby w okolicy</td><td>{{ edo.soil_moisture_anomaly.label_pl }} (na tle wielolecia)</td></tr>{% endif %}
+    {% if edo.agri_risk %}<tr><td>Ryzyko skutków suszy dla rolnictwa</td><td>{{ edo.agri_risk.label_pl }}</td></tr>{% endif %}
+  </table>
+  <p style="margin-top:3pt">{% if edo.agrees %}✓ {% endif %}{{ edo.sentence }}</p>
+  <p class="muted">{{ edo.resolution_note }} Źródło: {{ edo.source }}.</p>
+  {% endif %}
 
   {% if a.precip_sources %}{% set ps = a.precip_sources %}
   <h2>Źródła opadów</h2>
@@ -194,7 +206,9 @@
   <table class="kv">
     <tr><td>Zapas wody w glebie</td><td><b>{{ a.indicators.soil_water_pct.value|num(0, '%') }} pełnego</b> · ok. {{ a.indicators.soil_water_mm.value|num(0, 'mm') }} wody dostępnej dla roślin{% if a.soil_water %} · {{ a.soil_water.description }}{% endif %}</td></tr>
     <tr><td>Bilans wody w sezonie</td><td>{{ balance_words(a.indicators.water_balance_season.value) }}{% if a.seasonal_balance_label %} ({{ a.seasonal_balance_label }}){% endif %}</td></tr>
-    {% if a.period %}<tr><td>Okres: {{ a.period.label }}</td><td>{{ a.period.sentence }}</td></tr>{% endif %}
+    {% if a.period %}<tr><td>Okres: {{ a.period.label }}</td><td>{{ a.period.sentence }}{% if a.period.dry_spell %} {{ a.period.dry_spell.sentence }}{% endif %}</td></tr>{% endif %}
+    {% if a.dry_spell %}<tr><td>Okresy bez deszczu w sezonie</td><td>{{ a.dry_spell.sentence }}{% if a.dry_spell.spells_10d %} Okresów bez deszczu trwających 10 dni i dłużej: {{ a.dry_spell.spells_10d }}.{% endif %}</td></tr>{% endif %}
+    {% if a.heat %}<tr><td>Upał w sezonie</td><td>{{ a.heat.sentence }} <span class="muted">Dane NASA POWER (siatka ok. 50 km) uśredniają upały – dlatego podajemy oba progi.</span></td></tr>{% endif %}
     <tr><td>Ile wody zmieści gleba</td><td>{{ a.indicators.soil_capacity.value|num(0, 'mm') }} · {{ soil_short }}</td></tr>
     {% if a.indicators.risk_7d.label %}<tr><td>Ryzyko na 7 dni</td><td>{{ a.indicators.risk_7d.label }}{% if a.indicators.risk_7d.note %} – {{ a.indicators.risk_7d.note }}{% endif %}</td></tr>{% endif %}
   </table>

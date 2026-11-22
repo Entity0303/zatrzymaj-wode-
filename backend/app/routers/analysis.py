@@ -937,8 +937,7 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
         forecast_error=err(fc_res), soil=soil_a, model=model, wb=wb,
         hg_share_season=_hg_share(w, sums),
         extra_limitations=soil_lim + (field.limitations if field and (crop_obj is None or crop_off) else [])
-        + ([extremes.LIMITATION] if dry_c is not None or heat_c is not None else [])
-        + ([extremes.HUMUS_LIMITATION] if om_c is not None else []),
+        + ([extremes.LIMITATION] if dry_c is not None or heat_c is not None else []),
         soilgrids="brak" if isinstance(sg_res, SourceError) else "ok", soilgrids_error=err(sg_res),
         soil_map=sm_status or "brak", soil_map_error=err(sm_res),
         soil_map_year=sm_rep.mapped_year if sm_status == "ok" else None,
