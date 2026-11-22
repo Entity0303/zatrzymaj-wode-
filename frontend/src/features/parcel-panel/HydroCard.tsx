@@ -18,7 +18,16 @@ const GAUGE: Record<HydroGauge['state'], { label: string; cls: string }> = {
  * czy w stronę odpływu wody z działki) i najbliższy wodowskaz ze stanem. `pending` – „Sprawdzam wodę w okolicy…”
  * (dociąga useAnalysis); brak sekcji w odpowiedzi – karty nie ma.
  */
-export function HydroCard({ hydro: h, passport }: { hydro?: Hydro | null; passport?: boolean }) {
+export function HydroCard({
+  hydro: h,
+  passport,
+  historicalDate,
+}: {
+  hydro?: Hydro | null
+  passport?: boolean
+  /** F-MASTER B1: data analizy, gdy historyczna – bez wodowskazu mówimy wprost, że nie ma stanu z tego dnia */
+  historicalDate?: string | null
+}) {
   const { t } = useLang()
   const { failed, retry } = useHydroRetry()
   const box = cn('space-y-2.5 rounded-xl bg-surface', passport ? 'p-4 shadow-card' : 'border p-3.5')
@@ -97,6 +106,11 @@ export function HydroCard({ hydro: h, passport }: { hydro?: Hydro | null; passpo
             {formatNum(g.level_cm, 0)} cm · {formatDatePl(g.date)}
           </span>
         </div>
+      )}
+      {!g && historicalDate && (
+        <p className="flex items-center gap-2 text-sm leading-5 text-text-muted">
+          <Gauge className="size-4 shrink-0" aria-hidden /> {t('Brak stanu wodowskazu z dnia analizy ({d})', { d: formatDatePl(historicalDate) })}
+        </p>
       )}
       <p className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs leading-4 text-text-muted">
         <SourceTag kind="pomiar" />

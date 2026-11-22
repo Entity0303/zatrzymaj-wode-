@@ -55,7 +55,9 @@ function AnalysisMetrics({ analysis }: { analysis: AnalysisResponse }) {
             <div className="h-1.5 overflow-hidden rounded-full bg-surface-2" aria-hidden>
               <div className="h-full rounded-full bg-water" style={{ width: `${Math.max(0, Math.min(100, water.value))}%` }} />
             </div>
-            <p className="text-sm leading-5 text-text-muted">{t('tyle wody dostępnej dla roślin jest teraz w glebie')}</p>
+            <p className="text-sm leading-5 text-text-muted">{analysis.historical
+                ? t('tyle wody dostępnej dla roślin było w glebie w dniu analizy ({d})', { d: formatDatePl(analysis.analysis_date) })
+                : t('tyle wody dostępnej dla roślin jest teraz w glebie')}</p>
           </>
         )}
       </MetricCard>

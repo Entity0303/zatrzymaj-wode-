@@ -850,6 +850,7 @@ export default function Start() {
       where={where}
       compact={compact}
       bare={!compact}
+      historical={historical}
     />
   )
 
@@ -1086,6 +1087,7 @@ export default function Start() {
                 <PanelCollapsed
                   parcel={parcel}
                   status={analysis && !analysis.soil.non_agricultural ? analysis.status.level : null}
+                  historical={historical}
                   onExpand={() => setPanelMin(false)}
                   onClose={backToExplore}
                 />
@@ -1152,6 +1154,7 @@ export default function Start() {
                   onCopied={panelProps.onCopied}
                   onClose={backToExplore}
                   status={analysis?.status.level ?? 'no_data'}
+                  historical={historical}
                   onReport={analysis ? reportUi.download : undefined}
                   reportBusy={report.busy}
                 />

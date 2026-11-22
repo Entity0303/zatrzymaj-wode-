@@ -12,6 +12,7 @@ export function WeatherWidget({
   where,
   compact,
   bare,
+  historical,
 }: {
   forecast: Forecast | null
   loading: boolean
@@ -21,6 +22,8 @@ export function WeatherWidget({
   compact?: boolean
   /** bez własnego tła i cienia – w grupie górnego paska */
   bare?: boolean
+  /** F-MASTER B2: data analizy w przeszłości – pogoda jest dzisiejsza, nie z dnia analizy (szary dopisek) */
+  historical?: boolean
 }) {
   const { t } = useLang()
   const now = forecast?.teraz
@@ -57,12 +60,18 @@ export function WeatherWidget({
               <span className="tabular text-base font-semibold">
                 {now.temperatura === null ? '—' : `${Math.round(now.temperatura)}°C`}
               </span>
-              {!compact && <span className="hidden max-w-36 truncate text-sm text-text-muted xl:inline">{t(now.opis)}</span>}
+              {!compact && !historical && <span className="hidden max-w-36 truncate text-sm text-text-muted xl:inline">{t(now.opis)}</span>}
+              {historical && (
+                <span className={cn('text-xs leading-4 text-text-muted', compact ? 'hidden' : 'max-w-40')}>{t('pogoda dziś – nie dotyczy daty analizy')}</span>
+              )}
             </>
           )}
         </div>
       </TooltipTrigger>
-      <TooltipContent>{now ? `${t(now.opis)} · ${where} · Open-Meteo` : t('Pogoda z Open-Meteo')}</TooltipContent>
+      <TooltipContent>
+        {now ? `${t(now.opis)} · ${where} · Open-Meteo` : t('Pogoda z Open-Meteo')}
+        {historical && ` · ${t('pogoda dziś – nie dotyczy daty analizy')}`}
+      </TooltipContent>
     </Tooltip>
   )
 }

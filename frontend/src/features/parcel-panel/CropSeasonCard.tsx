@@ -4,6 +4,7 @@ import { SourceTag } from '@/components/SourceTag'
 import { formatDayMonth, formatNum } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { useLang } from '@/lib/i18n'
+import { todayIso } from '@/lib/dates'
 
 const DAY = 86_400_000
 
@@ -45,7 +46,13 @@ export function CropSeasonCard({ season, analysisDate }: { season: CropSeason; a
               season.sensitive ? 'bg-warn-soft text-[#875a12]' : 'bg-surface-2 text-text-muted',
             )}
           >
-            {t(season.sensitive ? 'teraz najbardziej potrzebuje wody' : (PHASE_BADGE[season.phase] ?? 'brak wody mniej szkodzi'))}
+            {t(
+              season.sensitive
+                ? analysisDate < todayIso()
+                  ? 'w dniu analizy najbardziej potrzebowała wody'
+                  : 'teraz najbardziej potrzebuje wody'
+                : (PHASE_BADGE[season.phase] ?? 'brak wody mniej szkodzi'),
+            )}
           </span>
         </div>
       </div>

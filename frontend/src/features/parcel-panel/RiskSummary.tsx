@@ -40,7 +40,7 @@ export function RiskSummary({ analysis }: { analysis: AnalysisResponse }) {
       <div className="min-w-0 px-4 py-3">
         {v ? (
           // dziś (status) i na lata (werdykt) – dwa równe wiersze jak w dymku na mapie (wspólny StatusRows), bez kropki
-          <StatusRows now={now} longTerm={v.level} className="mb-1" />
+          <StatusRows now={now} longTerm={v.level} historical={analysis.historical} className="mb-1" />
         ) : (
           <p className="flex items-center gap-1.5 text-sm leading-5 font-semibold text-text">
             <span className={cn('size-2.5 rounded-full', r.bar)} aria-hidden />

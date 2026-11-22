@@ -1140,4 +1140,14 @@ export const EN: Record<string, string> = {
   'Przeliczam…': 'Recalculating…',
   // F14
   'Sprawdź': 'Check',
+  // F-MASTER B: data historyczna
+  'Brak stanu wodowskazu z dnia analizy ({d})': 'No river gauge reading from the analysis date ({d})',
+  'pogoda dziś – nie dotyczy daty analizy': 'today’s weather – not for the analysis date',
+  'W dniu analizy:': 'On the analysis date:',
+  'W dniu analizy ({d}):': 'On the analysis date ({d}):',
+  'W dniu analizy ({d})': 'On the analysis date ({d})',
+  'w dniu analizy najbardziej potrzebowała wody': 'needed water most on the analysis date',
+  'tyle wody dostępnej dla roślin było w glebie w dniu analizy ({d})': 'this much plant-available water was in the soil on the analysis date ({d})',
+  'Pobrano': 'Downloaded',
+  'pobrano {d}': 'downloaded {d}',
 }

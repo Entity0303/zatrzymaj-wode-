@@ -8,7 +8,20 @@ import { useParcelTitle } from './parcelTitle'
  * Zwinięty panel działki (komputer): sama belka z nazwą, stanem i ✕ – mapa zostaje odsłonięta.
  * Kliknięcie belki rozwija panel z powrotem.
  */
-export function PanelCollapsed({ parcel, status, onExpand, onClose }: { parcel: Parcel; status: StatusLevel | null; onExpand: () => void; onClose: () => void }) {
+export function PanelCollapsed({
+  parcel,
+  status,
+  historical,
+  onExpand,
+  onClose,
+}: {
+  parcel: Parcel
+  status: StatusLevel | null
+  /** F-MASTER B3: „W dniu analizy:” zamiast „Teraz:” */
+  historical?: boolean
+  onExpand: () => void
+  onClose: () => void
+}) {
   const { t } = useLang()
   const { title } = useParcelTitle(parcel)
   return (
@@ -18,7 +31,7 @@ export function PanelCollapsed({ parcel, status, onExpand, onClose }: { parcel: 
           <Leaf className="size-5" aria-hidden />
         </span>
         <span className="font-name min-w-0 flex-1 truncate text-lg leading-6 font-bold">{title}</span>
-        {status && <StatusBadge status={status} size="sm" now={status !== 'no_data'} />}
+        {status && <StatusBadge status={status} size="sm" now={status !== 'no_data'} historical={historical} />}
         <ChevronDown className="size-5 shrink-0 text-text-muted" aria-label={t('Rozwiń panel')} />
       </button>
       <button

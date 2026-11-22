@@ -17,10 +17,13 @@ export function MobileSheetHeader({
   onToggleSave,
   onCopied,
   status = 'no_data',
+  historical,
   onReport,
   reportBusy,
   onClose,
 }: {
+  /** F-MASTER B3: data analizy w przeszłości – „W dniu analizy:” */
+  historical?: boolean
   /** zamyka działkę – powrót do mapy */
   onClose?: () => void
   status?: StatusLevel
@@ -41,6 +44,7 @@ export function MobileSheetHeader({
         onToggleSave={onToggleSave}
         onCopied={onCopied}
         status={status}
+        historical={historical}
         onReport={onReport}
         reportBusy={reportBusy}
         onClose={onClose}
@@ -55,10 +59,12 @@ function ParcelHead({
   onToggleSave,
   onCopied,
   status,
+  historical,
   onReport,
   reportBusy,
   onClose,
 }: {
+  historical?: boolean
   parcel: Parcel
   saved: boolean
   onToggleSave: () => void
@@ -102,7 +108,7 @@ function ParcelHead({
             : `${t('gm. {gmina}, obręb {obreb}', { gmina: parcel.gmina, obreb: parcel.obreb })} · ${shortCounty(parcel.powiat)}`}
         </p>
         <div className="flex items-center gap-1 pl-[46px]">
-          <StatusBadge status={status} size="sm" now={status !== 'no_data'} />
+          <StatusBadge status={status} size="sm" now={status !== 'no_data'} historical={historical} />
           <span className="flex-1" />
           <ParcelActions parcel={parcel} saved={saved} onToggleSave={onToggleSave} onCopied={onCopied} />
           <button

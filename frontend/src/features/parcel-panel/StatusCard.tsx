@@ -4,6 +4,7 @@ import { StatusBadge } from '@/components/StatusBadge'
 import { STATUS } from '@/theme/status'
 import { cn } from '@/lib/utils'
 import { useLang } from '@/lib/i18n'
+import { formatDatePl } from '@/lib/format'
 
 /** 3. Karta stanu (SPEC 6.3). */
 export function StatusCard({
@@ -54,7 +55,7 @@ function AnalysisStatusCard({ analysis, onOpen }: { analysis: AnalysisResponse; 
         <Icon className="size-6" aria-hidden />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-xs font-semibold tracking-wider text-text-muted uppercase">{t('Teraz')}</p>
+        <p className="text-xs font-semibold tracking-wider text-text-muted uppercase">{analysis.historical ? t('W dniu analizy ({d})', { d: formatDatePl(analysis.analysis_date) }) : t('Teraz')}</p>
         <p className="font-display text-xl leading-7 font-semibold">{t(headline)}</p>
         <p className="mt-0.5 text-sm leading-5 text-text">{t(summary)}</p>
         <StatusBadge status={level} size="sm" className="mt-2" />

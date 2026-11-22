@@ -16,7 +16,10 @@ export function StatusRows({
   longTerm,
   size = 'sm',
   className,
+  historical,
 }: {
+  /** F-MASTER B3: data analizy w przeszłości – „W dniu analizy:” zamiast „Teraz:” */
+  historical?: boolean
   now: Status | null
   longTerm: VerdictLevel | null | undefined
   /** xs – dymek na mapie, sm – panel */
@@ -38,7 +41,7 @@ export function StatusRows({
             <Icon className={cn(xs ? 'size-3.5' : 'size-4', STATUS[now].fg)} aria-hidden />
           </span>
           <span>
-            <span className={label}>{t('Teraz:')}</span> {t(NOW_LABEL[now])}
+            <span className={label}>{t(historical ? 'W dniu analizy:' : 'Teraz:')}</span> {t(NOW_LABEL[now])}
           </span>
         </span>
       )}

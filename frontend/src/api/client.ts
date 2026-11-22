@@ -147,9 +147,14 @@ export const api = {
    */
   terrain: (q: AnalysisQuery, signal?: AbortSignal) =>
     q.geometry ? post<Terrain>('/api/terrain', { geometry: q.geometry }, signal) : get<Terrain>('/api/terrain', placeParams(q), signal),
-  /** F3: woda w okolicy – GET /api/hydro?parcel_id= (lon/lat) albo POST { geometry } */
+  /**
+   * F3: woda w okolicy – GET /api/hydro?parcel_id=&date= (lon/lat) albo POST { geometry, date }. F-MASTER B1: zawsze
+   * z datą analizy – bez niej backend bierze dziś i dla daty historycznej pokazywał dzisiejszy stan wodowskazu.
+   */
   hydro: (q: AnalysisQuery, signal?: AbortSignal) =>
-    q.geometry ? post<Hydro>('/api/hydro', { geometry: q.geometry }, signal) : get<Hydro>('/api/hydro', placeParams(q), signal),
+    q.geometry
+      ? post<Hydro>('/api/hydro', { geometry: q.geometry, date: q.date }, signal)
+      : get<Hydro>('/api/hydro', { ...placeParams(q), date: q.date }, signal),
   /** GET /api/search?q= – jedno pole wyszukiwania: identyfikator, „obręb numer” albo nazwa miejscowości (A5c) */
   search: (q: string, signal?: AbortSignal) => get<SearchResponse>('/api/search', { q }, signal),
   /** GET /api/layers/{layer} – warstwa przycięta do obrysu działki (raster PNG + bbox, GeoJSON) */

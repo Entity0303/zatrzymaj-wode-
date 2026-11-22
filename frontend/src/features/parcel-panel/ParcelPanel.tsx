@@ -232,7 +232,7 @@ export function ParcelPanel({
               {/* tryb Rolnik: to, czego nie ma w krótkim widoku głównym */}
               {!nonAgri && crop && <StatusCard crop={crop} analysis={analysis} onOpen={onOpenPassport} />}
               {!nonAgri && !advisor && analysis.satellite && <SatelliteCard satellite={analysis.satellite} />}
-              {!nonAgri && !advisor && <HydroCard hydro={analysis.hydro} />}
+              {!nonAgri && !advisor && <HydroCard hydro={analysis.hydro} historicalDate={analysis.historical ? analysis.analysis_date : null} />}
               {!nonAgri && <Metrics analysis={analysis} />}
               {analysis && !nonAgri && analysis.crop_season && <CropSeasonCard season={analysis.crop_season} analysisDate={analysis.analysis_date} />}
               {analysis && !nonAgri && <SoilWaterCard state={analysis.soil_water} />}

@@ -1,5 +1,6 @@
 import type { AnalysisResponse, CropId } from '@/api/types'
 import { useLang } from '@/lib/i18n'
+import { formatDatePl } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { STATUS } from '@/theme/status'
 import { ChoiceCard } from './ChoiceCard'
@@ -41,7 +42,7 @@ export function NowLine({ analysis }: { analysis: AnalysisResponse }) {
     <p className="flex items-center gap-2.5 rounded-xl border bg-surface px-3.5 py-2.5 text-sm leading-5">
       <Icon className={cn('size-5 shrink-0', s.fg)} aria-hidden />
       <span>
-        <b>{t('Teraz:')}</b> {t(analysis.status.headline)}
+        <b>{analysis.historical ? t('W dniu analizy ({d}):', { d: formatDatePl(analysis.analysis_date) }) : t('Teraz:')}</b> {t(analysis.status.headline)}
       </span>
     </p>
   )
@@ -83,7 +84,7 @@ export function FieldOverview({
       {analysis.verdict && <VerdictCard verdict={analysis.verdict} bare limit={3} hideCrops={!!s} precip={analysis.precip_sources} />}
       {analysis.status.level !== 'ok' && analysis.status.level !== 'no_data' && <NowLine analysis={analysis} />}
       {advisor && analysis.satellite && <SatelliteCard satellite={analysis.satellite} />}
-      {advisor && <HydroCard hydro={analysis.hydro} />}
+      {advisor && <HydroCard hydro={analysis.hydro} historicalDate={analysis.historical ? analysis.analysis_date : null} />}
       {s && <ChoiceCard suggestions={s} priceNow={analysis.price_now} />}
       {s && s.groups.some((g) => g.items.length) && <RankingCard suggestions={s} priceNow={analysis.price_now} />}
       {analysis.recommendations.length > 0 && (

@@ -35,7 +35,7 @@ export function SectionA({ analysis, chartWidth }: { analysis: AnalysisResponse;
           caption={status.score == null ? undefined : 'na 100'}
         />
         <div className="min-w-0 flex-1 basis-56 space-y-1.5">
-          <StatusBadge status={status.level} now={status.level !== 'no_data'} />
+          <StatusBadge status={status.level} now={status.level !== 'no_data'} historical={analysis.historical} />
           <p className="font-display text-xl leading-7 font-semibold">{t(status.headline)}</p>
           <p className="text-base leading-6">{t(status.summary)}</p>
           <p className="text-xs leading-4 text-text-muted">{t('Ogólny stan wodny: 100 = dużo wody, 0 = bardzo mało wody.')}</p>
@@ -100,7 +100,7 @@ export function SectionA({ analysis, chartWidth }: { analysis: AnalysisResponse;
         </MetricCard>
       </div>
       {analysis.satellite && <SatelliteCard satellite={analysis.satellite} passport chartWidth={chartWidth} />}
-      <HydroCard hydro={analysis.hydro} passport />
+      <HydroCard hydro={analysis.hydro} passport historicalDate={analysis.historical ? analysis.analysis_date : null} />
       <TerrainCard terrain={analysis.terrain} note={analysis.terrain_note} />
     </PassportSection>
   )

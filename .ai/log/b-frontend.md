@@ -4,6 +4,11 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-22 · `main` · F-MASTER B (A za B): data historyczna – wodowskaz, pogoda, „W dniu analizy”, „pobrano”
+**Co:** B1 `api.hydro` – data analizy w GET (`date=`) i POST (`{geometry, date}`); wcześniej backend brał dziś i dla daty historycznej pokazywał dzisiejszy stan wodowskazu (V4). Sprawdzone curl: 201305, 2018-06-30 → `gauge: null`. `HydroCard` – przy dacie historycznej bez wodowskazu „Brak stanu wodowskazu z dnia analizy (dd.mm.rrrr)”. B2 `WeatherWidget` `historical` – szary dopisek „pogoda dziś – nie dotyczy daty analizy” (pasek i dymek). B3 „Teraz:” → „W dniu analizy:” przy dacie historycznej: `StatusRows` (RiskSummary), `StatusBadge` (paszport, zwinięty panel, szuflada telefonu), NowLine, StatusCard, KeyMetrics, CropSeasonCard; dziś bez zmian. B4 „Skąd dane” – data źródła późniejsza niż data analizy (albo samo `fetched_at`, typ lokalny – A20) = „pobrano dd.mm.rrrr”.
+**Pliki:** `frontend/src/api/client.ts`, `features/parcel-panel/{HydroCard,FieldOverview,ParcelPanel,RiskSummary,StatusCard,KeyMetrics,CropSeasonCard,PanelCollapsed,MobileSheetHeader}.tsx`, `features/passport/{SectionA,SectionE}.tsx`, `features/weather/WeatherWidget.tsx`, `components/{StatusRows,StatusBadge}.tsx`, `pages/Start.tsx`, `lib/i18n.en.ts`.
+**Kontrakt API:** nie.
+
 ## 2026-11-22 · `main` · F17 (A za B): bez dymka na wybranej działce
 **Co:** `ParcelMap` – usunięty stały tooltip z nazwą i statusem na wybranej działce (`ParcelLabel.tsx` usunięty, CSS `.parcel-label` usunięty, prop `parcelRisk` usunięty z ParcelMap i Start); obrys wybranej działki w kolorze statusu (`STATUS[...].hex`, brak danych = biały) nad ciemną poświatą. Podpowiedzi po najechaniu na inne działki (numerowane kandydatki przy kilku działkach o tym samym numerze – innych działek, np. z „Moich działek”, mapa nie rysuje) tylko przy `(hover: hover) and (pointer: fine)` – na telefonie wcale.
 **Sprawdzone:** `npx tsc --noEmit`, `npm run build`, `npx oxlint`. W przeglądarce – nie.

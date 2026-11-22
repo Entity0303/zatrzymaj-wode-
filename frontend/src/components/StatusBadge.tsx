@@ -8,8 +8,11 @@ export function StatusBadge({
   label,
   size = 'md',
   now,
+  historical,
   className,
 }: {
+  /** F-MASTER B3: data analizy w przeszłości – „W dniu analizy:” zamiast „Teraz:” */
+  historical?: boolean
   status: Status
   label?: string
   /** stan wody dziś – „Teraz: dobrze” (werdykt działki mówi o latach, ten status o dzisiejszym dniu) */
@@ -31,7 +34,7 @@ export function StatusBadge({
       )}
     >
       <Icon className={size === 'sm' ? 'size-3.5' : 'size-4'} aria-hidden />
-      {now ? `${t('Teraz:')} ${t(label ?? NOW_LABEL[status])}` : t(label ?? s.label)}
+      {now ? `${t(historical ? 'W dniu analizy:' : 'Teraz:')} ${t(label ?? NOW_LABEL[status])}` : t(label ?? s.label)}
     </span>
   )
 }

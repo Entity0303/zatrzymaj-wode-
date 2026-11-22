@@ -1,5 +1,5 @@
 import { CircleAlert, CircleCheck, CircleX, ShieldCheck } from 'lucide-react'
-import type { AnalysisResponse, Confidence, SourceAvailability } from '@/api/types'
+import type { AnalysisResponse, Confidence, SourceAvailability, SourceStatus } from '@/api/types'
 import { formatDatePl } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { useLang } from '@/lib/i18n'
@@ -19,6 +19,23 @@ const AVAIL: Record<SourceAvailability, { label: string; icon: typeof CircleChec
 }
 
 /** E. Wiarygodność danych (SPEC 7.E): pewność + powód, kompletność, tabela źródeł, ograniczenia. */
+/**
+ * F-MASTER B4: data źródła w karcie „Skąd dane”. Data późniejsza niż data analizy (np. granice z ULDK pobrane dziś
+ * przy analizie z 2018) to data POBRANIA, nie danych – podpis „pobrano dd.mm.rrrr”. Backend dopisuje `fetched_at`
+ * (A20) – gdy jest, bierzemy je wprost (pole opcjonalne, typ lokalny).
+ */
+type SourceFetched = SourceStatus & { fetched_at?: string | null }
+function sourceDate(s: SourceStatus, analysisDate: string, t: (k: string, v?: Record<string, string | number>) => string) {
+  const fetched = (s as SourceFetched).fetched_at?.slice(0, 10) ?? null
+  const later = !!s.data_date && s.data_date > analysisDate
+  if (later || (!s.data_date && fetched)) {
+    const d = formatDatePl(fetched ?? s.data_date!)
+    return { label: t('Pobrano'), text: d, cell: t('pobrano {d}', { d }) }
+  }
+  const d = s.data_date ? formatDatePl(s.data_date) : '—'
+  return { label: t('Data danych'), text: d, cell: d }
+}
+
 export function SectionE({ analysis }: { analysis: AnalysisResponse }) {
   const { t } = useLang()
   const r = analysis.reliability
@@ -62,7 +79,7 @@ export function SectionE({ analysis }: { analysis: AnalysisResponse }) {
               {s.resolution && <p className="text-xs leading-4 text-text-muted">{t(s.resolution)}</p>}
               {s.note && <p className="text-xs leading-4 text-text-muted">{t(s.note)}</p>}
               <p className="mt-1 text-xs leading-4 text-text-muted">
-                {t('Data danych')}: <span className="tabular">{s.data_date ? formatDatePl(s.data_date) : '—'}</span>
+                {sourceDate(s, analysis.analysis_date, t).label}: <span className="tabular">{sourceDate(s, analysis.analysis_date, t).text}</span>
               </p>
             </li>
           )
@@ -90,7 +107,7 @@ export function SectionE({ analysis }: { analysis: AnalysisResponse }) {
                     {s.resolution && <span className="block text-xs text-text-muted">{t(s.resolution)}</span>}
                     {s.note && <span className="block text-xs text-text-muted">{t(s.note)}</span>}
                   </td>
-                  <td className="tabular px-4 py-2.5 whitespace-nowrap">{s.data_date ? formatDatePl(s.data_date) : '—'}</td>
+                  <td className="tabular px-4 py-2.5 whitespace-nowrap">{sourceDate(s, analysis.analysis_date, t).cell}</td>
                   <td className="px-4 py-2.5">
                     <span className={cn('inline-flex items-center gap-1 font-medium whitespace-nowrap', a.cls)}>
                       <Icon className="size-4" aria-hidden /> {t(a.label)}
