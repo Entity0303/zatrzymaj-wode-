@@ -8,7 +8,7 @@ WORKDIR /app
 
 # WeasyPrint (raport PDF): Pango + HarfBuzz; czcionka Inter (SIL OFL 1.1) – polskie znaki
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz-subset0 fonts-inter \
+    && apt-get install -y --no-install-recommends libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz-subset0 fonts-inter fonts-liberation \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt ./
