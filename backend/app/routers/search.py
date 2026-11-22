@@ -15,7 +15,7 @@ from app.core.config import settings
 from app.core.http import NotFoundError, SourceError
 from app.core.search_query import HINT, ParsedQuery, fold, parse
 from app.schemas.search import SearchResponse, SearchResult
-from app.sources import nominatim, places, uldk
+from app.sources import nominatim, places, uldk, uug
 
 router = APIRouter(prefix="/api", tags=["wyszukiwanie"])
 MAX_RESULTS = 10
@@ -95,6 +95,36 @@ def _sorted_parcels(parcels: list[uldk.Parcel]) -> list[uldk.Parcel]:
     return sorted(parcels, key=lambda p: (fold(p.voivodeship), fold(p.county), fold(p.commune), fold(p.region)))
 
 
+def address_result(a) -> SearchResult:
+    """A9: adres punktowy (PRG / OSM) – rolnik przybliża mapę do domu i klika swoje pole."""
+    name = f"{a.street} {a.house_number}" if a.street else f"{a.locality} {a.house_number}"
+    head = f"ul. {a.street} {a.house_number}, {a.locality}" if a.street else f"{a.locality} {a.house_number}"
+    return SearchResult(kind="address", id=a.id, label=place_label(head, a.gmina or None, a.powiat or None,
+                                                                   a.wojewodztwo or None),
+                        name=name, lon=a.lon, lat=a.lat, gmina=a.gmina or None, powiat=_strip(a.powiat, "powiat") or None,
+                        wojewodztwo=a.wojewodztwo or None, bbox=places.point_bbox(a.lon, a.lat, False), bbox_approx=True,
+                        locality=a.locality, street=a.street, house_number=a.house_number, source=a.source)
+
+
+async def _addresses(locality: str, number: str, street: str | None, notices: list[str]) -> tuple[list, str | None]:
+    """Adres: UUG GUGiK (PRG) → rezerwa Nominatim OSM (gdy UUG zablokowane / bez wyniku). Zwraca (adresy, atrybucja)."""
+    if not settings.search_addresses or ("/" in number and not street):  # „6/1” bez ulicy – to działka, nie dom
+        return [], None
+    try:
+        found = await uug.find(locality, number, street)
+        if found:
+            return found, uug.ATTRIBUTION
+    except SourceError as exc:
+        notices.append(f"{exc.source}: {exc.message}")
+    try:
+        found = await nominatim.addresses(locality, number, street)
+        if found:
+            return found, nominatim.ATTRIBUTION
+    except SourceError as exc:
+        notices.append(f"{exc.source}: {exc.message}")
+    return [], None
+
+
 async def _search(pq: ParsedQuery) -> SearchResponse:
     notices: list[str] = []
     attribution = None
@@ -119,12 +149,24 @@ async def _search(pq: ParsedQuery) -> SearchResponse:
         total = len(results)
 
     elif pq.kind == "obreb_numer":
-        parcels = await _parcels(pq.name or "", pq.number or "", notices)
-        if parcels:
-            results = [parcel_result(p) for p in _sorted_parcels(parcels)]
+        # A9: „miejscowość numer” – działka (ULDK) I adres (PRG / OSM) równolegle; „miejscowość, ul. ulica numer” – adres
+        if pq.street:
+            parcels, (addrs, a_attr) = [], await _addresses(pq.name or "", pq.number or "", pq.street, notices)
+        else:
+            parcels, (addrs, a_attr) = await asyncio.gather(
+                _parcels(pq.name or "", pq.number or "", notices),
+                _addresses(pq.name or "", pq.number or "", None, notices))
+        attribution = a_attr
+        if parcels or addrs:
+            results = [parcel_result(p) for p in _sorted_parcels(parcels)] + [address_result(a) for a in addrs]
             total = len(results)
-            if total > 1:
+            if len(parcels) > 1:
                 hint = "Kilka obrębów o tej nazwie – wybierz właściwy (gmina i powiat są przy każdej pozycji)."
+            elif addrs and not parcels and not pq.street:
+                hint = (f"Nie znaleziono działki nr {pq.number} w obrębie „{pq.name}”, ale jest taki adres – przybliż mapę "
+                        "do domu i kliknij swoje pole.")
+            elif addrs and pq.street:
+                hint = "To adres, nie działka – przybliż mapę do domu i kliknij swoje pole."
         else:  # nie ma takiej działki (albo ULDK niedostępne) – pokazujemy miejscowość, rolnik kliknie swoje pole
             res = await places.find(pq.name or "")
             notices += [n for n in res.notices if n not in notices]

@@ -143,6 +143,41 @@ async def search(name: str) -> list[OsmPlace]:
     return [p for p in parse_search(items) if fold(p.name).startswith(want)]
 
 
+async def addresses(locality: str, number: str, street: str | None = None) -> list:
+    """A9: adres punktowy z OSM (rezerwa UUG): „Tczów 123” albo „Długa 5, Kraków”. Tylko wyniki z dokładnym numerem
+    domu i zgodną miejscowością; zwraca `uug.Address` (source = "osm")."""
+    from app.sources.uug import Address
+
+    q = f"{street} {number}, {locality}" if street else f"{locality} {number}"
+    key = ("address", fold(q))
+
+    async def download() -> list[dict]:
+        data = await _get("/search", {"q": q, "countrycodes": "pl", "format": "jsonv2", "addressdetails": "1",
+                                      "limit": "5", "accept-language": "pl"})
+        return data if isinstance(data, list) else []
+
+    items = await cached_fetch(_cache, key, SOURCE, download, ttl_s=FOREVER, breaker_s=settings.nominatim_breaker_s)
+    want = fold(locality)
+    out = []
+    for it in items:
+        a = it.get("address") or {}
+        hn = str(a.get("house_number") or "")
+        town = a.get("village") or a.get("town") or a.get("city") or a.get("hamlet") or a.get("suburb") or ""
+        if hn.lower() != number.lower() or not (fold(town).startswith(want) or want in fold(it.get("display_name", ""))):
+            continue
+        try:
+            lon, lat = float(it["lon"]), float(it["lat"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        out.append(Address(id=f"osm:{it.get('osm_type', '')}/{it.get('osm_id', '')}", locality=town or locality,
+                           street=a.get("road") or None, house_number=hn,
+                           gmina=strip_prefix(a.get("municipality"), "gmina") or (town if a.get("city") else ""),
+                           powiat=strip_prefix(a.get("county"), "powiat"), wojewodztwo=strip_prefix(a.get("state"),
+                                                                                                   "województwo"),
+                           lon=round(lon, 6), lat=round(lat, 6), source="osm"))
+    return out
+
+
 @dataclass
 class Admin:
     wojewodztwo: str

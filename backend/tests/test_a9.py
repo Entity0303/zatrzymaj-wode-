@@ -91,3 +91,71 @@ def test_terrain_post_geometry_and_satellite_layer_post(client, monkeypatch):
     assert r.status_code == 200, r.text
     assert r.json()["raster"]["image_url"].startswith("data:image/png;base64,")
     assert client.post("/api/layers/teren", json={"geometry": geom}).status_code == 501
+
+
+# ── CZĘŚĆ 2: adresy w wyszukiwarce ─────────────────────────────────────────────────────────
+
+import httpx  # noqa: E402
+
+from app.core.search_query import parse  # noqa: E402
+from app.schemas.search import SearchResponse  # noqa: E402
+from app.sources import uug  # noqa: E402
+
+UUG_TCZOW = ('{"type":"address","found objects":15,"returned objects":1,"results":{"1":{"city":"Tczów","citypart":null,'
+             '"street":null,"number":"123","teryt":"143604","simc":"0639943","ulic":null,"code":"26-706",'
+             '"jednostka":"{Polska,mazowieckie,zwoleński,Tczów}","x":"670477.23","y":"387247.04","accuracy":"1"}}}')
+UUG_EMPTY = '{"type":"address","found objects":0,"returned objects":0,"results":null}'
+OSM_DLUGA = [{"osm_type": "node", "osm_id": 1, "lat": "50.0687", "lon": "19.9406", "display_name": "5, Długa, Kraków",
+              "address": {"house_number": "5", "road": "Długa", "city": "Kraków", "county": "Kraków",
+                          "state": "województwo małopolskie"}}]
+
+
+@pytest.mark.parametrize("q, name, street, number", [
+    ("Kraków, ul. Długa 5", "Kraków", "Długa", "5"),
+    ("Kraków, Długa 5a", "Kraków", "Długa", "5a"),
+    ("Wola, al. Polna 12/3", "Wola", "Polna", "12/3"),
+    ("Tczów 123", "Tczów", None, "123"),
+    ("Wnory-Wandy 6/1", "Wnory-Wandy", None, "6/1"),
+])
+def test_parse_address_forms(q, name, street, number):
+    pq = parse(q)
+    assert (pq.kind, pq.name, pq.street, pq.number) == ("obreb_numer", name, street, number)
+    assert parse("Nowa Wieś, Busko").kind == "name"
+
+
+def test_uug_parse_point_and_admin():
+    a = uug.parse(UUG_TCZOW)[0]
+    assert (a.locality, a.street, a.house_number, a.gmina, a.powiat, a.wojewodztwo, a.source) == (
+        "Tczów", None, "123", "Tczów", "zwoleński", "mazowieckie", "prg")
+    assert 21.3 < a.lon < 21.6 and 51.2 < a.lat < 51.5
+    assert uug.parse(UUG_EMPTY) == []
+
+
+@respx.mock
+def test_search_village_number_returns_parcel_and_address_groups(client, monkeypatch):
+    from test_a5c import ULDK_ONE  # noqa: F401 – format odpowiedzi ULDK
+    monkeypatch.setattr(settings, "search_addresses", True)
+    uldk_txt = ULDK_ONE.replace("201305_2.0038.6/1", "143604_2.0011.123").replace("Wnory-Wandy", "Tczów") \
+        .replace("6/1", "123")
+    respx.get(settings.uldk_url).mock(return_value=httpx.Response(200, text=uldk_txt))
+    respx.get(settings.uug_url).mock(return_value=httpx.Response(200, text=UUG_TCZOW))
+    r = SearchResponse.model_validate(client.get("/api/search", params={"q": "Tczów 123"}).json())
+    kinds = [x.kind for x in r.results]
+    assert kinds == ["parcel", "address"] and r.interpreted_as == "obreb_numer"
+    a = r.results[1]
+    assert a.locality == "Tczów" and a.house_number == "123" and a.street is None and a.source == "prg"
+    assert a.label.startswith("Tczów 123, gm. Tczów") and r.attribution == "Adresy: PRG GUGiK"
+
+
+@respx.mock
+def test_search_street_address_falls_back_to_osm_when_uug_blocked(client, monkeypatch):
+    monkeypatch.setattr(settings, "search_addresses", True)
+    monkeypatch.setattr(settings, "nominatim_min_interval_s", 0)
+    uldk_route = respx.get(settings.uldk_url).mock(return_value=httpx.Response(200, text="-1 brak\n"))
+    respx.get(settings.uug_url).mock(return_value=httpx.Response(200, text="blocked for abuse"))
+    respx.get(settings.nominatim_url.rstrip("/") + "/search").mock(return_value=httpx.Response(200, json=OSM_DLUGA))
+    r = SearchResponse.model_validate(client.get("/api/search", params={"q": "Kraków, ul. Długa 5"}).json())
+    assert [x.kind for x in r.results] == ["address"] and not uldk_route.called  # ulica = adres, nie działka
+    a = r.results[0]
+    assert (a.street, a.house_number, a.locality, a.source) == ("Długa", "5", "Kraków", "osm")
+    assert "OpenStreetMap" in (r.attribution or "") and any("UUG" in n for n in r.notices)

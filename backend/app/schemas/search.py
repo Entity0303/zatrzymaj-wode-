@@ -13,7 +13,7 @@ class _Contract(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
-SearchKind = Literal["parcel", "place"]
+SearchKind = Literal["parcel", "place", "address"]  # A9: address – adres punktowy (PRG / OSM)
 PlaceType = Literal["miejscowosc", "gmina", "obreb"]
 QueryInterpretation = Literal["parcel_id", "obreb_numer", "name", "empty", "unrecognized"]
 
@@ -35,7 +35,11 @@ class SearchResult(_Contract):
         None, description="lon_min, lat_min, lon_max, lat_max (EPSG:4326) – do fitBounds; parcel: obrys działki")
     bbox_approx: bool = Field(False, description="true = bbox wyznaczony wokół punktu (źródło podało tylko punkt)")
     area_ha: float | None = Field(None, description="Tylko kind = parcel – z geometrii")
-    source: str = Field(description="Skąd wynik: 'ULDK GUGiK', 'PRNG GUGiK', 'OpenStreetMap Nominatim', 'słownik demo'")
+    locality: str | None = Field(None, description="A9 – tylko address: miejscowość")
+    street: str | None = Field(None, description="A9 – tylko address: ulica (null na wsi bez ulic)")
+    house_number: str | None = Field(None, description="A9 – tylko address: numer domu")
+    source: str = Field(description="Skąd wynik: 'ULDK GUGiK', 'PRNG GUGiK', 'OpenStreetMap Nominatim', 'słownik demo'; "
+                                    "address: 'prg' | 'osm'")
 
 
 class SearchResponse(_Contract):

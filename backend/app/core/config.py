@@ -99,6 +99,11 @@ class Settings(BaseSettings):
     nominatim_timeout_s: float = 6.0
     nominatim_min_interval_s: float = 1.1  # polityka OSM: najwyżej 1 zapytanie na sekundę
     nominatim_breaker_s: float = 60.0
+    # A9: adresy PRG – UUG GUGiK (klucz `uug` w OFFLINE_SOURCES), rezerwa Nominatim
+    uug_url: str = "https://services.gugik.gov.pl/uug/"
+    uug_timeout_s: float = 6.0
+    uug_breaker_s: float = 120.0
+    search_addresses: bool = True        # A9: adresy w wyszukiwarce (testy A5c – bez, jawnie włączane w test_a9)
     search_timeout_s: float = 14.0        # łączny limit jednego wyszukiwania
 
     # przykłady demo: rozgrzewka cache przy starcie (w tle) i co tyle godzin

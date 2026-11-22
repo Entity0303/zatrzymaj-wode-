@@ -20,6 +20,10 @@ _NAME_THEN_NUM = re.compile(rf"^(?P<name>.*?[^\W\d_])[\s,;]+(?:(?:nr|dz|dz\.|dzi
                             re.IGNORECASE)
 _NUM_THEN_NAME = re.compile(rf"^(?:(?:nr|dz|działka|dzialka)\.?\s*)(?P<num>{_NUM})[\s,;]+(?P<name>[^\W\d_].*)$",
                             re.IGNORECASE)
+# A9: „Kraków, ul. Długa 5”, „Kraków, Długa 5a”, „Wola, al. Polna 12/3”
+_STREET = re.compile(r"^(?P<loc>[^,\d]*[^\W\d_][^,]*),\s*(?:(?:ul|ulica|al|aleja|aleje|os|osiedle|pl|plac)\.?\s+)?"
+                     r"(?P<street>[^\W\d_][^,]*?)\s+(?:nr\.?\s*)?(?P<num>\d{1,4}[A-Za-z]?(?:\s*/\s*\d{1,4}[A-Za-z]?)?)$",
+                     re.IGNORECASE)
 _ONLY_NAME = re.compile(r"^[^\W\d_](?:[^\W\d_]|[ \-.'’()])*$")
 _LETTERS = str.maketrans({"ł": "l", "Ł": "L", "đ": "d", "ø": "o"})
 HINT = "Wpisz nazwę wsi albo obręb i numer działki, np. Wnory-Wandy 6/1"
@@ -47,6 +51,7 @@ class ParsedQuery:
     number: str | None = None  # numer działki, np. 6/1
     parcel_id: str | None = None
     area_hint: list[str] = field(default_factory=list)  # po przecinku: gmina / powiat / województwo, np. „Nowa Wieś, Busko”
+    street: str | None = None  # A9: „Kraków, ul. Długa 5” → name = Kraków, street = Długa, number = 5 (tylko adres)
 
 
 def _norm_number(num: str) -> str:
@@ -60,6 +65,10 @@ def parse(q: str | None) -> ParsedQuery:
     if _FULL_ID.match(text.replace(" ", "")):
         pid = text.replace(" ", "")
         return ParsedQuery("parcel_id", pid, parcel_id=pid)
+    ms = _STREET.match(text)
+    if ms and not re.fullmatch(r"(?:gm|gmina|pow|powiat|woj)\.?\s.*", ms.group("street"), re.IGNORECASE):
+        return ParsedQuery("obreb_numer", text, name=clean(ms.group("loc")).strip(" ,."),
+                           number=_norm_number(ms.group("num")), street=clean(ms.group("street")).strip(" ,."))
     m = _NUM_THEN_NAME.match(text) or _NAME_THEN_NUM.match(text)
     if m:
         name = clean(m.group("name")).strip(" ,.")
