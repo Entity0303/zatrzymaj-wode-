@@ -4,6 +4,16 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-22 18:00 · `main` · A9+: teren w tle, adresy, woda w okolicy, zgłoszenia
+**Co:** (VPN, GUGiK z limitem; satelity nie pobierano)
+- **Cz. 1 – teren w tle** (D92): `terrain = {status: pending}` + liczenie w tle, `GET/POST /api/terrain`, wspólne zadanie dla warstw, siatka ≤ 5000 pkt, POST `/api/layers/kondycja|wilgotnosc` z geometry. Na żywo: 201305 i Pożarowo – teren z cache (analiza 0,04–0,26 s); Drwinia 876 – pending (analiza 0,47 s), `/api/terrain` 4,7 s, po restarcie z cache.
+- **Cz. 2 – adresy** (D93): `sources/uug.py` (UUG działa przez VPN), `nominatim.addresses`, parser „miejscowość, ul. ulica numer”. Na żywo: „Tczów 123” → adres PRG (0,9 s), „Drwinia 1” → działka + adres (0,9 s), „Kraków, ul. Długa 5” → adres PRG (0,2 s).
+- **Cz. 3 – woda** (D94, D95): `sources/{overpass,imgw_hydro}.py`, `analysis/hydro.py`, `routers/hydro.py`, warstwa `woda`, reguła zastawki z rowem, zdanie w werdykcie, sekcja w raporcie szczegółowym; `scripts/build_imgw_hydro.py` → `hydro_levels.json` (847 stacji, 264 kB, 18 MB pobrane raz); zgłoszenia infra w SQLite; przykład `less-drzewce`; ograniczenie o wodach gruntowych. MPHP – 401 (pominięte). Na żywo: 201305 – brak wody w 500 m wg OSM, wodowskaz Ślina – Zawady 13 km, niski; Pożarowo – 8 obiektów (rowy przy granicy, rów 111 m w kierunku odpływu, zbiorniki), Warta – Wronki 9 km, niski; Drwinia 876 – ciek przy działce w kierunku odpływu, Wisła – Sierosławice 4 km, średni (Overpass 34 s – instancja rezerwowa; główna dała 502).
+- PDF: `reports/examples/dobra-szczegolowy.pdf` (10 stron, „Woda w okolicy” na str. 4) + PNG.
+- Testy: pełny zestaw bez sieci – 507 + 1 poprawiony (`test_a6` – fakty wody w helperze) = 508; `test_a9.py` – 19 testów.
+**Pliki:** `backend/app/{analysis/{hydro.py,terrain.py,verdict.py,confidence.py,recommendations.py,rules/{retencja,verdict}.yaml}, sources/{uug,overpass,imgw_hydro,nominatim}.py, routers/{terrain,hydro,analysis,layers,reports,search,infra_reports}.py, schemas/{analysis,search,layers}.py, core/{config,search_query}.py, report/{builder.py,templates/report.html}, demo.py, data/imgw/hydro_levels.json, main.py}`, `backend/scripts/build_imgw_hydro.py`, testy (`test_a9.py` nowy, `test_a6`, `test_contract`, `test_demo_status_report`, `conftest`), mocki `terrain/hydro/layers.woda/search.address.sample.json`.
+**Kontrakt:** TAK (addytywnie, zgodnie z typami F3) – `contract-changes.md`, wpis A9+ „Dla Mefju”.
+
 ## 2026-11-22 14:30 · `main` · A8: działki demo, teren NMT, tryb GUGiK per źródło
 **Co:** (ULDK przez VPN: 1 zapytanie testowe OK, potem po 1 zapytaniu na działkę; satelita tylko Earth Search)
 - **NMT** (D91): przyczyna braku terenu w UI – dopasowanie wysokości po kluczu 0,1 m przy innym zaokrągleniu współrzędnych w odpowiedzi NMT; `nmt.match_heights` (po kolejności, tolerancja 0,15 m) + test. 201305 i Drwinia 876: `terrain` w analizie, Teren 3 obiekty, Spływ 46 / 19. Porażki nie były w cache, bezpiecznik zamknięty.

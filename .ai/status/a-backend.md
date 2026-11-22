@@ -1,6 +1,6 @@
 # Status – osoba A (Dominik), backend
 
-_Stan na: 2026-11-22 14:30 (A8)_
+_Stan na: 2026-11-22 18:00 (A9+)_
 
 ## Zrobione
 - Wyszukiwanie działki ULDK: pełny identyfikator, „obręb numer”, punkt; `GET /api/parcel` (409 lista kandydatów, 404, 502 z nazwą źródła), timeout 10 s + jedna ponowna próba, cache 24 h.
@@ -74,16 +74,21 @@ _Stan na: 2026-11-22 14:30 (A8)_
   - 15 działek demo z ULDK (kandydaci C, brakujące A5d, teren C; less → Drzewce-Kolonia 203), teren NMT w cache dla wszystkich; 6 przykładów `/api/demo/examples` (D91);
   - `OFFLINE_SOURCES` (blokada GUGiK per źródło) + wspólny limit GUGiK 2 naraz / 0,5 s (D89); satelita z cache – najnowsza scena ≤ data analizy, porażki 30 min (D90);
   - obszar przybliżony / pole narysowane rozpoznawane po id w warstwach i raporcie; `demo_check.py` – 409 z naszą działką na liście = OK.
-- Testy: **490 bez sieci** (`docker run --network none`) + 5 live.
+- **A9+ (na `main`) – teren w tle, adresy, woda w okolicy:**
+  - teren: analiza bez czekania na NMT (`terrain = {status: pending}`), `GET/POST /api/terrain`, siatka ≤ 5000 pkt, POST warstw satelitarnych z geometry (D92);
+  - adresy: UUG GUGiK (PRG) + rezerwa Nominatim, „miejscowość numer” = działka + adres, „miejscowość, ul. ulica numer” (D93);
+  - woda: Overpass OSM (+ rezerwowe instancje) w 500 m, wodowskaz IMGW z percentylami 2016–2025 (`hydro_levels.json`), `GET/POST /api/hydro`, warstwa `woda`, zastawka tylko przy rowie, zdanie w werdykcie, sekcja w raporcie szczegółowym (D94);
+  - zgłoszenia infra w SQLite (bez danych osobowych), przykład Less zamiast Żuław, ograniczenie o wodach gruntowych (D95).
+- Testy: **508 bez sieci** (`docker run --network none`) + 5 live.
 
 ## W trakcie (gałąź)
 - **INT3 (22.11 ok. 00:55): `c/research`, `a/backend`, `b/frontend` scalone do `main` (bez konfliktów) i wypchnięte.** Od 22.11 00:45 praca bezpośrednio na `main` (zasady w CLAUDE.md); gałęzie `a/backend` itp. już nieużywane. Główny folder `zatrzymaj-wode-` przełączony na `main`, kontenery przebudowane.
 
 ## Tryb pracy (A8, D89) – przełączanie jedną komendą PowerShell (z katalogu repo)
-- **VPN włączony** (GUGiK dozwolony z limitem): `$env:DEMO_OFFLINE="false"; $env:OFFLINE_SOURCES="uug,bdot"; docker compose up -d backend`
+- **VPN włączony** (GUGiK dozwolony z limitem; UUG działa przez VPN – A9): `$env:DEMO_OFFLINE="false"; $env:OFFLINE_SOURCES="bdot"; docker compose up -d backend`
 - **VPN wyłączony** (GUGiK tylko z cache): `$env:DEMO_OFFLINE="false"; $env:OFFLINE_SOURCES="uldk,nmt,kieg,uug,bdot"; docker compose up -d backend`
 - **Prezentacja** (wszystko z cache): `$env:DEMO_OFFLINE="true"; docker compose up -d backend`
-- Teraz (22.11 14:30): VPN włączony – `OFFLINE_SOURCES=uug,bdot`.
+- Teraz (22.11 18:00): VPN włączony – `OFFLINE_SOURCES=bdot`.
 
 ## Przed prezentacją (na dobrej sieci; w Git Bash poprzedź komendy `MSYS_NO_PATHCONV=1`)
 1. `docker compose up -d --build` – backend z wolumenem cache (`/data/cache.sqlite`).
