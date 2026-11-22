@@ -198,11 +198,21 @@ async def fetch(parcel_4326: BaseGeometry) -> tuple[list, list | None]:
     return els, None if isinstance(gs, BaseException) else gs
 
 
+def _queued(parcel_4326: BaseGeometry):
+    """A23: pobranie rowów i zbiorników przez wspólną kolejkę zadań w tle; dane już w cache – od razu."""
+    from app.core import background
+
+    key = search_bbox(parcel_4326)
+    if overpass.cached_elements(key) is not None:
+        return fetch(parcel_4326)
+    return background.run("rowy", str(key), fetch(parcel_4326))
+
+
 async def live(parcel_4326: BaseGeometry, outlets: list, on: date) -> tuple[Hydro, list]:
     key = search_bbox(parcel_4326)
     task = _tasks.get(key)
     if task is None or task.done():
-        task = asyncio.ensure_future(fetch(parcel_4326))
+        task = asyncio.ensure_future(_queued(parcel_4326))
         _tasks[key] = task
     try:
         els, gs = await asyncio.shield(task)
@@ -221,7 +231,7 @@ def start_background(parcel_4326: BaseGeometry) -> None:
     if key in _tasks and not _tasks[key].done():
         return
     try:
-        t = asyncio.ensure_future(fetch(parcel_4326))
+        t = asyncio.ensure_future(_queued(parcel_4326))
     except RuntimeError:
         return
     _tasks[key] = t

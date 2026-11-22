@@ -2,6 +2,7 @@
 ekoschematy, płodozmian), gleba dla rolnika (SoilGrids, Saxton i Rawls, mapa glebowo-rolnicza), odporność
 na awarie źródeł (przeterminowany cache) – bez sieci."""
 
+import time
 import asyncio
 from datetime import date
 
@@ -278,6 +279,12 @@ def test_analysis_soil_section_and_previous_crop(client):
     mock_all()
     r = client.get("/api/analysis", params={**Q, "previous_crop": "zboza_ozime"})
     assert r.status_code == 200, r.text
+    first = AnalysisResponse.model_validate(r.json())
+    # A23: SoilGrids idzie kolejką zadań w tle jako ostatni – pierwsza odpowiedź na niego nie czeka („w toku”),
+    # kolejna ma go z cache
+    assert first.soil.texture is None and any(s.id == "soilgrids" and "w tle" in (s.note or "") for s in first.steps)
+    time.sleep(0.8)
+    r = client.get("/api/analysis", params={**Q, "previous_crop": "zboza_ozime"})
     a = AnalysisResponse.model_validate(r.json())
     assert a.previous_crop == "zboza_ozime"
     assert a.soil.texture.texture_class == "glina piaszczysta" and a.soil.permeability.ksat_mm_h > 0

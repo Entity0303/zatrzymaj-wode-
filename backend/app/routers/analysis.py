@@ -764,6 +764,16 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
         _terrain_step(p, timed),
     )
     tr_pending = isinstance(tr_res, SourceError) and tr_res.message == TERRAIN_PENDING
+    if (isinstance(sg_res, SourceError) and sg_res.message == soilgrids.PENDING_MESSAGE
+            and isinstance(sm_res, SourceError) and isinstance(iung_res, SourceError)):
+        # A23: brak mapy glebowo-rolniczej i IUNG – SoilGrids jest jedynym źródłem gleby, więc na niego czekamy
+        # (wynik nie może zależeć od tego, czy zdążył w tle)
+        st_sg = perf_counter()
+        try:
+            sg_res = await soilgrids.texture_budget(rp.x, rp.y, settings.soilgrids_timeout_s + 5, must_wait=True)
+        except SourceError as exc:
+            sg_res = exc
+        sg_ms += int((perf_counter() - st_sg) * 1000)
     if isinstance(w_res, SourceError):  # bez pogody nic nie da się policzyć
         raise http_error(w_res)
     w = w_res.weather

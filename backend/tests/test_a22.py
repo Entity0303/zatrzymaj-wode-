@@ -24,10 +24,13 @@ def test_soilgrids_budget_then_background_fill(monkeypatch):
         return "wynik"
 
     monkeypatch.setattr(soilgrids, "texture_at", slow)
+    from app.core import background
+
+    monkeypatch.setattr(background, "GRACE_S", {"soilgrids": 0.001})
 
     async def run():
         with pytest.raises(SourceError) as e:
-            await soilgrids.texture_budget(22.6, 53.05, wait_s=0.02)  # budżet minął – odpowiedź bez SoilGrids
+            await soilgrids.texture_budget(22.6, 53.05, wait_s=0.02)  # A23: SoilGrids w kolejce tła – od razu „w toku”
         assert e.value.message == soilgrids.PENDING_MESSAGE
         with pytest.raises(SourceError):
             await soilgrids.texture_budget(22.6, 53.05, wait_s=0.02)  # to samo pobieranie – bez drugiego zapytania

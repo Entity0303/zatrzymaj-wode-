@@ -22,6 +22,7 @@ import numpy as np
 
 from app.analysis import suggestions as S
 from app.analysis.et0 import DailyWeather
+from app.core import background
 from app.schemas.analysis import CropSuggestions
 from app.sources import iung
 
@@ -103,8 +104,13 @@ async def ranges(w: DailyWeather, raw_precip, precip_main: str | None, factor: f
         _done.move_to_end(key)
         return _done[key]
     fut = _tasks.get(key)
+    queued = False
     if fut is None or fut.done():
-        fut = asyncio.ensure_future(asyncio.to_thread(_compute, w, raw_precip, precip_main, factor, analysis_date, ctx, years))
+        # A23: wspólna kolejka zadań w tle (po terenie); gdy wszystkie miejsca zajęte – analiza nie czeka
+        queued = background.busy()
+        fut = asyncio.ensure_future(background.run(
+            "widelki", f"{analysis_date.isoformat()} {key[0][:8]}",
+            asyncio.to_thread(_compute, w, raw_precip, precip_main, factor, analysis_date, ctx, years)))
         _tasks[key] = fut
 
         def finish(f: asyncio.Future, key=key) -> None:
@@ -118,6 +124,8 @@ async def ranges(w: DailyWeather, raw_precip, precip_main: str | None, factor: f
     try:
         if wait_s is None:
             return await asyncio.shield(fut)
+        if queued:
+            return None
         return await asyncio.wait_for(asyncio.shield(fut), wait_s)
     except asyncio.TimeoutError:
         return None

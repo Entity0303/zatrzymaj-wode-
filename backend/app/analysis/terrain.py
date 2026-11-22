@@ -1291,12 +1291,25 @@ def _task_key(geom_2180: Any) -> tuple:
     return ("terrain", prepare(geom_2180).key)
 
 
+def _work(geom_2180: Any, parcel_id: str | None):
+    """Liczenie terenu jako zadanie tła (A23: wspólna kolejka, najwyższy priorytet). Gdy siatka wysokości jest już
+    w pamięci / cache – od razu, bez kolejki (obliczenia < 1 s)."""
+    from app.core import background
+    from app.sources import nmt
+
+    prep = prepare(geom_2180)
+    work = terrain_for_parcel(geom_2180, parcel_id)
+    if prep.key in _memo or nmt._cache.get(prep.key) is not None:
+        return work
+    return background.run("teren", str(parcel_id or prep.key)[:48], work)
+
+
 async def live(geom_2180: Any, parcel_id: str | None = None) -> TerrainResult:
     """Teren na żywo (GET /api/terrain, warstwy, raport): jedno liczenie na działkę naraz (wspólne zadanie)."""
     key = _task_key(geom_2180)
     task = _tasks.get(key)
     if task is None or task.done():
-        task = asyncio.ensure_future(terrain_for_parcel(geom_2180, parcel_id))
+        task = asyncio.ensure_future(_work(geom_2180, parcel_id))
         _tasks[key] = task
     try:
         return await asyncio.shield(task)
@@ -1311,7 +1324,7 @@ def start_background(geom_2180: Any, parcel_id: str | None = None) -> None:
     if key in _tasks and not _tasks[key].done():
         return
     try:
-        t = asyncio.ensure_future(terrain_for_parcel(geom_2180, parcel_id))
+        t = asyncio.ensure_future(_work(geom_2180, parcel_id))
     except RuntimeError:
         return
     _tasks[key] = t

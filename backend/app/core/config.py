@@ -70,6 +70,8 @@ class Settings(BaseSettings):
         return text
 
     http_timeout_s: float = 20.0
+    # A23: ile zadań w tle naraz w całej aplikacji (teren, widełki, rowy, satelita, SoilGrids) – core/background.py
+    background_workers: int = 2
     http_ipv4_only: bool = True  # A23: klient HTTP łączy się tylko po IPv4 (błędne odpowiedzi DNS AAAA dla NMT GUGiK)
     user_agent: str = "Wodoskop/0.1 (HackNation 2026)"  # uczciwy User-Agent dla wszystkich źródeł (A6)
     # A19: JSON albo tekst z przecinkami (NoDecode – pydantic-settings nie dekoduje JSON-a sam, robi to parse_origins)

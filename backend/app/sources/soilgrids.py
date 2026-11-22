@@ -91,17 +91,23 @@ PENDING_MESSAGE = "odpowiada wolno – dociągane w tle, będzie przy kolejnym p
 _tasks: dict[tuple, asyncio.Future] = {}
 
 
-async def texture_budget(lon: float, lat: float, wait_s: float | None = None) -> "SoilGridsResult | None":
+async def texture_budget(lon: float, lat: float, wait_s: float | None = None,
+                         must_wait: bool = False) -> "SoilGridsResult | None":
     """Jak `texture_at`, ale czekamy najwyżej `wait_s`; po tym czasie SourceError(PENDING_MESSAGE), a pobieranie
-    trwa dalej w tle (wynik w cache)."""
+    trwa dalej w tle (wynik w cache). A23: pobieranie idzie wspólną kolejką zadań w tle jako ostatnie – gdy czeka
+    w kolejce, od razu PENDING (analiza nie czeka); `must_wait` – czekaj mimo kolejki (brak innych danych o glebie)."""
     wait_s = settings.soilgrids_wait_s if wait_s is None else wait_s
     key = (round(lon, 4), round(lat, 4))
     hit = _cache.get(key)
     if hit is not None:
         return hit
     task = _tasks.get(key)
+    queued = False
     if task is None or task.done():
-        task = asyncio.ensure_future(texture_at(lon, lat))
+        from app.core import background
+
+        queued = background.busy("soilgrids")  # A23: SoilGrids startuje ostatni – analiza nie czeka na kolejkę
+        task = asyncio.ensure_future(background.run("soilgrids", f"{key[0]},{key[1]}", texture_at(lon, lat)))
         _tasks[key] = task
 
         def finish(t: asyncio.Future, key=key) -> None:
@@ -110,6 +116,8 @@ async def texture_budget(lon: float, lat: float, wait_s: float | None = None) ->
                 t.exception()  # błąd odebrany – bez ostrzeżenia „exception was never retrieved”
 
         task.add_done_callback(finish)
+    if queued and not must_wait:
+        raise SourceError(SOURCE, PENDING_MESSAGE)
     try:
         return await asyncio.wait_for(asyncio.shield(task), wait_s)
     except asyncio.TimeoutError as exc:

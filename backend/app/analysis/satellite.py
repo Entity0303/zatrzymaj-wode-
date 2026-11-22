@@ -492,13 +492,22 @@ async def live(geom: BaseGeometry, on: date) -> Satellite:
     key = ("task", geom_key(geom), on.isoformat())
     task = _tasks.get(key)
     if task is None or task.done():
-        task = asyncio.ensure_future(_compute_and_store(geom, on))
+        task = asyncio.ensure_future(_queued(geom, on))
         _tasks[key] = task
     try:
         return _with_series(await asyncio.shield(task), geom, on)
     finally:
         if task.done():
             _tasks.pop(key, None)
+
+
+def _queued(geom: BaseGeometry, on: date):
+    """A23: pobranie zdjęcia przez wspólną kolejkę zadań w tle (po terenie, widełkach i rowach)."""
+    from app.core import background
+
+    if not settings.sentinel_enabled or offline():  # bez zapytań – od razu
+        return _compute_and_store(geom, on)
+    return background.run("satelita", f"{geom_key(geom)} {on.isoformat()}", _compute_and_store(geom, on))
 
 
 async def _compute_and_store(geom: BaseGeometry, on: date) -> Satellite:
@@ -529,7 +538,7 @@ def start_background(geom: BaseGeometry, on: date) -> None:
     if key in _tasks and not _tasks[key].done():
         return
     try:
-        t = asyncio.ensure_future(_compute_and_store(geom, on))
+        t = asyncio.ensure_future(_queued(geom, on))
     except RuntimeError:
         return
     _tasks[key] = t
