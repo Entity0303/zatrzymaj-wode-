@@ -78,3 +78,33 @@ def test_http_client_ipv4_only():
     pool = c._transport._pool
     assert getattr(pool, "_local_address", None) == "0.0.0.0"
     asyncio.run(http.close_client())
+
+
+@pytest.mark.parametrize("crop", ["zboza_ozime", None])
+def test_one_soil_water_number_in_response(crop, monkeypatch):
+    """Wskaźnik i field_state zwracają ten sam zapas wody i tę samą datę – z uprawą (model uprawy) i bez (stan pola)."""
+    import respx
+    from datetime import date as _date
+    from fastapi.testclient import TestClient
+
+    from app.main import app
+    from app.routers import analysis as analysis_router
+    from test_a5 import mock_all
+    from test_water_model import _dry_2018, _et0_seasonal, synth
+
+    async def fake(lon, lat, analysis_date, season_start=None):
+        w = synth(_date(2006, 8, 1), analysis_date.replace(day=max(1, analysis_date.day - 1)), _dry_2018, _et0_seasonal)
+        return analysis_router.WeatherLoad(w, _date(2006, 8, 1), analysis_date, False, 1)
+
+    monkeypatch.setattr(analysis_router, "load_weather_history", fake)
+    with respx.mock(assert_all_called=False) as router:
+        for route in mock_all().values():
+            router.add(route)
+        with TestClient(app) as c:
+            params = {"parcel_id": "201305_2.0038.6/1", "date": "2018-06-10", **({"crop": crop} if crop else {})}
+            a = c.get("/api/analysis", params=params).json()
+    ind, fs = a["indicators"], a["field_state"]
+    assert ind["soil_water_pct"]["value"] is not None
+    assert fs["soil_water_pct"]["value"] == ind["soil_water_pct"]["value"]
+    assert fs["soil_water_mm"]["value"] == ind["soil_water_mm"]["value"]
+    assert fs["soil_water_pct"]["source_tag"]["date"] == ind["soil_water_pct"]["source_tag"]["date"]

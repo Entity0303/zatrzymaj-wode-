@@ -927,6 +927,10 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
     if out and not crop_off:
         sw_pct, sw_mm, risk7, soil_water = out.soil_water_pct, out.soil_water_mm, out.risk_7d, out.soil_water
         sw_pct, sw_mm = _until_weather(sw_pct, wb.data_until), _until_weather(sw_mm, wb.data_until)
+        if field_c is not None:
+            # A23: jedna liczba „zapas wody w glebie” w całej odpowiedzi – z aktywną uprawą źródłem jest model uprawy,
+            # więc field_state pokazuje tę samą wartość i datę co wskaźnik (bez uprawy i poza sezonem – stan pola)
+            field_c = field_c.model_copy(update={"soil_water_pct": sw_pct, "soil_water_mm": sw_mm, "soil_water": soil_water})
     elif crop_off:  # jedna liczba wody: profil działki (field_state); ryzyko stresu – nie dotyczy poza sezonem
         sw_pct, sw_mm, soil_water = fs.water_indicators(field, analysis_date, fs_level)
         risk7 = RiskIndicator(value=None, unit="dni", label="Nie dotyczy", status="no_data",
