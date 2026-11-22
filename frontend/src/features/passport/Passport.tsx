@@ -16,11 +16,10 @@ import { SoilCard } from '@/features/parcel-panel/SoilCard'
 import { TerrainCard } from '@/features/parcel-panel/TerrainCard'
 import { ApproxAreaBanner } from '@/features/parcel-panel/ApproxAreaBanner'
 import { HydroCard } from '@/features/parcel-panel/HydroCard'
-import { RankingCard } from '@/features/parcel-panel/RankingCard'
 import { SatelliteCard } from '@/features/parcel-panel/SatelliteCard'
 import { PassportSection } from './PassportSection'
-import { SectionB } from './SectionB'
-import { SectionC } from './SectionC'
+import { CropTableSection } from './CropTableSection'
+import { WaterHistorySection } from './WaterHistorySection'
 import { SectionD } from './SectionD'
 import { SectionE } from './SectionE'
 import { VerdictSection } from './VerdictSection'
@@ -62,22 +61,13 @@ function Content({ analysis, print, onShowOnMap, refineForm }: { analysis: Analy
         <SectionE analysis={analysis} />
       </>
     )
-  const s = analysis.suggestions
   return (
     <>
       {approx}
       <VerdictSection analysis={analysis} />
-      {/* sekcje 3–7: dotychczasowa treść w nowych kotwicach – wymieniana w kolejnych krokach F6 */}
-      {s && s.groups.some((g) => g.items.length) && (
-        <PassportSection id="pp-posiac" title={t('Co tu posiać')}>
-          {refineForm}
-          <RankingCard suggestions={s} priceNow={analysis.price_now} top={5} />
-        </PassportSection>
-      )}
-      <div id="pp-woda" className="space-y-6">
-        <SectionB analysis={analysis} chartWidth={print ? 680 : undefined} />
-        <SectionC analysis={analysis} />
-      </div>
+      {/* sekcje 5–7: dotychczasowa treść w nowych kotwicach – wymieniana w kolejnym kroku F6 */}
+      <CropTableSection analysis={analysis} refineForm={refineForm} />
+      <WaterHistorySection analysis={analysis} chartWidth={print ? 680 : undefined} />
       <PassportSection id="pp-teren" title={t('Teren i okolica')}>
         <TerrainCard terrain={analysis.terrain} note={analysis.terrain_note} />
         <HydroCard hydro={analysis.hydro} passport historicalDate={analysis.historical ? analysis.analysis_date : null} />

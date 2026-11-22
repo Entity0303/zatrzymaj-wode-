@@ -1,4 +1,4 @@
-import type { CropRevenue, PriceNow } from '@/api/types'
+import type { CropRevenue, CropSuggestion, PriceNow } from '@/api/types'
 
 /** F8: pomocnicze do kolumny „Przychód z pola” (features/parcel-panel/RevenueCell). */
 
@@ -27,3 +27,22 @@ export const okZl = (v: number | null | undefined): v is number => typeof v === 
 
 /** Przychód z pola nadaje się do pokazania – typowy rok > 0 zł. */
 export const hasRevenue = (r: CropRevenue | null | undefined): r is CropRevenue => !!r && okZl(r.typical_zl)
+
+type T = (key: string, vars?: Record<string, string | number>) => string
+
+/**
+ * F6: lista źródeł cen pod tabelą upraw – ceny GUS z `revenue.price_source` (bez powtórzeń), a dla upraw bez ceny
+ * GUS – podpis ceny bieżącej (`price_source` przy pozycji albo przy `price_now`, inaczej składany z tygodnia).
+ */
+export function priceSourceList(items: CropSuggestion[], priceNow: PriceNow[] | null | undefined, t: T): string[] {
+  const gus = [...new Set(items.map((s) => (hasRevenue(s.revenue) ? s.revenue.price_source?.trim() : '')).filter(Boolean) as string[])]
+  const now = items
+    .filter((s) => !hasRevenue(s.revenue))
+    .flatMap((s) => {
+      const api = (s as CropSuggestion & { price_source?: string | null }).price_source?.trim()
+      const p = priceNow?.find((x) => x.crop_id === s.crop_id)
+      const src = api ? t(api) : p ? priceNowSource(p, t) : null
+      return src ? [`${t(s.label).toLowerCase()} – ${src}`] : []
+    })
+  return [...gus.map((x) => t(x)), ...now]
+}
