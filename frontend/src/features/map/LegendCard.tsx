@@ -58,7 +58,10 @@ export function LegendCard({
   collapsed,
   onToggle,
   onRetry,
+  collapsedLabel,
 }: {
+  /** F9: zwinięta jako pigułka z tym napisem i ▾ (np. „Podatność gleb”) zamiast samego paska kolorów */
+  collapsedLabel?: string
   /** błąd pobrania warstwy – przycisk „Spróbuj ponownie” (to samo zapytanie: warstwa, działka, data) */
   onRetry?: () => void
   /** zwinięta do pigułki z nazwą warstwy (komputer) */
@@ -73,6 +76,20 @@ export function LegendCard({
   style?: CSSProperties
 }) {
   const { t } = useLang()
+  if (collapsed && onToggle && collapsedLabel)
+    return (
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={false}
+        aria-label={t('Pokaż legendę: {title}', { title: t(title) })}
+        style={style}
+        className={cn('flex h-11 items-center gap-1.5 rounded-full bg-legend/90 px-3.5 text-sm font-semibold text-white shadow-float hover:bg-legend', className)}
+      >
+        {t(collapsedLabel)}
+        <ChevronDown className="size-4 text-white/80" aria-hidden />
+      </button>
+    )
   if (collapsed && onToggle) {
     // zwinięta: sam pasek kolorów warstwy (gradient albo próbki klas) – rozwija się po kliknięciu
     const colors =

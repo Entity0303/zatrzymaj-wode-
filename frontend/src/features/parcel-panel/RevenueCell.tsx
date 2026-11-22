@@ -1,14 +1,15 @@
 import type { CropRevenue, PriceNow } from '@/api/types'
 import { formatNum, formatZl } from '@/lib/format'
-import { hasRevenue, okZl, priceNowMonth } from '@/lib/revenue'
+import { hasRevenue, okZl, priceNowSource } from '@/lib/revenue'
 import { useLang } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
 
 /**
  * F8: pola przychodu, które backend dopiero dopisuje (inna sesja) – opcjonalne, brak = nie pokazujemy.
- * `revenue_note` – powód braku ceny skupu dla tej uprawy (np. „GUS nie podaje ceny kiszonki”).
+ * `revenue_note` – powód braku ceny skupu dla tej uprawy (np. „GUS nie podaje ceny kiszonki”);
+ * F9: `price_source` – gotowy podpis ceny z API przy uprawie bez przychodu (np. „cena z lipca 2026 (ZSRIR)”).
  */
-export type RevenueExtras = { revenue_note?: string | null }
+export type RevenueExtras = { revenue_note?: string | null; price_source?: string | null }
 
 /**
  * Kolumna „Przychód z pola” w rankingu „Co tu posiać?”: typowy rok pogrubiony („ok. 2 100 zł”), pod spodem
@@ -19,8 +20,11 @@ export function RevenueCell({
   revenue: r,
   note,
   priceNow,
+  priceSource,
   className,
 }: {
+  /** F9: podpis ceny z API (pozycja rankingu) – pierwszeństwo przed podpisem z ceny bieżącej */
+  priceSource?: string | null
   revenue?: CropRevenue | null
   note?: string | null
   /** bieżąca cena tej uprawy (ZSRIR) – przy braku przychodu pokazana szaro, bez liczenia przychodu */
@@ -34,8 +38,12 @@ export function RevenueCell({
       <span className={cn('block text-sm leading-5 text-text-muted', className)}>
         {label}
         {t(note?.trim() || 'brak ceny skupu')}
-        {priceNow && Number.isFinite(priceNow.zl_t) && priceNow.zl_t > 0 && (
-          <span className="block">{t('cena z {m} ({src}): {p} zł/t', { m: priceNowMonth(priceNow.week), src: priceNow.source.split(' ')[0], p: formatNum(priceNow.zl_t, 0) })}</span>
+        {priceNow && Number.isFinite(priceNow.zl_t) && priceNow.zl_t > 0 ? (
+          <span className="block">
+            {priceSource?.trim() ? t(priceSource.trim()) : priceNowSource(priceNow, t)}: {t('{p} zł/t', { p: formatNum(priceNow.zl_t, 0) })}
+          </span>
+        ) : (
+          priceSource?.trim() && <span className="block">{t(priceSource.trim())}</span>
         )}
       </span>
     )

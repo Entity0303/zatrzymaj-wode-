@@ -1,4 +1,4 @@
-import type { CropRevenue } from '@/api/types'
+import type { CropRevenue, PriceNow } from '@/api/types'
 
 /** F8: pomocnicze do kolumny „Przychód z pola” (features/parcel-panel/RevenueCell). */
 
@@ -9,6 +9,17 @@ export function priceNowMonth(week: string): string {
   const m = week.match(/(\d{1,2})\.(\d{2})\.(\d{4})\s*$/)
   const month = m ? MONTHS_GEN[Number(m[2]) - 1] : undefined
   return m && month ? `${month} ${m[3]}` : week
+}
+
+/**
+ * F9: podpis ceny bieżącej z API (`price_now[].price_source`, np. „cena z lipca 2026 (ZSRIR)”) – pole opcjonalne,
+ * dopisywane przez backend; brak = podpis składany z tygodnia notowania i źródła (zachowanie z F8).
+ */
+export type PriceNowExtras = PriceNow & { price_source?: string | null }
+
+export function priceNowSource(p: PriceNowExtras, t: (key: string, vars?: Record<string, string | number>) => string): string {
+  const api = p.price_source?.trim()
+  return api ? t(api) : t('cena z {m} ({src})', { m: priceNowMonth(p.week), src: p.source.split(' ')[0] })
 }
 
 /** Kwota nadaje się do pokazania (nigdy „0 zł”, „NaN”, „null”). */

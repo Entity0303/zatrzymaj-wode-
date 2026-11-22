@@ -115,6 +115,8 @@ export default function Start() {
   const [baseMap, setBaseMap] = useState<BaseMap>(settings.baseMap)
   // F7: podatność gleb na suszę (IUNG) – nakładka na żądanie, domyślnie wyłączona, stan w localStorage
   const [soilOn, setSoilOn] = useSoilLayerOn()
+  // F9: telefon z otwartą działką – legenda gleb zwinięta do paska „Podatność gleb ▾” (nie zasłania obrysu)
+  const [soilLegendOpen, setSoilLegendOpen] = useState(false)
   const [pendingPoint, setPendingPoint] = useState<[number, number] | null>(null)
   const [userPoint, setUserPoint] = useState<[number, number] | null>(null)
   const [locating, setLocating] = useState(false)
@@ -1006,7 +1008,10 @@ export default function Start() {
               legend={SOIL_SUSCEPTIBILITY_LEGEND}
               status={soilStatus}
               compact={isMobile}
-              className={isMobile ? 'absolute right-3 z-[1000] w-52' : 'absolute right-4 bottom-[96px] z-[1000]'}
+              {...(isMobile && parcel
+                ? { collapsed: !soilLegendOpen, collapsedLabel: 'Podatność gleb', onToggle: () => setSoilLegendOpen((o) => !o) }
+                : {})}
+              className={isMobile ? cn('absolute right-3 z-[1000]', !(parcel && !soilLegendOpen) && 'w-52') : 'absolute right-4 bottom-[96px] z-[1000]'}
               style={isMobile ? { top: parcel ? 304 : 260 } : undefined}
             />
           )}

@@ -2,7 +2,7 @@ import { ChevronDown, CircleAlert, CircleCheck, CircleX, TreeDeciduous, type Luc
 import { useState } from 'react'
 import type { CropSuggestion, CropSuggestions, PerennialSuggestion, PriceNow, SuggestionCategory } from '@/api/types'
 import { RevenueCell, type RevenueExtras } from './RevenueCell'
-import { hasRevenue, priceNowMonth } from '@/lib/revenue'
+import { hasRevenue, priceNowSource } from '@/lib/revenue'
 import { SourceTag } from '@/components/SourceTag'
 import { formatDatePl, formatHa, formatNum } from '@/lib/format'
 import { useLang } from '@/lib/i18n'
@@ -88,7 +88,12 @@ function Row({ s, area, priceNow }: { s: CropSuggestion; area: number | null; pr
                 <YieldLine s={s} area={area} />
               </span>
             </span>
-            <RevenueCell revenue={s.revenue} note={(s as CropSuggestion & RevenueExtras).revenue_note} priceNow={priceNow} className="mt-0.5 sm:mt-0 sm:pt-0.5 sm:text-right" />
+            <RevenueCell
+              revenue={s.revenue}
+              note={(s as CropSuggestion & RevenueExtras).revenue_note}
+              priceSource={(s as CropSuggestion & RevenueExtras).price_source}
+              priceNow={priceNow}
+              className="mt-0.5 sm:mt-0 sm:pt-0.5 sm:text-right" />
           </span>
           {open && <span className="mt-1 block text-sm leading-5 text-text-muted">{t(s.reason)}</span>}
           {open && <Details s={s} priceNow={priceNow} />}
@@ -120,8 +125,11 @@ export function RankingCard({ suggestions, top = 3, priceNow }: { suggestions: C
   const nowSources = shown
     .filter((s) => !hasRevenue(s.revenue))
     .flatMap((s) => {
+      // F9: podpis z API (pozycja rankingu albo cena bieżąca), a bez niego – składany z tygodnia i źródła
+      const api = (s as CropSuggestion & RevenueExtras).price_source?.trim()
       const p = priceNow?.find((x) => x.crop_id === s.crop_id)
-      return p ? [`${t(s.label).toLowerCase()} – ${t('cena z {m} ({src})', { m: priceNowMonth(p.week), src: p.source.split(' ')[0] })}`] : []
+      const src = api ? t(api) : p ? priceNowSource(p, t) : null
+      return src ? [`${t(s.label).toLowerCase()} – ${src}`] : []
     })
   const allSources = [...priceSources.map((x) => t(x)), ...nowSources]
 

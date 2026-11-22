@@ -28,12 +28,18 @@ const isIso = (v: string) => /^\d{4}-\d{2}-\d{2}$/.test(v) && !Number.isNaN(Date
  */
 export const periodMinIso = (asOf: string) => `${Number(asOf.slice(0, 4)) - 12}-08-01`
 
+/** F9: najdłuższy własny zakres (dni, z obu końcami) – backend dostaje ten sam limit. */
+export const PERIOD_MAX_DAYS = 366
+
+/** Liczba dni zakresu razem z obu końcami (daty ISO, bez stref czasowych). */
+const rangeDays = (from: string, to: string) => Math.round((Date.parse(to) - Date.parse(from)) / 86_400_000) + 1
+
 /** Ostatni dzień, który może zakończyć zakres: data analizy, ale nie później niż dziś. */
 export const periodMaxIso = (asOf: string) => (asOf < todayIso() ? asOf : todayIso())
 
 /**
  * Błąd własnego zakresu po polsku (null = poprawny). Zasady backendu: od < do (F8), koniec ≤ data analizy,
- * nie w przyszłość, początek nie wcześniej niż pobrana pogoda.
+ * nie w przyszłość, początek nie wcześniej niż pobrana pogoda, najwyżej 366 dni (F9).
  */
 export function rangeError(from: string, to: string, asOf: string): string | null {
   if (!from || !to) return 'Podaj obie daty: od i do.'
@@ -41,6 +47,7 @@ export function rangeError(from: string, to: string, asOf: string): string | nul
   if (to > todayIso()) return 'Data „do” nie może być w przyszłości.'
   if (to > asOf) return `Data „do” nie może być późniejsza niż data analizy (${formatDatePl(asOf)}).`
   if (from >= to) return 'Data „od” musi być wcześniejsza niż data „do”.'
+  if (rangeDays(from, to) > PERIOD_MAX_DAYS) return 'Wybierz okres nie dłuższy niż rok.'
   if (from < periodMinIso(asOf)) return `Najwcześniej od ${formatDatePl(periodMinIso(asOf))} – starszej pogody nie pobieramy.`
   return null
 }
@@ -50,7 +57,7 @@ export function customRange(token: PeriodToken | null | undefined): { from: stri
   const m = token?.match(/^(\d{4}-\d{2}-\d{2})_(\d{4}-\d{2}-\d{2})$/)
   if (!m || !isIso(m[1]) || !isIso(m[2])) return null
   const [from, to] = [m[1], m[2]]
-  return from < to && to <= todayIso() ? { from, to } : null
+  return from < to && to <= todayIso() && rangeDays(from, to) <= PERIOD_MAX_DAYS ? { from, to } : null
 }
 
 /** Znacznik z adresu albo null, gdy nieznany / błędny. */
