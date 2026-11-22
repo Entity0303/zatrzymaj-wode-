@@ -291,3 +291,11 @@ Weryfikacja: `tsc -b` przechodzi; `vite build` – lokalnie i w kontenerze brak 
 
 **Dla Mefju:** `details` pokaż w „szczegółach źródeł” / trybie Doradca; przy `fetched_at` – „pobrano DD.MM.RRRR”; w wywołaniu `/api/terrain` dla daty historycznej dodaj `date`. Etykiety stopni w UI ujednolić do słownika (risk = „Mało wody”, danger = „Bardzo mało wody”).
 **Łamie zgodność:** nie.
+
+### 2026-11-22 · `main` · A21 – widełki rankingu, data siewu
+- `CropSuggestion`: `yield_typical_range`, `yield_weak_range` (`number[] | null`, [min, max] t/ha), `drought_risk_range` (`number[] | null`, [min, max] lat); `CropRevenue.revenue_range` ([min, max] zł). Pola bazowe bez zmian.
+- `CropSuggestions.ranges_pending: boolean` – widełki jeszcze się liczą w tle (analiza czeka na nie najwyżej 1 s).
+- Zapytanie: `sowing_date` (RRRR-MM-DD) w GET / POST `/api/analysis` i `/api/report.pdf`; odpowiedź: `crop_season.sowing_date`, `crop_season.sowing_note`.
+
+**Dla Mefju:** gdy `suggestions.ranges_pending` – ponów `/api/analysis` po ok. 2 s (odpowiedź z pamięci, ok. 0,1 s) i podmień ranking; przy `min == max` pokaż jedną liczbę. `sowing_note` pokaż pod polem daty siewu.
+**Łamie zgodność:** nie (wszystko opcjonalne).
