@@ -13,7 +13,7 @@ C = {
     "muted": "#5F6B64", "border": "#E3DED4", "text": "#1E2A23", "nodata": "#B8BDB9", "earth": "#8B6B4A",
 }
 MONTHS = ["sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paź", "lis", "gru"]
-FONT = 'font-family="Inter, sans-serif"'
+FONT = 'font-family="DejaVu Sans, Liberation Sans, sans-serif"'
 
 
 def _num(v: float) -> str:
@@ -233,7 +233,8 @@ def season_bars(years, mean_mm: float | None, width: int = 680, height: int = 19
     for i, y in enumerate(ys):
         x = pad_l + i * bw + bw * 0.18
         top, bot = sorted((y_of(y.balance_mm), y0))
-        color = (C["danger"] if below_mean else C["brand"]) if y.current else C["nodata"]
+        # F19: bieżący rok – kolor ryzyka pod średnią, kolor wody nad nią; poprzednie lata szare (czytelne także w druku cz-b)
+        color = ("#E07B39" if below_mean else C["water"]) if y.current else "#C9CCC6"
         parts.append(f'<rect x="{x:.1f}" y="{top:.1f}" width="{bw * 0.64:.1f}" height="{max(bot - top, 0.8):.1f}" '
                      f'fill="{color}" rx="1.5"/>')
         lab_y = top - 3 if y.balance_mm >= 0 else bot + 10

@@ -173,7 +173,7 @@ def test_report_pdf_with_polish_text(client):
     assert int(r.headers["x-generation-ms"]) < 10_000
     assert ortho.called
     text = _pdf_text(r.content)
-    for phrase in ("Werdykt działki", "Raport skrócony", "Co tu posiać?", "Co zrobić z wodą", "Na tle 10 lat",
+    for phrase in ("Paszport wodny działki", "Raport skrócony", "Co tu posiać", "Co mogę zrobić?", "Bilans wody na tle 10 lat",
                    "Raport ma charakter pomocniczy", "Zboża ozime", "glina lekka pylasta"):
         assert phrase in text, phrase
     assert "ż" in text and "ą" in text and "ł" in text and "ę" in text  # polskie znaki w tekście PDF
@@ -186,7 +186,8 @@ def test_report_pdf_without_orthophoto(client):
     mock_all()
     respx.get(settings.ortho_wms_url).mock(return_value=httpx.Response(503))
     r = client.get("/api/report.pdf", params=Q)
-    assert r.status_code == 200 and "Ortofotomapa niedostępna" in _pdf_text(r.content)
+    # F19: raport skrócony bez mapki – brak ortofotomapy nie psuje raportu (mapka tylko w pełnym, przy zdjęciu satelitarnym)
+    assert r.status_code == 200 and "None" not in _pdf_text(r.content)
 
 
 @respx.mock
@@ -200,12 +201,12 @@ def test_report_html_sections_and_qr(client):
     mock_all()
     a = AnalysisResponse.model_validate(client.get("/api/analysis", params=Q).json())
     html = render_html(a, ortho=None, report_type="full")
-    for sec in ("Woda na działce", "Na tle 10 lat", "Dlaczego?", "Co zrobić z wodą", "Gleba, teren i skąd dane",
-                "Skąd te dane", "Szczegóły techniczne"):
+    for sec in ("Woda w glebie", "Bilans wody na tle 10 lat", "Dlaczego?", "Co mogę zrobić?", "Gleba i teren",
+                "Skąd dane i pewność", "Szczegóły techniczne"):
         assert sec in html
     assert "<svg" in html and "polygon" in html  # wykresy i obrys działki
     url = analysis_url(a)
     assert url.startswith(settings.public_url) and "dzialka=201305_2.0038.6%2F1" in url and "przedplon=zboza_ozime" in url
     assert filename(a).endswith(".pdf")
     for r in a.recommendations:  # każda rekomendacja z formalnościami i terminem
-        assert r.permit_note in html and r.when_label in html
+        assert r.permit_note in html and (r.when_label in html or (r.when == "teraz" and a.historical))

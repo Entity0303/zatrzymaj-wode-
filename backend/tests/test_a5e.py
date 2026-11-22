@@ -153,16 +153,16 @@ def test_report_short_vs_full_pages(client, long_weather):
     full = client.get("/api/report.pdf", params={**q, "report_type": "full"})
     assert short.status_code == full.status_code == 200
     ps, pf = PdfReader(io.BytesIO(short.content)).pages, PdfReader(io.BytesIO(full.content)).pages
-    assert len(ps) == 2 and 6 <= len(pf) <= 9  # A5e-2: skrócony = 2 strony, szczegółowy – reszta
+    assert len(ps) == 2 and 5 <= len(pf) <= 10  # A5e-2/F19: skrócony = 2 strony, szczegółowy – reszta
     ts = " ".join(" ".join(p.extract_text() for p in ps).split())
     tf = " ".join(" ".join(p.extract_text() for p in pf).split())
-    for phrase in ("Raport skrócony", "Twój wybór", "Co zrobić z wodą", "Na tle 10 lat", "dane pogodowe do"):
+    for phrase in ("Raport skrócony", "Twój wybór", "Co mogę zrobić?", "Bilans wody na tle 10 lat", "dane pogodowe do"):
         assert phrase in ts, phrase
-    for phrase in ("Raport szczegółowy", "Woda na działce", "Gleba, teren i skąd dane", "Wszystkie uprawy",
+    for phrase in ("Raport szczegółowy", "Woda w glebie", "Gleba i teren", "Wszystkie uprawy",
                    "Szczegóły techniczne"):
         assert phrase in tf, phrase
     assert "Wszystkie uprawy" not in ts
-    assert "spadło minus wyparowało" in ts and "opad − parowanie" not in ts
+    assert "opad minus parowanie" in ts and "spadło minus wyparowało" not in ts  # F19: słownik jak w aplikacji
     assert "szczegolowy" in full.headers["content-disposition"] and "skrocony" in short.headers["content-disposition"]
     post = client.post("/api/report.pdf", json={**q, "planned_crops": ["pszenica_ozima"], "report_type": "full"})
     assert post.status_code == 200 and len(PdfReader(io.BytesIO(post.content)).pages) == len(pf)
@@ -174,8 +174,8 @@ def test_report_without_choice_shows_top5_and_one_line_not_sow(client, long_weat
     respx.get(settings.ortho_wms_url).mock(return_value=httpx.Response(503))
     a = AnalysisResponse.model_validate(client.get("/api/analysis", params={"parcel_id": PID, "date": "2018-11-21"}).json())
     html = render_html(a, ortho=None)
-    assert "Najlepsze na tej działce" in html and "Nie siej" in html and 'class="choice-summary"' not in html
-    assert ">Twój wybór<" not in html
+    assert "Co tu posiać" in html and ("Unikaj:" in html or "nie jest tu odradzana" in html)
+    assert "Twój wybór:" not in html
     for cid in a.suggestions.top_ids:
         label = next(i.label for i in a.suggestions.groups[0].items if i.crop_id == cid)
         assert label in html
@@ -188,9 +188,9 @@ def test_report_only_one_most_important_action(client, long_weather):
                                                                             "crop": "zboza_ozime"}).json())
     assert sum(r.in_panel for r in a.recommendations) >= 2  # w API nadal do 3 w panelu
     html = render_html(a, ortho=None, report_type="full")
-    assert html.count(">najważniejsze<") == 1
-    short = render_html(a, ortho=None)
-    assert ">najważniejsze<" not in short and short.split('class="wact2"')[1].split("</ol>")[0].count("<li>") <= 3
+    assert html.count(">Najważniejsze<") == 1
+    short = render_html(a, ortho=None)  # F19: jedna lista maks. 3 działań, jedno „Najważniejsze”
+    assert short.count(">Najważniejsze<") == 1 and short.split('class="acts"')[1].split("</ol>")[0].count("<li") <= 3
 
 
 # ── 3. jeden stan wody, zero nawadniania poza sezonem ───────────────────────────────────────
@@ -293,9 +293,10 @@ def test_short_report_is_exactly_two_pages(client, long_weather, extra):
     pages = PdfReader(io.BytesIO(r.content)).pages
     assert len(pages) == 2
     p2 = " ".join(pages[1].extract_text().split())
-    assert "Co tu posiać?" in p2 and "Co zrobić z wodą" in p2 and "Na tle 10 lat" in p2
-    assert ("Twój wybór" in p2) == bool(extra.get("planned_crops"))
-    assert ("Nie polecamy" in p2 or "Nie siej" in p2)
+    assert "Co tu posiać" in p2 and "Co mogę zrobić?" in p2 and "Bilans wody na tle 10 lat" in p2
+    p1 = " ".join(pages[0].extract_text().split())  # F19: wybór rolnika i „Unikaj” na stronie 1
+    assert ("Twój wybór" in p1) == bool(extra.get("planned_crops"))
+    assert ("Unikaj:" in p1 or "nie jest tu odradzana" in p1)
 
 
 def test_alternatives_must_have_lower_drought_risk():

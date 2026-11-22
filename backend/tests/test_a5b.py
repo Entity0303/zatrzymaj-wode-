@@ -308,13 +308,15 @@ def test_report_pdf_without_crop(client):
     assert 'filename="stan-wodny-dzialki-201305_2.0038.6-1-2018-06-10-skrocony.pdf"' in r.headers["content-disposition"]
     reader = PdfReader(io.BytesIO(r.content))
     text = "\n".join(p.extract_text() for p in reader.pages)
-    for phrase in ("Werdykt działki", "Raport skrócony", "Co tu posiać?", "Co zrobić z wodą", "Na tle 10 lat"):
+    # F19: jeden tytuł „Paszport wodny działki” (także bez uprawy), słownik jak w aplikacji
+    for phrase in ("Paszport wodny działki", "Raport skrócony", "Co tu posiać", "Co mogę zrobić?",
+                   "Bilans wody na tle 10 lat", "Skąd dane i pewność"):
         assert phrase in text, phrase
-    assert "Paszport wodny" not in text and "Dni stresu" not in text
+    assert "Werdykt działki" not in text and "Dni stresu" not in text and "None" not in text
     assert len(reader.pages) == 2  # A5e-2: raport skrócony = dokładnie 2 strony
     full = client.get("/api/report.pdf", params={**NO_CROP, "report_type": "full"})
     tf = "\n".join(p.extract_text() for p in PdfReader(io.BytesIO(full.content)).pages)
-    for phrase in ("Raport szczegółowy", "Woda na działce", "stan wody na działce", "Gleba, teren i skąd dane", "Skąd te dane"):
+    for phrase in ("Raport szczegółowy", "Woda w glebie", "Gleba i teren", "Skąd dane i pewność", "Szczegóły techniczne"):
         assert phrase in tf, phrase
 
 

@@ -449,10 +449,10 @@ def test_report_pdf_terrain_section(client):
     respx.get(settings.ortho_wms_url).mock(return_value=httpx.Response(503))
     r = client.get("/api/report.pdf", params=Q)
     assert r.status_code == 200
-    text = "\n".join(p.extract_text() for p in PdfReader(io.BytesIO(r.content)).pages)
-    for phrase in ("obniżenie – zbiera się woda", "32% działki to obniżenie"):  # strona 1 (werdykt)
+    text = " ".join(" ".join(p.extract_text() for p in PdfReader(io.BytesIO(r.content)).pages).split())
+    for phrase in ("obniżenie 32%", "32% działki to obniżenie"):  # F19: pasek stref (str. 2) i werdykt (str. 1)
         assert phrase in text, phrase
     full = client.get("/api/report.pdf", params={**Q, "report_type": "full"})  # A5e-2: teren w raporcie szczegółowym
     text_full = "\n".join(p.extract_text() for p in PdfReader(io.BytesIO(full.content)).pages)
-    for phrase in ("Gleba, teren i skąd dane", "NMT GUGiK", "Woda spływa", "Teren – szczegóły", "Siatka"):
+    for phrase in ("Gleba i teren", "NMT GUGiK", "Woda spływa", "Teren – szczegóły", "Siatka"):
         assert phrase in text_full, phrase

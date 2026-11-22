@@ -32,10 +32,10 @@ MAP_PX = 560
 
 STATUS = {  # SPEC 2.2
     "ok": ("Dobrze", "#5BB37F", "#E6F4EA"), "warn": ("Uwaga", "#E8B931", "#FDF4D8"),
-    "risk": ("Ryzyko", "#E07B39", "#FCEBDD"), "danger": ("Susza", "#C8453B", "#FBE7E5"),
+    "risk": ("Ryzyko", "#E07B39", "#FCEBDD"), "danger": ("Bardzo mało wody", "#C8453B", "#FBE7E5"),
     "no_data": ("Brak danych", "#B8BDB9", "#F1F2F1"),
 }
-CATEGORY = {"retencja": ("Retencja", "#2F80C9"), "agrotechnika": ("Agrotechnika", "#8B6B4A"),
+CATEGORY = {"retencja": ("Zatrzymanie wody", "#2F80C9"), "agrotechnika": ("Zmiany w uprawie", "#8B6B4A"),
             "nawadnianie": ("Nawadnianie", "#2F6B47")}
 PERMIT_ICON = {"none": "✓", "maybe": "!", "required": "§"}
 SOURCE_ICON = {"ok": "✓", "czesciowo": "⚠", "brak": "✕"}
@@ -85,7 +85,15 @@ def sentences(text: str | None, n: int = 2) -> str:
     return " ".join(parts[:n])
 
 
-_env.filters.update(num=num, pct=pct, date_pl=date_pl, first_sentence=first_sentence, sentences=sentences)
+def clip(text: str | None, n: int = 170) -> str:
+    """Skrót do `n` znaków na granicy słowa (raport skrócony – zawsze 2 strony)."""
+    if not text or len(text) <= n:
+        return text or ""
+    cut = text[:n].rsplit(" ", 1)[0].rstrip(",;:–-")
+    return cut + "…"
+
+
+_env.filters.update(num=num, pct=pct, date_pl=date_pl, first_sentence=first_sentence, sentences=sentences, clip=clip)
 REPORT_LABEL = {"short": "Raport skrócony", "full": "Raport szczegółowy"}
 REPORT_SLUG = {"short": "skrocony", "full": "szczegolowy"}
 SHORT_RECS = 4
@@ -276,6 +284,201 @@ def satellite_overlay(a: AnalysisResponse, bbox: tuple[float, float, float, floa
     return "data:image/png;base64," + lay["kondycja"], style
 
 
+# ── F19: raport w stylu paszportu – dane gotowe do szablonu (bez liczenia: tylko wybór i formatowanie) ──────────
+
+NOW_LABEL = {"ok": "woda w normie", "warn": "mało wody", "risk": "brakuje wody", "danger": "bardzo mało wody",
+             "no_data": "brak danych"}
+LONG_LABEL = {"ok": "niskie ryzyko suszy", "warn": "średnie ryzyko suszy", "bad": "wysokie ryzyko suszy"}
+POINT_KINDS = ["gleba", "opady", "teren", "rosliny", "uprawa_wybrana"]
+CAT_ORDER = {"retencja": 0, "agrotechnika": 1, "nawadnianie": 2}
+CAT_TEXT = {"polecane": ("polecana", "#5BB37F"), "mozliwe": ("możliwa", "#E8B931"), "odradzane": ("odradzana", "#C8453B")}
+PERMIT_TEXT = {"none": "bez formalności", "maybe": "sprawdź formalności", "required": "wymaga zgłoszenia"}
+# zawsze prawdziwe dla metody – w ramce „Skąd dane i pewność” (wymóg KOWR)
+STANDARD_LIMITS = [
+    "Wody gruntowe nie są uwzględnione – liczymy wodę z opadów i parowania w strefie korzeni.",
+    "Teren opisujemy z modelu GUGiK; nie zmienia on obliczonego bilansu wody.",
+    "Typowy plon to wynik z pogody 10 lat, nie prognoza na ten rok.",
+]
+# to samo krótko – ramka na stronie 2 raportu skróconego
+STANDARD_LIMITS_SHORT = "bez wód gruntowych; teren nie zmienia obliczonego bilansu; typowy plon z 10 lat, nie prognoza na ten rok"
+
+
+def balance_words(mm: float | None) -> str:
+    """Bilans wody słowami: ujemny = „zabrakło 120 mm”, dodatni = „zostało 35 mm”."""
+    if mm is None:
+        return "brak danych"
+    v = round(mm)
+    return f"zabrakło {num(abs(v))} mm" if v < 0 else f"zostało {num(v)} mm" if v > 0 else "0 mm"
+
+
+def tonnes(v: float | None) -> str:
+    """Tony z pola po ludzku: „ok. 430 t” (≥ 100 – do 10 t), „ok. 43 t”, „ok. 4,3 t”."""
+    if v is None:
+        return "brak danych"
+    if v >= 100:
+        return f"ok. {num(round(v, -1))} t"
+    if v >= 10:
+        return f"ok. {num(round(v))} t"
+    return f"ok. {num(v, 1)} t"
+
+
+def zl(v: float | None) -> str | None:
+    """Kwota do 100 zł z twardą spacją tysięcy: „ok. 2 100 zł”; brak / ≤ 0 = None (nigdy „0 zł”)."""
+    if v is None or v <= 0:
+        return None
+    r = int(round(v / 100) * 100)
+    return "ok. " + f"{r:,}".replace(",", " ") + " zł"
+
+
+def risk_text(i) -> str:
+    """„3 na 10 lat” albo zakres „1–3 na 10 lat”, gdy analiza go poda (pole opcjonalne)."""
+    rng = getattr(i, "drought_risk_range", None) or getattr(i, "risk_years_range", None)
+    n = f"{rng[0]}–{rng[1]}" if rng and rng[0] != rng[1] else str(i.drought_risk_years)
+    return f"{n} na {i.years_simulated} lat"
+
+
+def field_items(a: AnalysisResponse) -> list:
+    s = a.suggestions
+    return [i for g in s.groups if g.key == "polowe" for i in g.items] if s else []
+
+
+def chosen_item(a: AnalysisResponse):
+    """Pozycja rankingu dla wybranej uprawy (wybór rolnika → gatunek z grupy IUNG → najlepsza na działce)."""
+    items = field_items(a)
+    if not items:
+        return None
+    if a.suggestions and a.suggestions.choice:
+        ids = [c.crop_id for c in a.suggestions.choice]
+        hit = next((i for i in items if i.crop_id in ids), None)
+        if hit:
+            return hit
+    if a.crop:
+        group = sorted((i for i in items if i.group_id == a.crop), key=lambda i: i.rank)
+        if group:
+            return group[0]
+    top = top_items(a)
+    return top[0] if top else items[0]
+
+
+def tiles(a: AnalysisResponse) -> list[dict]:
+    """4 kafle strony 1: zapas wody w glebie, bilans okresu, ryzyko suszy, przychód."""
+    ind = a.indicators
+    out = []
+    w = ind.soil_water_pct.value
+    rank = a.soil_water.rank if a.soil_water else None
+    sub = (("o tej porze roku mniej wody nie było w żadnym z {of} lat" if rank.lower_years == 0 else
+            "o tej porze roku mniej wody było w {n} z {of} lat").format(n=rank.lower_years, of=rank.of_years)
+           if rank and rank.of_years else "zapas wody dostępnej dla roślin")
+    out.append({"title": "Zapas wody w glebie", "value": "brak danych" if w is None else f"{num(w)}%",
+                "unit": "pełnego" if w is not None else "", "sub": sub, "color": "#2F80C9", "bar": w})
+    if a.period:
+        mm, normal, label = a.period.balance_mm, a.period.normal_balance_mm, a.period.label
+    else:
+        cur = next((y for y in a.seasonal_balance_by_year if y.current), None)
+        mm = cur.balance_mm if cur else ind.water_balance_season.value
+        normal = a.seasonal_balance_mean_mm
+        label = a.seasonal_balance_label or "od początku sezonu"
+    out.append({"title": "Bilans wody (opad minus parowanie)", "value": balance_words(mm), "unit": "",
+                "sub": f"{label} · zwykle: {balance_words(normal)}" if normal is not None else label,
+                "color": "#C8453B" if mm is not None and mm < 0 else "#2F80C9", "bar": None})
+    it = chosen_item(a)
+    if it:
+        n = it.drought_risk_years
+        out.append({"title": f"Ryzyko suszy – {it.label.lower()}", "value": risk_text(it), "unit": "",
+                    "sub": "lata, w których susza zabiera ponad 20% plonu",
+                    "color": "#C8453B" if n >= 5 else "#E07B39" if n >= 3 else "#5BB37F", "bar": None})
+        typ = zl(it.revenue.typical_zl) if it.revenue else None
+        weak = zl(it.revenue.weak_year_zl) if it.revenue else None
+        out.append({"title": f"Przychód z pola – {it.label.lower()}", "value": typ or "brak ceny", "unit": "",
+                    "sub": (f"typowy rok, bez kosztów{f' · słaby rok {weak}' if weak else ''}" if typ else
+                            (it.revenue_note or "brak ceny skupu")),
+                    "color": "#2F6B47", "bar": None})
+    else:
+        out.append({"title": "Ryzyko suszy", "value": "brak danych", "unit": "", "sub": "ranking upraw niedostępny",
+                    "color": "#B8BDB9", "bar": None})
+        out.append({"title": "Przychód z pola", "value": "brak danych", "unit": "", "sub": "ranking upraw niedostępny",
+                    "color": "#B8BDB9", "bar": None})
+    return out
+
+
+def verdict_points(a: AnalysisResponse, n: int = 4) -> list:
+    """3–4 punkty werdyktu w stałej kolejności: gleba, opady, teren, rośliny (potem wybrana uprawa)."""
+    v = a.verdict
+    if not v:
+        return []
+    by = {s.kind: s for s in v.statements}
+    return [by[k] for k in POINT_KINDS if k in by][:n]
+
+
+def avoid_groups(a: AnalysisResponse, max_groups: int = 2) -> list[tuple[str, list[str]]]:
+    """„Unikaj:” pogrupowane po powodzie (maks. 2 linie): [(powód, [uprawy])]."""
+    v = a.verdict
+    if not v or not v.crops_bad:
+        return []
+    groups: dict[str, list[str]] = {}
+    for c in v.crops_bad:
+        groups.setdefault((c.reason or "odradzane na tej działce").rstrip("."), []).append(c.label.lower())
+    return list(groups.items())[:max_groups]
+
+
+def is_ditch(r) -> bool:
+    txt = f"{r.title} {r.description}".lower()
+    return "rów" in txt or "rowu" in txt or "zastawk" in txt
+
+
+def actions(a: AnalysisResponse, n: int | None = 3) -> list:
+    """Działania: retencja → agrotechnika → nawadnianie, w grupie wg priorytetu, bez powtórzeń (tytuł)."""
+    recs = sorted(a.recommendations, key=lambda r: (CAT_ORDER.get(r.category, 9), bool(r.warning), -(r.priority or 0)))
+    seen, out = set(), []
+    for r in recs:
+        key = r.title.strip().lower()
+        if key in seen or r.id in seen:
+            continue
+        seen.update({key, r.id})
+        out.append(r)
+    return out if n is None else out[:n]
+
+
+def source_date(s, analysis_date: dt.date) -> str:
+    """„dane z dd.mm.rrrr” / „pobrano dd.mm.rrrr” (A20: data pobrania, gdy później niż data analizy)."""
+    parts = []
+    if s.data_date and s.data_date <= analysis_date:
+        parts.append(f"dane z {date_pl(s.data_date)}")
+    fetched = s.fetched_at or (s.data_date if s.data_date and s.data_date > analysis_date else None)
+    if fetched:
+        parts.append(f"pobrano {date_pl(fetched)}")
+    return ", ".join(parts)
+
+
+def sources_line(a: AnalysisResponse, limit: int | None = None) -> str:
+    """Źródła w 1–2 liniach: „IMGW-PIB (dane z 29.06.2018); ULDK GUGiK (pobrano 21.11.2026); …”."""
+    items = []
+    for s in a.reliability.sources:
+        if s.status == "brak":
+            continue
+        d = source_date(s, a.analysis_date)
+        items.append(f"{s.name} ({d})" if d else s.name)
+    if limit and len(items) > limit:
+        rest = len(items) - limit
+        items = items[:limit] + [f"i {rest} {'inne' if rest < 5 else 'innych'} (w raporcie pełnym)"]
+    return "; ".join(items)
+
+
+def period_text(a: AnalysisResponse) -> str:
+    if a.period:
+        return a.period.label
+    return f"od {date_pl(a.history.season_start)} (sezon uprawy)"
+
+
+def area_text(a: AnalysisResponse) -> str:
+    """Powierzchnia działki + powierzchnia uprawy z notą, gdy są dwie różne."""
+    ha = num(a.parcel.powierzchnia_ha, 2, "ha")
+    s = a.suggestions
+    if s and s.area and abs(s.area.value_ha - a.parcel.powierzchnia_ha) >= 0.01:
+        return f"{ha} · uprawa {num(s.area.value_ha, 2, 'ha')} ({s.area.note.rstrip('.')})"
+    return ha
+
+
 def render_html(a: AnalysisResponse, ortho: str | None, generated: dt.datetime | None = None,
                 report_type: str = "short") -> str:
     bbox, outline = map_frame(a.parcel.geometria)
@@ -285,7 +488,8 @@ def render_html(a: AnalysisResponse, ortho: str | None, generated: dt.datetime |
     ctx = {
         "a": a,
         "generated": generated or dt.datetime.now(dt.timezone.utc),
-        "title": "Paszport wodny działki" if a.crop else "Stan wodny działki",
+        # F19: jeden tytuł niezależnie od uprawy
+        "title": "Paszport wodny działki",
         "crop_label": CROPS[a.crop].label if a.crop else None,
         "field": a.field_state,
         "field_status": STATUS[a.field_state.status.level] if a.field_state else None,
@@ -319,7 +523,7 @@ def render_html(a: AnalysisResponse, ortho: str | None, generated: dt.datetime |
         "chart_sat": Markup(charts.satellite_series(a.satellite.series) or "") if a.satellite and a.satellite.series else "",
         "report_label": REPORT_LABEL.get(report_type, REPORT_LABEL["short"]),
         "chart_years_small": Markup(charts.season_bars(a.seasonal_balance_by_year, a.seasonal_balance_mean_mm,
-                                                       width=620, height=128) or ""),
+                                                       width=640, height=86) or ""),
         "top_items": top_items(a),
         "recs": a.recommendations if report_type == "full" else a.recommendations[:SHORT_RECS],
         "more_recs": 0 if report_type == "full" else max(0, len(a.recommendations) - SHORT_RECS),
@@ -330,6 +534,26 @@ def render_html(a: AnalysisResponse, ortho: str | None, generated: dt.datetime |
         "chart_years": Markup(charts.season_bars(a.seasonal_balance_by_year, a.seasonal_balance_mean_mm) or ""),
         "year_below": bool(a.seasonal_balance_by_year and a.seasonal_balance_mean_mm is not None
                            and a.seasonal_balance_by_year[-1].balance_mm < a.seasonal_balance_mean_mm),
+        # F19: układ w stylu paszportu
+        "tiles": tiles(a),
+        "points": verdict_points(a),
+        "now_label": ("W dniu analizy" if a.historical else "Teraz"),
+        "now_text": NOW_LABEL.get(a.status.level, ""),
+        "long_text": LONG_LABEL.get(a.verdict.level) if a.verdict else None,
+        "avoid": avoid_groups(a),
+        "rank_rows": field_items(a) if report_type == "full" else (top_items(a) or field_items(a))[:5],
+        "CATT": CAT_TEXT, "PERMIT_TEXT": PERMIT_TEXT,
+        "acts": actions(a, None if report_type == "full" else 3),
+        "is_ditch": is_ditch,
+        "sources_line": sources_line(a, None if report_type == "full" else 3),
+        "source_date": source_date,
+        "std_limits": STANDARD_LIMITS, "std_limits_short": STANDARD_LIMITS_SHORT,
+        "period_text": period_text(a),
+        "area_text": area_text(a),
+        "tonnes": tonnes, "zl": zl, "risk_text": risk_text, "balance_words": balance_words,
+        "price_sources": sorted({i.revenue.price_source for i in field_items(a) if i.revenue and i.revenue.price_source}),
+        "generated_txt": (generated or dt.datetime.now(dt.timezone.utc)).astimezone().strftime("%d.%m.%Y %H:%M"),
+        "app_host": (settings.public_url.split("//", 1)[-1].rstrip("/") if settings.public_url else "Wodoskop"),
     }
     return _env.get_template("report.html").render(**ctx)
 
