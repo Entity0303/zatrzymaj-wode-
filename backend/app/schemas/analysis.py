@@ -433,6 +433,10 @@ class PeriodSummary(Contract):
     sentence: str
     stress_days: int | None = Field(None, description="Dni stresu wodnego uprawy w okresie (tylko z uprawą)")
     daily: list[PeriodDay] = Field(default_factory=list)
+    requested_to: dt.date | None = Field(None, description="A17: koniec okresu wybrany przez rolnika")
+    data_until: dt.date | None = Field(None, description="A17: ostatni dzień okresu z pomiarami (NASA / IMGW)")
+    filled_days: int = Field(0, description="A17: ile ostatnich dni okresu uzupełniono danymi modelu Open-Meteo")
+    note: str | None = Field(None, description="A17: nota dla rolnika, gdy pomiary kończą się przed końcem okresu")
 
 
 class CropRevenue(Contract):

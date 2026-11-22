@@ -8,6 +8,7 @@ procentach tych lat było suszej (niższy bilans) niż teraz. Zdanie z liczb, be
 
 from __future__ import annotations
 
+import dataclasses
 from dataclasses import dataclass
 from datetime import date, timedelta
 
@@ -119,14 +120,51 @@ def sentence(win: Window, p: float, e: float, b: float, normal: float | None, pr
     return txt
 
 
+def fill_gap(w: DailyWeather, last_data: date, until: date, forecast: list | None) -> tuple[DailyWeather, date]:
+    """A17: dni po ostatnim dniu z pomiarem (opóźnienie NASA / IMGW) uzupełnione z Open-Meteo (`forecast` – lista dni
+    z polami day, precip, et0: opad i ET0 FAO z modelu, z cache prognozy). Tylko ciągły ciąg dni od `last_data + 1`
+    najdalej do `until`. Zwraca (seria z uzupełnieniem, ostatni uzupełniony dzień albo `last_data`)."""
+    by_day = {d.day: d for d in forecast or [] if not (np.isnan(d.precip) or np.isnan(d.et0))}
+    precip, et0, end = None, None, last_data
+    day = last_data + timedelta(days=1)
+    while day <= until and day in by_day:
+        i = int((np.datetime64(day, "D") - w.dates[0]).astype(int))
+        if i < 0 or i >= len(w.dates):
+            break
+        if precip is None:
+            precip, et0 = w.precip.copy(), w.et0.copy()
+        precip[i], et0[i] = by_day[day].precip, by_day[day].et0
+        end = day
+        day += timedelta(days=1)
+    return (w if precip is None else dataclasses.replace(w, precip=precip, et0=et0)), end
+
+
+def data_note(requested: date, measured: date | None, end: date, filled: int) -> str | None:
+    """Krótka nota dla rolnika: co jest pomiarem, co uzupełnieniem, czego jeszcze nie ma."""
+    if measured is None or measured >= requested:
+        return None
+    if end < requested:
+        return f"Dane pogodowe są dostępne do {date_pl(end)} – ostatnie dni nie są jeszcze opublikowane."
+    if filled == 1:
+        return f"Ostatni dzień ({date_pl(end)}) to dane modelu pogodowego Open-Meteo – pomiar nie jest jeszcze opublikowany."
+    first = measured + timedelta(days=1)
+    return (f"Ostatnie {filled} dni ({first:%d.%m}–{date_pl(end)}) to dane modelu pogodowego Open-Meteo – pomiary nie są "
+            "jeszcze opublikowane.")
+
+
 def build(w: DailyWeather, win: Window, years: int = 10, stress_dates: list[date] | None = None,
-          has_crop: bool = False) -> PeriodSummary:
-    """Podsumowanie okresu; koniec przycięty do ostatniego dnia z danymi pogodowymi."""
+          has_crop: bool = False, forecast: list | None = None) -> PeriodSummary:
+    """Podsumowanie okresu. A17: dni między końcem pomiarów a końcem okresu uzupełniane z Open-Meteo (`forecast` –
+    tylko dla dzisiejszej daty; dla dat historycznych None – bez zmian); gdy się nie da – koniec przycięty do
+    ostatniego dnia z danymi. Pola `requested_to`, `data_until`, `filled_days`, `note` mówią, co jest czym."""
     last_data = None
     ok = ~np.isnan(w.precip) & ~np.isnan(w.et0)
     if ok.any():
         last_data = w.dates[np.flatnonzero(ok)[-1]].astype(object)
-    end = min(win.end, last_data) if last_data else win.end
+    requested, measured, filled_end = win.end, last_data, last_data
+    if last_data is not None and last_data < win.end and forecast:
+        w, filled_end = fill_gap(w, last_data, win.end, forecast)
+    end = min(win.end, filled_end) if filled_end else win.end
     if end < win.start:
         raise PeriodError("Brak danych pogodowych w wybranym okresie.")
     start = end - timedelta(days=29) if win.kind == "30d" else win.start  # „30 dni” = 30 dni z danymi
@@ -153,6 +191,9 @@ def build(w: DailyWeather, win: Window, years: int = 10, stress_dates: list[date
                                balance_cum_mm=round(cum, 1)))
     stress = (sum(1 for d in stress_dates if win.start <= d <= win.end) if has_crop and stress_dates is not None
               else None)
+    filled = 0 if measured is None else max(0, (win.end - max(measured, win.start - timedelta(days=1))).days)
     return PeriodSummary(**{"from": win.start}, to=win.end, label=_label(win), precip_mm=round(p), et0_mm=round(e),
                          balance_mm=round(b), normal_balance_mm=round(normal) if normal is not None else 0,
-                         percentile=pct, sentence=sentence(win, p, e, b, normal, prev), stress_days=stress, daily=daily)
+                         percentile=pct, sentence=sentence(win, p, e, b, normal, prev), stress_days=stress, daily=daily,
+                         requested_to=requested, data_until=min(measured, win.end) if measured else None,
+                         filled_days=filled, note=data_note(requested, measured, win.end, filled))

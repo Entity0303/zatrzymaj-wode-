@@ -1016,6 +1016,14 @@ export type PeriodSummary = {
   sentence: string
   stress_days?: number | null
   daily: PeriodDay[]
+  /** A17: koniec okresu wybrany przez rolnika */
+  requested_to?: ISODate | null
+  /** A17: ostatni dzień okresu z pomiarami (NASA / IMGW) */
+  data_until?: ISODate | null
+  /** A17: ile ostatnich dni okresu uzupełniono danymi modelu Open-Meteo */
+  filled_days?: number
+  /** A17: nota dla rolnika, gdy pomiary kończą się przed końcem okresu */
+  note?: string | null
 }
 
 // ── Werdykt działki (A5b-2b) ──────────────────────────────────────────────────────────────

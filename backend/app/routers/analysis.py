@@ -846,7 +846,8 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
         win = period_mod.resolve(period, date_from, date_to, analysis_date, sowing)
         if win is not None:
             period_c = period_mod.build(w, win, settings.history_years, model.stress_dates if model else None,
-                                        has_crop=crop_obj is not None)
+                                        has_crop=crop_obj is not None,
+                                        forecast=forecast if is_today else None)  # A17: luka z Open-Meteo
     except period_mod.PeriodError as exc:
         raise HTTPException(status_code=422, detail={"message": str(exc)}) from exc
     steps.append(_step("balance", "Liczę bilans wody i wodę w glebie (FAO-56)", "done" if ok_calc else "error",
