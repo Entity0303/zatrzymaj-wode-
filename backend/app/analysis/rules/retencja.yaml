@@ -148,7 +148,7 @@ rules:
     description: "Zapas wody w glebie: {water_pct}% pełnego ({water_description}). Nie orz na zimę – zostaw resztki pożniwne, szorstką powierzchnię albo międzyplon ozimy: więcej wody z deszczu i roztopów wsiąknie zamiast spłynąć."
     why:
       - "Jesień i zima to główny okres odbudowy zapasu wody w glebie."
-      - "Bilans wody z ostatnich 30 dni: {kbw30_mm} mm ({kbw30_vs_mean_txt})."
+      - "Bilans wody {kbw30_period_txt}: {kbw30_mm} mm ({kbw30_vs_mean_txt})."
 
   - id: retencja.dzialka_wiosna
     category: retencja
@@ -166,7 +166,7 @@ rules:
     description: "Zapas wody w glebie: {water_pct}% pełnego ({water_description}). Rób jak najmniej przejazdów i nie odwracaj roli – każda uprawka przesusza wierzchnią warstwę; goła gleba traci wodę najszybciej."
     why:
       - "Ograniczenie intensywnej uprawy zmniejsza straty wody przez parowanie."
-      - "Bilans wody z ostatnich 30 dni: {kbw30_mm} mm ({kbw30_vs_mean_txt})."
+      - "Bilans wody {kbw30_period_txt}: {kbw30_mm} mm ({kbw30_vs_mean_txt})."
 
   - id: retencja.dzialka_lato_jesien
     category: retencja
@@ -184,7 +184,7 @@ rules:
     description: "Zapas wody w glebie: {water_pct}% pełnego ({water_description}). Po zbiorze zostaw rozdrobnioną słomę i wysiej międzyplon – okryta gleba mniej paruje i może zatrzymać więcej wody z jesiennych opadów."
     why:
       - "Międzyplony i resztki pożniwne zwiększają próchnicę i wsiąkanie wody – to podstawowy sposób zatrzymania wody w glebie."
-      - "Bilans wody z ostatnich 30 dni: {kbw30_mm} mm ({kbw30_vs_mean_txt})."
+      - "Bilans wody {kbw30_period_txt}: {kbw30_mm} mm ({kbw30_vs_mean_txt})."
 
   # ── zależne od gleby ──
   - id: retencja.prochnica

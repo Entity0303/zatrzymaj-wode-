@@ -50,4 +50,4 @@ def test_limitation_plain_language():
     import inspect
 
     src = inspect.getsource(S)
-    assert "Spadek plonu przy suszy liczymy metodą FAO" in src and "Reakcja plonu na brak wody wg FAO-33" not in src
+    assert "reakcja plonu na brak wody (metoda FAO)" in src and "FAO-33, współczynnik Ky" not in src  # A20

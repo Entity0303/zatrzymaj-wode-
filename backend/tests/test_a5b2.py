@@ -14,7 +14,7 @@ from app.analysis import suggestions as S
 from app.analysis.crops import ALL_CROPS, CROPS, RANKING_CROPS, get_crop
 from app.analysis.field_state import REFERENCE
 from app.analysis.recommendations import evaluate
-from app.analysis.scoring import overall_status, rank_level
+from app.analysis.scoring import level_for, overall_status
 from app.analysis.water_balance import soil_water_model
 from app.main import app
 from app.routers import analysis as analysis_router
@@ -316,17 +316,17 @@ def test_rank_level_same_date_in_ten_years():
         return facts(**{**dict(water_pct=60.0, water_rank_lower=5, water_rank_of=10, kbw30_rank_lower=5,
                                kbw30_rank_of=10), **kw})
 
-    assert rank_level(f(), "poza_sezonem") == "ok"  # w normie
-    assert rank_level(f(water_rank_lower=2), "poza_sezonem") == "warn"  # niżej niż w 8 na 10 lat
-    assert rank_level(f(water_rank_lower=3), "poza_sezonem") == "ok"
-    assert rank_level(f(water_rank_lower=0), "poza_sezonem") == "risk"  # najniżej od 10 lat
-    assert rank_level(f(water_rank_lower=0, water_pct=20.0), "bez_uprawy") == "danger"
-    assert rank_level(f(water_rank_lower=0, water_pct=95.0), "poza_sezonem") == "ok"  # pełny profil to nie alarm
-    assert rank_level(f(kbw30_rank_lower=0), "poza_sezonem") == "warn"  # 30 dni najsuchsze od 10 lat
-    assert rank_level(f(water_rank_of=3), "poza_sezonem") is None  # za mało lat – progi bezwzględne
-    s = overall_status(f(phase="po_zbiorze", phase_label="po zbiorze", sensitive=False, water_rank_lower=1), SOIL_OK)
+    # A20: wspólne progi (rules/status.yaml) – pozycja wśród lat podnosi stopień tylko przy zapasie ≤ 50%
+    assert level_for(f()) == "ok"  # 60% – w normie
+    assert level_for(f(water_rank_lower=0)) == "warn"  # 60% w najsuchszym roku – najwyżej „Uwaga”
+    assert level_for(f(water_pct=45.0, water_rank_lower=1)) == "risk"  # 2 najsuchsze z 10 → „Mało wody”
+    assert level_for(f(water_pct=45.0, water_rank_lower=0)) == "danger"  # najsuchszy z 10 → „Bardzo mało wody”
+    assert level_for(f(water_pct=45.0, kbw30_rank_lower=0)) == "danger"  # bilans 30 dni najniższy od 10 lat
+    assert level_for(f(water_rank_lower=0, water_pct=95.0)) == "ok"  # pełny profil to nie alarm
+    assert level_for(f(water_pct=45.0, water_rank_lower=0, water_rank_of=3, kbw30_rank_of=3)) == "warn"  # za mało lat
+    s = overall_status(f(phase="po_zbiorze", phase_label="po zbiorze", sensitive=False, water_pct=45.0), SOIL_OK)
     assert s.level == "warn" and 50 <= s.score <= 69 and s.scope == "poza_sezonem"
-    assert "mniej wody było tego dnia w 1 z 10" in s.summary
+    assert "mniej wody było tego dnia w 5 z 10" in s.summary
 
 
 def test_winter_crops_in_november_are_in_the_field():

@@ -283,7 +283,7 @@ def plants_statement(sat) -> VerdictStatement | None:
 def build(prof: SoilProfile, wod_mm: float | None, w: DailyWeather, last: date, terrain: Terrain | None,
           sug: CropSuggestions | None, recs: list[Recommendation], field_status: OverallStatus | None,
           chosen: tuple[str, str, OverallStatus, bool] | None = None, measured_precip: bool = False,
-          satellite=None, terrain_pending: bool = False, hydro=None) -> Verdict:
+          satellite=None, terrain_pending: bool = False, hydro=None, now_word: str = "teraz") -> Verdict:
     sts = [soil_statement(prof, wod_mm)]
     p = precip_statement(precip_stats(w, last), measured_precip)
     if p:
@@ -300,7 +300,7 @@ def build(prof: SoilProfile, wod_mm: float | None, w: DailyWeather, last: date, 
         label, phase, status, off = (*chosen, False)[:4]
         tpl = cfg()["chosen_crop_off"] if off else cfg()["chosen_crop"]
         sts.append(VerdictStatement(kind="uprawa_wybrana", level=STATUS_LEVEL.get(status.level, "warn"),
-                                    text=tpl.format(crop=label, phase=phase, headline=status.headline),
+                                    text=tpl.format(crop=label, phase=phase, headline=status.headline, now=now_word),
                                     numbers={"wynik": status.score, "poza_sezonem": 1 if off else 0}))
     # „rosliny” – bez wpływu na nagłówek; teren liczony w tle (info) – jak brak danych (warn), jak przed A9
     lv = {s.kind: ("warn" if s.level == "info" else s.level) for s in sts if s.kind in ("gleba", "opady", "teren", "uprawy")}

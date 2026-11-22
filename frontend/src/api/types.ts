@@ -533,7 +533,10 @@ export type EcoScheme = {
 export type SourceStatus = {
   name: string
   used_for: string
+  /** data danych – nigdy późniejsza niż data analizy (A20) */
   data_date: ISODate | null
+  /** A20: „pobrano” – gdy pobranie było później niż data analizy (data historyczna) */
+  fetched_at?: ISODate | null
   resolution?: string | null
   status: SourceAvailability
   note?: string | null
@@ -815,6 +818,8 @@ export type PrecipSources = {
   windows?: PrecipWindow[]
   /** jedno zdanie dla rolnika: „Opady liczymy ze stacji IMGW Burzyn (27 km). …” */
   sentence: string
+  /** A20: szczegóły źródeł (tryb Doradca / „szczegóły źródeł”) – porównanie z NASA w %, lata rozjazdu, uzupełnione dni */
+  details?: string[]
   /** true: stacje daleko albo źródła mocno się różnią – pewność o poziom niżej */
   confidence_lowered?: boolean
   /** A16: lata, w których suma IV–VII ze stacji IMGW różni się od NASA o > 30% */

@@ -557,6 +557,17 @@ def _sat_indicator(sat, which: str, no_sat: SourceTag) -> SatelliteIndicator:
         source_tag=SourceTag(kind="pomiar", date=sat.date, source="Sentinel-2 L2A"))
 
 
+HISTORICAL_NOW = "w dniu analizy"  # A20: zamiast „teraz” przy dacie historycznej
+
+
+def _until_weather(ind: Indicator, data_until: dt.date | None) -> Indicator:
+    """A20: data zapasu wody = ostatni dzień danych pogodowych (nie dzień przed analizą, gdy pogoda kończy się wcześniej)."""
+    tag = ind.source_tag
+    if tag is None or tag.date is None or data_until is None or tag.date <= data_until:
+        return ind
+    return ind.model_copy(update={"source_tag": tag.model_copy(update={"date": data_until})})
+
+
 def precip_contract(info: "precip_mod.PrecipInfo | None", data_until: dt.date | None) -> PrecipSources:
     """PrecipInfo → kontrakt `precip_sources` (None = opad z NASA, jak przed A7)."""
     info = info or precip_mod.PrecipInfo(main="nasa", sentence=precip_mod.cfg()["sentences"]["nasa_no_store"])
@@ -572,7 +583,7 @@ def precip_contract(info: "precip_mod.PrecipInfo | None", data_until: dt.date | 
         agreement=info.agreement, agreement_label=c["labels"][info.agreement],
         windows=[PrecipWindow(key=x.key, label=x.label, start=x.start, end=x.end, imgw_mm=x.imgw_mm, nasa_mm=x.nasa_mm,
                               difference_pct=x.difference_pct, rating=x.rating) for x in info.windows],
-        sentence=info.sentence, confidence_lowered=info.confidence_lowered,
+        sentence=info.sentence, details=list(info.details), confidence_lowered=info.confidence_lowered,
         precip_disagreement=list(info.disagreement_years), precip_disagreement_source=info.disagreement_source,
         source_tag=SourceTag(kind="pomiar" if measured else "szacunek_modelu", date=data_until,
                              source=imgw.SOURCE if measured else precip_mod.NASA_LABEL))
@@ -764,7 +775,7 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
     else:
         steps.append(_step("forecast", "Prognoza pogody", "done", note="data historyczna – scenariusz typowej pogody", ms=0))
     steps.append(_step("satellite", "Zdjęcie satelitarne (Sentinel-2)", "done" if sat.status != "pending" else "pending",
-                       note=(f"scena z {sat.date:%d.%m.%Y}" if sat.status == "ok" else
+                       note=(f"zdjęcie z {sat.date:%d.%m.%Y}" if sat.status == "ok" else
                              "pobierane osobno – GET /api/satellite" if sat.status == "pending" else sat.warning)))
     tr_saved = None if isinstance(tr_res, SourceError) else tr_res.facts.get("saved_note")
     steps.append(_step("terrain", "Analizuję teren (NMT GUGiK)", "pending" if tr_pending else state(tr_res),
@@ -832,7 +843,8 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
     elif isinstance(tr_res, SourceError):
         terrain_note = f"Brak analizy terenu – {tr_res.source}: {tr_res.message}"
     else:
-        terrain_c = terrain_interpret.to_contract(tr_res.facts, soil_prof.group, data_date=today if not tr_saved else None,
+        terrain_c = terrain_interpret.to_contract(tr_res.facts, soil_prof.group,
+                                                  data_date=min(today, analysis_date) if not tr_saved else None,
                                                   saved_note=tr_saved, soil_text=soil_prof.text)
     facts.values.update(terrain_interpret.rule_facts(None if terrain_c is None else tr_res.facts, soil_cat))
     facts.values["terrain_runoff_pct"] = (None if terrain_c is None else
@@ -848,6 +860,9 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
     causes = [] if soil_a.not_agricultural else build_causes(facts)
     available = {"terrain"} if terrain_c is not None else set()
     evaluation = evaluate(facts, available=available) if ok_calc and not soil_a.not_agricultural else Evaluation([])
+    if analysis_date < today:  # A20: przy dacie historycznej „teraz” = w dniu analizy (też nawadnianie z modelu)
+        evaluation.recommendations = [r.model_copy(update={"when_label": HISTORICAL_NOW}) if r.when_label == "teraz"
+                                      else r for r in evaluation.recommendations]
     field_c = None
     if field is not None:
         f_status = status if crop_obj is None else reserve_status(field_facts(field, recent), "bez_uprawy")
@@ -874,16 +889,18 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
     ))
     history = wb.history.model_copy(update={"stress_days_by_year": out.stress_days_by_year if out else []})
     no_sat = SourceTag(kind="brak_danych", source="Sentinel-2 L2A")
+    fs_level = field_c.status.level if field_c is not None and field_c.status is not None else None
     if out and not crop_off:
         sw_pct, sw_mm, risk7, soil_water = out.soil_water_pct, out.soil_water_mm, out.risk_7d, out.soil_water
+        sw_pct, sw_mm = _until_weather(sw_pct, wb.data_until), _until_weather(sw_mm, wb.data_until)
     elif crop_off:  # jedna liczba wody: profil działki (field_state); ryzyko stresu – nie dotyczy poza sezonem
-        sw_pct, sw_mm, soil_water = fs.water_indicators(field, analysis_date)
+        sw_pct, sw_mm, soil_water = fs.water_indicators(field, analysis_date, fs_level)
         risk7 = RiskIndicator(value=None, unit="dni", label="Nie dotyczy", status="no_data",
                               note=f"{out.crop_season.phase_label} – poza sezonem uprawy; pokazujemy stan wody na działce",
                               source_tag=SourceTag(kind="brak_danych", source=fs.FIELD_SOURCE))
     else:  # bez uprawy – stan działki (pokrycie referencyjne); ryzyko stresu roślin nie dotyczy
         if field is not None:
-            sw_pct, sw_mm, soil_water = fs.water_indicators(field, analysis_date)
+            sw_pct, sw_mm, soil_water = fs.water_indicators(field, analysis_date, fs_level)
         else:
             tag = SourceTag(kind="brak_danych", source=fs.FIELD_SOURCE)
             sw_pct = Indicator(value=None, unit="%", status="no_data", note=no_model, source_tag=tag)
@@ -938,7 +955,8 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
         verdict = verdict_mod.build(soil_prof, soil_a.wod_mm, w, last_usable_day(analysis_date), terrain_c, suggestions,
                                     evaluation.recommendations, field_c.status if field_c else None, chosen,
                                     measured_precip=bool(w_res.precip and w_res.precip.main != "nasa"), satellite=sat,
-                                    terrain_pending=tr_pending, hydro=hydro_c)
+                                    terrain_pending=tr_pending, hydro=hydro_c,
+                                    now_word=HISTORICAL_NOW if analysis_date < today else "teraz")
     steps.append(_step("total", "Cała analiza", "done", ms=int((perf_counter() - t0) * 1000)))
 
     return AnalysisResponse(

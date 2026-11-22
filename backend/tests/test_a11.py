@@ -351,7 +351,8 @@ def test_api_satellite_live_then_cached_and_analysis_uses_cache(client, monkeypa
     assert [st.kind for st in a.verdict.statements].count("rosliny") == 1
     assert a.indicators.crop_health.value == 86.0 and "16.11.2026" in a.indicators.crop_health.note
     src = [x for x in a.reliability.sources if x.name.startswith("Sentinel-2")][0]
-    assert src.status == "ok" and src.data_date == date(2026, 11, 16)
+    # A20: data danych nigdy po dacie analizy (sztuczna scena z 2026 r. w analizie z 2018 r. → „pobrano”)
+    assert src.status == "ok" and src.data_date == date(2018, 6, 10) and src.fetched_at == date(2026, 11, 16)
 
 
 @respx.mock

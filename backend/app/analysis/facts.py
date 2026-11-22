@@ -134,6 +134,9 @@ def recent_facts(recent: RecentBalance | None) -> dict[str, Any]:
         "kbw30_mean_mm": recent.mean_mm if recent else None,
         "kbw30_rank_lower": recent.lower_years if recent else None,
         "kbw30_rank_of": recent.of_years if recent else None,
+        # A20: okres bilansu z datami („od 31.05 do 29.06.2018”) zamiast „z ostatnich 30 dni”
+        "kbw30_period_txt": (f"od {recent.start:%d.%m} do {recent.until:%d.%m.%Y}"
+                             if recent and recent.start and recent.until else "z ostatnich 30 dni"),
     }
     dev30 = v["kbw30_deviation_mm"]
     v["kbw30_vs_mean_txt"] = (

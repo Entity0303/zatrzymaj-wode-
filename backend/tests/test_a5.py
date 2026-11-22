@@ -408,7 +408,7 @@ def test_off_season_warn_headline_matches_data():
     from app.analysis.scoring import overall_status
     from test_analysis import SOIL_OK
 
-    base = dict(phase="dojrzewanie", phase_label="dojrzewanie", sensitive=False, water_pct=59.0, water_rank_pct=40.0)
+    base = dict(phase="dojrzewanie", phase_label="dojrzewanie", sensitive=False, water_pct=45.0, water_rank_pct=40.0)  # A20: ≤ 50% = „Uwaga”
     wetter = overall_status(facts(**base, balance_deviation_mm=40.0, balance_percentile=70.0), SOIL_OK)
     drier = overall_status(facts(**base, balance_deviation_mm=-40.0, balance_percentile=30.0), SOIL_OK)
     assert wetter.level == drier.level == "warn"

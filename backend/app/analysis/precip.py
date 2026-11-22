@@ -80,6 +80,7 @@ class PrecipInfo:
     season_sums: dict[int, tuple[float, float]] = field(default_factory=dict)  # A16b: rok → (IMGW, NASA) mm, IV–VII
     neighbour_mm: dict[int, float] = field(default_factory=dict)       # A16b: rok → mediana sąsiednich stacji, mm
     disagreement_by: dict[int, str] = field(default_factory=dict)      # A16b: rok → "nasa" | "station"
+    details: list[str] = field(default_factory=list)                    # A20: szczegóły źródeł (porównania, lata)
 
     @property
     def disagreement_source(self) -> str | None:
@@ -190,9 +191,13 @@ def _years_text(years: list[int]) -> str:
 def disagreement_sentence(info: PrecipInfo) -> str:
     """A16b: lata „nasa” – „dane satelitarne NASA pokazują ok. X% więcej… – przyjmujemy pomiar ze stacji”; lata
     „station” – zdanie o mniej pewnym wyniku (A16). Liczby i lata z danych."""
+    st_years = [y for y in info.disagreement_years if info.disagreement_by.get(y) != "nasa"]
+    return _nasa_sentence(info) + _station_sentence(info, st_years)
+
+
+def _nasa_sentence(info: PrecipInfo) -> str:
     s = cfg()["sentences"]
     nasa_years = [y for y in info.disagreement_years if info.disagreement_by.get(y) == "nasa"]
-    st_years = [y for y in info.disagreement_years if info.disagreement_by.get(y) != "nasa"]
     txt = ""
     if nasa_years:
         rel = [(b - a) / a * 100 for a, b in (info.season_sums[y] for y in nasa_years) if a > 0]  # NASA względem stacji
@@ -201,7 +206,7 @@ def disagreement_sentence(info: PrecipInfo) -> str:
             same = all(r > 0 for r in rel) or all(r < 0 for r in rel)
             txt += s["disagree_nasa"].format(years=_years_text(nasa_years), pct=pct,
                                              direction=("więcej" if rel[0] > 0 else "mniej") if same else "inaczej")
-    return txt + _station_sentence(info, st_years)
+    return txt
 
 
 def _station_sentence(info: PrecipInfo, years: list[int]) -> str:
@@ -222,29 +227,58 @@ def _km(d: float) -> str:
     return f"{d:.0f} km"
 
 
-def sentence(info: PrecipInfo) -> str:
+def _span(days: int) -> str:
+    """49 → „Ostatnie 7 tygodni”, 3 → „Ostatnie 3 dni”, 1 → „Ostatni dzień” (od 14 dni – w tygodniach)."""
+    if days == 1:
+        return "Ostatni dzień"
+    if days < 14:
+        return f"Ostatnie {days} dni"
+    wk = round(days / 7)
+    word = "tygodnie" if wk % 10 in (2, 3, 4) and wk % 100 not in (12, 13, 14) else "tygodni"
+    return f"Ostatnie {wk} {word}"
+
+
+def texts(info: PrecipInfo) -> tuple[str, list[str]]:
+    """A20: (zdanie główne – najwyżej 2 zdania dla rolnika, szczegóły źródeł). Liczby z danych."""
     s, t = cfg()["sentences"], cfg()["thresholds"]
     if info.main == "nasa" and info.outdated:
         p, last = info.outdated[0]
         key = "nasa_outdated_factor" if info.factor is not None else "nasa_outdated"
         return s[key].format(station=p.name, km=_km(p.dist_km), last=date_pl(last),
-                             factor=num(info.factor, 2) if info.factor is not None else "")
+                             factor=num(info.factor, 2) if info.factor is not None else ""), []
     if info.main == "nasa":
-        return s["nasa_only"] if info.store_end is not None else s["nasa_no_store"]
+        return (s["nasa_only"] if info.store_end is not None else s["nasa_no_store"]), []
     names = [f"{p.name} ({_km(p.dist_km)})" for p, _w in info.stations]
     if info.main == "imgw_daleko":
-        txt = s["far"].format(stations=_join(names))
+        main = s["far"].format(stations=_join(names))
     else:
-        txt = (s["one"] if len(names) == 1 else s["many"]).format(stations=_join(names))
+        main = (s["one"] if len(names) == 1 else s["many"]).format(stations=_join(names))
+    extra: list[str] = []  # kandydaci na drugie zdanie – od najważniejszego
+    if info.agreement == "mocno_sie_roznia":
+        extra.append(s["strong"])
+    st_years = [y for y in info.disagreement_years if info.disagreement_by.get(y) != "nasa"]
+    if st_years:
+        extra.append(_station_sentence(info, st_years))
+    if info.filled_days > 0 and info.filled_from is not None:
+        extra.append(s["filled"].format(span=_span(info.filled_days),
+                                        target=s["filled_target"][int(len(info.stations) > 1)]))
+    details: list[str] = []
     pct = info.nasa_vs_imgw_pct
     if pct is not None:
         key = "nasa_same" if abs(pct) <= t["same_pct"] else "nasa_more" if pct > 0 else "nasa_less"
-        txt += s[key].format(pct=f"{abs(pct):.0f}")
-    if info.agreement == "mocno_sie_roznia":
-        txt += s["strong"]
+        details.append(s[key].format(pct=f"{abs(pct):.0f}").strip())
+    nasa_part = _nasa_sentence(info)
+    if nasa_part:
+        details.append(nasa_part.strip())
     if info.filled_days > 0 and info.filled_from is not None:
-        txt += s["filled"].format(days=info.filled_days, from_=date_pl(info.filled_from))
-    return txt + disagreement_sentence(info)
+        details.append(f"Dane NASA od {date_pl(info.filled_from)} ({info.filled_days} dni) przeliczone współczynnikiem "
+                       f"stacji{' ×' + num(info.factor, 2) if info.factor is not None else ''}.")
+    details += [x.strip() for x in extra[1:]]
+    return main + (extra[0] if extra else ""), details
+
+
+def sentence(info: PrecipInfo) -> str:
+    return texts(info)[0]
 
 
 def apply(w: DailyWeather, lon: float, lat: float, analysis_date: date) -> tuple[DailyWeather, PrecipInfo]:
@@ -252,7 +286,7 @@ def apply(w: DailyWeather, lon: float, lat: float, analysis_date: date) -> tuple
     st = imgw.store()
     if st is None or len(w.dates) == 0:
         info = PrecipInfo(main="nasa")
-        info.sentence = sentence(info)
+        info.sentence, info.details = texts(info)
         return w, info
     store_end = st.end.astype(object)
     main = "imgw"
@@ -275,7 +309,7 @@ def apply(w: DailyWeather, lon: float, lat: float, analysis_date: date) -> tuple
                 info.common_days = int(both.sum())
                 w = replace(w, precip=w.precip * info.factor)
             info.outdated = [(old[0], imgw.last_day(st, old[0].idx))]
-        info.sentence = sentence(info)
+        info.sentence, info.details = texts(info)
         return w, info
 
     t = cfg()["thresholds"]
@@ -324,7 +358,7 @@ def apply(w: DailyWeather, lon: float, lat: float, analysis_date: date) -> tuple
         info.neighbour_mm = neighbour_medians(st, lon, lat, {p.idx for p in picks}, w.dates)
     classify_disagreement(info)
     info.confidence_lowered = main == "imgw_daleko" or info.agreement == "mocno_sie_roznia" or info.disagreement_lowers
-    info.sentence = sentence(info)
+    info.sentence, info.details = texts(info)
 
     w2 = dataclasses.replace(w, precip=new, source=f"IMGW-PIB (opad) + {w.source} (parowanie)")
     return w2, info

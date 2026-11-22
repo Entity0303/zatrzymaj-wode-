@@ -13,7 +13,7 @@ from app.analysis.causes import build_causes
 from app.analysis.confidence import ConfidenceInputs, reliability
 from app.analysis.facts import Facts
 from app.analysis.recommendations import CATEGORY_ORDER, RuleError, _validate, evaluate, load_rules
-from app.analysis.scoring import overall_status, risk_points, score_value, status_for
+from app.analysis.scoring import drought_level, overall_status, risk_points, score_value
 from app.analysis.soil import SoilAssessment, assess_soil
 from app.core.config import settings
 from app.core.http import SourceError
@@ -89,8 +89,9 @@ def facts(**kw) -> Facts:
 def test_score_components_and_thresholds():
     assert risk_points(0) == 0 and risk_points(5) == 50 and risk_points(None) == 100
     assert score_value(facts()) == round(0.45 * 60 + 0.35 * 100 + 0.20 * 50)
-    assert status_for(85, True) == "ok" and status_for(55, True) == "warn"
-    assert status_for(35, True) == "risk" and status_for(10, True) == "danger"
+    # A20: stopień z zapasu wody (rules/status.yaml), nie z wskaźnika 0–100
+    assert drought_level(85) == "ok" and drought_level(45) == "warn"
+    assert drought_level(30) == "risk" and drought_level(10) == "danger"
 
 
 def test_stressed_plants_alarm_in_sensitive_phase():
@@ -104,8 +105,8 @@ def test_stressed_plants_alarm_in_sensitive_phase():
 def test_no_plant_stress_alarm_outside_sensitive_phases(phase):
     s = overall_status(facts(phase=phase, phase_label=phase, sensitive=False, water_pct=5.0, days_to_stress=None,
                              balance_percentile=0.0, water_rank_pct=0.0, water_rank_lower=0), SOIL_OK)
-    assert s.level == "risk"  # najwyżej „ryzyko” – nie „susza” roślin
-    assert "zapas wody w glebie" in s.headline and "cierpią" not in s.headline
+    # A20: faza nie ucina stopnia braku wody (5% zapasu = „Bardzo mało wody”), ale nagłówek mówi o glebie, nie o roślinach
+    assert s.level == "danger" and s.headline == "Bardzo mało wody w glebie" and "roślin" not in s.headline
     assert "zapas" in s.summary and "wody w glebie" in s.summary
 
 

@@ -148,8 +148,8 @@ def test_apply_replaces_precip_and_keeps_et0(tmp_path):
     assert np.array_equal(w2.et0, w.et0) and w2.source.startswith("IMGW-PIB (opad)")
     assert info.factor == pytest.approx(0.8, abs=0.005) and info.nasa_vs_imgw_pct == pytest.approx(25.0, abs=0.2)
     assert info.filled_days == 0 and info.agreement == "roznia_sie" and not info.confidence_lowered
-    assert info.sentence == ("Opady liczymy ze stacji IMGW Burzyn (27 km). Dane satelitarno-modelowe NASA pokazują "
-                             "o 25% więcej – przyjmujemy pomiar ze stacji.")
+    assert info.sentence == "Opady liczymy ze stacji IMGW Burzyn (27 km)."  # A20: porównanie z NASA w szczegółach
+    assert info.details == ["Dane satelitarno-modelowe NASA pokazują o 25% więcej – przyjmujemy pomiar ze stacji."]
     assert {x.key for x in info.windows} == {"sezon", "ostatnie_30_dni", "wielolecie"}
 
 
@@ -162,7 +162,8 @@ def test_apply_fills_recent_days_with_corrected_nasa(tmp_path):
     assert info.filled_from == START + timedelta(days=3987 - 50)
     assert w2.precip[-1] == pytest.approx(2.0 * 0.8, abs=0.01)      # NASA × współczynnik stacji (IMGW / NASA)
     assert w2.precip[0] == pytest.approx(1.6)
-    assert "to dane NASA przeliczone do poziomu stacji" in info.sentence and f"Ostatnie {info.filled_days} dni" in info.sentence
+    assert info.sentence.endswith("to dane satelitarne NASA dopasowane do tej stacji, bo archiwum IMGW ich jeszcze nie ma.")
+    assert info.sentence.count(".") == 2 and any(f"({info.filled_days} dni)" in d for d in info.details)  # A20
     season = next(x for x in info.windows if x.key == "sezon")
     assert season.end == info.filled_from - timedelta(days=1) and season.rating == "roznia_sie"  # okno kończy się na pomiarze
 
@@ -172,7 +173,7 @@ def test_apply_fallback_50km_lowers_confidence(tmp_path):
     _w2, info = P.apply(weather(), LON, LAT, date(2018, 11, 21))
     assert info.main == "imgw_daleko" and info.confidence_lowered
     assert info.sentence.startswith("Najbliższe stacje IMGW są daleko (Daleka (40 km))")
-    assert "zgodne z pomiarem" in info.sentence
+    assert any("zgodne z pomiarem" in d for d in info.details)  # A20: porównanie w szczegółach
 
 
 def test_apply_no_station_uses_nasa(tmp_path):

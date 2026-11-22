@@ -829,7 +829,9 @@ class EcoScheme(Contract):
 class SourceStatus(Contract):
     name: str
     used_for: str
-    data_date: dt.date | None
+    data_date: dt.date | None = Field(description="Data danych – nigdy późniejsza niż data analizy (A20)")
+    fetched_at: dt.date | None = Field(None, description="A20: kiedy pobrano, gdy później niż data analizy "
+                                                         "(np. granice działki pobrane dziś dla analizy z 2018 r.)")
     resolution: str | None = None
     status: SourceAvailability
     note: str | None = None
@@ -961,7 +963,9 @@ class PrecipSources(Contract):
     agreement: PrecipAgreement = Field(description="Zgodność źródeł: sezon od 1 marca i ostatnie 30 dni (gorsza z dwóch)")
     agreement_label: str
     windows: list[PrecipWindow] = Field(default_factory=list)
-    sentence: str = Field(description="Jedno zdanie dla rolnika, np. 'Opady liczymy ze stacji IMGW Burzyn (27 km). …'")
+    sentence: str = Field(description="Najwyżej 2 zdania dla rolnika, np. 'Opady liczymy ze stacji IMGW Burzyn (27 km). …'")
+    details: list[str] = Field(default_factory=list, description="A20: szczegóły źródeł (tryb Doradca) – porównanie "
+                                                                 "z NASA w %, lata rozjazdu, uzupełnione dni")
     confidence_lowered: bool = Field(False, description="True: stacje daleko albo źródła mocno się różnią – pewność o poziom niżej")
     precip_disagreement: list[int] = Field(
         default_factory=list, description="A16: lata, w których suma IV–VII ze stacji IMGW różni się od NASA o > 30%")

@@ -172,8 +172,9 @@ def recent_note(rb: RecentBalance) -> str | None:
 # ── Wynik → kontrakt (schemas/analysis.py: FieldState) ──────────────────────────────────────
 
 
-def water_indicators(res: FieldStateResult, analysis_date: date):
-    """(soil_water_pct, soil_water_mm, SoilWaterState) – profil ~1 m pod pokryciem referencyjnym."""
+def water_indicators(res: FieldStateResult, analysis_date: date, level: str | None = None):
+    """(soil_water_pct, soil_water_mm, SoilWaterState) – profil ~1 m pod pokryciem referencyjnym. A20: status wskaźnika
+    = stopień ze scoring.drought_level (te same progi co status działki)."""
     from app.schemas.analysis import BalanceRank, Indicator, SoilWaterState, SourceTag
 
     if res.status != "ok":
@@ -182,8 +183,13 @@ def water_indicators(res: FieldStateResult, analysis_date: date):
         return (Indicator(value=None, unit="%", status="no_data", note=note, source_tag=tag),
                 Indicator(value=None, unit="mm", status="no_data", note=note, source_tag=tag),
                 SoilWaterState(scope="profil", depth_m=PROFILE_DEPTH_M, description=note))
-    tag = SourceTag(kind="szacunek_modelu", date=last_usable_day(analysis_date), source=FIELD_SOURCE)
-    status = "warn" if (res.water_pct or 0) < 50 else "ok"
+    # A20: data = ostatni dzień danych pogodowych (dni po nim to prognoza / scenariusz typowej pogody)
+    tag = SourceTag(kind="szacunek_modelu", date=res.data_until or last_usable_day(analysis_date), source=FIELD_SOURCE)
+    if level is None or level == "no_data":
+        from app.analysis.scoring import drought_level
+
+        level = drought_level(res.water_pct, res.rank_lower if (res.rank_of or 0) >= 5 else None)
+    status = level
     pct = Indicator(value=res.water_pct, unit="%", label="stan działki", status=status,
                     note=f"{res.description} (profil ok. 1 m, typowe pole z roślinami)", source_tag=tag)
     mm = Indicator(value=res.water_mm, unit="mm", status=status, note="woda dostępna dla roślin, profil ok. 1 m",
@@ -208,7 +214,7 @@ def balance_30d_indicator(rb: RecentBalance, source: str):
 def to_contract(res: FieldStateResult, rb: RecentBalance, status, analysis_date: date, weather_source: str):
     from app.schemas.analysis import BalanceRank, BandPoint, FieldState, SeriesPoint, SourceTag
 
-    pct, mm, sw = water_indicators(res, analysis_date)
+    pct, mm, sw = water_indicators(res, analysis_date, getattr(status, "level", None))
     return FieldState(
         status=status, cover=COVER_LABEL, soil_water_pct=pct, soil_water_mm=mm, soil_water=sw,
         series_start=res.series_start,

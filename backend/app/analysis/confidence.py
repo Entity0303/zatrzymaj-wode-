@@ -7,7 +7,7 @@ Dane z przeterminowanego cache (źródło nie odpowiadało, D44) – pewność o
 """
 
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import date, timedelta
 
 from app.analysis.soil import SoilAssessment
 from app.analysis.water_balance import SoilWaterResult, WaterBalanceResult
@@ -163,6 +163,21 @@ def level(points: int, capped: bool, stale: bool = False) -> Confidence:
     return ORDER[min(ORDER.index(lv) + 1, 2)] if stale else lv
 
 
+SERIES_SOURCES = ("IMGW",)  # serie dzienne: dane do dnia PRZED datą analizy
+
+
+def cap_source_dates(sources: list[SourceStatus], analysis_date: date) -> list[SourceStatus]:
+    """A20: data danych nigdy po dacie analizy – późniejsza trafia do `fetched_at` („pobrano”), a `data_date` =
+    ostatni dzień danych przed datą analizy (serie dzienne) albo data analizy."""
+    out = []
+    for s in sources:
+        if s.data_date is not None and s.data_date > analysis_date:
+            cap = analysis_date - timedelta(days=1) if s.name.startswith(SERIES_SOURCES) else analysis_date
+            s = s.model_copy(update={"fetched_at": s.data_date, "data_date": cap})
+        out.append(s)
+    return out
+
+
 def precip_disagreement_text(p) -> str:
     from app.analysis.precip import disagreement_sentence
 
@@ -300,5 +315,6 @@ def reliability(i: ConfidenceInputs) -> tuple[Reliability, list[Premise], int]:
     for c in CONSTANT_LIMITATIONS:  # bez powtórzeń treści już zgłoszonej przez moduły (np. gleba)
         if not ("gleby mineralne" in c and any("gleby mineralne" in x for x in lim)):
             lim.append(c)
+    sources = cap_source_dates(sources, i.analysis_date)
     return Reliability(confidence=conf, reason=reason, sources=sources, completeness=completeness,
                        limitations=_dedupe(lim)), prem, points

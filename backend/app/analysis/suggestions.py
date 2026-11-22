@@ -391,14 +391,14 @@ def reason(crop: Crop, cat: str, suit: str, risk: int, n: int, typ: float | None
             return (f"Słaba, lekka ziemia trzyma mało wody – {name}: w {risk} z {n} lat strata ponad 20% plonu "
                     f"({soil_txt}).")
         if light_soil:
-            return f"Słaba, lekka ziemia ({soil_txt}) nie nadaje się pod tę uprawę – plon będzie dużo niższy niż zwykle."
-        return f"Ta gleba ({soil_txt}) nie pasuje do tej uprawy – plon będzie wyraźnie niższy niż zwykle w okolicy."
+            return f"Słaba, lekka ziemia ({soil_txt}) nie nadaje się pod tę uprawę – plon zwykle jest dużo niższy niż w okolicy."
+        return f"Ta gleba ({soil_txt}) nie pasuje do tej uprawy – plon zwykle jest wyraźnie niższy niż w okolicy."
     if cat == "odradzane":
         return (f"Za mało wody dla tej uprawy: w {risk} z {n} lat susza zabrałaby ponad 20% plonu, w najgorszym roku "
                 f"({weak_year}) {worst_loss_pct}%.")
     if cat == "polecane":
         if risk == 0:
-            return (f"Gleba pasuje i wody wystarcza – {yld}, a nawet w najsuchszym roku ({weak_year}) plon spadłby "
+            return (f"Gleba pasuje i wody wystarcza – {yld}, a nawet w najgorszym roku ({weak_year}) plon spadłby "
                     f"tylko o {worst_loss_pct}%.")
         return (f"Gleba pasuje – {yld}; strata ponad 20% plonu zdarzyłaby się w {risk} z {n} lat "
                 f"(najgorszy rok: {weak_year}).")
@@ -406,7 +406,7 @@ def reason(crop: Crop, cat: str, suit: str, risk: int, n: int, typ: float | None
         return (f"Gleba pasuje, ale wody bywa za mało – {yld}, strata ponad 20% plonu w {risk} z {n} lat "
                 f"(najgorszy rok: {weak_year}).")
     tail = (f"strata ponad 20% plonu w {risk} z {n} lat" if risk else
-            f"w najsuchszym roku ({weak_year}) plon niższy o {worst_loss_pct}%")
+            f"w najgorszym roku ({weak_year}) plon niższy o {worst_loss_pct}%")
     return f"Da się uprawiać, choć ta gleba nie jest dla tej uprawy najlepsza – {yld}, {tail}."
 
 
@@ -464,7 +464,7 @@ def build(w: DailyWeather, analysis_date: date, ctx: Context, years: int = 10) -
                  + (sc["rotation_plus"] if rot.status == "plus" else sc["rotation_warning"] if rot.status == "ostrzezenie" else 0))
         low = []
         if crop.estimated:
-            low.append("współczynnik Ky (reakcja plonu na brak wody) to szacunek")
+            low.append("reakcja plonu na brak wody (metoda FAO) to szacunek")
         if crop.id in GUS_SUBSTITUTE:
             low.append(f"plon potencjalny: {GUS_SUBSTITUTE[crop.id]}")
         if pot.scope == "brak":
@@ -532,11 +532,12 @@ def build(w: DailyWeather, analysis_date: date, ctx: Context, years: int = 10) -
         crop_history=ctx.history,
         rotation_hint=None if has_history else "Podaj, co rosło w ostatnich latach – uwzględnimy płodozmian.",
         note="Plony bez nawadniania. Symulacja na pogodzie z ostatnich 10 sezonów dla tej działki i tej gleby; "
-             "nie uwzględnia nawożenia, odmiany, chorób ani cen.",
+             "nie uwzględnia nawożenia, odmiany ani chorób. Przychód = plon × cena skupu, bez kosztów. Typowy plon to "
+             "wynik z 10 lat, nie prognoza na ten rok.",
         limitations=[
-            "Plon potencjalny z plonów GUS w województwie (90. percentyl z 10 lat) i szacunkowego współczynnika "
+            "Plon potencjalny z najlepszych lat w województwie (plony GUS) i szacunkowego współczynnika "
             "przydatności gleby – to rząd wielkości, nie prognoza.",
-            "Spadek plonu przy suszy liczymy metodą FAO, inną dla każdej uprawy (FAO-33, współczynnik Ky); dla części upraw "
+            "Spadek plonu przy suszy: reakcja plonu na brak wody (metoda FAO), inna dla każdej uprawy; dla części upraw "
             "to szacunek – oznaczone niższą pewnością.",
             "Wymagania glebowe i płodozmian – ogólne zalecenia agrotechniczne (szacunek, do weryfikacji z doradcą).",
         ],

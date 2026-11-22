@@ -40,7 +40,8 @@ async def soil_for_terrain(p: uldk.Parcel) -> tuple[str | None, str | None]:
         return None, None
 
 
-async def terrain_contract(p: uldk.Parcel) -> Terrain:
+async def terrain_contract(p: uldk.Parcel, analysis_date: dt.date | None = None) -> Terrain:
+    """A20: `source_tag.date` nigdy po dacie analizy (dla daty historycznej – data analizy)."""
     try:
         res, (group, text) = await asyncio.gather(
             asyncio.wait_for(terrain_mod.live(p.geom_2180, p.id), settings.nmt_total_timeout_s + 5),
@@ -50,7 +51,8 @@ async def terrain_contract(p: uldk.Parcel) -> Terrain:
     except asyncio.TimeoutError as exc:
         raise http_error(SourceError("NMT GUGiK", "teren liczy się dłużej niż zwykle – spróbuj za chwilę")) from exc
     saved = res.facts.get("saved_note")
-    return terrain_interpret.to_contract(res.facts, group, data_date=None if saved else dt.date.today(),
+    today = dt.date.today()
+    return terrain_interpret.to_contract(res.facts, group, data_date=None if saved else min(today, analysis_date or today),
                                          saved_note=saved, soil_text=text)
 
 
@@ -58,12 +60,13 @@ async def terrain_contract(p: uldk.Parcel) -> Terrain:
 async def get_terrain(
     parcel_id: str | None = Query(None, description="Pełny identyfikator działki ULDK"),
     lon: float | None = Query(None), lat: float | None = Query(None),
+    date: dt.date | None = Query(None, description="A20: data analizy – data wyniku nie późniejsza niż ona"),
 ) -> Terrain:
     """Strefy terenu, spadki, odpływ i zagłębienia (NMT GUGiK) – liczone na żywo (zwykle 2–15 s), potem z cache."""
-    return await terrain_contract(await resolve_any(parcel_id, lon, lat))
+    return await terrain_contract(await resolve_any(parcel_id, lon, lat), date)
 
 
 @router.post("/terrain", response_model=Terrain)
 async def post_terrain(req: AnalysisRequest) -> Terrain:
     """Jak GET – dla pola narysowanego (`geometry`) albo działki / punktu w treści."""
-    return await terrain_contract(await resolve_any(req.parcel_id, req.lon, req.lat, req.geometry))
+    return await terrain_contract(await resolve_any(req.parcel_id, req.lon, req.lat, req.geometry), req.date)

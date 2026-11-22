@@ -1,0 +1,23 @@
+# A20: stopień braku wody – JEDNE progi dla analizy z uprawą (scoring.overall_status) i bez uprawy / poza sezonem
+# (scoring.reserve_status, field_state). Deterministycznie, bez AI. Faza (dojrzewanie, po zbiorze, zimowanie)
+# może obniżyć PILNOŚĆ działań (rekomendacje), ale NIE stopień braku wody.
+status:
+  # zapas wody dostępnej [%] → stopień (od najgorszego); wyżej niż „warn_max_pct” – w normie
+  danger_max_pct: 15      # ≤ 15% – „Bardzo mało wody”
+  risk_max_pct: 35        # ≤ 35% – „Mało wody”
+  warn_max_pct: 50        # ≤ 50% – „Uwaga”
+  # pozycja wśród 10 poprzednich lat TEGO SAMEGO dnia (zapas wody w glebie albo bilans wody z ostatnich 30 dni –
+  # gorsza z dwóch): najsuchszy → „Bardzo mało wody”, w 2 najsuchszych → „Mało wody”
+  rank_min_years: 5       # mniej lat porównawczych – tylko progi procentowe
+  rank_danger_lower: 0    # mniej wody / niższy bilans było w 0 z 10 lat (najsuchszy)
+  rank_risk_lower: 1      # … w najwyżej 1 z 10 lat (2 najsuchsze)
+  # pozycję wśród lat stosujemy tylko przy niepełnym zapasie: ≤ 50% → podnosi do „Mało” / „Bardzo mało wody”;
+  # 50–90% przy najsuchszym okresie → najwyżej „Uwaga”; ≥ 90% (pełny profil) – nigdy alarm
+  rank_escalation_max_pct: 50
+  full_profile_pct: 90
+  # nazwy stopni – słownik aplikacji (SPEC 1), nie „Susza” / „Ryzyko”
+  labels:
+    ok: "W normie"
+    warn: "Uwaga"
+    risk: "Mało wody"
+    danger: "Bardzo mało wody"

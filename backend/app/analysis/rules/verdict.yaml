@@ -75,7 +75,7 @@ verdict:
 
   chosen_crop: "{crop} ({phase}): {headline}."
   # A5e (D79): przed siewem / po zbiorze uprawy nie ma w polu – zdanie mówi o stanie działki, nie o uprawie
-  chosen_crop_off: "{crop} – teraz {phase}, uprawy nie ma w polu. Stan wody na działce: {headline}."
+  chosen_crop_off: "{crop} – {now} {phase}, uprawy nie ma w polu. Stan wody na działce: {headline}."  # A20: {now} = teraz / w dniu analizy
 
   # Nagłówek – pierwsza pasująca reguła (warunki: poziomy pozycji, liczba „źle”, udziały stref terenu)
   headlines:
