@@ -122,7 +122,7 @@ export function LegendCard({
     <section
       aria-label={t('Legenda: {title}', { title: t(title) })}
       style={style}
-      className={cn('w-64 rounded-lg bg-legend/90 text-sm leading-5 text-white shadow-float', compact ? 'px-3 py-2.5' : 'px-3.5 py-3', className)}
+      className={cn('tabular w-64 rounded-lg bg-legend/90 text-sm leading-5 text-white shadow-float', compact ? 'px-3 py-2.5' : 'px-3.5 py-3', className)}
     >
       <div className={cn('flex items-center gap-2', compact ? 'mb-1.5' : 'mb-2')}>
         <h3 className="min-w-0 flex-1 text-sm font-semibold">{t(title)}</h3>

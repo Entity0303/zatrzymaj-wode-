@@ -134,7 +134,7 @@ export function RankingCard({ suggestions, top = 3, priceNow }: { suggestions: C
   const allSources = [...priceSources.map((x) => t(x)), ...nowSources]
 
   return (
-    <section aria-label={t('Co tu posiać?')} className="rounded-xl border bg-surface">
+    <section aria-label={t('Co tu posiać?')} className="tabular rounded-xl border bg-surface">
       <header className="px-4 pt-3.5">
         <h3 className="font-display text-lg leading-6 font-semibold">{t('Co tu posiać?')}</h3>
         <p className="text-sm leading-5 text-text-muted">{all ? t('Wszystkie uprawy polowe, od najlepszej') : t('Najlepsze dla tej ziemi i pogody z 10 lat')}</p>

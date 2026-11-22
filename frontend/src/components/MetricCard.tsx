@@ -58,7 +58,7 @@ export function MetricCard({
   return (
     <div
       className={cn(
-        'flex min-w-0 flex-col gap-2 rounded-xl border bg-surface p-3.5',
+        'tabular flex min-w-0 flex-col gap-2 rounded-xl border bg-surface p-3.5',
         noData && 'hatch-nodata',
         className,
       )}

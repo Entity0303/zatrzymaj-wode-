@@ -59,7 +59,7 @@ export function IntroHero({
       >
         <div className="flex items-center gap-3">
           <LogoMark className="size-12 shrink-0 md:size-14" />
-          <h1 id="hero-title" className="font-display text-2xl leading-8 font-semibold text-brand-dark md:text-[34px] md:leading-[40px]">
+          <h1 id="hero-title" className="font-display text-2xl leading-8 font-bold text-brand-dark md:text-[34px] md:leading-[40px]">
             {BRAND_NAME} <span className="font-normal text-text-muted">– {t(BRAND_TAGLINE)}</span>
           </h1>
         </div>

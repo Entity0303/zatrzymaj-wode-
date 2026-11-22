@@ -16,7 +16,7 @@ import type { Status } from '@/theme/status'
 import { parcelBounds, type MapInsets } from './geo'
 import { layerByKey, type LayerKey } from './layers'
 import { ParcelLabel } from './ParcelLabel'
-import { SoilSusceptibilityLayer } from './SoilSusceptibilityLayer'
+import { SoilParcelOverlay, type SoilImageStatus } from './SoilSusceptibilityLayer'
 import { InfraPins } from '@/features/infra-reports/InfraPins'
 import { useLang } from '@/lib/i18n'
 
@@ -108,7 +108,7 @@ const numberIcon = (n: number) =>
     className: '',
     iconSize: [32, 32],
     iconAnchor: [16, 16],
-    html: `<div style="width:32px;height:32px;border-radius:9999px;background:#2E5B3F;border:2px solid #fff;color:#fff;font:600 14px/28px 'Inter Variable',system-ui,sans-serif;text-align:center;box-shadow:0 2px 8px rgb(30 42 35/.35)">${n}</div>`,
+    html: `<div style="width:32px;height:32px;border-radius:9999px;background:#2E5B3F;border:2px solid #fff;color:#fff;font:600 14px/28px var(--font-sans);text-align:center;box-shadow:0 2px 8px rgb(30 42 35/.35)">${n}</div>`,
   })
 
 const anchorIcon = L.divIcon({ className: '', iconSize: [0, 0] })
@@ -141,8 +141,8 @@ type Props = {
   highlight?: GeoJSON.Geometry | null
   /** ekran powitalny – widok całej Polski */
   intro?: boolean
-  /** podatność gleb na suszę (IUNG) – włączona przełącznikiem w menu podkładu (F7) */
-  soil?: boolean
+  /** F10: stan obrazu warstwy „Gleba” (IUNG w obrysie działki) – tekst pod legendą */
+  onSoilStatus?: (s: SoilImageStatus) => void
   /** zgłoszenia rowów/zbiorników wokół działki; zmiana `infraRefresh` = ponowne pobranie */
   infraRefresh?: number
 }
@@ -169,7 +169,7 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
     onClosePopup,
     highlight,
     intro = false,
-    soil = false,
+    onSoilStatus,
     infraRefresh = 0,
     children,
   },
@@ -233,6 +233,8 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
           {ActiveOverlay && layerData && (layerData.parcel_id === parcel.id || parcel.source === 'drawn') && (
             <ActiveOverlay parcel={parcel} analysisDate={analysisDate} data={layerData} />
           )}
+          {/* F10: gleba IUNG – jeden obraz WMS przycięty do obrysu (nowa działka = nowy obraz) */}
+          {layer === 'gleba' && <SoilParcelOverlay key={parcel.id} geometry={parcel.geometria} onStatus={onSoilStatus} />}
           {/* delikatna poświata pod białym obrysem 3 px (SPEC 5.1) */}
           <GeoJSON
             key={`${parcel.id}-halo`}
@@ -310,8 +312,6 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
       )}
 
       <IntroView active={intro} />
-      {/* zawsze zamontowana – jedna instancja Leafletu, włączanie = addLayer / removeLayer (F7) */}
-      <SoilSusceptibilityLayer on={soil} />
       <InfraPins bbox={infraBox} refresh={infraRefresh} />
 
       <FitTo parcel={parcel} candidates={candidates} insets={insets} reducedMotion={reducedMotion} />

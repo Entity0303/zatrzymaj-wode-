@@ -1,7 +1,7 @@
 import type { AnalysisResponse, StatusLevel, VerdictLevel } from '@/api/types'
 import { useLang } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
-import { LONG_TERM_LABEL, NOW_LABEL, STATUS } from '@/theme/status'
+import { StatusRows } from '@/components/StatusRows'
 
 type Risk = 'niskie' | 'srednie' | 'wysokie'
 
@@ -26,7 +26,6 @@ export function RiskSummary({ analysis }: { analysis: AnalysisResponse }) {
   const risk = v ? FROM_VERDICT[v.level] : FROM_STATUS[analysis.status.level]
   const sentence = v?.headline ?? analysis.status.headline
   const now = analysis.status.level
-  const NowIcon = STATUS[now].icon
   if (!risk)
     return (
       <div className="rounded-xl border bg-surface px-4 py-3">
@@ -40,26 +39,8 @@ export function RiskSummary({ analysis }: { analysis: AnalysisResponse }) {
       <span className={cn('w-1.5 shrink-0', r.bar)} aria-hidden />
       <div className="min-w-0 px-4 py-3">
         {v ? (
-          // dziś (status) i na lata (werdykt) w jednej linii – żeby „woda w normie” obok „wysokie ryzyko” nie wyglądało na sprzeczność
-          <p className="flex flex-wrap items-center gap-x-1.5 text-sm leading-5 text-text">
-            {now !== 'no_data' && (
-              <span className="flex items-center gap-1.5">
-                <NowIcon className={cn('size-4 shrink-0', STATUS[now].fg)} aria-hidden />
-                <span>
-                  <b className="font-semibold">{t('Teraz:')}</b> {t(NOW_LABEL[now])}
-                </span>
-                <span className="text-text-muted" aria-hidden>
-                  ·
-                </span>
-              </span>
-            )}
-            <span className="flex items-center gap-1.5">
-              <span className={cn('size-2.5 shrink-0 rounded-full', r.bar)} aria-hidden />
-              <span>
-                <b className="font-semibold">{t('Na dłuższą metę:')}</b> {t(LONG_TERM_LABEL[v.level])}
-              </span>
-            </span>
-          </p>
+          // dziś (status) i na lata (werdykt) – dwa równe wiersze jak w dymku na mapie (wspólny StatusRows), bez kropki
+          <StatusRows now={now} longTerm={v.level} className="mb-1" />
         ) : (
           <p className="flex items-center gap-1.5 text-sm leading-5 font-semibold text-text">
             <span className={cn('size-2.5 rounded-full', r.bar)} aria-hidden />

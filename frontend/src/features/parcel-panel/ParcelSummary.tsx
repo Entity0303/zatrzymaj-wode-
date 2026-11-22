@@ -50,7 +50,7 @@ export function ParcelSummary({
           <Leaf className="size-5" aria-hidden />
         </span>
         <div className="min-w-0 flex-1">
-          <h2 className="font-name line-clamp-2 text-xl leading-7 font-semibold">{title}</h2>
+          <h2 className="font-name line-clamp-2 text-xl leading-7 font-bold">{title}</h2>
           <p className="text-sm leading-5 text-text-muted">{sub}</p>
         </div>
         {onCollapse && (

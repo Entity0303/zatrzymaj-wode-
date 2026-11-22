@@ -23,7 +23,8 @@ import { PanelCollapsed } from '@/features/parcel-panel/PanelCollapsed'
 import { ExploreBar } from '@/features/intro/ExploreBar'
 import { IntroHero } from '@/features/intro/IntroHero'
 import { useDemoExamples } from '@/features/intro/useDemoExamples'
-import { SOIL_SUSCEPTIBILITY_LEGEND, SOIL_ZOOM_HINT, soilLayerInRange, useSoilLayerOn } from '@/features/map/SoilSusceptibilityLayer'
+import type { SoilImageStatus } from '@/features/map/SoilSusceptibilityLayer'
+import { SOIL_CLASS_LABELS, SOIL_COLOR } from '@/theme/soil'
 import { LocateButton } from '@/features/search/LocateButton'
 import { Passport } from '@/features/passport/Passport'
 import { exampleDate, type Example } from '@/features/parcel-panel/examples'
@@ -113,10 +114,10 @@ export default function Start() {
   const [settings] = useSettings()
   const [ui, setUi] = useUiPrefs()
   const [baseMap, setBaseMap] = useState<BaseMap>(settings.baseMap)
-  // F7: podatność gleb na suszę (IUNG) – nakładka na żądanie, domyślnie wyłączona, stan w localStorage
-  const [soilOn, setSoilOn] = useSoilLayerOn()
-  // F9: telefon z otwartą działką – legenda gleb zwinięta do paska „Podatność gleb ▾” (nie zasłania obrysu)
+  // F9/F10: telefon – legenda warstwy „Gleba” zwinięta do paska „Podatność gleb ▾” (nie zasłania obrysu)
   const [soilLegendOpen, setSoilLegendOpen] = useState(false)
+  // F10: obraz IUNG w obrysie działki (warstwa „Gleba”) – wczytywanie / gotowy / błąd
+  const [soilImg, setSoilImg] = useState<SoilImageStatus>('loading')
   const [pendingPoint, setPendingPoint] = useState<[number, number] | null>(null)
   const [userPoint, setUserPoint] = useState<[number, number] | null>(null)
   const [locating, setLocating] = useState(false)
@@ -204,14 +205,17 @@ export default function Start() {
     satLayer && satStatus === 'pending'
       ? 'Pobieram zdjęcie satelitarne…'
       : terrainLayer && terrainPending
-        ? 'Liczę ukształtowanie terenu…'
+        ? layer === 'splyw'
+          ? 'Liczę spływ…'
+          : 'Liczę ukształtowanie terenu…'
         : layer === 'woda' && hydroStatus === 'pending'
           ? 'Szukam wody w okolicy…'
           : null
   // „Spróbuj ponownie” w legendzie: nowy numer próby = to samo zapytanie warstwy jeszcze raz
   const [layerAttempt, setLayerAttempt] = useState(0)
   const layerRefresh = `${satLayer ? (satStatus ?? '') : ''}|${terrainLayer ? String(terrainPending) : ''}|${layer === 'woda' ? (hydroStatus ?? '') : ''}|${layerAttempt}`
-  const layerState = useLayerData(layer, parcel?.id ?? null, asOf, layerRefresh, layerWaiting, drawnGeom)
+  // F10: „Gleba” to obraz IUNG z WMS (SoilParcelOverlay), nie /api/layers – bez zapytania do serwera
+  const layerState = useLayerData(layer, layer === 'gleba' ? null : (parcel?.id ?? null), asOf, layerRefresh, layerWaiting, drawnGeom)
   const retryLayer = layerState.phase === 'error' ? () => setLayerAttempt((n) => n + 1) : undefined
   const carrying = !!parcel && passportCarry === parcel.id && !!lastAnalysis && lastAnalysis.parcel.id === parcel.id
   const passportOpen = (!!analysis && passportFor === runKey) || carrying
@@ -645,9 +649,8 @@ export default function Start() {
 
   const { forecast, state: forecastState } = useForecast(weatherTarget)
 
-  // poziom przybliżenia (po zakończeniu ruchu) – karta powitalna, podpowiedź „Przybliż mapę…” przy glebach
+  // poziom przybliżenia (po zakończeniu ruchu) – karta powitalna chowa się / wraca
   const [zoom, setZoom] = useState(POLAND_ZOOM)
-  const soilStatus = soilLayerInRange(zoom) ? 'IUNG-PIB · tereny nierolnicze bez koloru' : SOIL_ZOOM_HINT
   const onMoveEnd = useCallback((lon: number, lat: number, z: number) => {
     setZoom(z)
     setMapCenter((prev) => {
@@ -700,8 +703,28 @@ export default function Start() {
 
   const legendBase = layerByKey(layer)
   // legenda z odpowiedzi serwera (A11: kolory skali satelity), stan danych jako tekst pod nią (nigdy sam kolor)
-  const legend = { label: legendBase.label, legend: layerLegend(legendBase, layerState) }
-  const legendStatus = t(layerStatusText(layer, layerState, satStatus), layerState.phase === 'ok' ? layerStatusVars(layerState.data) : undefined)
+  // F10: gleba – udziały kategorii IUNG na działce (analysis.soil.shares) jako % w legendzie, bez nich sama legenda
+  const soilShares = analysis?.soil.shares ?? []
+  const soilPct = (code: number) => Math.round((soilShares.find((x) => x.code === code)?.share ?? 0) * 100)
+  const soilLegend = {
+    kind: 'classes' as const,
+    items: [1, 2, 3, 4, 5].map((code) => ({
+      color: SOIL_COLOR[code],
+      label: soilPct(code) > 0 ? `${t(SOIL_CLASS_LABELS[code])}: ${soilPct(code)}%` : SOIL_CLASS_LABELS[code],
+    })),
+  }
+  const soilAgri = soilShares.some((x) => x.code >= 1 && x.code <= 5 && x.share > 0)
+  const soilLegendStatus =
+    soilImg === 'error' || (soilImg === 'ok' && analysis && !soilAgri)
+      ? 'Brak danych IUNG dla tej działki'
+      : soilImg === 'loading'
+        ? 'Wczytuję warstwę…'
+        : 'IUNG-PIB · tylko w obrysie działki'
+  const legend = layer === 'gleba' ? { label: legendBase.label, legend: soilLegend } : { label: legendBase.label, legend: layerLegend(legendBase, layerState) }
+  const legendStatus =
+    layer === 'gleba'
+      ? t(soilLegendStatus)
+      : t(layerStatusText(layer, layerState, satellite), layerState.phase === 'ok' ? layerStatusVars(layerState.data) : undefined)
   const refine = {
     crop,
     onCropChange: (c: CropId | null) => {
@@ -756,7 +779,9 @@ export default function Start() {
         if (v === '3d' && (layer === 'kondycja' || layer === 'wilgotnosc')) setLayer('teren')
       }}
       // woda w okolicy: backend bez sekcji `hydro` (stara wersja / awaria) – „wkrótce”
-      unavailable={analysis && analysis.hydro == null ? ['gleba', 'woda'] : ['gleba']}
+      unavailable={analysis && analysis.hydro == null ? ['woda'] : []}
+      // F10: gleba tylko w obrysie działki – bez działki nieaktywna
+      needsParcel={parcel ? [] : ['gleba']}
       notes={{
         ...(satStatus === 'pending'
           ? { kondycja: 'pobieram…', wilgotnosc: 'pobieram…' }
@@ -851,7 +876,7 @@ export default function Start() {
             highlight={infra ? infraMarker : highlight}
             infraRefresh={infraRefresh}
             intro={intro}
-            soil={soilOn}
+            onSoilStatus={setSoilImg}
             insets={insets}
             reducedMotion={reducedMotion}
             onMapClick={onMapClick}
@@ -918,15 +943,6 @@ export default function Start() {
                   isMobile ? 'right-3 bottom-20' : 'right-4 bottom-4',
                 )}
               >
-                {soilOn && (
-                  <LegendCard
-                    title="Podatność gleb na suszę"
-                    legend={SOIL_SUSCEPTIBILITY_LEGEND}
-                    status={soilStatus}
-                    compact={isMobile}
-                    className={isMobile ? 'w-52' : undefined}
-                  />
-                )}
                 <MapControls
                   horizontal
                   onZoomIn={() => mapRef.current?.zoomIn()}
@@ -936,9 +952,6 @@ export default function Start() {
                   canGoBack={false}
                   baseMap={baseMap}
                   onBaseMapChange={setBaseMap}
-                  soilOn={soilOn}
-                  onSoilChange={setSoilOn}
-                  zoom={zoom}
                 />
               </div>
             </>
@@ -995,25 +1008,7 @@ export default function Start() {
             canGoBack={!!parcel}
             baseMap={baseMap}
             onBaseMapChange={setBaseMap}
-            soilOn={soilOn}
-            onSoilChange={setSoilOn}
-            zoom={zoom}
           />
-          )}
-
-          {/* ── legenda nakładki gleb IUNG (F7) – tylko gdy włączona; komputer nad przyciskami mapy, telefon pod nimi ── */}
-          {view === '2d' && soilOn && (!isMobile || snap === 'collapsed') && (
-            <LegendCard
-              title="Podatność gleb na suszę"
-              legend={SOIL_SUSCEPTIBILITY_LEGEND}
-              status={soilStatus}
-              compact={isMobile}
-              {...(isMobile && parcel
-                ? { collapsed: !soilLegendOpen, collapsedLabel: 'Podatność gleb', onToggle: () => setSoilLegendOpen((o) => !o) }
-                : {})}
-              className={isMobile ? cn('absolute right-3 z-[1000]', !(parcel && !soilLegendOpen) && 'w-52') : 'absolute right-4 bottom-[96px] z-[1000]'}
-              style={isMobile ? { top: parcel ? 304 : 260 } : undefined}
-            />
           )}
 
           {/* ── legenda aktywnej warstwy (SPEC 5.3) ── */}
@@ -1025,7 +1020,9 @@ export default function Start() {
               status={legendStatus}
               onRetry={retryLayer}
               compact
-              className="absolute left-3 z-[1000] w-56"
+              // F9/F10: gleba na telefonie – zwinięta pigułka „Podatność gleb ▾”, rozwijana kliknięciem
+              {...(layer === 'gleba' ? { collapsed: !soilLegendOpen, collapsedLabel: 'Podatność gleb', onToggle: () => setSoilLegendOpen((o) => !o) } : {})}
+              className={cn('absolute left-3 z-[1000]', !(layer === 'gleba' && !soilLegendOpen) && 'w-56')}
               style={{ bottom: sheetVisible + 32 }}
             />
           )}

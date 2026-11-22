@@ -1,15 +1,12 @@
 import { Layers } from 'lucide-react'
-import { SOIL_COLOR, soilColor } from '@/theme/soil'
-import { LayerData, type FeatureStyler } from './LayerData'
+import { SOIL_COLOR } from '@/theme/soil'
 import type { MapLayer } from './types'
 
 /**
- * Gleba – kategorie podatności na suszę IUNG (I–IV, organiczne, nie-rolne), przycięte do obrysu (SPEC 5.3).
+ * Gleba – kategorie podatności na suszę IUNG (I–IV, organiczne), tylko w obrysie działki (SPEC 5.3, F10).
+ * Rysowanie: `SoilParcelOverlay` (features/map/SoilSusceptibilityLayer) – obraz WMS IUNG przycięty do obrysu,
+ * bez GET /api/layers/gleba. Legenda z udziałami kategorii na działce – w pages/Start (`analysis.soil.shares`).
  */
-const soilStyle: FeatureStyler = (p) => {
-  const c = p?.color ?? (p?.kind && /^\d+$/.test(p.kind) ? soilColor(Number(p.kind)) : '#B8BDB5')
-  return { color: '#FFFFFF', weight: 1, opacity: 0.8, fillColor: c, fillOpacity: 0.6 }
-}
 
 const Soil: MapLayer = {
   key: 'gleba',
@@ -26,8 +23,8 @@ const Soil: MapLayer = {
       { color: SOIL_COLOR[5], label: 'Gleby organiczne' },
     ],
   },
-  // kategorie IUNG: kolor z `color` albo z kodu (`kind` = '1'…'14'), jak w legendzie
-  Overlay: (props) => <LayerData {...props} style={soilStyle} />,
+  // rysowane osobno (ParcelMap → SoilParcelOverlay), nie z /api/layers
+  Overlay: null,
 }
 
 export default Soil

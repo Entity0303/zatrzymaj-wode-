@@ -53,7 +53,7 @@ export default function MyParcels() {
               <li key={p.id} className="flex flex-col gap-3 rounded-xl bg-surface p-5 shadow-card">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <h2 className="font-name text-xl leading-7 font-semibold">{t('Działka {numer}', { numer: p.numer })}</h2>
+                    <h2 className="font-name text-xl leading-7 font-bold">{t('Działka {numer}', { numer: p.numer })}</h2>
                     <p className="text-sm leading-5 text-text-muted">
                       {t('gm. {gmina}, obręb {obreb}', { gmina: p.gmina, obreb: p.obreb })} · {formatHa(p.powierzchnia_ha)} ha
                     </p>

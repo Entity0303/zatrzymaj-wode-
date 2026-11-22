@@ -1,8 +1,9 @@
 # Status – osoba B (Mefju), frontend
 
-_Stan na: 2026-11-22 (F9 – A za B, `main`)_
+_Stan na: 2026-11-22 (F10 – A za B, `main`)_
 
 ## Zrobione
+- **F10 (A za B)**: „Gleba” w menu warstw = jeden obraz WMS IUNG przycięty do obrysu działki (bez kafli na całą mapę z F7, przycisk podkładu znów jednym kliknięciem), udziały kategorii w legendzie; teksty pustych warstw; wspólny `StatusRows` (dymek + panel); nota okresu `data_until`; systemowy krój zamiast Inter + Fraunces.
 - **F9 (A za B)**: dymek działki w dwóch wierszach (bez kropki, maks. 260 px), własny zakres okresu maks. 366 dni, legenda gleb na telefonie przy działce zwinięta do „Podatność gleb ▾”, podpis ceny z API (`price_source`) z fallbackiem.
 - **F8 (A za B)**: okres w paszporcie („Okres: …” w pasku, walidacja zakresu, przeliczanie z przyciemnionym poprzednim wynikiem, `?okres=` / `?od=&do=`, ten sam okres w PDF i dla pola narysowanego); kolumna „Przychód z pola” w rankingu „Co tu posiać?” (typowy / słaby rok, źródło cen, cena ZSRIR przy braku ceny GUS).
 - **F7 (A za B)**: podatność gleb IUNG tylko na żądanie – przełącznik w menu podkładu (prawy dolny róg), domyślnie wyłączona, stan w localStorage; kafle WMS 512 px od zoomu 12, jedna instancja Leafletu, `updateWhenIdle`, granice Polski; legenda i atrybucja tylko gdy włączona.

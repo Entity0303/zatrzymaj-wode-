@@ -139,7 +139,7 @@ export function Passport({
           <p className="flex items-center gap-2 text-sm text-text-muted">
             <LogoMark className="size-6" /> {BRAND_NAME} · {t('Paszport wodny')} · {t('wygenerowano')} {formatDatePl(analysis.generated_at.slice(0, 10))}
           </p>
-          <h2 className="font-name text-2xl leading-8 font-semibold">{title}</h2>
+          <h2 className="font-name text-2xl leading-8 font-bold">{title}</h2>
           <p className="text-sm text-text-muted">
             {t('stan na')} {formatDatePl(analysis.analysis_date)} · {t('gm. {gmina}, obręb {obreb}', { gmina: p.gmina, obreb: p.obreb })}
           </p>
@@ -173,7 +173,7 @@ export function Passport({
               {t('Paszport wodny')} · {t('stan na')} {formatDatePl(analysis.analysis_date)}
               {analysis.historical && <> · {t('analiza historyczna')}</>}
             </p>
-            <h2 className={cn('font-name truncate font-semibold transition-all', small ? 'text-base leading-6' : 'text-xl leading-7')}>{title}</h2>
+            <h2 className={cn('font-name truncate font-bold transition-all', small ? 'text-base leading-6' : 'text-xl leading-7')}>{title}</h2>
           </div>
           {period && !analysis.soil.non_agricultural && <div className="shrink-0 max-sm:hidden">{period.picker}</div>}
           {report && (

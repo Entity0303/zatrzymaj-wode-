@@ -5,7 +5,6 @@
  */
 export { MapContainer } from './MapContainer'
 export { TileLayer } from './TileLayer'
-export { WMSTileLayer } from './WMSTileLayer'
 export { GeoJSON } from './GeoJSON'
 export { ImageOverlay } from './ImageOverlay'
 export { Marker } from './Marker'

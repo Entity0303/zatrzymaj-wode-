@@ -16,3 +16,12 @@ export const SOIL_COLOR: Record<number, string> = {
 
 /** Kolor dla nieznanego kodu – szary „brak danych”. */
 export const soilColor = (code: number) => SOIL_COLOR[code] ?? '#B8BDB9'
+
+/** Etykiety kategorii IUNG (kody 1–5) – legenda warstwy „Gleba”. */
+export const SOIL_CLASS_LABELS: Record<number, string> = {
+  1: 'I – bardzo podatna na suszę',
+  2: 'II – podatna',
+  3: 'III – średnio podatna',
+  4: 'IV – mało podatna',
+  5: 'Gleby organiczne',
+}

@@ -10,8 +10,9 @@ export type LayerState =
   | { phase: 'waiting'; reason: string }
   | { phase: 'loading' }
   | { phase: 'ok'; data: LayerResponse }
-  | { phase: 'unavailable' }
-  | { phase: 'error' }
+  /** F10: `message` – komunikat z API (detail.message), np. „Brak bezchmurnego zdjęcia … z ostatnich 60 dni” */
+  | { phase: 'unavailable'; message?: string | null }
+  | { phase: 'error'; message?: string | null }
 
 /** Mock (?dane=przykladowe): warstwy satelitarne z plików przykładowych A11. */
 async function mockLayer(layer: LayerKey): Promise<LayerResponse | null> {
@@ -52,7 +53,9 @@ export function useLayerData(
       (e) => {
         if (ctrl.signal.aborted) return
         const unavailable = e instanceof ApiError && (e.status === 404 || e.status === 501)
-        setResult({ key, state: { phase: unavailable ? 'unavailable' : 'error' } })
+        const detail = e instanceof ApiError ? (e.detail as { message?: unknown } | null) : null
+        const message = typeof detail?.message === 'string' && detail.message.trim() ? detail.message.trim() : null
+        setResult({ key, state: { phase: unavailable ? 'unavailable' : 'error', message } })
       },
     )
     return () => ctrl.abort()

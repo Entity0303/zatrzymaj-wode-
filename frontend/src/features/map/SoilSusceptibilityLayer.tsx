@@ -2,38 +2,27 @@ import L from 'leaflet'
 import { useEffect, useRef } from 'react'
 import { useMap } from './leaflet'
 import { SOIL_COLOR } from '@/theme/soil'
-import { useStored } from '@/lib/storage'
 
 /**
- * Podatność gleb na suszę – mapa IUNG-PIB (`Susza:katgl_landuse2024`, ta sama co do analizy, D3).
- * Własny styl SLD w kolorach aplikacji (`theme/soil.ts` – jak warstwa „Gleba”): kat. I–IV i gleby organiczne
- * kolorowe, las / woda / zabudowa / drogi przezroczyste. GeoServer IUNG przyjmuje `SLD_BODY` (sprawdzone 21.11.2026).
- *
- * F7: tylko na żądanie (domyślnie wyłączona, stan w localStorage) i dopiero od przybliżenia gminy.
- * Kafle idą prosto z przeglądarki do sgeo.iung.pl (bez proxy w backendzie) – stały URL, więc przeglądarka
- * bierze je z własnej pamięci przy powrocie w to samo miejsce.
+ * Gleba (F10) – podatność gleb na suszę IUNG-PIB (`Susza:katgl_landuse2024`, ta sama co do analizy, D3) TYLKO
+ * w obrysie wybranej działki (też pola narysowanego i obszaru przybliżonego). Zamiast kafli na całą mapę (F7):
+ * JEDNO zapytanie WMS GetMap dla prostokąta działki + 10% marginesu, w EPSG:3857 (ta sama siatka co mapa),
+ * rozmiar obrazu jak działka na ekranie przy dopasowaniu widoku (maks. 1024 px). Obraz w SVG przyciętym
+ * `clipPath` do obrysu (bez CORS – nie czytamy pikseli) jako L.svgOverlay w stałych współrzędnych: przesuwanie
+ * i zoom go nie odświeżają; nowa działka = nowy obraz, stary zdjęty z mapy.
+ * Styl SLD w kolorach aplikacji (`theme/soil.ts`), las / woda / zabudowa / drogi przezroczyste. Zapytanie idzie
+ * prosto z przeglądarki do sgeo.iung.pl (bez proxy w backendzie).
  */
 const IUNG_WMS = 'https://sgeo.iung.pl/geoserver/Susza/wms'
 
-/** Od tego przybliżenia warstwa pobiera kafle (skala gminy / kilku wsi). Poniżej – nic nie pobiera. */
-export const SOIL_MIN_ZOOM = 12
-
-/** Przybliżenia ponad to – kafle z poziomu 15 powiększane (raster IUNG ma ok. 5 m, ostrzej i tak nie będzie). */
-const SOIL_MAX_NATIVE_ZOOM = 15
-
-/** Polska z małym zapasem – Leaflet nie pyta o kafle poza tym prostokątem. */
-const POLAND_BOUNDS = L.latLngBounds([48.9, 14.0], [55.0, 24.3])
+/** Największy bok obrazu, px. */
+const MAX_PX = 1024
+const MIN_PX = 64
 
 export const SOIL_ATTRIBUTION = 'Podatność gleb na suszę: <a href="https://susza.iung.pulawy.pl">IUNG-PIB</a>'
 
-/** Czy przy tym przybliżeniu warstwa ma kafle – ta sama reguła co Leaflet (zaokrąglony zoom ≥ minZoom). */
-export const soilLayerInRange = (zoom: number) => Math.round(zoom) >= SOIL_MIN_ZOOM
-
-/** Szary tekst przy przełączniku i w legendzie, gdy mapa jest za bardzo oddalona. */
-export const SOIL_ZOOM_HINT = 'Przybliż mapę, aby zobaczyć podatność gleb'
-
-/** Włączona / wyłączona – zapamiętane w przeglądarce (readStored / writeStored mają try/catch). */
-export const useSoilLayerOn = () => useStored<boolean>('zw.soilLayer', false)
+/** Stan obrazu gleby – tekst pod legendą („Brak danych IUNG dla tej działki” przy błędzie). */
+export type SoilImageStatus = 'loading' | 'ok' | 'error'
 
 const entry = (q: number, opacity: number) => `<ColorMapEntry color="${SOIL_COLOR[q]}" quantity="${q}" opacity="${opacity}"/>`
 const clear = (q: number) => `<ColorMapEntry color="#000000" quantity="${q}" opacity="0"/>`
@@ -54,56 +43,101 @@ const SLD = [
   '</ColorMap></RasterSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>',
 ].join('')
 
-/** Jedna instancja na całe życie mapy – wszystkie opcje stałe, URL kafla zależy tylko od położenia. */
-function createSoilLayer() {
-  return L.tileLayer.wms(IUNG_WMS, {
-    layers: 'Susza:katgl_landuse2024',
-    format: 'image/png',
-    transparent: true,
-    // parametr spoza typów Leaflet – GeoServer: styl przekazany w zapytaniu
-    ...({ sld_body: SLD } as object),
-    tileSize: 512,
-    opacity: 0.55,
-    zIndex: 5,
-    minZoom: SOIL_MIN_ZOOM,
-    maxNativeZoom: SOIL_MAX_NATIVE_ZOOM,
-    maxZoom: 20,
-    bounds: POLAND_BOUNDS,
-    // kafle dopiero po zatrzymaniu mapy, nie w trakcie przesuwania / animacji przybliżania
-    updateWhenIdle: true,
-    updateWhenZooming: false,
-    keepBuffer: 2,
-    attribution: SOIL_ATTRIBUTION,
-  })
-}
+// Web Mercator (EPSG:3857), metry
+const R = 6378137
+const mercX = (lon: number) => (R * lon * Math.PI) / 180
+const mercY = (lat: number) => R * Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360))
+
+const SVG_NS = 'http://www.w3.org/2000/svg'
+let clipSeq = 0
+
+type Geom = GeoJSON.Polygon | GeoJSON.MultiPolygon
+
+/** Wszystkie pierścienie (zewnętrzne i dziury) – clip-rule evenodd. */
+const ringsOf = (g: Geom) => (g.type === 'Polygon' ? g.coordinates : g.coordinates.flat())
 
 /**
- * Warstwa tworzona RAZ (useRef, przy pierwszym włączeniu); włączanie / wyłączanie = tylko addLayer / removeLayer.
- * Atrybucja IUNG-PIB w stopce mapy pojawia się i znika razem z warstwą (Leaflet dodaje ją przy addLayer).
+ * Obraz IUNG przycięty do obrysu `geometry`. Montowany tylko przy włączonej warstwie „Gleba” i wybranej działce;
+ * `onStatus` – loading → ok / error (błąd WMS = GeoServer odpowiada XML-em zamiast PNG → `error` obrazu).
  */
-export function SoilSusceptibilityLayer({ on }: { on: boolean }) {
+export function SoilParcelOverlay({ geometry, onStatus }: { geometry: Geom; onStatus?: (s: SoilImageStatus) => void }) {
   const map = useMap()
-  const layer = useRef<L.TileLayer.WMS | null>(null)
-  useEffect(() => {
-    if (!on) return
-    layer.current ??= createSoilLayer()
-    const l = layer.current
-    map.addLayer(l)
-    return () => {
-      map.removeLayer(l)
-    }
-  }, [on, map])
-  return null
-}
+  const status = useRef(onStatus)
+  status.current = onStatus
+  const shape = JSON.stringify(geometry.coordinates)
 
-/** Legenda warstwy (te same kategorie i kolory co warstwa „Gleba”). */
-export const SOIL_SUSCEPTIBILITY_LEGEND = {
-  kind: 'classes' as const,
-  items: [
-    { color: SOIL_COLOR[1], label: 'I – bardzo podatna na suszę' },
-    { color: SOIL_COLOR[2], label: 'II – podatna' },
-    { color: SOIL_COLOR[3], label: 'III – średnio podatna' },
-    { color: SOIL_COLOR[4], label: 'IV – mało podatna' },
-    { color: SOIL_COLOR[5], label: 'Gleby organiczne' },
-  ],
+  useEffect(() => {
+    const g = geometry
+    const bounds = L.geoJSON(g).getBounds().pad(0.1)
+    const [x0, x1] = [mercX(bounds.getWest()), mercX(bounds.getEast())]
+    const [y0, y1] = [mercY(bounds.getSouth()), mercY(bounds.getNorth())]
+    // rozmiar jak na ekranie przy widoku dopasowanym do działki (albo bliżej, jeśli już przybliżono)
+    const z = Math.max(map.getZoom(), map.getBoundsZoom(bounds))
+    const a = map.project(bounds.getNorthWest(), z)
+    const b = map.project(bounds.getSouthEast(), z)
+    const scale = Math.min(1, MAX_PX / Math.max(Math.abs(b.x - a.x), Math.abs(b.y - a.y), 1))
+    const w = Math.max(MIN_PX, Math.round(Math.abs(b.x - a.x) * scale))
+    const h = Math.max(MIN_PX, Math.round(Math.abs(b.y - a.y) * scale))
+
+    const url =
+      `${IUNG_WMS}?` +
+      new URLSearchParams({
+        SERVICE: 'WMS',
+        VERSION: '1.3.0',
+        REQUEST: 'GetMap',
+        LAYERS: 'Susza:katgl_landuse2024',
+        STYLES: '',
+        SLD_BODY: SLD,
+        CRS: 'EPSG:3857',
+        BBOX: `${x0},${y0},${x1},${y1}`,
+        WIDTH: String(w),
+        HEIGHT: String(h),
+        FORMAT: 'image/png',
+        TRANSPARENT: 'TRUE',
+      }).toString()
+
+    // obrys w układzie obrazu (x w prawo, y w dół)
+    const px = (lon: number) => ((mercX(lon) - x0) / (x1 - x0)) * w
+    const py = (lat: number) => ((y1 - mercY(lat)) / (y1 - y0)) * h
+    const d = ringsOf(g)
+      .map((ring) => ring.map(([lon, lat], i) => `${i ? 'L' : 'M'}${px(lon).toFixed(1)} ${py(lat).toFixed(1)}`).join('') + 'Z')
+      .join('')
+
+    const id = `soil-clip-${++clipSeq}`
+    const svg = document.createElementNS(SVG_NS, 'svg')
+    svg.setAttribute('viewBox', `0 0 ${w} ${h}`)
+    svg.setAttribute('preserveAspectRatio', 'none')
+    const defs = document.createElementNS(SVG_NS, 'defs')
+    const clip = document.createElementNS(SVG_NS, 'clipPath')
+    clip.setAttribute('id', id)
+    clip.setAttribute('clipPathUnits', 'userSpaceOnUse')
+    const path = document.createElementNS(SVG_NS, 'path')
+    path.setAttribute('d', d)
+    path.setAttribute('clip-rule', 'evenodd')
+    clip.appendChild(path)
+    defs.appendChild(clip)
+    svg.appendChild(defs)
+    const img = document.createElementNS(SVG_NS, 'image')
+    img.setAttribute('x', '0')
+    img.setAttribute('y', '0')
+    img.setAttribute('width', String(w))
+    img.setAttribute('height', String(h))
+    img.setAttribute('preserveAspectRatio', 'none')
+    img.setAttribute('clip-path', `url(#${id})`)
+    img.setAttribute('style', 'image-rendering: pixelated')
+    img.addEventListener('load', () => status.current?.('ok'))
+    img.addEventListener('error', () => status.current?.('error'))
+    img.setAttribute('href', url)
+    svg.appendChild(img)
+
+    status.current?.('loading')
+    const layer = L.svgOverlay(svg, bounds, { opacity: 0.8, interactive: false, attribution: SOIL_ATTRIBUTION })
+    map.addLayer(layer)
+    return () => {
+      map.removeLayer(layer)
+    }
+    // obraz zależy tylko od kształtu działki (nie od przesunięć i zoomu)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [map, shape])
+  return null
 }

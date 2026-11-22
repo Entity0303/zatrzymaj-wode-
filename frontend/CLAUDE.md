@@ -6,7 +6,7 @@ React + Vite + TypeScript + Tailwind v4 + shadcn/ui + Leaflet (własna cienka wa
 ## Wygląd
 
 - Wyłącznie wg **`design/SPEC_UI.md`** i grafik w `design/` (`ref-desktop.png`, `ref-mobile.png`, `ref-style.png`). Niczego nie upraszczaj ani nie pomijaj; jeśli czegoś nie da się zrobić – napisz to wprost.
-- Tokeny (paleta, cienie, zaokrąglenia, Inter) tylko z `theme/index.css` – bez „luźnych” kolorów hex w komponentach, poza wyjątkami już tam opisanymi.
+- Tokeny (paleta, cienie, zaokrąglenia, systemowy krój `--font-sans` – F10, bez czcionek z sieci) tylko z `theme/index.css` – bez „luźnych” kolorów hex w komponentach, poza wyjątkami już tam opisanymi.
 - UI po polsku, słownik z SPEC 1 (np. „Kondycja upraw”, nie „NDVI” – terminy techniczne tylko w „Szczegółach”). Tekst min. 14 px (przypisy źródeł 12 px), przyciski min. 44×44 px.
 
 ## Struktura `src/`

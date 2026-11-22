@@ -11,7 +11,7 @@ const DESCRIPTION: Record<LayerKey, string> = {
   teren: 'Górki, stoki i dołki na działce',
   splyw: 'Którędy spływa woda po deszczu',
   woda: 'Rzeki, rowy i stawy wokół działki',
-  gleba: 'Jak gleba trzyma wodę – mapa IUNG',
+  gleba: 'Jak gleba na działce znosi suszę – mapa IUNG',
 }
 
 /**
@@ -24,6 +24,7 @@ export function LayerMenu({
   view,
   onViewChange,
   unavailable = [],
+  needsParcel = [],
   notes,
   canUse3d = true,
   side = 'top',
@@ -38,6 +39,8 @@ export function LayerMenu({
   onViewChange: (v: '2d' | '3d') => void
   /** warstwy bez danych z serwera (dziś 501) – wyszarzone, „wkrótce” */
   unavailable?: LayerKey[]
+  /** F10: warstwy tylko z wybraną działką (gleba w obrysie) – bez działki nieaktywne, „wybierz działkę” */
+  needsParcel?: LayerKey[]
   /** krótka uwaga przy dostępnej warstwie, np. „pobieram…” / „brak zdjęcia” (satelita, A11) */
   notes?: Partial<Record<LayerKey, string>>
   /** 3D tylko przy wybranej działce */
@@ -71,7 +74,9 @@ export function LayerMenu({
         <DropdownMenuGroup aria-label={t('Warstwa mapy')}>
           {LAYERS.map((l) => {
             const Icon = l.icon
-            const off = unavailable.includes(l.key)
+            const soon = unavailable.includes(l.key)
+            const noParcel = !soon && needsParcel.includes(l.key)
+            const off = soon || noParcel
             const on = l.key === value
             return (
               <DropdownMenuItem
@@ -86,7 +91,7 @@ export function LayerMenu({
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-2 text-sm leading-5 font-semibold">
                     {t(l.label)}
-                    {off && <span className="rounded-full bg-surface-2 px-2 text-xs font-medium text-text-muted">{t('wkrótce')}</span>}
+                    {off && <span className="rounded-full bg-surface-2 px-2 text-xs font-medium text-text-muted">{t(noParcel ? 'wybierz działkę' : 'wkrótce')}</span>}
                     {!off && notes?.[l.key] && <span className="rounded-full bg-surface-2 px-2 text-xs font-medium text-text-muted">{t(notes[l.key]!)}</span>}
                   </span>
                   <span className="block text-sm leading-5 text-text-muted">{t(DESCRIPTION[l.key])}</span>

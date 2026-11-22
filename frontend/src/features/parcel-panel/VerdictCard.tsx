@@ -58,7 +58,7 @@ export function VerdictCard({
           <HeadIcon className="mt-0.5 size-7 shrink-0" style={{ color: head.color }} aria-hidden />
           <div className="min-w-0">
             <p className="text-xs font-semibold tracking-wider text-text-muted uppercase">{t('Werdykt')}</p>
-            <h3 className="font-display text-xl leading-7 font-semibold">{t(verdict.headline)}</h3>
+            <h3 className="font-display text-xl leading-7 font-bold">{t(verdict.headline)}</h3>
           </div>
         </header>
       )}

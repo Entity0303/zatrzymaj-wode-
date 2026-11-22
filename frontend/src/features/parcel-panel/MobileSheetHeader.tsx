@@ -76,7 +76,7 @@ function ParcelHead({
           <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-ok-soft text-brand">
             <Leaf className="size-5" aria-hidden />
           </span>
-          <h2 className="font-name min-w-0 flex-1 truncate text-2xl leading-8 font-semibold">{title}</h2>
+          <h2 className="font-name min-w-0 flex-1 truncate text-2xl leading-8 font-bold">{title}</h2>
           <span
             className="tabular shrink-0 text-lg font-semibold"
             title={t(approx ? 'Kwadrat wokół wskazanego punktu – brak granic działki' : 'Pomiar – z granic działki w ewidencji (ULDK GUGiK)')}

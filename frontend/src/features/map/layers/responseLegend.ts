@@ -1,4 +1,4 @@
-import type { LayerKey, LayerResponse, SatelliteStatus } from '@/api/types'
+import type { LayerKey, LayerResponse, Satellite } from '@/api/types'
 import { formatDatePl, formatNum } from '@/lib/format'
 import type { LegendSpec, MapLayer } from './types'
 import type { LayerState } from './useLayerData'
@@ -37,13 +37,30 @@ export function layerStatusVars(d: LayerResponse): Record<string, string> {
   }
 }
 
+/** Ile dni wstecz backend szuka bezchmurnej sceny (satellite.yaml `days_back`) – tylko do tekstu zapasowego. */
+const SAT_DAYS_BACK = 60
+
+/**
+ * F10: pusta warstwa satelity – „Poza sezonem – rośliny nie rosną” (wilgotność poza sezonem: NDMI oceniamy tylko
+ * w sezonie), komunikat z API (404 `detail.message`, zdanie analizy satelity), na końcu tekst zapasowy.
+ */
+function satelliteEmptyText(layer: LayerKey, apiMessage: string | null | undefined, satellite: Satellite | null): string {
+  if (layer === 'wilgotnosc' && satellite?.in_season === false) return 'Poza sezonem – rośliny nie rosną'
+  const api = apiMessage ?? (satellite?.status === 'brak_danych' ? (satellite.sentence ?? satellite.warning) : null)
+  if (api?.trim()) return api.trim()
+  if (satellite?.in_season === false) return 'Poza sezonem – rośliny nie rosną'
+  return `Brak bezchmurnego zdjęcia z ostatnich ${SAT_DAYS_BACK} dni`
+}
+
 /**
  * Stan danych warstwy jako tekst pod legendą (klucz tłumaczenia; zmienne z `layerStatusVars`).
- * `satellite = 'brak_danych'` – serwer nie ma zdjęcia: warstwy satelity mówią to wprost.
+ * F10: puste warstwy mówią wprost dlaczego (komunikat z API, jeśli jest; inaczej nasz tekst):
+ * satelita – brak bezchmurnego zdjęcia / poza sezonem; spływ – „Liczę spływ…” / „Brak danych o terenie”;
+ * woda – „Brak rzek i rowów w promieniu 500 m”. Gleba – w pages/Start (obraz IUNG, nie /api/layers).
  */
-export function layerStatusText(layer: LayerKey, state: LayerState, satellite: SatelliteStatus | null): string {
+export function layerStatusText(layer: LayerKey, state: LayerState, satellite: Satellite | null): string {
   const sat = SATELLITE_LAYERS.includes(layer)
-  if (sat && satellite === 'brak_danych' && state.phase !== 'ok') return 'Brak zdjęcia satelitarnego dla tej działki'
+  if (sat && satellite?.status === 'brak_danych' && state.phase !== 'ok') return satelliteEmptyText(layer, null, satellite)
   switch (state.phase) {
     case 'idle':
       return 'Wybierz działkę, aby zobaczyć warstwę'
@@ -52,15 +69,22 @@ export function layerStatusText(layer: LayerKey, state: LayerState, satellite: S
     case 'loading':
       return 'Wczytuję warstwę…'
     case 'unavailable':
-      if (sat) return 'Brak zdjęcia satelitarnego dla tej działki'
-      return layer === 'gleba' || layer === 'woda' ? 'Ta warstwa będzie wkrótce' : 'Brak danych dla tej działki'
+      if (sat) return satelliteEmptyText(layer, state.message, satellite)
+      if (layer === 'splyw' || layer === 'teren') return state.message ?? 'Brak danych o terenie'
+      if (layer === 'woda') return state.message ?? 'Brak rzek i rowów w promieniu 500 m'
+      return state.message ?? 'Brak danych dla tej działki'
     case 'error':
-      return 'Nie udało się pobrać warstwy – mapa działa dalej'
+      if (layer === 'splyw') return state.message ?? 'Brak danych o terenie'
+      return state.message ?? 'Nie udało się pobrać warstwy – mapa działa dalej'
     case 'ok': {
       const d = state.data
       if (d.layer === 'teren' && d.value_range) return 'Wysokość od {a} do {b} m n.p.m.'
-      if (d.layer === 'woda' && !d.features?.features?.length) return 'W pobliżu działki nie ma rzek, rowów ani stawów'
+      // woda: `note` to atrybucja OSM, nie komunikat – pusta warstwa = nasz tekst
+      if (d.layer === 'woda' && !d.features?.features?.length) return 'Brak rzek i rowów w promieniu 500 m'
       if (d.layer === 'woda' && d.note) return d.note
+      if (d.layer === 'splyw' && !d.raster && !d.features?.features?.length) return d.note ?? 'Brak danych o terenie'
+      if (sat && !d.raster && !d.features?.features?.length) return satelliteEmptyText(layer, d.note, satellite)
+      if (d.layer === 'wilgotnosc' && satellite?.in_season === false) return 'Poza sezonem – rośliny nie rosną'
       if (sat && (d.scene_date || d.source_tag.date)) return 'Zdjęcie satelitarne z {date}'
       if (d.source_tag.date) return 'Dane z {date}'
       return d.source_tag.source ?? ''

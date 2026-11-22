@@ -7,6 +7,12 @@ import { useLang } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
 
 /**
+ * F10 (A17, backend dopiero dodaje – pola opcjonalne, typ lokalny): dane pogodowe kończą się przed wybranym końcem.
+ * `requested_to` – koniec wybrany przez rolnika, `data_until` – ostatni dzień z danymi, `note` – zdanie dla rolnika.
+ */
+type PeriodDataExtras = { data_until?: string | null; requested_to?: string | null; filled_days?: number | null; note?: string | null; data_note?: string | null }
+
+/**
  * Karta „Okres” (F3): jedno zdanie dużą czcionką (z serwera), sumy – spadło / wyparowało / zostało vs zwykle –
  * i mały wykres dzień po dniu (słupki deszczu, linia „ile wody zostało” narastająco). `requested` bez `period`
  * w odpowiedzi (backend jeszcze bez okresów) – informacja „wkrótce”, nigdy błąd.
@@ -44,12 +50,22 @@ export function PeriodCard({ period: p, requested, passport, chartWidth }: { per
     </ComposedChart>
   )
   const diff = p.balance_mm - p.normal_balance_mm
+  // F10: dane kończą się przed wybranym końcem – nagłówek = zakres rolnika, pod nim szara nota z API
+  const x = p as PeriodSummary & PeriodDataExtras
+  const wantedTo = x.requested_to ?? p.to
+  const cut = !!x.data_until && x.data_until < wantedTo
+  const heading = cut ? `${formatDatePl(p.from)}–${formatDatePl(wantedTo)}` : t(p.label)
+  const cutNote = cut
+    ? (x.note ?? x.data_note)?.trim() ||
+      t('Dane pogodowe są dostępne do {d} – ostatnie dni nie są jeszcze opublikowane.', { d: formatDatePl(x.data_until!) })
+    : null
   return (
-    <section aria-label={t('Okres')} className={cn('space-y-3 rounded-xl bg-surface', passport ? 'p-4 shadow-card' : 'border p-3.5')}>
+    <section aria-label={t('Okres')} className={cn('tabular space-y-3 rounded-xl bg-surface', passport ? 'p-4 shadow-card' : 'border p-3.5')}>
       <div className="flex items-center gap-2">
         <CalendarRange className="size-5 shrink-0 text-brand" aria-hidden />
-        <h4 className="min-w-0 flex-1 text-sm leading-5 font-semibold text-text-muted">{t(p.label)}</h4>
+        <h4 className="min-w-0 flex-1 text-sm leading-5 font-semibold text-text-muted">{heading}</h4>
       </div>
+      {cutNote && <p className="-mt-2 text-sm leading-5 text-text-muted">{t(cutNote)}</p>}
       <p className={cn('font-display font-semibold text-brand-dark', passport ? 'text-xl leading-7' : 'text-lg leading-6')}>{t(p.sentence)}</p>
       <dl className="grid grid-cols-3 gap-2 text-center">
         <div className="rounded-lg bg-water-soft/70 px-1 py-2">

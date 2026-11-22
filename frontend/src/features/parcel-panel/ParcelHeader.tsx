@@ -29,7 +29,7 @@ export function ParcelHeader({
         <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-ok-soft text-brand">
           <Leaf className="size-5" aria-hidden />
         </span>
-        <h2 className="font-name min-w-0 flex-1 text-2xl leading-8 font-semibold break-words">{title}</h2>
+        <h2 className="font-name min-w-0 flex-1 text-2xl leading-8 font-bold break-words">{title}</h2>
         <Tooltip>
           <TooltipTrigger asChild>
             <span tabIndex={0} className="tabular flex shrink-0 items-center gap-1 text-base leading-6 font-medium text-text-muted">
