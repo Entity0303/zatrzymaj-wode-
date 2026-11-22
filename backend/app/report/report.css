@@ -126,5 +126,5 @@ table.src td { padding: 2pt 4pt; border-bottom: 1pt solid #EFECE4; vertical-alig
 
 /* F20 pkt 7: zakresy nie łamią się po kresce – cały zakres w jednym bloku; w kaflu pod „ok.”, mniejszą czcionką (min. 10 pt) */
 .nw { white-space: nowrap; }
-.tile .v .vr { display: block; white-space: nowrap; font-size: 11pt; }
+.tile .v .vr { display: block; white-space: nowrap; font-size: 12pt; }
 .tile .v .vr.vr10 { font-size: 10pt; }

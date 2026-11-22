@@ -96,7 +96,32 @@ def clip(text: str | None, n: int = 170) -> str:
     return cut + "…"
 
 
-_env.filters.update(num=num, pct=pct, date_pl=date_pl, first_sentence=first_sentence, sentences=sentences, clip=clip)
+def whole(text: str | None, n: int = 150) -> str:
+    """F24: skrót BEZ wielokropka – tyle pełnych zdań, ile mieści się w `n` znakach; gdy już pierwsze zdanie jest za
+    długie, ucinamy je na granicy członu (średnik, myślnik, przecinek) i kończymy kropką; ostatecznie całe zdanie."""
+    if not text:
+        return ""
+    parts = re.split(r"(?<=[.!?])\s+(?=[A-ZĄĆĘŁŃÓŚŹŻ])", text.strip())
+    out = parts[0]
+    for p in parts[1:]:
+        if len(out) + 1 + len(p) > n:
+            break
+        out += " " + p
+    if len(out) <= n:
+        return out
+    for sep in ("; ", " – ", ", "):
+        cut = out[:n].rfind(sep)
+        if cut >= n * 0.5:
+            return out[:cut].rstrip(" ,;–") + "."
+    return out
+
+
+def tidy(text: str | None) -> str:
+    """F24: bez powtórzeń w opisie działania – „95% pełnego (zapas wody w glebie pełny)” → „95% pełnego”."""
+    return re.sub(r"(% pełnego) \((?:zapas wody w glebie (?:prawie )?pełny)\)", r"\1", text or "")
+
+
+_env.filters.update(whole=whole, tidy=tidy, num=num, pct=pct, date_pl=date_pl, first_sentence=first_sentence, sentences=sentences, clip=clip)
 REPORT_LABEL = {"short": "Raport skrócony", "full": "Raport szczegółowy"}
 REPORT_SLUG = {"short": "skrocony", "full": "szczegolowy"}
 SHORT_RECS = 4
@@ -357,12 +382,12 @@ def yield_text(v: float | None, rng=None) -> str:
 
 
 def zl_range(rev) -> str | None:
-    """F21: przychód „ok. 4 600–5 200 zł” z revenue_range albo „ok. 4 900 zł”; brak ceny = None."""
+    """Przychód „4 600–5 200 zł” z revenue_range (A21) albo „ok. 4 900 zł”; brak ceny = None."""
     if not rev or zl(rev.typical_zl) is None:
         return None
     s = _span(getattr(rev, "revenue_range", None))
     if s and zl(s[0]) and zl(s[1]) and zl(s[0]) != zl(s[1]):
-        return f"{zl(s[0])[:-3]}–{zl(s[1])[4:]}"
+        return f"{zl(s[0])[4:-3]}–{zl(s[1])[4:]}"  # F24: zakres bez „ok.” („ok.” tylko przy jednej kwocie)
     return zl(rev.typical_zl)
 
 
@@ -389,8 +414,15 @@ def chosen_item(a: AnalysisResponse):
     return top[0] if top else items[0]
 
 
-def water_rank_text(rank) -> str | None:
-    """F20: porównanie z tą samą porą w 10 latach z poprawnym kierunkiem (`lower_years` = lata z MNIEJSZĄ ilością wody)."""
+FULL_RESERVE_PCT = 80.0  # F24: od tylu % zapasu nie porównujemy lat (o tej porze gleba zwykle jest pełna)
+FULL_RESERVE_TEXT = "zapas prawie pełny – typowo dla tej pory roku"
+
+
+def water_rank_text(rank, pct: float | None = None) -> str | None:
+    """Porównanie zapasu z tą samą porą w 10 latach (`lower_years` = lata z MNIEJSZĄ ilością wody). F24: przy zapasie
+    ≥ 80% zamiast rankingu lat „zapas prawie pełny – typowo dla tej pory roku”."""
+    if pct is not None and pct >= FULL_RESERVE_PCT:
+        return FULL_RESERVE_TEXT
     if not rank or not rank.of_years:
         return None
     n, of = rank.lower_years, rank.of_years
@@ -409,7 +441,9 @@ def soil_chart_sentence(a: AnalysisResponse) -> str:
     v = f.soil_water_pct.value if f else None
     if v is None:
         return "Brak danych o zapasie wody w glebie."
-    txt = water_rank_text(f.soil_water.rank) if f.soil_water else None
+    txt = water_rank_text(f.soil_water.rank if f.soil_water else None, v)
+    if txt == FULL_RESERVE_TEXT:  # bez powtórzenia słowa „zapas”
+        txt = "typowo dla tej pory roku"
     return f"Teraz {num(v)}% pełnego zapasu{' – ' + txt if txt else ''}." if not a.historical else \
         f"W dniu analizy {num(v)}% pełnego zapasu{' – ' + txt if txt else ''}."
 
@@ -419,6 +453,7 @@ def precip_chart_sentence(a: AnalysisResponse) -> str:
     ms = [m for m in a.history.monthly_precip if m.current_mm is not None]
     if not ms:
         return "Brak danych o opadach w miesiącach."
+    gaps = len(a.history.monthly_precip) - len(ms)  # F24: miesiące z niepełnymi danymi („?” na wykresie)
     loc = ["styczniu", "lutym", "marcu", "kwietniu", "maju", "czerwcu", "lipcu", "sierpniu", "wrześniu",
            "październiku", "listopadzie", "grudniu"]
     dry = [m for m in ms if m.mean_mm and m.current_mm < 0.7 * m.mean_mm]
@@ -431,7 +466,8 @@ def precip_chart_sentence(a: AnalysisResponse) -> str:
     if len(mn) > 3:
         return f"W {len(mn)} miesiącach spadło łącznie o ok. {less}% mniej niż zwykle."
     txt = mn[0] if len(mn) == 1 else ", ".join(mn[:-1]) + " i " + mn[-1]
-    return f"{'We' if txt.startswith('wrz') else 'W'} {txt} spadło o ok. {less}% mniej niż zwykle."
+    return (f"{'We' if txt.startswith('wrz') else 'W'} {txt} spadło o ok. {less}% mniej niż zwykle."
+            + (" „?” = niepełne dane." if gaps else ""))
 
 
 def app_url() -> str:
@@ -445,7 +481,7 @@ def tiles(a: AnalysisResponse) -> list[dict]:
     out = []
     w = ind.soil_water_pct.value
     rank = a.soil_water.rank if a.soil_water else None
-    sub = water_rank_text(rank) or "zapas wody dostępnej dla roślin"
+    sub = water_rank_text(rank, w) or "zapas wody dostępnej dla roślin"
     out.append({"title": "Zapas wody w glebie", "value": "brak danych" if w is None else f"{num(w)}%",
                 "unit": "pełnego" if w is not None else "", "sub": sub, "color": "#2F80C9", "bar": w})
     if a.period:
@@ -456,7 +492,9 @@ def tiles(a: AnalysisResponse) -> list[dict]:
         normal = a.seasonal_balance_mean_mm
         label = a.seasonal_balance_label or "od początku sezonu"
     out.append({"title": "Bilans wody (opad minus parowanie)", "value": balance_words(mm), "unit": "",
-                "sub": f"{label} · zwykle: {balance_words(normal)}" if normal is not None else label,
+                "sub": (f"{label} · zwykle: {balance_words(normal)}" if normal is not None else label) +
+                       (" · za cały sezon; jesienne opady uzupełniły glebę"
+                        if mm is not None and mm < 0 and w is not None and w >= FULL_RESERVE_PCT else ""),
                 "color": "#C8453B" if mm is not None and mm < 0 else "#2F80C9", "bar": None})
     it = chosen_item(a)
     if it:
@@ -626,7 +664,7 @@ def render_html(a: AnalysisResponse, ortho: str | None, generated: dt.datetime |
         "chart_sat": Markup(charts.satellite_series(a.satellite.series) or "") if a.satellite and a.satellite.series else "",
         "report_label": REPORT_LABEL.get(report_type, REPORT_LABEL["short"]),
         "chart_years_small": Markup(charts.season_bars(a.seasonal_balance_by_year, a.seasonal_balance_mean_mm,
-                                                       width=640, height=86) or ""),
+                                                       width=640, height=120) or ""),
         "top_items": top_items(a),
         "recs": a.recommendations if report_type == "full" else a.recommendations[:SHORT_RECS],
         "more_recs": 0 if report_type == "full" else max(0, len(a.recommendations) - SHORT_RECS),

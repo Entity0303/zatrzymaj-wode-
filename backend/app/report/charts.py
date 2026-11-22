@@ -210,7 +210,8 @@ def season_bars(years, mean_mm: float | None, width: int = 680, height: int = 19
     lo, hi = min(vals), max(vals)
     pad = max(10.0, 0.08 * (hi - lo))
     lo, hi = lo - pad, hi + pad
-    pad_l, pad_r, pad_t, pad_b = 40, 8, 16, 34  # F20: miejsce na wartość pod najniższym słupkiem i rok
+    # F20: miejsce na wartość pod najniższym słupkiem i rok; F24: prawy margines na podpis średniej
+    pad_l, pad_r, pad_t, pad_b = 40, (62 if mean_mm is not None else 8), 16, 34
     hh = height - pad_t - pad_b
 
     def y_of(v: float) -> float:
@@ -235,7 +236,8 @@ def season_bars(years, mean_mm: float | None, width: int = 680, height: int = 19
         parts.append(f'<rect x="{x:.1f}" y="{top:.1f}" width="{bw * 0.64:.1f}" height="{max(bot - top, 0.8):.1f}" '
                      f'fill="{color}" rx="1.5"/>')
         # F20: dodatnie – nad słupkiem; ujemne – pod słupkiem, ale zawsze nad osią lat (z odstępem)
-        lab_y = top - 3 if y.balance_mm >= 0 else min(bot + 10, height - 19)
+        # F24: mała wartość (słupek niższy niż 3 px) – tuż przy osi zera
+        lab_y = (min(top, y0) - 3) if y.balance_mm >= 0 else min(max(bot, y0) + 10, height - 19)
         weight = ' font-weight="700"' if y.current else ""
         parts.append(f'<text x="{x + bw * 0.32:.1f}" y="{lab_y:.1f}" text-anchor="middle" font-size="8.5" '
                      f'fill="{C["text"] if y.current else C["muted"]}"{weight}>{_num(y.balance_mm)}</text>')
@@ -245,9 +247,9 @@ def season_bars(years, mean_mm: float | None, width: int = 680, height: int = 19
         ym = y_of(mean_mm)
         parts.append(f'<line x1="{pad_l}" x2="{width - pad_r}" y1="{ym:.1f}" y2="{ym:.1f}" stroke="{C["water"]}" '
                      f'stroke-width="1.4" stroke-dasharray="5 3"/>')
-        parts.append(f'<rect x="{pad_l + 3}" y="{ym - 14:.1f}" width="96" height="12" fill="#FFFFFF" opacity="0.85"/>')
-        parts.append(f'<text x="{pad_l + 6}" y="{ym - 4:.1f}" text-anchor="start" fill="{C["water"]}" '
-                     f'font-weight="600">średnia {_num(mean_mm)} mm</text>')
+        tx = width - pad_r + 4  # F24: podpis po prawej stronie linii, poza słupkami
+        parts.append(f'<text x="{tx}" y="{ym - 1:.1f}" fill="{C["water"]}" font-weight="600">średnia</text>')
+        parts.append(f'<text x="{tx}" y="{ym + 10:.1f}" fill="{C["water"]}" font-weight="600">{_num(mean_mm)} mm</text>')
     parts.append("</svg>")
     return "".join(parts)
 
@@ -360,9 +362,9 @@ def soil_season_chart(f: FieldState, low_pct: float = 50.0, width: int = 340, he
 def precip_norm_chart(months: list[MonthlyPrecip], width: int = 340, height: int = 165, low: float = 0.7) -> str | None:
     """„Opady w miesiącach vs norma”: słupek opadu bieżącego roku (mm), pozioma kreska normy z 10 lat; miesiące
     poniżej `low` × normy – kolor ryzyka i kreskowanie (czytelne w druku cz-b)."""
-    ms = [m for m in months if m.current_mm is not None]
-    if len(ms) < 2:
+    if len([m for m in months if m.current_mm is not None]) < 2:
         return None
+    ms = list(months)  # F24: miesiąc bez pełnych danych zostaje na osi – oznaczony „?”, nie jako 0
     pad_l, pad_r, pad_t, pad_b = 34, 6, 12, 22
     top = max([m.current_mm or 0 for m in ms] + [m.mean_mm or 0 for m in ms] + [10]) * 1.08
     bw = (width - pad_l - pad_r) / len(ms)
@@ -376,6 +378,12 @@ def precip_norm_chart(months: list[MonthlyPrecip], width: int = 340, height: int
     for i, m in enumerate(ms):
         x0 = pad_l + i * bw + bw * 0.18
         bwi = bw * 0.64
+        if m.current_mm is None:
+            parts.append(f'<rect x="{x0:.1f}" y="{pad_t:.1f}" width="{bwi:.1f}" height="{hh:.1f}" fill="none" stroke="#9AA19C" '
+                         f'stroke-width="0.8" stroke-dasharray="3 2"/>')
+            parts.append(f'<text x="{x0 + bwi / 2:.1f}" y="{pad_t + hh / 2:.1f}" text-anchor="middle" fill="#555F58">?</text>')
+            parts.append(f'<text x="{x0 + bwi / 2:.1f}" y="{height - 6}" text-anchor="middle" fill="{C["muted"]}">{MONTHS[m.month - 1]}</text>')
+            continue
         dry = m.mean_mm is not None and m.mean_mm > 0 and m.current_mm < low * m.mean_mm
         bh = hh * m.current_mm / top
         fill = "url(#lowp)" if dry else C["water"]

@@ -46,7 +46,7 @@
     {% for tl in tiles %}
     <div class="tile" style="border-left-color: {{ tl.color }}">
       <div class="t">{{ tl.title }}</div>
-      <div class="v" style="color: {{ tl.color if tl.color != '#2F80C9' and tl.color != '#2F6B47' else '#1E2A23' }}">{% if '–' in tl.value and tl.value.startswith('ok. ') %}ok. <span class="vr{% if tl.value|length > 18 %} vr10{% endif %}">{{ tl.value[4:] }}</span>{% else %}<span class="nw">{{ tl.value }}</span>{% endif %}{% if tl.unit %} <span class="u">{{ tl.unit }}</span>{% endif %}</div>
+      <div class="v" style="color: {{ tl.color if tl.color != '#2F80C9' and tl.color != '#2F6B47' else '#1E2A23' }}">{% if '–' in tl.value and tl.value.endswith('zł') %}<span class="vr{% if tl.value|length > 15 %} vr10{% endif %}">{{ tl.value }}</span>{% else %}<span class="nw">{{ tl.value }}</span>{% endif %}{% if tl.unit %} <span class="u">{{ tl.unit }}</span>{% endif %}</div>
       {% if tl.bar is not none %}<div class="tbar"><i style="width: {{ [[tl.bar, 0]|max, 100]|min }}%"></i></div>{% endif %}
       <div class="s">{{ tl.sub }}</div>
     </div>
@@ -62,7 +62,7 @@
     {% if points %}
       {% for st in points %}
       <div class="point"><span class="ico" style="background: {{ LV[st.level][1] }}">{{ LV[st.level][0] }}</span>
-        <div><span class="k">{{ KIND[st.kind] }}:</span> {{ st.text if full else (st.text|sentences(1)|clip(cp.pt_clip)) }}</div></div>
+        <div><span class="k">{{ KIND[st.kind] }}:</span> {{ st.text if full else (st.text|whole(cp.pt_clip)) }}</div></div>
       {% endfor %}
     {% else %}<p>{{ a.status.summary }}</p>{% endif %}
     {% if v %}
@@ -127,7 +127,7 @@
     {% for r in acts %}
     <li class="{{ 'first' if loop.first else '' }}" style="{% if not loop.first %}border-left-color: {{ CATEGORY[r.category][1] }}{% endif %}">
       <div><span class="atitle">{{ r.title }}</span> <span class="awhen">· {% if loop.first %}<span class="atag">Najważniejsze</span> · {% endif %}{% if r.when == 'teraz' and a.historical %}w dniu analizy{% else %}{{ r.when_label }}{% endif %}</span></div>
-      <div>{% if full %}{{ r.description|sentences(3) }}{% elif cp.act_clip %}{{ r.description|sentences(1)|clip(cp.act_clip) }}{% endif %}{% if is_ditch(r) %} <span class="muted">Rów wg OpenStreetMap – sprawdź na miejscu.</span>{% endif %}
+      <div>{% if full %}{{ r.description|tidy|sentences(3) }}{% elif cp.act_clip %}{{ r.description|tidy|sentences(1)|whole(cp.act_clip) }}{% endif %}{% if is_ditch(r) %} <span class="muted">Rów wg OpenStreetMap – sprawdź na miejscu.</span>{% endif %}
         <span class="ameta">· {{ PERMIT_TEXT[r.permit] }}{% if full and r.permit_note %} – {{ r.permit_note }}{% endif %}{% if r.eco_scheme %} · ekoschemat: {{ r.eco_scheme.name }}{% endif %}</span></div>
       {% if full %}<div class="ameta"><b>Dlaczego:</b> {{ r.why|first_sentence }}</div>{% if r.warning %}<div class="warning">{{ r.warning }}</div>{% endif %}{% endif %}
     </li>
