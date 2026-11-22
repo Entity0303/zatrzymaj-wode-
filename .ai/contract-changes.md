@@ -261,3 +261,11 @@ Weryfikacja: `tsc -b` przechodzi; `vite build` – lokalnie i w kontenerze brak 
 - Przy `revenue = null` pokaż „brak ceny skupu” (szaro), nie 0 zł. Pod kwotą `price_source` drobnym tekstem; to przychód bez kosztów i dopłat.
 - „Od siewu” – tylko z wybraną uprawą (bez niej backend zwraca 422 – przycisk wyszarzony, jak w `PERIOD_OPTIONS.needsCrop`).
 **Łamie zgodność:** nie.
+
+### 2026-11-22 · `main` · A12b – cena ZSRIR przy braku GUS, powód braku ceny; okres najwyżej rok
+- `CropSuggestion.revenue_note: string | null` – powód braku ceny, gdy `revenue = null` („pasza na własne potrzeby, brak ceny skupu” – kiszonka; „cena z umowy z cukrownią” – burak; „brak ceny skupu w danych publicznych” – reszta). Dodane w `types.ts` (frontend F8 czytał je dotąd przez rzutowanie).
+- `revenue.price_source` przy cenie ZSRIR: „ZSRIR, lipiec 2026 (notowanie 05.07.2026)”; przy GUS bez zmian („GUS – ceny skupu, woj. X, 2023–2025”). Rzepak ma teraz `revenue` z ceny ZSRIR (2319 zł/t, `backend/app/data/prices/prices_zsrir_latest.csv`); `price_now` – rzepak.
+- Własny zakres okresu (`date_from`–`date_to`) najwyżej 366 dni – dłuższy → HTTP 422 „Wybierz okres nie dłuższy niż rok.”
+
+**Dla Mefju:** `revenue_note` jest w kontrakcie – rzutowanie `RevenueExtras` można usunąć. Przy `price_source` zaczynającym się od „ZSRIR” pokaż je wprost (już jest czytelne). Zakres > rok – komunikat z `detail.message`.
+**Łamie zgodność:** nie.
