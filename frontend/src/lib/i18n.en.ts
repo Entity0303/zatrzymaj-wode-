@@ -1360,4 +1360,8 @@ export const EN: Record<string, string> = {
   'plon w regionie, t/ha': 'regional yield, t/ha',
   // F34: data siewu jak data analizy
   '{pole} – wybierz z kalendarza': '{pole} – pick from the calendar',
+  // Obejmuje działki – 3 pozycje i rozwijanie
+  'Obejmuje działki ({obreb}):': 'Covers parcels ({obreb}):',
+  'i {n} więcej': 'and {n} more',
+  'pokaż mniej': 'show less',
 }

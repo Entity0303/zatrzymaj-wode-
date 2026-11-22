@@ -13,8 +13,21 @@ const MAX_SHOWN = 5
  * pod obrysem (POST /api/parcels-in-area, próbkowanie punktami). Zapytanie w tle – nie blokuje analizy ani warstw.
  * Pozycja to link do tej działki (otwiera ją jak wynik wyszukiwarki). Błąd / nota z serwera – szary tekst.
  */
-export function DrawnParcels({ parcel, className }: { parcel: Parcel; className?: string }) {
+export function DrawnParcels({
+  parcel,
+  className,
+  max = MAX_SHOWN,
+  compact,
+}: {
+  parcel: Parcel
+  className?: string
+  /** ile pozycji pokazać od razu; reszta pod „i N więcej” (rozwijane kliknięciem) */
+  max?: number
+  /** wąski panel: krótsze pozycje (sam numer, obręb raz w nagłówku, gdy wspólny) */
+  compact?: boolean
+}) {
   const { t } = useLang()
+  const [open, setOpen] = useState(false)
   const [res, setRes] = useState<{ id: string; data: ParcelsInArea } | null>(() => {
     const c = cache.get(parcel.id)
     return c ? { id: parcel.id, data: c } : null
@@ -44,21 +57,33 @@ export function DrawnParcels({ parcel, className }: { parcel: Parcel; className?
   if (!data) return <p className={className}>{t('sprawdzam działki ewidencyjne…')}</p>
   if (data.note) return <p className={className}>{t(data.note)}</p>
   if (!data.parcels.length) return null
-  const shown = data.parcels.slice(0, MAX_SHOWN)
+  const shown = open ? data.parcels : data.parcels.slice(0, max)
   const rest = data.parcels.length - shown.length
+  // wąski panel (`compact`): sam numer i udział – „6/1 (25%), 6/2 (25%), 147 (17%) i 3 więcej”; obręb w podpowiedzi,
+  // a gdy wszystkie działki są z jednego obrębu – raz w nagłówku
+  const oneRegion = compact && data.parcels.every((p) => p.obreb === data.parcels[0].obreb)
   return (
     <p className={className}>
-      {t('Obejmuje działki:')}{' '}
+      {oneRegion ? t('Obejmuje działki ({obreb}):', { obreb: data.parcels[0].obreb }) : t('Obejmuje działki:')}{' '}
       {shown.map((p, i) => (
         <span key={p.id}>
           {i > 0 && ', '}
-          <a href={startLink({ dzialka: p.id })} className="font-medium whitespace-nowrap text-brand-dark underline-offset-2 hover:underline">
-            {p.numer} {p.obreb}
-          </a>{' '}
-          <span className="whitespace-nowrap">({t('ok. {n}%', { n: p.share })})</span>
+          <span className="whitespace-nowrap">
+            <a href={startLink({ dzialka: p.id })} title={`${p.numer} ${p.obreb}`} className="font-medium text-brand-dark underline-offset-2 hover:underline">
+              {compact ? p.numer : `${p.numer} ${p.obreb}`}
+            </a>{' '}
+            ({compact ? `${p.share}%` : t('ok. {n}%', { n: p.share })})
+          </span>
         </span>
       ))}
-      {rest > 0 && ` ${t('i {n} innych', { n: rest })}`}
+      {(rest > 0 || open) && data.parcels.length > max && (
+        <>
+          {' '}
+          <button type="button" aria-expanded={open} onClick={() => setOpen((o) => !o)} className="font-medium whitespace-nowrap text-brand-dark underline underline-offset-2">
+            {open ? t('pokaż mniej') : t('i {n} więcej', { n: rest })}
+          </button>
+        </>
+      )}
     </p>
   )
 }
