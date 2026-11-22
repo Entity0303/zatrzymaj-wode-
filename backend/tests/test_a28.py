@@ -8,23 +8,44 @@ from app.sources import imgw
 
 
 def synth(years=range(2013, 2025), dry=(2015, 2018, 2019)):
-    """12 lat: w suchych latach opad 250 mm, plon 4,0 t/ha, cena 1100 zł/t; w pozostałych 400 mm, 5,0 t/ha, 1000 zł/t."""
-    prices = {("pszenica", "podlaskie"): {y: 1100.0 if y in dry else 1000.0 for y in years}}
-    yields = {("pszenica_ozima", "podlaskie"): {y: 4.0 if y in dry else 5.0 for y in years}}
+    """12 lat z TRENDEM: plon rośnie o 0,1 t/ha rocznie (od 4,0), cena o 20 zł/t (od 800). W suchych latach opad 250 mm
+    (inaczej 400), plon o 20% poniżej trendu, cena o 10% powyżej."""
+    prices = {("pszenica", "podlaskie"): {y: round((800 + 20 * (y - 2013)) * (1.10 if y in dry else 1.0), 1) for y in years}}
+    yields = {("pszenica_ozima", "podlaskie"): {y: round((4.0 + 0.1 * (y - 2013)) * (0.80 if y in dry else 1.0), 3) for y in years}}
     precip = {y: (250.0 if y in dry else 400.0, 12) for y in years}
     return prices, yields, precip
 
 
-def test_summary_compares_driest_quarter_with_other_years():
+def test_summary_compares_deviations_from_trend_not_raw_values():
     prices, yields, precip = synth()
     r = PW.build("podlaskie", "pszenica_ozima", 2025, prices=prices, yields=yields, precip=precip)
     assert r["region_label"] == "woj. podlaskie" and r["crop_label"] == "Pszenica" and r["unavailable"] is False
     assert [x["year"] for x in r["years"]] == list(range(2013, 2025))
-    assert r["years"][2] == {"year": 2015, "precip_mm": 250.0, "price_pln_t": 1100.0, "yield_t_ha": 4.0}
+    y2015 = r["years"][2]
+    assert y2015["year"] == 2015 and y2015["precip_mm"] == 250.0 and set(y2015) == {
+        "year", "precip_mm", "price_pln_t", "yield_t_ha", "yield_dev_pct", "price_dev_pct"}
+    assert -21 < y2015["yield_dev_pct"] < -19 and 9 < y2015["price_dev_pct"] < 11
+    assert abs(r["years"][0]["yield_dev_pct"]) < 0.5 and abs(r["years"][-1]["price_dev_pct"]) < 0.5  # zwykłe lata na trendzie
     assert r["dry_years"] == [2015, 2018, 2019]  # dolne 25% z 12 lat = 3 lata
     assert r["summary_pl"] == ("W najsuchszych latach (2015, 2018, 2019) plon pszenicy w województwie podlaskim był średnio "
-                               "o 20% niższy, a cena skupu średnio o 10% wyższa niż w pozostałych latach.")
-    assert r["note_pl"] == PW.NOTE and len(r["sources"]) == 3
+                               "o 20% niższy od typowego dla tamtych lat, a cena skupu o 10% wyższa.")
+    assert r["note_pl"].startswith(PW.NOTE) and "2022" in r["note_pl"] and len(r["sources"]) == 3
+
+
+def test_rising_yields_do_not_hide_drought_loss():
+    """Suche lata na KOŃCU szeregu rosnących plonów: surowo plon w suchych latach jest wyższy niż średnia pozostałych,
+    ale względem trendu – niższy (to był błąd pierwszej wersji wniosku)."""
+    years = range(2014, 2026)
+    dry = (2023, 2024, 2025)
+    yields = {("pszenica_ozima", "podlaskie"): {y: round((3.0 + 0.2 * (y - 2014)) * (0.9 if y in dry else 1.0), 3) for y in years}}
+    prices = {("pszenica", "podlaskie"): {y: 800.0 + 10 * (y - 2014) for y in years}}
+    precip = {y: (240.0 if y in dry else 420.0, 10) for y in years}
+    r = PW.build("podlaskie", "pszenica", 2026, prices=prices, yields=yields, precip=precip)
+    raw_dry = sum(yields[("pszenica_ozima", "podlaskie")][y] for y in dry) / 3
+    raw_rest = sum(v for y, v in yields[("pszenica_ozima", "podlaskie")].items() if y not in dry) / 9
+    assert raw_dry > raw_rest and r["dry_years"] == [2023, 2024, 2025]
+    assert "niższy od typowego dla tamtych lat" in r["summary_pl"] and "cena skupu podobna" in r["summary_pl"]
+    assert PW.theil_sen([(1, 1.0), (2, 2.0), (3, 3.0), (4, 40.0), (5, 5.0)])[0] == 1.0 and PW.theil_sen([(1, 1.0)]) is None
 
 
 def test_only_years_before_to_year_and_no_summary_below_six_full_years():
@@ -35,7 +56,7 @@ def test_only_years_before_to_year_and_no_summary_below_six_full_years():
     # brak opadu w części lat = te lata nie wchodzą do wniosku (dane zostają z null)
     few = {y: v for y, v in precip.items() if y >= 2020}
     r = PW.build("podlaskie", "pszenica", 2025, prices=prices, yields=yields, precip=few)
-    assert r["years"][0]["precip_mm"] is None and r["years"][0]["price_pln_t"] == 1000.0 and r["summary_pl"] is None
+    assert r["years"][0]["precip_mm"] is None and r["years"][0]["price_pln_t"] == 800.0 and r["summary_pl"] is None
 
 
 def test_crop_without_gus_price_is_unavailable_and_region_names():

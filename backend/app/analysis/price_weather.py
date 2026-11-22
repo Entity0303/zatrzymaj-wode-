@@ -1,7 +1,8 @@
 """A28: „Ceny i pogoda na tle lat” – porównanie REGIONALNE (województwo albo cała Polska; nie działka, wieś ani powiat).
 
 Dla każdego roku: cena skupu GUS (zł/t), średni plon GUS (t/ha) i średnia suma opadów IV–IX ze stacji IMGW regionu.
-Wniosek liczony z danych: lata najsuchsze (dolne 25% opadów) na tle pozostałych – średnia różnica plonu i ceny w %.
+Wniosek liczony z danych: lata najsuchsze (dolne 25% opadów) na tle pozostałych – średnie odchylenie plonu i ceny
+od trendu (Theil–Sen), bo plony i ceny rosną z roku na rok.
 To zestawienie lat, nie przyczyna: cenę kształtuje rynek krajowy i światowy. Dane statyczne (pliki w repo) – wynik
 zapamiętany w pamięci procesu. Stacje przypisujemy do województwa po NAJBLIŻSZYM środku województwa (w repo nie ma
 granic województw ani kodów TERYT stacji) – to przybliżenie, opisane w `sources`.
@@ -32,6 +33,7 @@ MIN_COVERAGE = 0.90      # stacja liczy się w roku, gdy ma ≥ 90% dni sezonu
 SEASON = ((4, 1), (9, 30))
 PL = "PL"
 NOTE = "To porównanie lat w regionie, nie przyczyna – cenę kształtuje rynek krajowy i światowy."
+NOTE_2022 = " Skok cen w 2022 r. wynikał z sytuacji na rynkach światowych (wojna w Ukrainie), nie z pogody."
 NO_PRICE_NOTE = "brak cen skupu GUS dla tej uprawy"
 
 # produkt GUS → (mianownik, dopełniacz do zdania „plon …”)
@@ -173,9 +175,33 @@ def _diff_words(pct: float, lower: str, higher: str, similar: str) -> str:
     return similar if r < 1 else f"średnio o {r}% {lower if pct < 0 else higher}"
 
 
+def theil_sen(points: list[tuple[float, float]]) -> tuple[float, float] | None:
+    """Trend odporny na pojedyncze lata (Theil–Sen, jak w A16): nachylenie = mediana nachyleń par lat, wyraz wolny =
+    mediana (y − nachylenie · x). Mniej niż 4 punkty – None."""
+    if len(points) < 4:
+        return None
+    slopes = [(y2 - y1) / (x2 - x1) for k, (x1, y1) in enumerate(points) for x2, y2 in points[k + 1:] if x2 != x1]
+    if not slopes:
+        return None
+    slope = float(np.median(slopes))
+    return slope, float(np.median([y - slope * x for x, y in points]))
+
+
+def add_deviations(rows: list[dict]) -> None:
+    """A28b: do każdego roku dopisuje odchylenie plonu i ceny od trendu, % (`yield_dev_pct`, `price_dev_pct`) – plony
+    i ceny rosną z roku na rok, więc porównujemy „o ile powyżej / poniżej typowego dla tamtych lat”, nie surowe liczby."""
+    for key, out in (("yield_t_ha", "yield_dev_pct"), ("price_pln_t", "price_dev_pct")):
+        trend = theil_sen([(r["year"], r[key]) for r in rows if r[key] is not None])
+        for r in rows:
+            base = trend[0] * r["year"] + trend[1] if trend else None
+            r[out] = round((r[key] / base - 1) * 100, 1) if r[key] is not None and base and base > 0 else None
+
+
 def summarize(rows: list[dict], crop_gen: str, where: str) -> tuple[list[int], str | None]:
-    """Lata najsuchsze (dolne 25% opadów) na tle pozostałych → (lata, zdanie). Mniej niż MIN_YEARS pełnych lat – bez zdania."""
-    full = [r for r in rows if r["precip_mm"] is not None and r["price_pln_t"] is not None and r["yield_t_ha"] is not None]
+    """Lata najsuchsze (dolne 25% opadów) na tle pozostałych → (lata, zdanie): średnie ODCHYLENIE od trendu plonu i ceny
+    w latach najsuchszych minus w pozostałych. Mniej niż MIN_YEARS pełnych lat – bez zdania."""
+    full = [r for r in rows if r["precip_mm"] is not None and r.get("price_dev_pct") is not None
+            and r.get("yield_dev_pct") is not None]
     if len(full) < MIN_YEARS:
         return [], None
     k = max(1, math.ceil(len(full) * DRY_SHARE))
@@ -183,14 +209,15 @@ def summarize(rows: list[dict], crop_gen: str, where: str) -> tuple[list[int], s
     dry_years = sorted(r["year"] for r in dry)
     rest = [r for r in full if r["year"] not in dry_years]
     mean = lambda rs, key: sum(r[key] for r in rs) / len(rs)  # noqa: E731
-    dy = _pct(mean(dry, "yield_t_ha"), mean(rest, "yield_t_ha"))
-    dp = _pct(mean(dry, "price_pln_t"), mean(rest, "price_pln_t"))
+    dy = mean(dry, "yield_dev_pct") - mean(rest, "yield_dev_pct")
+    dp = mean(dry, "price_dev_pct") - mean(rest, "price_dev_pct")
     yield_txt = _diff_words(dy, "niższy", "wyższy", "podobny")
-    price_txt = _diff_words(dp, "niższa", "wyższa", "podobna")
+    price_txt = _diff_words(dp, "niższa", "wyższa", "podobna").replace("średnio ", "")
+    typical = " od typowego dla tamtych lat" if round(abs(dy)) >= 1 else " do typowego dla tamtych lat"
     joiner = ", a" if (dy < 0) != (dp < 0) or round(abs(dy)) < 1 or round(abs(dp)) < 1 else " i"
     years_txt = ", ".join(str(y) for y in dry_years)
-    return dry_years, (f"W najsuchszych latach ({years_txt}) plon {crop_gen} {where} był {yield_txt}"
-                       f"{joiner} cena skupu {price_txt} niż w pozostałych latach.")
+    return dry_years, (f"W najsuchszych latach ({years_txt}) plon {crop_gen} {where} był {yield_txt}{typical}"
+                       f"{joiner} cena skupu {price_txt}.")
 
 
 def region_phrase(region: str) -> tuple[str, str]:
@@ -224,7 +251,9 @@ def build(region: str, crop: str, to_year: int, *, prices=None, yields=None, pre
              "precip_mm": precip[y][0] if y in precip else None,
              "price_pln_t": price_by_year.get(y),
              "yield_t_ha": yield_by_year.get(y)} for y in years]
+    add_deviations(rows)
     dry_years, summary = summarize(rows, info["genitive"], where)
+    note = NOTE + (NOTE_2022 if any(r["year"] == 2022 and r["price_pln_t"] is not None for r in rows) else "")
     stations = sorted({n for _mm, n in precip.values()})
     sources = [
         f"GUS BDL – ceny skupu ({product}), średnie roczne, {label}",
@@ -234,7 +263,7 @@ def build(region: str, crop: str, to_year: int, *, prices=None, yields=None, pre
         + ("" if region == PL else "; stacje przypisane do województwa po najbliższym środku województwa (przybliżenie)"),
     ]
     return {"region_label": label, "crop_label": info["label"], "unavailable": False, "years": rows, "dry_years": dry_years,
-            "summary_pl": summary, "note_pl": NOTE, "sources": sources}
+            "summary_pl": summary, "note_pl": note, "sources": sources}
 
 
 @lru_cache(maxsize=512)
