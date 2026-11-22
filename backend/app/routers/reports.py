@@ -63,10 +63,19 @@ async def _satellite_first(parcel_id, lon, lat, geometry, date) -> None:
         p = await resolve_any(parcel_id, lon, lat, geometry)
     except Exception:  # noqa: BLE001 – brak działki itp. zgłosi run_analysis z właściwym kodem HTTP
         return
-    # A9: teren i zdjęcie równolegle (raport może poczekać – analiza nie); błąd któregoś nie blokuje raportu
-    await asyncio.gather(asyncio.wait_for(terrain_mod.live(p.geom_2180, p.id), 30),
-                         satellite_mod.live(p.geom_4326, date or dt.date.today()), return_exceptions=True)
-    try:  # A9: woda w okolicy (po terenie – kierunek odpływu); Overpass bywa wolny – najwyżej 45 s
+    from app.analysis import hydro as hydro_mod
+
+    # A9: teren i zdjęcie równolegle (raport może poczekać – analiza nie); błąd któregoś nie blokuje raportu.
+    # P1: obiekty wodne (Overpass) i wodowskazy też od razu, równolegle – nie zależą od terenu (dawniej po nim:
+    # 20–30 s terenu + do 55 s Overpass po kolei); niżej hydro_for składa wynik z cache (kierunek odpływu z terenu)
+    *_rest, hydro_res = await asyncio.gather(
+        asyncio.wait_for(terrain_mod.live(p.geom_2180, p.id), 30),
+        satellite_mod.live(p.geom_4326, date or dt.date.today()),
+        asyncio.wait_for(hydro_mod.fetch(p.geom_4326), settings.overpass_timeout_s + 10),
+        return_exceptions=True)
+    if isinstance(hydro_res, BaseException):  # P1: Overpass nie odpowiedział – bez drugiej próby po kolei
+        return
+    try:  # A9: woda w okolicy (po terenie – kierunek odpływu); dane Overpass już w cache – tylko złożenie wyniku
         from app.routers.hydro import hydro_for
 
         await asyncio.wait_for(hydro_for(p, date or dt.date.today()), settings.overpass_timeout_s + 15)

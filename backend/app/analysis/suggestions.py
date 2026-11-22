@@ -15,6 +15,8 @@ Uprawy wieloletnie – osobna grupa. Współczynniki i progi: rules/ranking.yaml
 from __future__ import annotations
 
 import csv
+import hashlib
+from collections import OrderedDict
 from dataclasses import dataclass, field
 from datetime import date
 from functools import lru_cache
@@ -211,11 +213,20 @@ def last_full_season(crop: Crop, last: date) -> int:
 _sim_memo: dict[tuple, list[tuple[int, float, float]]] = {}
 
 
+def weather_key(w: DailyWeather) -> str:
+    """P1: odcisk serii pogody (daty, opad, ET0) – ten sam punkt i zakres, ale inny opad (IMGW / NASA, warianty A21)
+    to inny klucz pamięci."""
+    h = hashlib.blake2b(digest_size=12)
+    h.update(f"{w.source}|{w.lat:.3f}|{w.lon:.3f}|{w.dates[0] if len(w.dates) else ''}|{len(w.dates)}".encode())
+    h.update(np.ascontiguousarray(w.precip, dtype=float).tobytes())
+    h.update(np.ascontiguousarray(w.et0, dtype=float).tobytes())
+    return h.hexdigest()
+
+
 def simulate(w: DailyWeather, crop: Crop, wod_mm: float, last: date, years: int = 10) -> list[tuple[int, float, float]]:
     """[(rok sezonu, plon względny Ya/Ym, niedobór wody ETc − ETa w sezonie [mm])] dla ≤ `years` pełnych sezonów."""
     y_last = last_full_season(crop, last)
-    key = (crop.id, w.source, round(w.lat, 2), round(w.lon, 2), str(w.dates[0]), len(w.dates), round(wod_mm, 1),
-           y_last, years)
+    key = (crop.id, weather_key(w), round(wod_mm, 1), y_last, years)  # P1: odcisk pogody zamiast samej długości serii
     if key in _sim_memo:
         return _sim_memo[key]
     out = []
@@ -424,7 +435,31 @@ class Context:
     soil_group: str | None = None  # etykieta ważona (analysis/soil_label.py); None – z kategorii / kompleksu
 
 
+# P1: wynik rankingu w pamięci – nie zależy od wybranej uprawy ani od okresu, więc ich zmiana nie liczy go od nowa.
+# Klucz: odcisk pogody, data analizy, kontekst działki (gleba, województwo, powierzchnia, historia), lata.
+_build_memo: OrderedDict[tuple, CropSuggestions | None] = OrderedDict()
+BUILD_MEMO_MAX = 64
+
+
 def build(w: DailyWeather, analysis_date: date, ctx: Context, years: int = 10) -> CropSuggestions | None:
+    key = (weather_key(w), analysis_date, years, repr(ctx), id(config()))
+    if key in _build_memo:
+        _build_memo.move_to_end(key)
+        hit = _build_memo[key]
+        return None if hit is None else hit.model_copy(deep=True)
+    out = _build(w, analysis_date, ctx, years)
+    _build_memo[key] = out
+    while len(_build_memo) > BUILD_MEMO_MAX:
+        _build_memo.popitem(last=False)
+    return None if out is None else out.model_copy(deep=True)
+
+
+def clear_memo() -> None:
+    _build_memo.clear()
+    _sim_memo.clear()
+
+
+def _build(w: DailyWeather, analysis_date: date, ctx: Context, years: int = 10) -> CropSuggestions | None:
     t0 = perf_counter()
     cfg = config()
     last = last_usable_day(analysis_date)

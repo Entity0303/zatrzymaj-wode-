@@ -46,9 +46,10 @@ def _isolated_caches():
         uldk._known.clear()
         uldk._known_loaded = False
 
-    from app.analysis import terrain
+    from app.analysis import suggestions, terrain
 
     terrain.clear_memo()
+    suggestions.clear_memo()  # P1: pamięć wyniku rankingu i symulacji
     saved = (settings.cache_db, settings.demo_offline, settings.demo_parcels_preload, settings.terrain_saved_results)
     saved_imgw = (settings.imgw_enabled, settings.imgw_store, settings.sentinel_enabled)
     reset()

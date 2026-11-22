@@ -6,6 +6,8 @@ Brakujące wartości mają kod -999 (także ostatnie dni przed dziś – opóźn
 Rozdzielczość ok. 0,5° × 0,625° (~50 km). 10 lat w jednym zapytaniu ~1,6 s.
 """
 
+import ast
+import dataclasses
 from datetime import date
 
 import numpy as np
@@ -67,9 +69,54 @@ def cache_key(lon: float, lat: float, start: date, end: date) -> tuple:
     return (round(lon, 1), round(lat, 1), start.isoformat(), end.isoformat())
 
 
+SERIES_FIELDS = ("dates", "precip", "tmax", "tmin", "rh", "wind2m", "radiation", "et0_provided", "et0", "et0_method")
+STABLE_AFTER_DAYS = 7  # dni starsze niż tydzień NASA już nie poprawia (jak w ttl_for)
+
+
+def slice_weather(w: DailyWeather, start: date, end: date) -> DailyWeather | None:
+    """P1: wycinek [start, end] z dłuższej serii – te same wartości dzienne (ET0 liczone osobno dla każdego dnia);
+    None, gdy seria nie obejmuje całego zakresu albo ma w nim dziury."""
+    s, e = np.datetime64(start, "D"), np.datetime64(end, "D")
+    if len(w.dates) == 0 or w.dates[0] > s or w.dates[-1] < e:
+        return None
+    m = (w.dates >= s) & (w.dates <= e)
+    if int(m.sum()) != (end - start).days + 1:
+        return None
+    return dataclasses.replace(w, **{f: getattr(w, f)[m] for f in SERIES_FIELDS})
+
+
+def _covering(lon: float, lat: float, start: date, end: date) -> DailyWeather | None:
+    """P1: zapisana seria tego samego punktu siatki obejmująca [start, end] (najkrótsza) – bez nowego pobrania przy
+    zmianie daty analizy. Tylko dla zakresów kończących się ponad tydzień temu (dane NASA już się nie zmieniają)."""
+    if (date.today() - end).days <= STABLE_AFTER_DAYS:
+        return None
+    lo, la = round(lon, 1), round(lat, 1)
+    cands = []
+    for k in _cache.keys():
+        try:
+            t = ast.literal_eval(k)
+            if not (isinstance(t, tuple) and len(t) == 4 and t[0] == lo and t[1] == la):
+                continue
+            s0, e0 = date.fromisoformat(t[2]), date.fromisoformat(t[3])
+        except (ValueError, SyntaxError, TypeError):
+            continue
+        if s0 <= start and e0 >= end and (s0, e0) != (start, end):
+            cands.append(((e0 - s0).days, t))
+    for _n, t in sorted(cands):
+        w = _cache.get(t)
+        cut = None if w is None else slice_weather(w, start, end)
+        if cut is not None:
+            return cut
+    return None
+
+
 async def fetch(lon: float, lat: float, start: date, end: date) -> DailyWeather:
-    """Dane dobowe od `start` do `end` włącznie. SourceError, gdy usługa nie odpowie."""
+    """Dane dobowe od `start` do `end` włącznie. SourceError, gdy usługa nie odpowie. P1: brak dokładnego wpisu,
+    a jest zapisana dłuższa seria tego punktu – wycinek z niej (bez zapytania do NASA)."""
     key = cache_key(lon, lat, start, end)
+    if _cache.get(key) is None and (cut := _covering(lon, lat, start, end)) is not None:
+        _cache.set(key, cut, ttl_s=ttl_for(end))
+        return cut
     return await cached_fetch(_cache, key, SOURCE_SHORT, lambda: _download(key, start, end), ttl_s=ttl_for(end),
                               breaker_s=120)
 

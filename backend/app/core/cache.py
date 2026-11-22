@@ -94,6 +94,11 @@ class Store:
             out = self._con.execute("SELECT k, stored_at, ttl_s, value FROM cache WHERE ns=?", (ns,)).fetchall()
         return [(k, s, FOREVER if t is None else t, v) for k, s, t, v in out]
 
+    def keys(self, ns: str) -> list[str]:
+        """P1: same klucze (bez wczytywania wartości) – np. szukanie zapisanej serii pogody obejmującej zakres."""
+        with self._lock:
+            return [r[0] for r in self._con.execute("SELECT k FROM cache WHERE ns=?", (ns,)).fetchall()]
+
     def stats(self, ns: str) -> tuple[int, float | None]:
         with self._lock:
             n, newest = self._con.execute("SELECT COUNT(*), MAX(stored_at) FROM cache WHERE ns=?", (ns,)).fetchone()
@@ -283,6 +288,14 @@ class TTLCache(Generic[V]):
         self._remember(k, e)
         if (st := store()) is not None:
             st.put(self.ns, k, e.stored_at, ttl, pickle.dumps(value, protocol=pickle.HIGHEST_PROTOCOL))
+
+    def keys(self) -> list[str]:
+        """P1: klucze wpisów (pamięć + plik) jako tekst `repr(klucz)`, bez wczytywania wartości."""
+        out = list(self._data.keys())
+        if (st := store()) is not None:
+            seen = set(out)
+            out += [k for k in st.keys(self.ns) if k not in seen]
+        return out
 
     def values(self) -> Iterator[V]:
         """Wszystkie wpisy (pamięć + plik) – np. indeks znanych działek ULDK."""
