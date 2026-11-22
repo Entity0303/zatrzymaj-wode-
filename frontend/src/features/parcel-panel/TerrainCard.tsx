@@ -44,7 +44,7 @@ export function TerrainCard({ terrain, note }: { terrain: Terrain | null | undef
           {terrain.relief_m != null && (
             <p className="text-sm leading-5 text-text-muted">
               {t('Różnica wysokości {m} m', { m: formatNum(terrain.relief_m, 1) })}
-              {terrain.slope_max_pct != null && ` · ${t('najbardziej stromo {p}%', { p: formatNum(terrain.slope_max_pct, 0) })}`}
+              {terrain.slope_max_pct != null && ` · ${t('największy spadek {p}%', { p: formatNum(terrain.slope_max_pct, 0) })}`}
             </p>
           )}
         </div>

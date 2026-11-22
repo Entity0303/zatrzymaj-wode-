@@ -1,3 +1,4 @@
+import { plForm } from '@/lib/format'
 import { ChevronDown, ChevronUp, MousePointerClick, Tractor } from 'lucide-react'
 import type { CSSProperties } from 'react'
 import { ForecastCard } from '@/features/weather/ForecastCard'
@@ -44,7 +45,7 @@ export function FarmDrawer({
 
   const summary = firstRun
     ? t('kliknij pole, aby zacząć')
-    : [n ? parcelsLabel(n, t) : null, alerts ? t(alerts === 1 ? '{n} alert' : '{n} alerty', { n: alerts }) : null].filter(Boolean).join(' · ') ||
+    : [n ? parcelsLabel(n, t) : null, alerts ? t(plForm(alerts, '{n} alert', '{n} alerty', '{n} alertów'), { n: alerts }) : null].filter(Boolean).join(' · ') ||
       t('bez alertów')
 
   const bar = (

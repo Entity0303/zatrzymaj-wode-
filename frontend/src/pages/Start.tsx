@@ -147,7 +147,10 @@ export default function Start() {
   const satellite = analysis?.satellite ?? null
   const satStatus = satellite?.status ?? null
   const satLayer = layer === 'kondycja' || layer === 'wilgotnosc'
-  const layerState = useLayerData(layer, parcel?.id ?? null, asOf, satLayer ? (satStatus ?? '') : '', satLayer && satStatus === 'pending')
+  // „Spróbuj ponownie” w legendzie: nowy numer próby = to samo zapytanie warstwy jeszcze raz
+  const [layerAttempt, setLayerAttempt] = useState(0)
+  const layerState = useLayerData(layer, parcel?.id ?? null, asOf, `${satLayer ? (satStatus ?? '') : ''}|${layerAttempt}`, satLayer && satStatus === 'pending')
+  const retryLayer = layerState.phase === 'error' ? () => setLayerAttempt((n) => n + 1) : undefined
   const passportOpen = !!analysis && passportFor === runKey
 
   // wysokość obszaru mapy – do położeń szuflady
@@ -779,6 +782,7 @@ export default function Start() {
               title={legend.label}
               legend={legend.legend}
               status={legendStatus}
+              onRetry={retryLayer}
               compact
               className="absolute left-3 z-[1000] w-56"
               style={{ bottom: sheetVisible + 32 }}
@@ -791,6 +795,7 @@ export default function Start() {
                   title={legend.label}
                   legend={legend.legend}
                   status={legendStatus}
+                  onRetry={retryLayer}
                   collapsed={!ui.legend}
                   onToggle={() => setUi({ legend: !ui.legend })}
                 />

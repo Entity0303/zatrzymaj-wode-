@@ -17,7 +17,7 @@ const AGREEMENT: Record<PrecipAgreement, { label: string; icon: LucideIcon; cls:
 function usePrecipLabel(ps: PrecipSources): string {
   const { t } = useLang()
   const st = ps.stations ?? []
-  if (ps.main === 'nasa' || !st.length) return t('model NASA – brak stacji IMGW w pobliżu')
+  if (ps.main === 'nasa' || !st.length) return t('dane satelitarne NASA – brak stacji pogodowej w pobliżu')
   const one = (i: number) => `${st[i].name} · ${formatNum(st[i].distance_km, 0)} km`
   if (st.length === 1) return t('stacja IMGW {s}', { s: one(0) })
   return t('stacje IMGW {a} i {b}', { a: one(0), b: one(1) })

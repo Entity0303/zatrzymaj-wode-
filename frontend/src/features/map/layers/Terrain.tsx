@@ -22,7 +22,7 @@ const Terrain: MapLayer = {
     items: [
       { color: '#8B6B4A', label: 'Sucha górka' },
       { color: '#E8B931', label: 'Stok' },
-      { color: '#5BB37F', label: 'Płasko' },
+      { color: '#5BB37F', label: 'Płaski teren' },
       { color: '#2F80C9', label: 'Mokry dołek' },
     ],
   },

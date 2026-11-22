@@ -7,7 +7,7 @@ import { LoadingSteps, type Step } from '@/components/LoadingSteps'
 import { SourceTag } from '@/components/SourceTag'
 import { Button } from '@/components/ui/button'
 import { WaveDivider } from '@/components/WaveDivider'
-import { formatDatePl } from '@/lib/format'
+import { formatDatePl, plForm } from '@/lib/format'
 import { irrigationPracticed, irrigationShown } from '@/lib/crops'
 import { AnalysisLoading } from './AnalysisLoading'
 import { ApproxAreaBanner } from './ApproxAreaBanner'
@@ -96,7 +96,7 @@ export function ParcelPanel({
         <LoadingSteps
           steps={[
             {
-              label: state.kind === 'point' ? 'Szukam działki w tym miejscu (ULDK GUGiK)' : 'Szukam działki w ewidencji (ULDK GUGiK)',
+              label: state.kind === 'point' ? 'Szukam działki w tym miejscu' : 'Szukam działki w ewidencji gruntów',
               state: 'active',
             },
           ]}
@@ -117,7 +117,7 @@ export function ParcelPanel({
     return (
       <EmptyState
         illustration={<FieldIllustration className="w-32" />}
-        title={t('Znaleziono {n} działek', { n: state.total })}
+        title={t(plForm(state.total, 'Znaleziono {n} działkę', 'Znaleziono {n} działki', 'Znaleziono {n} działek'), { n: state.total })}
         description="Ten numer jest w kilku miejscach. Wybierz swoją działkę z listy pod wyszukiwarką albo kliknij numer na mapie."
       />
     )

@@ -47,7 +47,7 @@ export function BalanceCard({ analysis }: { analysis: AnalysisResponse | null })
   if (!analysis || !h || !geom)
     return (
       <Card icon={ChartNoAxesCombined} title="Bilans wody">
-        <NoData text={analysis ? 'Brak danych o bilansie dla tej działki' : 'Wybierz działkę i uprawę – pokażemy bilans sezonu'} />
+        <NoData text={analysis ? 'Brak danych o wodzie w sezonie dla tej działki' : 'Wybierz działkę – pokażemy, ile wody zostało w sezonie'} />
       </Card>
     )
   const dev = h.balance_deviation_mm

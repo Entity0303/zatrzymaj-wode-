@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react'
-import { ChevronDown, ChevronUp } from 'lucide-react'
+import { ChevronDown, ChevronUp, RotateCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { LegendSpec } from './layers/types'
 import { useLang } from '@/lib/i18n'
@@ -57,7 +57,10 @@ export function LegendCard({
   style,
   collapsed,
   onToggle,
+  onRetry,
 }: {
+  /** błąd pobrania warstwy – przycisk „Spróbuj ponownie” (to samo zapytanie: warstwa, działka, data) */
+  onRetry?: () => void
   /** zwinięta do pigułki z nazwą warstwy (komputer) */
   collapsed?: boolean
   onToggle?: () => void
@@ -159,6 +162,15 @@ export function LegendCard({
           <span className="mt-1 size-2 shrink-0 rounded-full bg-nodata" aria-hidden />
           {t(status)}
         </p>
+      )}
+      {onRetry && (
+        <button
+          type="button"
+          onClick={onRetry}
+          className="mt-2 flex min-h-11 w-full items-center justify-center gap-1.5 rounded-md bg-white/15 px-3 text-sm font-semibold text-white hover:bg-white/25"
+        >
+          <RotateCw className="size-4" aria-hidden /> {t('Spróbuj ponownie')}
+        </button>
       )}
     </section>
   )

@@ -42,7 +42,7 @@ function Details({ s }: { s: CropSuggestion | PerennialSuggestion }) {
           {s.total_weak_t != null && ` · ${t('≈ {t} t z pola', { t: num(s.total_weak_t) ?? '' })}`}
         </li>
       )}
-      <li>{t('susza obniża plon o ponad 20% w {n} na {of} lat', { n: s.drought_risk_years, of: s.years_simulated })}</li>
+      <li>{t('susza obniża plon o ponad 20% w {n} z {of} lat', { n: s.drought_risk_years, of: s.years_simulated })}</li>
       {rot?.notes?.map((n) => (
         <li key={n} className={cn(rot.status === 'naruszenie' && 'text-danger', rot.status === 'ostrzezenie' && 'text-[#875a12]')}>
           {t(n)}

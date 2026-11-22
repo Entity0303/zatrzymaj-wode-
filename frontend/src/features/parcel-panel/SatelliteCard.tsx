@@ -9,7 +9,7 @@ import { SatelliteSeriesChart } from './SatelliteSeriesChart'
 
 const TREND: Record<SatelliteTrend, { label: string; icon: LucideIcon; cls: string }> = {
   lepiej: { label: 'zieleń bujniejsza niż rok temu', icon: TrendingUp, cls: 'text-brand' },
-  podobnie: { label: 'zieleń podobna jak rok temu', icon: Minus, cls: 'text-text-muted' },
+  podobnie: { label: 'zieleń podobna do zeszłorocznej', icon: Minus, cls: 'text-text-muted' },
   gorzej: { label: 'zieleń słabsza niż rok temu', icon: TrendingDown, cls: 'text-danger' },
 }
 
@@ -101,7 +101,7 @@ export function SatelliteCard({ satellite: s, passport, chartWidth }: { satellit
           <dt className="text-text-muted">{t('Wilgotność roślin (NDMI)')}</dt>
           <dd className="tabular">
             {s.ndmi != null ? formatNum(s.ndmi, 2) : t('brak danych')}
-            <span className="text-text-muted"> · {t(s.ndmi_label ?? 'oceniamy w sezonie IV–IX przy gęstym łanie')}</span>
+            <span className="text-text-muted"> · {t(s.ndmi_label ?? 'oceniamy od kwietnia do września, gdy łan jest gęsty')}</span>
           </dd>
           {s.last_year && (
             <>

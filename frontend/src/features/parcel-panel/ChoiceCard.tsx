@@ -37,7 +37,7 @@ function Choice({ c }: { c: ChoiceItem }) {
         {c.yield_weak_t_ha != null && c.weak_year != null && (
           <li className="text-text-muted">{t('w słabym roku ({rok}): {t} t/ha', { rok: c.weak_year, t: num(c.yield_weak_t_ha) ?? '' })}</li>
         )}
-        <li className="text-text-muted">{t('susza obniża plon o ponad 20% w {n} na {of} lat', { n: c.drought_risk_years, of: c.years_simulated })}</li>
+        <li className="text-text-muted">{t('susza obniża plon o ponad 20% w {n} z {of} lat', { n: c.drought_risk_years, of: c.years_simulated })}</li>
       </ul>
       <p className="text-sm leading-5">{t(c.why)}</p>
       {rotation.map((n) => (
@@ -87,7 +87,7 @@ export function ChoiceCard({ suggestions }: { suggestions: CropSuggestions }) {
                   </span>
                   <b>{t(a.label)}</b>
                   {a.yield_typical_t_ha != null && <span className="text-text-muted">{t('typowo')} {num(a.yield_typical_t_ha)} t/ha</span>}
-                  <span className="text-text-muted">· {t('{n} na {of} lat ze stratą', { n: a.drought_risk_years, of: a.years_simulated })}</span>
+                  <span className="text-text-muted">· {t('strata w {n} z {of} lat', { n: a.drought_risk_years, of: a.years_simulated })}</span>
                 </span>
                 <span className="block text-text-muted">{t(a.why)}</span>
               </li>

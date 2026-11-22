@@ -22,7 +22,7 @@ _Stan na: 2026-11-22 (F1 – A za B)_
 - `b/frontend` (jedna długa gałąź; B1 z `b/wyglad-grafiki` już scalone) – merge do `main` tylko przy kamieniach milowych, bez PR na zadanie
 
 ## Następne
-- F1 do dokończenia: przegląd literówek / żargonu w całej aplikacji; zrzut 390 px karty Werdyktu.
+- F1: zrobione (teksty, przycięcie warstw do obrysu, „Spróbuj ponownie” w legendzie). Do sprawdzenia na żywo: „Spróbuj ponownie” przy prawdziwym błędzie warstwy.
 0. **Uwagi mentora (jury ma 3 min):** karty „Zobacz przykład” są (B10, lista lokalna) – podmienić na `GET /api/demo/examples`; po merge `origin/a/backend` z nowym kontraktem – pole „Co rosło w zeszłym roku?” (+ `przedplon` w linku i raporcie), odznaki formalności / ostrzeżenie / ekoschemat w rekomendacjach (3 w panelu, 5 w paszporcie), gleba: piasek/pył/ił %, uziarnienie, przepuszczalność, ulewa, typ gleby.
 1. Widok 3D – zrobiony (B21) na kaflach ~30 m; dokładniej po endpoincie siatki NMT od A (propozycja w dzienniku B21).
 

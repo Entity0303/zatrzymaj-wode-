@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { api } from '@/api/client'
 import type { Parcel, SearchResponse, SearchResult } from '@/api/types'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { formatHa } from '@/lib/format'
+import { formatHa, plForm } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { useLang } from '@/lib/i18n'
 
@@ -252,7 +252,7 @@ export function SearchBar({
       {showCandidates && (
         <div className="absolute inset-x-0 top-full z-10 mt-2 overflow-hidden rounded-xl bg-surface shadow-float">
           <p className="border-b px-4 py-2 text-sm text-text-muted">
-            {t('Znaleziono {n} działek – wybierz swoją', { n: total })}
+            {t(plForm(total, 'Znaleziono {n} działkę – wybierz ją', 'Znaleziono {n} działki – wybierz swoją', 'Znaleziono {n} działek – wybierz swoją'), { n: total })}
             {total > candidates.length && ` ${t('(pokazano {n})', { n: candidates.length })}`}
           </p>
           <ul role="listbox" className="max-h-[50vh] overflow-y-auto py-1">

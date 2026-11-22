@@ -1,3 +1,4 @@
+import { BRAND_NAME } from '@/lib/brand'
 import type { InfraReportIn, Parcel } from '@/api/types'
 import { formatDatePl } from '@/lib/format'
 import { todayIso } from '@/lib/dates'
@@ -40,7 +41,7 @@ export function buildLetter(r: InfraReportIn, parcel: Parcel | null, hasPhoto: b
     '(podpis)',
     '',
     '—',
-    'Pismo przygotowane w aplikacji Wodoskop. Aplikacja niczego nie wysyła automatycznie.',
+    `Pismo przygotowane w aplikacji ${BRAND_NAME}. Aplikacja niczego nie wysyła automatycznie.`,
   ]
   return lines.join('\n')
 }

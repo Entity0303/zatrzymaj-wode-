@@ -8,6 +8,15 @@ export const formatNum = (v: number, digits = 1) =>
   v.toLocaleString(locale(), { minimumFractionDigits: digits, maximumFractionDigits: digits })
 
 /** „+1,2” / „−3,4” – prawdziwy znak minus. */
+/** Polska odmiana po liczbie: 1 działka · 2–4 działki · 5+ działek (12–14 → działek). */
+export function plForm(n: number, one: string, few: string, many: string): string {
+  const a = Math.abs(n)
+  if (a === 1) return one
+  const d = a % 10
+  const h = a % 100
+  return d >= 2 && d <= 4 && (h < 12 || h > 14) ? few : many
+}
+
 export const formatSigned = (v: number, digits = 1) =>
   `${v > 0 ? '+' : v < 0 ? '−' : ''}${formatNum(Math.abs(v), digits)}`
 

@@ -39,7 +39,7 @@ export function SoilCard({ soil }: { soil: Soil }) {
 
       {soil.wod_mm != null && (
         <p className="mt-1 text-sm leading-5 text-text-muted">
-          {t('To {n} litrów wody na każdy metr kwadratowy – gleba działa jak gąbka, którą napełnia deszcz.', {
+          {t('To ok. {n} l wody na każdy metr kwadratowy – gleba działa jak gąbka, którą napełnia deszcz.', {
             n: formatNum(soil.wod_mm, 0),
           })}
         </p>

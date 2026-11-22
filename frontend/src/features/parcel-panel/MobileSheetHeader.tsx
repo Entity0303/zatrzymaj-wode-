@@ -3,7 +3,7 @@ import type { Parcel, StatusLevel } from '@/api/types'
 import { LogoMark } from '@/components/LogoMark'
 import { StatusBadge } from '@/components/StatusBadge'
 import { BRAND_NAME, BRAND_TAGLINE } from '@/lib/brand'
-import { formatHa, shortCounty } from '@/lib/format'
+import { formatHa, plForm, shortCounty } from '@/lib/format'
 import { ParcelActions } from './ParcelActions'
 import type { SearchPhase } from './types'
 import { useLang } from '@/lib/i18n'
@@ -125,7 +125,7 @@ function EmptyHead({ search }: { search: SearchPhase }) {
       : search.phase === 'error'
         ? t(search.error.title, search.error.vars)
         : search.phase === 'candidates'
-          ? t('Znaleziono {n} działek', { n: search.total })
+          ? t(plForm(search.total, 'Znaleziono {n} działkę', 'Znaleziono {n} działki', 'Znaleziono {n} działek'), { n: search.total })
           : t('Znajdź swoją działkę')
   const sub =
     search.phase === 'candidates'
@@ -134,7 +134,7 @@ function EmptyHead({ search }: { search: SearchPhase }) {
         ? t('Wpisz numer, kliknij pole albo użyj lokalizacji')
         : search.phase === 'error'
           ? t('Przesuń w górę, aby zobaczyć szczegóły')
-          : t('Pobieram dane z ewidencji (ULDK GUGiK)')
+          : t('Pobieram dane działki z ewidencji gruntów')
   return (
     <div className="min-h-12">
       {/* nagłówek wersji mobilnej: nazwa produktu, dopóki nie wybrano działki */}

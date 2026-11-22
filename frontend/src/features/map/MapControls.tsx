@@ -60,8 +60,8 @@ export function MapControls({
     >
       <CtrlButton
         icon={next === 'osm' ? MapIcon : Satellite}
-        label={t('Zmień rodzaj mapy na: {name}', { name: t(next === 'osm' ? 'Mapa' : 'Satelita') })}
-        tip={t(next === 'osm' ? 'Pokaż zwykłą mapę z drogami i nazwami' : 'Pokaż zdjęcie satelitarne (ortofotomapa)')}
+        label={t('Zmień rodzaj mapy na: {name}', { name: t(next === 'osm' ? 'Mapa' : 'Zdjęcie') })}
+        tip={t(next === 'osm' ? 'Pokaż zwykłą mapę z drogami i nazwami' : 'Pokaż zdjęcie lotnicze (ortofotomapa)')}
         onClick={() => onBaseMapChange(next)}
       />
       <CtrlButton icon={Plus} label={t('Przybliż')} onClick={onZoomIn} />
