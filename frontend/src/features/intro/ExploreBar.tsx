@@ -40,7 +40,10 @@ export function ExploreBar({
   onExample,
   examples,
   onDraw,
+  onHome,
 }: {
+  /** klik w logo – wraca karta powitalna */
+  onHome?: () => void
   isMobile: boolean
   search: ReactNode
   locate: ReactNode
@@ -62,10 +65,15 @@ export function ExploreBar({
   return (
     <>
       <div className="pointer-events-none absolute inset-x-3 top-3 z-[1200] flex items-start gap-2 animate-in fade-in duration-500 md:inset-x-4 md:top-4 [&>*]:pointer-events-auto">
-        <div className="flex h-12 shrink-0 items-center gap-2 rounded-full bg-surface pr-4 pl-1.5 shadow-float max-md:pr-1.5">
+        <button
+          type="button"
+          onClick={onHome}
+          aria-label={t('{name} – pokaż kartę powitalną', { name: BRAND_NAME })}
+          className="flex h-12 shrink-0 items-center gap-2 rounded-full bg-surface pr-4 pl-1.5 shadow-float hover:bg-sage-soft max-md:pr-1.5"
+        >
           <LogoMark className="size-9" />
           <span className="font-display text-lg font-bold text-brand max-md:hidden">{BRAND_NAME}</span>
-        </div>
+        </button>
         <div className="flex min-w-0 flex-1 items-start gap-2 md:max-w-[560px]">{search}</div>
         <Tooltip>
           <TooltipTrigger asChild>

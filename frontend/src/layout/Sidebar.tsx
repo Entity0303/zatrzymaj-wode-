@@ -7,7 +7,7 @@ import { BRAND_NAME, BRAND_TAGLINE } from '@/lib/brand'
 import { useLang } from '@/lib/i18n'
 
 /** Lewy pasek: 96 px z podpisami (≥ 1280 px), 64 px same ikony (tablet). SPEC 4.1, 12. */
-export function Sidebar() {
+export function Sidebar({ onHome }: { /** logo / „Start” na ekranie Start – powrót do karty powitalnej */ onHome?: () => void } = {}) {
   const { t } = useLang()
   const page = usePage()
   return (
@@ -15,15 +15,16 @@ export function Sidebar() {
       aria-label={t('Nawigacja główna')}
       className="relative z-[1200] hidden h-full w-16 shrink-0 flex-col items-center border-r bg-surface py-4 md:flex xl:w-[104px]"
     >
-      <div
-        className="mb-5 flex flex-col items-center gap-1.5 px-1 text-center"
+      <button
+        type="button"
+        onClick={() => (onHome && page === 'start' ? onHome() : goTo('start'))}
+        className="mb-5 flex flex-col items-center gap-1.5 rounded-xl px-1 py-1 text-center hover:bg-surface-2"
         title={`${BRAND_NAME} – ${t(BRAND_TAGLINE)}`}
-        aria-label={`${BRAND_NAME} – ${t(BRAND_TAGLINE)}`}
-        role="img"
+        aria-label={t('{name} – strona startowa', { name: BRAND_NAME })}
       >
         <LogoMark className="size-10 xl:size-11" />
         <span className="font-display hidden text-base leading-5 font-bold text-brand xl:block">{BRAND_NAME}</span>
-      </div>
+      </button>
       <ul className="flex w-full flex-col gap-1.5 px-1.5 xl:px-2">
         {SECTIONS.map((s) => {
           const active = s.key === page
@@ -34,7 +35,7 @@ export function Sidebar() {
               aria-current={active ? 'page' : undefined}
               aria-disabled={!s.ready || undefined}
               aria-label={s.ready ? t(s.label) : t('{label} – wkrótce', { label: t(s.label) })}
-              onClick={() => goTo(s.key)}
+              onClick={() => (s.key === 'start' && page === 'start' && onHome ? onHome() : goTo(s.key))}
               className={cn(
                 'relative flex min-h-14 w-full flex-col items-center justify-center gap-1 rounded-xl px-1 py-2 text-sm leading-4 font-medium transition-colors',
                 active ? 'bg-sage-soft text-brand' : 'text-text-muted hover:bg-surface-2',

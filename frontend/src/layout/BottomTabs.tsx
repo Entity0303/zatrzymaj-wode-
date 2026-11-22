@@ -4,7 +4,7 @@ import { SECTIONS } from './sections'
 import { useLang } from '@/lib/i18n'
 
 /** Dolny pasek zakładek na telefonie (SPEC 12). */
-export function BottomTabs() {
+export function BottomTabs({ onHome }: { /** „Start” na ekranie Start – powrót do karty powitalnej */ onHome?: () => void } = {}) {
   const { t } = useLang()
   const page = usePage()
   return (
@@ -17,7 +17,7 @@ export function BottomTabs() {
             key={s.key}
             type="button"
             aria-current={active ? 'page' : undefined}
-            onClick={() => goTo(s.key)}
+            onClick={() => (s.key === 'start' && page === 'start' && onHome ? onHome() : goTo(s.key))}
             aria-disabled={!s.ready || undefined}
             aria-label={s.ready ? t(s.short) : t('{label} – wkrótce', { label: t(s.label) })}
             className={cn(

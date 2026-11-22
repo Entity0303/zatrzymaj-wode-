@@ -6,6 +6,7 @@ import { ExampleCards } from './ExampleCards'
 import type { DemoExamples } from './useDemoExamples'
 import { BRAND_NAME, BRAND_TAGLINE } from '@/lib/brand'
 import { useLang } from '@/lib/i18n'
+import { cn } from '@/lib/utils'
 
 const STEPS = [
   { icon: Search, label: 'Znajdź działkę' },
@@ -25,7 +26,10 @@ export function IntroHero({
   onExample,
   onDraw,
   isMobile,
+  leaving,
 }: {
+  /** chowanie (ok. 200 ms): przezroczystość + lekki zjazd w dół, bez klikania */
+  leaving?: boolean
   search: ReactNode
   locate: ReactNode
   examples: DemoExamples
@@ -35,12 +39,23 @@ export function IntroHero({
 }) {
   const { t } = useLang()
   return (
-    <div className="pointer-events-none absolute inset-0 z-[1200] flex items-center justify-center p-3 md:p-6 lg:justify-start lg:pl-10">
+    <div
+      className={cn(
+        'pointer-events-none absolute inset-0 z-[1200] flex items-center justify-center p-3 transition-opacity duration-200 md:p-6 lg:justify-start lg:pl-10 motion-reduce:transition-none',
+        leaving && 'opacity-0',
+      )}
+      aria-hidden={leaving || undefined}
+      inert={leaving || undefined}
+    >
       {/* przyciemnienie mapy – klik w mapę przechodzi dalej (wybór pola) */}
       <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(31,66,48,0.45)_0%,rgba(31,66,48,0.15)_55%,rgba(31,66,48,0.05)_100%)]" aria-hidden />
       <section
         aria-labelledby="hero-title"
-        className="pointer-events-auto relative max-h-full w-full max-w-3xl animate-in overflow-y-auto overscroll-contain rounded-[28px] bg-surface/95 px-5 pt-6 pb-5 shadow-float backdrop-blur-md duration-500 fade-in slide-in-from-bottom-4 md:px-9 md:pt-8"
+        className={cn(
+          'relative max-h-full w-full max-w-3xl animate-in overflow-y-auto overscroll-contain rounded-[28px] bg-surface/95 px-5 pt-6 pb-5 shadow-float backdrop-blur-md transition-transform duration-200 fade-in slide-in-from-bottom-2 motion-reduce:animate-none',
+          leaving ? 'pointer-events-none translate-y-2' : 'pointer-events-auto',
+          'md:px-9 md:pt-8',
+        )}
       >
         <div className="flex items-center gap-3">
           <LogoMark className="size-12 shrink-0 md:size-14" />

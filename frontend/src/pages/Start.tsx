@@ -15,7 +15,7 @@ import { useLayerData } from '@/features/map/layers/useLayerData'
 import { layerLegend, layerStatusText, layerStatusVars } from '@/features/map/layers/responseLegend'
 import { LegendCard } from '@/features/map/LegendCard'
 import { MapControls } from '@/features/map/MapControls'
-import { POLAND_CENTER, ParcelMap, type BaseMap } from '@/features/map/ParcelMap'
+import { POLAND_CENTER, POLAND_ZOOM, ParcelMap, type BaseMap } from '@/features/map/ParcelMap'
 import { MobileSheetHeader } from '@/features/parcel-panel/MobileSheetHeader'
 import { ParcelPanel } from '@/features/parcel-panel/ParcelPanel'
 import { ParcelSummary } from '@/features/parcel-panel/ParcelSummary'
@@ -135,6 +135,16 @@ export default function Start() {
   const pendingPlan = useRef(link.plan)
   // karta powitalna (B0): tylko przy wejściu bez działki w linku; znika po pierwszym działaniu
   const [hero, setHero] = useState(() => !link.dzialka)
+  // F4: karta chowa się płynnie (ok. 200 ms) – do końca przejścia zostaje w drzewie jako „leaving”
+  const [heroMounted, setHeroMounted] = useState(hero)
+  if (hero && !heroMounted) setHeroMounted(true)
+  useEffect(() => {
+    if (hero) return
+    const id = window.setTimeout(() => setHeroMounted(false), 200)
+    return () => window.clearTimeout(id)
+  }, [hero])
+  // poziom przybliżenia, przy którym karta się pokazała – przybliżenie o ≥ 1 poziom ją chowa
+  const heroZoom = useRef(POLAND_ZOOM)
   const demoExamples = useDemoExamples()
   // przykład jednym klikiem: na telefonie po znalezieniu działki szuflada do połowy (wynik od razu widoczny)
   const expandAfterFind = useRef(false)
@@ -596,7 +606,7 @@ export default function Start() {
   const { forecast, state: forecastState } = useForecast(weatherTarget)
 
   // poziom przybliżenia – mapa gleb (i jej legenda) tylko przy oddaleniu
-  const [zoom, setZoom] = useState(6)
+  const [zoom, setZoom] = useState(POLAND_ZOOM)
   const onMoveEnd = useCallback((lon: number, lat: number, z: number) => {
     setZoom(z)
     setMapCenter((prev) => {
@@ -604,6 +614,34 @@ export default function Start() {
       return prev[0] === next[0] && prev[1] === next[1] ? prev : next
     })
   }, [])
+
+  // F4: karta powitalna – chowa się przy przybliżaniu (≥ 1 poziom) i przeciąganiu, wraca po oddaleniu do całej Polski
+  useEffect(() => {
+    if (parcel || infra || draw) return
+    if (hero && zoom >= heroZoom.current + 1) setHero(false)
+    else if (!hero && zoom <= POLAND_ZOOM && search.phase !== 'loading') {
+      heroZoom.current = zoom
+      setHero(true)
+    }
+    // tylko zmiana przybliżenia – pozostałe warunki czytamy w chwili zmiany
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [zoom])
+  const onDragStart = useCallback(() => setHero(false), [])
+  /** logo / „Start”: zamyka działkę, mapa na całą Polskę, wraca karta powitalna */
+  function goHome() {
+    backToExplore()
+    setDraw(null)
+    heroZoom.current = POLAND_ZOOM
+    setHero(true)
+    const map = mapRef.current
+    // już widać całą Polskę – mapa zostaje (bez skakania)
+    if (!map || (map.getZoom() <= POLAND_ZOOM && map.getCenter().distanceTo(POLAND_CENTER) < 150_000)) return
+    const w = map.getSize().x
+    // jak przy pierwszym wejściu: na komputerze Polska przesunięta w prawo (karta po lewej)
+    if (w >= 1024) map.once('moveend', () => map.panBy([-Math.round(w * 0.2), 0], { animate: !reducedMotion }))
+    if (reducedMotion) map.setView(POLAND_CENTER, POLAND_ZOOM, { animate: false })
+    else map.flyTo(POLAND_CENTER, POLAND_ZOOM, { duration: 0.8 })
+  }
 
   const where = parcel ? t('dla działki {numer}', { numer: parcel.numer }) : t('dla środka mapy')
   const historical = asOf !== todayIso()
@@ -746,7 +784,7 @@ export default function Start() {
   return (
     <div className="flex h-dvh w-full flex-col overflow-hidden bg-bg print:hidden">
       <div className="flex min-h-0 flex-1">
-        {!intro && <Sidebar />}
+        {!intro && <Sidebar onHome={goHome} />}
         <main
           ref={mainRef}
           className={`relative min-w-0 flex-1 overflow-hidden ${draw ? 'drawing' : ''}`}
@@ -773,6 +811,7 @@ export default function Start() {
             reducedMotion={reducedMotion}
             onMapClick={onMapClick}
             onMoveEnd={onMoveEnd}
+            onDragStart={onDragStart}
             onSelectCandidate={pickCandidate}
             onClosePopup={() => setInsidePopup(null)}
           >
@@ -791,8 +830,9 @@ export default function Start() {
 
           {intro ? (
             <>
-              {hero ? (
+              {heroMounted ? (
                 <IntroHero
+                  leaving={!hero}
                   search={searchBar}
                   locate={<LocateButton locating={locating} onClick={locate} iconOnly />}
                   examples={demoExamples}
@@ -808,6 +848,7 @@ export default function Start() {
                   onExample={openExample}
                   onDraw={startDraw}
                   examples={demoExamples}
+                  onHome={goHome}
                 />
               )}
               {/* przed wybraniem działki nie ma panelu – stan wyszukiwania i błąd z „co teraz” nad mapą */}
@@ -1126,7 +1167,7 @@ export default function Start() {
           )}
         </main>
       </div>
-      {!intro && <BottomTabs />}
+      {!intro && <BottomTabs onHome={goHome} />}
     </div>
   )
 }

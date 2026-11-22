@@ -23,6 +23,8 @@ import { useLang } from '@/lib/i18n'
 export type BaseMap = 'orto' | 'osm'
 
 export const POLAND_CENTER: [number, number] = [52.07, 19.48]
+/** widok całej Polski (start, powrót karty powitalnej po oddaleniu) */
+export const POLAND_ZOOM = 6
 
 // Ortofotomapa Geoportalu – WMTS w siatce EPSG:3857 (kafle z/x/y z cache; szybciej niż WMS).
 const ORTO_WMTS =
@@ -39,7 +41,7 @@ function IntroView({ active }: { active: boolean }) {
     // tylko przy pierwszym wejściu – powrót z działki zostawia mapę tam, gdzie była
     if (!active || done.current) return
     done.current = true
-    map.setView(POLAND_CENTER, 6, { animate: false })
+    map.setView(POLAND_CENTER, POLAND_ZOOM, { animate: false })
     // komputer: karta powitalna po lewej – Polska z mapą gleb przesunięta w prawą część ekranu
     const w = map.getSize().x
     if (w >= 1024) map.panBy([-Math.round(w * 0.2), 0], { animate: false })
@@ -83,12 +85,16 @@ function FitTo({
 function Events({
   onClick,
   onMoveEnd,
+  onDragStart,
 }: {
   onClick: (lon: number, lat: number) => void
   onMoveEnd: (lon: number, lat: number, zoom: number) => void
+  onDragStart?: () => void
 }) {
   const map = useMapEvents({
     click: (e: LeafletMouseEvent) => onClick(e.latlng.lng, e.latlng.lat),
+    // tylko przeciągnięcie przez użytkownika (nie flyTo / fitBounds z kodu)
+    dragstart: () => onDragStart?.(),
     moveend: () => {
       const c = map.getCenter()
       onMoveEnd(c.lng, c.lat, map.getZoom())
@@ -124,6 +130,8 @@ type Props = {
   insets: MapInsets
   reducedMotion: boolean
   onMapClick: (lon: number, lat: number) => void
+  /** użytkownik zaczął przeciągać mapę (chowa kartę powitalną) */
+  onDragStart?: () => void
   /** dodatkowe warstwy wewnątrz mapy (np. rysowane pole) */
   children?: ReactNode
   onMoveEnd: (lon: number, lat: number, zoom: number) => void
@@ -156,6 +164,7 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
     reducedMotion,
     onMapClick,
     onMoveEnd,
+    onDragStart,
     onSelectCandidate,
     onClosePopup,
     highlight,
@@ -180,7 +189,7 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
     <MapContainer
       ref={ref}
       center={POLAND_CENTER}
-      zoom={6}
+      zoom={POLAND_ZOOM}
       minZoom={5}
       maxZoom={20}
       zoomControl={false}
@@ -306,7 +315,7 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
 
       <FitTo parcel={parcel} candidates={candidates} insets={insets} reducedMotion={reducedMotion} />
       {children}
-      <Events onClick={onMapClick} onMoveEnd={onMoveEnd} />
+      <Events onClick={onMapClick} onMoveEnd={onMoveEnd} onDragStart={onDragStart} />
     </MapContainer>
   )
 })

@@ -4,6 +4,11 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-22 · `main` · F4 cz. 1 (A za B): karta powitalna chowa się przy ruchu mapy
+**Co:** karta powitalna chowa się po przybliżeniu o ≥ 1 poziom (względem poziomu, przy którym się pokazała) albo po przeciągnięciu mapy (`dragstart` – tylko ruch użytkownika); zostaje wąska wyszukiwarka + „Przykłady” (lista rozwijana). Wraca po oddaleniu do widoku całej Polski (zoom ≤ 6) albo po kliknięciu logo (pasek przeglądania, lewy pasek) / „Start” (lewy pasek, dolne zakładki) – wtedy zamyka działkę i pokazuje Polskę (bez ruchu, gdy Polska już widoczna). Przejście ok. 200 ms (przezroczystość + lekki zjazd, `inert` w trakcie), `prefers-reduced-motion` bez animacji.
+**Pliki:** `frontend/src/pages/Start.tsx`, `features/intro/{IntroHero,ExploreBar}.tsx`, `features/map/ParcelMap.tsx`, `layout/{Sidebar,BottomTabs}.tsx`.
+**Kontrakt API:** nie.
+
 ## 2026-11-22 · `main` · F3b (A za B): pogoda bez błędu, wilgotność poza sezonem, „Teraz / Na dłuższą metę”
 **Co:** pasek pogody pokazuje się dopiero, gdy `/api/forecast` odda dane – przy 502 (brak w cache dla środka mapy) znika bez komunikatu i bez migania szkieletu; karta prognozy: „Prognoza chwilowo niedostępna…”. Wskaźnik „Wilgotność roślin”: etykieta z backendu (np. „ocena tylko w sezonie przy gęstym łanie”) zwykłym tekstem zamiast dużej liczby, poza sezonem karta wyciszona (`MetricCard` – długie teksty bez czcionki 32 px). Zamiast „teraz: dobrze” obok „Ryzyko suszy: wysokie”: „Teraz: woda w normie · Na dłuższą metę: wysokie ryzyko suszy” – w karcie ryzyka na górze panelu i w etykiecie działki na mapie (`NOW_LABEL`, `LONG_TERM_LABEL` w `theme/status.ts`); odznaki „Teraz: woda w normie”.
 **Pliki:** `frontend/src/features/weather/{WeatherWidget,ForecastCard}.tsx`, `components/{MetricCard,StatusBadge}.tsx`, `features/passport/SectionA.tsx`, `features/parcel-panel/RiskSummary.tsx`, `features/map/{ParcelLabel,ParcelMap}.tsx`, `theme/status.ts`, `lib/i18n.en.ts`, `pages/Start.tsx`.
