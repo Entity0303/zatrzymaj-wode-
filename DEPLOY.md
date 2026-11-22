@@ -36,6 +36,8 @@ Zmienne ustawione przez `render.yaml` (nie trzeba ich wpisywać):
 | `OFFLINE_SOURCES` | *(puste)* | w chmurze GUGiK nie jest zablokowany – wszystkie źródła włączone |
 | `CACHE_DB` | `/data/cache.sqlite` | cache SQLite (na planie Free – do restartu, patrz niżej) |
 | `DEMO_WARMUP` | `true` | po starcie w tle liczą się przykłady z ekranu startowego |
+| `CACHE_SEED` | *(domyślnie `true`, nie trzeba ustawiać)* | pusty cache po starcie / uśpieniu → wczytanie gotowych danych działek demo z obrazu (`backend/app/data/seed/cache_seed.sqlite.gz`) |
+| `CORS_ORIGIN_REGEX` | *(opcjonalnie, ręcznie)* | podglądy Vercela o zmiennych adresach, np. `https://wodoskop(-[a-z0-9-]+)?\.vercel\.app` |
 
 Health check to `/api/health` (lekki). **Nie** ustawiaj `/api/status` jako health check – ten adres przy każdym wywołaniu
 wysyła zapytania testowe do wszystkich źródeł (GUGiK, NASA, IMGW…), a Render sprawdza zdrowie co kilka sekund.
@@ -73,7 +75,8 @@ wysyła zapytania testowe do wszystkich źródeł (GUGiK, NASA, IMGW…), a Rend
 ## 5. Przed oceną: obudzenie backendu
 
 Plan Free usypia usługę po ok. **15 minutach bez ruchu**. Pierwsze zapytanie po uśpieniu czeka na start kontenera
-(zwykle **1–2 minuty**), a cache jest pusty (patrz niżej).
+(zwykle **1–2 minuty**). Cache startuje z gotowego seeda (dane działek demo: działka, gleba, pogoda 10 lat, teren,
+zdjęcie satelitarne, woda w okolicy, ortofotomapa) – przykłady liczą się od razu, bez zapytań do źródeł.
 
 Ok. **10 minut przed oceną**:
 1. Otwórz `https://wodoskop-api.onrender.com/api/status` – obudzi usługę i sprawdzi źródła (pierwsze otwarcie może
@@ -86,11 +89,12 @@ w pogotowiu. Jedna usługa działająca całą dobę mieści się w darmowym lim
 
 ## 6. Konsekwencje planu Free
 
-- **Brak trwałego dysku.** Cache SQLite (`/data/cache.sqlite`) znika przy każdym restarcie, wdrożeniu i uśpieniu.
-  Po wybudzeniu pierwsze analizy pobierają wszystko od nowa (pogoda 10 lat, gleba, teren, zdjęcie satelitarne) –
-  zwykle 10–30 s na działkę; przykłady demo rozgrzewają się same w tle po starcie (`DEMO_WARMUP=true`).
-  Rozwiązania: (a) plan **Starter** + dysk 1 GB – odkomentuj sekcję `disk` w `render.yaml`;
-  (b) gotowy cache w obrazie (seed) – opis w punkcie 8.
+- **Brak trwałego dysku.** Cache SQLite (`/data/cache.sqlite`) znika przy każdym restarcie, wdrożeniu i uśpieniu –
+  dlatego obraz ma **gotowy seed** (`backend/app/data/seed/cache_seed.sqlite.gz`, wczytywany przy starcie, gdy cache
+  jest pusty): działki demo i przykłady liczą się od razu. Nowe działki (spoza seeda) pobierają dane od zera –
+  zwykle 10–30 s; teren, woda w okolicy i zdjęcie satelitarne liczą się w tle (analiza nie czeka).
+  Prognozy i bieżących stanów wód w seedzie nie ma (wygasają w godzinę) – pobierają się przy pierwszej analizie.
+  Trwały cache: plan **Starter** + dysk 1 GB – odkomentuj sekcję `disk` w `render.yaml`.
 - **512 MB pamięci.** Liczenie zdjęcia satelitarnego (rasterio) i PDF (WeasyPrint) naraz może przekroczyć limit –
   w logach Render będzie „Out of memory” i restart. Wtedy: w Environment dodaj `SENTINEL_ENABLED=false`
   (bez nowych zdjęć satelitarnych, reszta działa) albo przejdź na plan Starter.
@@ -114,21 +118,14 @@ Wariant awaryjny bez CORS: zamiast `VITE_API_URL` można dodać w `frontend/verc
 – przeglądarka widzi jeden adres. Minus: Vercel przerywa takie zapytania po kilkudziesięciu sekundach, a pierwsza
 analiza po wybudzeniu backendu może trwać dłużej.
 
-## 8. Do zrobienia w backendzie (druga sesja) – opcjonalnie
+## 8. Backend pod hosting – zrobione (A13)
 
-- **CORS** – jest konfigurowalny (`cors_origins` w `backend/app/core/config.py`, zmienna `CORS_ORIGINS` jako lista JSON).
-  Podglądy Vercela mają zmienne adresy (`wodoskop-git-…-konto.vercel.app`); jeśli mają działać, dodać
-  `cors_origin_regex: str = ""` w `Settings` i `allow_origin_regex=settings.cors_origin_regex or None`
-  w `CORSMiddleware` (`backend/app/main.py`), na Render: `CORS_ORIGIN_REGEX=https://wodoskop(-[a-z0-9-]+)?\.vercel\.app`.
-- **Gotowy cache w obrazie (seed)** – w repo są już: działki demo (`backend/app/data/demo_parcels.json`), zapisany teren
-  NMT (`backend/app/data/terrain/*.geojson|facts.json`), magazyn opadów IMGW (`backend/app/data/imgw/opady.npz`),
-  plony GUS (`backend/app/data/crops/*.csv`). **Tylko w wolumenie** (`cache-data:/data/cache.sqlite`, ok. 15 MB) jest
-  reszta: NASA POWER (ok. 12 MB), ortofotomapa, NMT, Sentinel-2, mapa glebowo-rolnicza, IUNG, SoilGrids, ULDK, PRNG.
-  Propozycja:
-  1. skrypt `backend/scripts/export_seed.py`: z `/data/cache.sqlite` kopiuje wiersze tabeli `cache` z przestrzeni
-     o długim / nieskończonym TTL (bez prognozy Open-Meteo i bez wyników „na dziś”) do
-     `backend/app/data/seed/cache_seed.sqlite.gz` (gzip, szac. 4–6 MB; `*.sqlite` jest w `.gitignore`, `.gz` nie);
-  2. przy starcie (`lifespan` w `main.py`, przed `store()`): jeśli plik `CACHE_DB` nie istnieje albo tabela `cache`
-     jest pusta – rozpakować seed i wczytać `INSERT OR IGNORE` (świeży wpis z wolumenu zawsze wygrywa);
-  3. `stored_at` zostaje z seeda (TTL działa jak dotąd); w `/api/status` widać liczbę wpisów po starcie.
-  Efekt: po każdym wybudzeniu na planie Free przykłady i działki testowe liczą się od razu, bez zapytań do GUGiK.
+- **CORS** – `CORS_ORIGINS` (lista JSON) i opcjonalnie `CORS_ORIGIN_REGEX` dla podglądów Vercela
+  (`allow_origin_regex` w `backend/app/main.py`).
+- **Seed cache w obrazie** – `backend/scripts/export_seed.py` kopiuje z `/data/cache.sqlite` wszystkie wpisy poza
+  prognozą Open-Meteo i bieżącymi stanami wód IMGW do `backend/app/data/seed/cache_seed.sqlite.gz`; przy starcie
+  (`lifespan` → `load_seed()`), gdy tabela `cache` jest pusta, seed jest wczytywany przez `INSERT OR IGNORE`
+  (wpis z wolumenu zawsze wygrywa). Odświeżenie seeda przed wdrożeniem (na dobrej sieci):
+  `docker compose exec backend python scripts/warm_demo.py --no-pdf` → `docker compose exec backend python
+  scripts/export_seed.py` → commit pliku `.gz`. Zgłoszenia rolników (`infra.sqlite`) do seeda nie trafiają.
+- **`/api/health`** – lekki (`{"status":"ok"}`, bez zapytań zewnętrznych).
