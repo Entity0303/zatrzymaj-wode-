@@ -142,7 +142,9 @@ type Props = {
   intro?: boolean
   /** F10: stan obrazu warstwy „Gleba” (IUNG w obrysie działki) – tekst pod legendą */
   onSoilStatus?: (s: SoilImageStatus) => void
-  /** zgłoszenia rowów/zbiorników wokół działki; zmiana `infraRefresh` = ponowne pobranie */
+  /** zgłoszenia rowów/zbiorników – tylko w widoku „Zgłoszenia”: środek obszaru [lon, lat]; null = nie pobieramy */
+  infraCenter?: [number, number] | null
+  /** zmiana = ponowne pobranie zgłoszeń */
   infraRefresh?: number
 }
 
@@ -169,6 +171,7 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
     intro = false,
     onSoilStatus,
     infraRefresh = 0,
+    infraCenter = null,
     children,
   },
   ref,
@@ -179,13 +182,12 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
   const hoverTips = useMediaQuery('(hover: hover) and (pointer: fine)')
   // F17: bez dymka na wybranej działce – sygnałem jest kolor obrysu w barwie statusu (brak danych = biały)
   const outline = parcelStatus === 'no_data' ? '#FFFFFF' : STATUS[parcelStatus].hex
-  // obszar zgłoszeń: działka + ok. 1,5 km dookoła
+  // obszar zgłoszeń: ok. 2 km wokół wskazanego miejsca – tylko w widoku „Zgłoszenia” (bez pobierania przy każdej działce)
   const infraBox = useMemo<[number, number, number, number] | null>(() => {
-    if (!parcel) return null
-    const b = parcelBounds(parcel).pad(0)
-    const d = 0.015
-    return [b.getWest() - d, b.getSouth() - d, b.getEast() + d, b.getNorth() + d]
-  }, [parcel])
+    if (!infraCenter) return null
+    const d = 0.02
+    return [infraCenter[0] - d, infraCenter[1] - d, infraCenter[0] + d, infraCenter[1] + d]
+  }, [infraCenter])
   return (
     <MapContainer
       ref={ref}

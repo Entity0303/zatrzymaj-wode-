@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react'
 import { writeLink, type LinkState } from './deepLink'
 
-/** Strony aplikacji (SPEC 3) – w adresie jako #dzialki, #raporty, #ustawienia; Start = bez #. */
-export type PageKey = 'start' | 'parcels' | 'reports' | 'settings'
+/**
+ * Strony aplikacji (SPEC 3) – w adresie jako #dzialki, #raporty, #zgloszenia, #ustawienia; Start = bez #.
+ * „Zgłoszenia” (rowy i zbiorniki) to widok mapy Startu z otwartym kreatorem zgłoszeń.
+ */
+export type PageKey = 'start' | 'parcels' | 'reports' | 'infra' | 'settings'
 
-const HASH: Record<PageKey, string> = { start: '', parcels: 'dzialki', reports: 'raporty', settings: 'ustawienia' }
+const HASH: Record<PageKey, string> = { start: '', parcels: 'dzialki', reports: 'raporty', infra: 'zgloszenia', settings: 'ustawienia' }
 
 function pageFromHash(): PageKey {
   const h = window.location.hash.replace(/^#/, '')

@@ -59,6 +59,7 @@ import { ReportForm } from '@/features/reports/ReportForm'
 import { useMediaQuery, useOnline, usePrefersReducedMotion, useSavedParcels } from '@/lib/hooks'
 import { mockApproxParcel, mockApproxRequested, mockRequested } from '@/mocks/useMockAnalysis'
 import { locale, useLang } from '@/lib/i18n'
+import { goTo, usePage } from '@/lib/router'
 
 /** Ekran Start (SPEC 4, 12): mapa + panel działki + dolny pasek kart / szuflada na telefonie. */
 
@@ -85,6 +86,8 @@ const NO_HISTORY: string[] = []
 
 export default function Start() {
   const { t } = useLang()
+  // „Zgłoszenia” (#zgloszenia) to widok Startu z otwartym kreatorem zgłoszeń
+  const page = usePage()
   const isMobile = useMediaQuery('(max-width: 767px)')
   const isDesktop = useMediaQuery('(min-width: 1280px)')
   const reducedMotion = usePrefersReducedMotion()
@@ -626,10 +629,40 @@ export default function Start() {
   function openInfra() {
     const c = parcel ? parcelBounds(parcel).getCenter() : null
     hidePassport()
-    setInfra({ point: c ? [c.lng, c.lat] : null, picking: false })
+    // bez działki – środek mapy (miejsce i tak wskazuje się na mapie)
+    setInfra({ point: c ? [c.lng, c.lat] : mapCenter, picking: false })
     if (isMobile) setSnap('full')
   }
-  const closeInfra = () => setInfra(null)
+  const closeInfra = () => {
+    setInfra(null)
+    if (page === 'infra') goTo('start')
+  }
+  // „Zgłoszenia” z lewego menu / dolnych zakładek (#zgloszenia) – otwiera kreator; okolica wybranej działki albo środek mapy
+  useEffect(() => {
+    if (page === 'infra' && !infra) openInfra()
+    // tylko wejście na stronę
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page])
+  // kreator zamknięty inną drogą (wybór działki, „Wróć do mapy”) – adres wraca na Start, żeby „Zgłoszenia” znów działały
+  const hadInfra = useRef(false)
+  useEffect(() => {
+    if (infra) hadInfra.current = true
+    else if (hadInfra.current) {
+      hadInfra.current = false
+      if (page === 'infra') goTo('start')
+    }
+    // tylko zmiana otwarcia kreatora
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [!!infra])
+  const infraCenter = useMemo<[number, number] | null>(() => {
+    if (!infra) return null
+    if (infra.point) return infra.point
+    if (parcel) {
+      const c = parcelBounds(parcel).getCenter()
+      return [c.lng, c.lat]
+    }
+    return mapCenter
+  }, [infra, parcel, mapCenter])
   const infraOpen = !!infra && !infra.picking
   const infraMarker = useMemo<GeoJSON.Geometry | null>(
     () => (infra?.point ? { type: 'Point', coordinates: infra.point } : null),
@@ -792,7 +825,6 @@ export default function Start() {
     report: reportUi,
     onOpenPassport: openPassport,
     onShowOnMap: showOnMap,
-    onReportInfra: openInfra,
     onExample: openExample,
     examples: demoExamples,
     onClose: backToExplore,
@@ -907,6 +939,7 @@ export default function Start() {
             insidePopup={insidePopup}
             highlight={infra ? infraMarker : highlight}
             infraRefresh={infraRefresh}
+            infraCenter={infraCenter}
             intro={intro}
             onSoilStatus={setSoilImg}
             insets={insets}

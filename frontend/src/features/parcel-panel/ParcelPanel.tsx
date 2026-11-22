@@ -1,4 +1,4 @@
-import { Loader2, Waves } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { EmptyState } from '@/components/EmptyState'
 import { ErrorNotice } from '@/components/ErrorNotice'
 import { FieldIllustration } from '@/components/FieldIllustration'
@@ -39,7 +39,6 @@ export function ParcelPanel({
   report,
   onOpenPassport,
   onShowOnMap,
-  onReportInfra,
   onExample,
   examples,
   onClose,
@@ -68,8 +67,6 @@ export function ParcelPanel({
   onOpenPassport?: () => void
   /** podświetla miejsce rekomendacji na mapie */
   onShowOnMap?: (g: GeoJSON.Geometry) => void
-  /** zgłoszenie stanu rowu / zbiornika w okolicy (SPEC 11) */
-  onReportInfra?: () => void
   /** pusty stan: przykładowe analizy jednym klikiem */
   onExample?: (e: Example) => void
   /** zamyka działkę – powrót do mapy */
@@ -188,15 +185,6 @@ export function ParcelPanel({
             <LoadingSteps steps={steps} className="mt-3" />
           </div>
         </>
-      )}
-      {onReportInfra && (
-        <button
-          type="button"
-          onClick={onReportInfra}
-          className="flex min-h-11 w-full items-center justify-center gap-2 rounded-md text-sm font-medium text-brand hover:bg-sage-soft"
-        >
-          <Waves className="size-4" aria-hidden /> {t('Zgłoś stan rowu lub zbiornika w okolicy')}
-        </button>
       )}
       <footer className="border-t pt-3 text-xs leading-4 text-text-muted">
         {t('Dane:')}{' '}

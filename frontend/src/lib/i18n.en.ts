@@ -1260,4 +1260,6 @@ export const EN: Record<string, string> = {
   // Dopisek: przyciski raportu
   'albo pełny raport': 'or the full report',
   'Przygotowuję…': 'Preparing…',
+  // Dopisek: Zgłoszenia w menu
+  'Zgłoszenia': 'Reports of ditches',
 }
