@@ -276,3 +276,9 @@ Weryfikacja: `tsc -b` przechodzi; `vite build` – lokalnie i w kontenerze brak 
 
 **Dla Mefju:** pole można pokazać przy opadzie (np. oznaczenie lat na wykresie „Na tle 10 lat”); nic nie jest wymagane. Dla dat sprzed 2022 r. przychód zwykle `null` z `revenue_note`.
 **Łamie zgodność:** nie.
+
+### 2026-11-22 · `main` · A16b – kto odstaje przy rozjeździe opadu
+- `PrecipSources.precip_disagreement_source: 'nasa' | 'station' | null` – `nasa`: stacje zgodne z sąsiednimi, rozjazd to NASA (pewność bez zmian); `station`: stacja odstaje od sąsiadów (wynik dla tych lat mniej pewny, pewność niżej przy ≥ 2 latach z 5); `null` – brak lat w `precip_disagreement`.
+
+**Dla Mefju:** przy `nasa` nie pokazuj ostrzeżenia – zdanie w `sentence` mówi, że przyjmujemy pomiar ze stacji. Ceny historyczne: dla dat 2014–2021 przychód jest teraz liczony (GUS z 3 lat przed rokiem analizy).
+**Łamie zgodność:** nie.

@@ -4,6 +4,10 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-22 09:30 · `main` · A16b: kto odstaje przy rozjeździe opadu, ceny GUS 2013–2020
+Rozjazd IV–VII klasyfikowany wg mediany sąsiednich stacji ≤ 50 km (±25%): „nasa” – zdanie „dane satelitarne NASA pokazują ok. X% więcej… – przyjmujemy pomiar ze stacji”, bez obniżania pewności; „station” – jak w A16 (D104). 201305: „nasa”, pewność „wysoka” (w A16 „średnia”). `build_prices.py --append` – ceny 2013–2020 pobrane raz (952 wartości). render.yaml pominięty: cudze niezacommitowane zmiany (A18) w render.yaml / config.py / docker-compose.yml; `confidence.py` nie ruszany (zmiany A18).
+**Pliki:** `backend/app/analysis/{precip,prices}.py`, `rules/precip.yaml`, `routers/analysis.py`, `schemas/analysis.py`, `frontend/src/api/types.ts` (1 pole), `backend/app/data/prices/gus_prices.csv`, `backend/scripts/build_prices.py`, `backend/tests/test_a16.py`. **Kontrakt:** tak – `PrecipSources.precip_disagreement_source`.
+
 ## 2026-11-22 08:30 · `main` · A16: plon i ceny sprzed daty analizy, trend plonów, rozjazd opadu IMGW / NASA
 Ym z plonów GUS < rok daty analizy, trend Theil–Sen (±3%/rok) × P90 reszt; ceny GUS z 3 lat przed rokiem analizy, ZSRIR tylko z notowań ≤ data; `precip_disagreement` (IV–VII, > 30%) + zdanie + pewność o poziom niżej przy ≥ 2 z 5 lat (D103). Burzyn: dane bez luk i podejrzanych zer – reguła niepotrzebna. Test wsteczny (201305, Krusza 57; pszenica, rzepak): r 0,09/0,64/0,60/0,72 → 0,60/0,76/0,83/0,88, MAPE 20,2/8,4/11,3/11,6 → 12,4/7,3/9,6/10,2%. `confidence.py` – w indeksie tylko fragmenty A16 (reszta pliku to niezacommitowane zmiany A18 innej sesji).
 **Pliki:** `backend/app/analysis/{suggestions,prices,precip,confidence}.py`, `rules/{ranking,precip}.yaml`, `routers/analysis.py`, `schemas/analysis.py`, `frontend/src/api/types.ts` (1 pole), `backend/tests/{test_a16,test_a5b2}.py`. **Kontrakt:** tak – `PrecipSources.precip_disagreement`.

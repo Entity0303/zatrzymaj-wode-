@@ -1,6 +1,6 @@
 # Status – osoba A (Dominik), backend
 
-_Stan na: 2026-11-22 08:30 (A16)_
+_Stan na: 2026-11-22 09:30 (A16b)_
 
 ## Zrobione
 - Wyszukiwanie działki ULDK: pełny identyfikator, „obręb numer”, punkt; `GET /api/parcel` (409 lista kandydatów, 404, 502 z nazwą źródła), timeout 10 s + jedna ponowna próba, cache 24 h.
@@ -85,6 +85,7 @@ _Stan na: 2026-11-22 08:30 (A16)_
 - **A9b:** okres analizy `period=30d|since_sowing|season` / `date_from`+`date_to` – sumy, norma 10 lat, percentyl, zdanie, dni stresu, przebieg dzienny (D100).
 - **A15:** poprawki z weryfikacji V1 – nagłówek „Trudna”, zboża na dobrej glebie, kompleksy górskie, satelita 12 h i słowami (D101).
 - **A16:** plon i ceny tylko sprzed daty analizy, trend plonów GUS (Theil–Sen), flaga rozjazdu opadu IMGW / NASA (D103).
+- **A16b:** rozjazd opadu – „nasa” / „station” wg sąsiednich stacji; ceny GUS 2013–2020 (D104). render.yaml czeka na commit A18.
 - Testy: **550 bez sieci** (cudze pliki w wersji z HEAD) + 5 live.
 
 ## W trakcie (gałąź)
