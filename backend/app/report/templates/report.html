@@ -104,17 +104,17 @@
   <h2>{{ 'Wszystkie uprawy' if full else 'Co tu posiać' }}</h2>
   {% if rank_rows %}
   <table class="rank">
-    <tr><th style="width:33%">Uprawa</th><th style="width:16%">Plon typowy</th><th style="width:15%">Słaby rok</th><th style="width:13%">Ryzyko suszy</th><th>Przychód z pola</th></tr>
+    <tr><th style="width:26%">Uprawa</th><th style="width:17%">Plon typowy</th><th style="width:17%">Słaby rok</th><th style="width:12%">Ryzyko suszy</th><th>Przychód z pola</th></tr>
     {% for i in rank_rows %}
     <tr>
       <td><div class="cname">{{ i.label }}</div>
         <div class="crank"><span class="ybar"><i style="width: {{ (i.relative_yield_median * 100)|round(0) }}%; background: {{ CATT[i.category][1] }}"></i></span>
           <span class="cat" style="color: {{ CATT[i.category][1] if i.category != 'mozliwe' else '#8A6A0C' }}">{{ CATT[i.category][0] }}</span></div>
         {% if full %}<div class="muted">{{ i.reason }}</div>{% endif %}</td>
-      <td class="n">{{ i.yield_typical_t_ha|num(1, 't/ha') }}{% if i.total_typical_t is not none %}<div class="muted">{{ tonnes(i.total_typical_t) }}</div>{% endif %}</td>
-      <td class="n">{{ i.yield_weak_t_ha|num(1, 't/ha') }}{% if i.weak_year %} <span class="muted">({{ i.weak_year }})</span>{% endif %}</td>
+      <td class="n">{{ yield_text(i.yield_typical_t_ha, i.yield_typical_range) }}{% if i.total_typical_t is not none %}<div class="muted">{{ tonnes(i.total_typical_t) }}</div>{% endif %}</td>
+      <td class="n">{{ yield_text(i.yield_weak_t_ha, i.yield_weak_range) }}{% if i.weak_year %} <span class="muted">({{ i.weak_year }})</span>{% endif %}</td>
       <td class="n">{{ risk_text(i) }}</td>
-      <td>{% if i.revenue and zl(i.revenue.typical_zl) %}<b>{{ zl(i.revenue.typical_zl) }}</b>{% if zl(i.revenue.weak_year_zl) %}<div class="muted">słaby rok {{ zl(i.revenue.weak_year_zl) }}</div>{% endif %}
+      <td>{% if zl_range(i.revenue) %}<b>{{ zl_range(i.revenue) }}</b>{% if zl(i.revenue.weak_year_zl) %}<div class="muted">słaby rok {{ zl(i.revenue.weak_year_zl) }}</div>{% endif %}
         {% else %}<span class="muted">{{ i.revenue_note or 'brak ceny skupu' }}</span>{% endif %}</td>
     </tr>
     {% endfor %}

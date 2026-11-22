@@ -32,8 +32,9 @@ ORTHO_TIMEOUT_S = 6.0
 MAP_PX = 560
 
 STATUS = {  # SPEC 2.2
-    "ok": ("Dobrze", "#5BB37F", "#E6F4EA"), "warn": ("Uwaga", "#E8B931", "#FDF4D8"),
-    "risk": ("Ryzyko", "#E07B39", "#FCEBDD"), "danger": ("Bardzo mało wody", "#C8453B", "#FBE7E5"),
+    # F21: nazwy stopni jak w backendzie (scoring / rules/status.yaml): W normie / Uwaga / Mało wody / Bardzo mało wody
+    "ok": ("W normie", "#5BB37F", "#E6F4EA"), "warn": ("Uwaga", "#E8B931", "#FDF4D8"),
+    "risk": ("Mało wody", "#E07B39", "#FCEBDD"), "danger": ("Bardzo mało wody", "#C8453B", "#FBE7E5"),
     "no_data": ("Brak danych", "#B8BDB9", "#F1F2F1"),
 }
 CATEGORY = {"retencja": ("Zatrzymanie wody", "#2F80C9"), "agrotechnika": ("Zmiany w uprawie", "#8B6B4A"),
@@ -332,11 +333,36 @@ def zl(v: float | None) -> str | None:
     return "ok. " + f"{r:,}".replace(",", " ") + " zł"
 
 
+def _span(r) -> tuple[float, float] | None:
+    """F21: [min, max] z wariantów A21 (None, gdy brak / niepełne)."""
+    if not r or len(r) < 2 or r[0] is None or r[1] is None:
+        return None
+    return (min(r[0], r[1]), max(r[0], r[1]))
+
+
 def risk_text(i) -> str:
-    """„3 na 10 lat” albo zakres „1–3 na 10 lat”, gdy analiza go poda (pole opcjonalne)."""
-    rng = getattr(i, "drought_risk_range", None) or getattr(i, "risk_years_range", None)
-    n = f"{rng[0]}–{rng[1]}" if rng and rng[0] != rng[1] else str(i.drought_risk_years)
+    """„3 na 10 lat” albo zakres „1–4 na 10 lat” (A21 drought_risk_range); min = max – jedna liczba."""
+    rng = _span(getattr(i, "drought_risk_range", None) or getattr(i, "risk_years_range", None))
+    n = f"{int(rng[0])}–{int(rng[1])}" if rng and rng[0] != rng[1] else str(i.drought_risk_years)
     return f"{n} na {i.years_simulated} lat"
+
+
+def yield_text(v: float | None, rng=None) -> str:
+    """F21: plon „3,4–3,9 t/ha” z widełek albo „3,6 t/ha”; brak = „brak danych”."""
+    s = _span(rng)
+    if s and num(s[0], 1) != num(s[1], 1):
+        return f"{num(s[0], 1)}–{num(s[1], 1)} t/ha"
+    return num(v, 1, "t/ha")
+
+
+def zl_range(rev) -> str | None:
+    """F21: przychód „ok. 4 600–5 200 zł” z revenue_range albo „ok. 4 900 zł”; brak ceny = None."""
+    if not rev or zl(rev.typical_zl) is None:
+        return None
+    s = _span(getattr(rev, "revenue_range", None))
+    if s and zl(s[0]) and zl(s[1]) and zl(s[0]) != zl(s[1]):
+        return f"{zl(s[0])[:-3]}–{zl(s[1])[4:]}"
+    return zl(rev.typical_zl)
 
 
 def field_items(a: AnalysisResponse) -> list:
@@ -430,7 +456,7 @@ def tiles(a: AnalysisResponse) -> list[dict]:
         out.append({"title": f"Ryzyko suszy – {it.label.lower()}", "value": risk_text(it), "unit": "",
                     "sub": "lata, w których susza zabiera ponad 20% plonu",
                     "color": "#C8453B" if n >= 5 else "#E07B39" if n >= 3 else "#5BB37F", "bar": None})
-        typ = zl(it.revenue.typical_zl) if it.revenue else None
+        typ = zl_range(it.revenue)
         weak = zl(it.revenue.weak_year_zl) if it.revenue else None
         out.append({"title": f"Przychód z pola – {it.label.lower()}", "value": typ or "brak ceny", "unit": "",
                     "sub": (f"typowy rok, bez kosztów{f' · słaby rok {weak}' if weak else ''}" if typ else
@@ -509,8 +535,15 @@ def sources_line(a: AnalysisResponse, limit: int | None = None) -> str:
 
 def period_text(a: AnalysisResponse) -> str:
     if a.period:
-        return a.period.label
-    return f"od {date_pl(a.history.season_start)} (sezon uprawy)"
+        txt = a.period.label
+    else:
+        txt = f"od {date_pl(a.history.season_start)} (sezon uprawy)"
+    cs = a.crop_season
+    if cs and cs.sowing_date:  # F21: data siewu rolnika (A21) i uwaga, gdy poza typowym zakresem
+        txt += f" · siew {date_pl(cs.sowing_date)}"
+    if cs and cs.sowing_note:
+        txt += f" ({cs.sowing_note.rstrip('.')})"
+    return txt
 
 
 def area_text(a: AnalysisResponse, short: bool = False) -> str:
@@ -596,7 +629,7 @@ def render_html(a: AnalysisResponse, ortho: str | None, generated: dt.datetime |
         "std_limits": STANDARD_LIMITS, "std_limits_short": STANDARD_LIMITS_SHORT,
         "period_text": period_text(a),
         "area_text": area_text(a, short=report_type != "full"),
-        "tonnes": tonnes, "zl": zl, "risk_text": risk_text, "balance_words": balance_words,
+        "tonnes": tonnes, "zl": zl, "risk_text": risk_text, "yield_text": yield_text, "zl_range": zl_range, "balance_words": balance_words,
         "price_sources": sorted({i.revenue.price_source for i in field_items(a) if i.revenue and i.revenue.price_source}),
         "generated_txt": (generated or dt.datetime.now(dt.timezone.utc)).astimezone().strftime("%d.%m.%Y %H:%M"),
         "app_host": app_url().split("//", 1)[-1],
