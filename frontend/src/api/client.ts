@@ -62,6 +62,9 @@ async function post<T>(path: string, body: unknown, signal?: AbortSignal): Promi
   return data as T
 }
 
+/** F30: odpowiedź POST /api/parcels-in-area (typ lokalny – poza kontraktem analizy). */
+export type ParcelsInArea = { parcels: { id: string; obreb: string; gmina: string; numer: string; share: number }[]; note: string | null }
+
 /** Parametry analizy (GET /api/analysis, GET /api/report.pdf). */
 export type AnalysisQuery = {
   parcelId?: string | null
@@ -190,6 +193,8 @@ export const api = {
   confirmInfraReport: (id: string) => post<InfraReport>(`/api/infra-reports/${encodeURIComponent(id)}/confirm`, {}),
   /** GET /api/demo/examples – przykłady „jednym klikiem” (działki rozgrzane w pamięci serwera) */
   demoExamples: (signal?: AbortSignal) => get<DemoExample[]>('/api/demo/examples', {}, signal),
+  /** F30: POST /api/parcels-in-area – działki ewidencyjne pod polem narysowanym (udział w %) */
+  parcelsInArea: (geometry: GeoJSON.Polygon, signal?: AbortSignal) => post<ParcelsInArea>('/api/parcels-in-area', { geometry }, signal),
   /** GET /api/report.pdf – te same parametry co analiza; odpowiedź to plik PDF */
   reportPdf: async (q: AnalysisQuery, signal?: AbortSignal): Promise<Blob> => {
     // bez uprawy = raport „Stan działki”; punkt zamiast działki = obszar przybliżony

@@ -92,3 +92,78 @@ async def get_parcel(
         return parcel_out(await resolve_parcel(id, lon, lat))
     except SourceError as exc:
         raise http_error(exc) from exc
+
+
+# ── F30: działki ewidencyjne pod polem narysowanym ───────────────────────────────────────────
+
+AREA_POINTS = 12  # najwyżej tyle punktów w obrysie (środek + siatka)
+AREA_LIMIT_S = 15.0
+AREA_NOTE = "Nie udało się sprawdzić działek ewidencyjnych – spróbuj za chwilę."
+_area_cache: dict[str, dict] = {}
+
+
+def area_points(geom) -> list[tuple[float, float]]:
+    """Punkty [lon, lat] wewnątrz obrysu: punkt wewnętrzny (środek) + równomierna siatka, razem najwyżej AREA_POINTS."""
+    from shapely.geometry import Point
+
+    c = geom.representative_point()
+    pts = [(c.x, c.y)]
+    x0, y0, x1, y1 = geom.bounds
+    for n in (4, 5, 6, 8):  # gęstsza siatka, gdy kształt jest wąski i mało punktów trafia do środka
+        grid = [(x0 + (x1 - x0) * (i + 0.5) / n, y0 + (y1 - y0) * (j + 0.5) / n) for j in range(n) for i in range(n)]
+        inside = [p for p in grid if geom.contains(Point(p))]
+        if len(inside) >= AREA_POINTS - 1 or n == 8:
+            step = max(1, len(inside) // (AREA_POINTS - 1))
+            pts += inside[::step][: AREA_POINTS - 1]
+            break
+    return pts
+
+
+@router.post("/parcels-in-area")
+async def parcels_in_area(body: dict) -> dict:
+    """F30: które działki ewidencyjne obejmuje narysowane pole – próbkowanie punktami (ULDK GetParcelByXY, z cache
+    i limitem klienta). `share` = udział punktów, %. Błąd / ponad 15 s bez wyniku → pusta lista i `note`."""
+    import asyncio
+    import json
+
+    from shapely.geometry import shape
+
+    try:
+        geom = shape(body.get("geometry") or {})
+        if geom.is_empty or geom.geom_type != "Polygon" or not geom.is_valid:
+            raise ValueError("obrys")
+    except Exception as exc:  # noqa: BLE001 – każdy błędny obrys = 422
+        raise HTTPException(status_code=422, detail={"message": "Podaj obrys pola (GeoJSON Polygon)."}) from exc
+    key = json.dumps([[round(x, 5), round(y, 5)] for x, y in geom.exterior.coords])
+    if key in _area_cache:
+        return _area_cache[key]
+    pts = area_points(geom)
+    found: list[uldk.Parcel] = []
+    failed = 0
+
+    async def sample() -> None:
+        nonlocal failed
+        for lon, lat in pts:  # po kolei – klient ULDK pilnuje limitu GUGiK
+            try:
+                found.append(await uldk.by_point(lon, lat))
+            except SourceError as exc:
+                from app.core.http import NotFoundError
+
+                if not isinstance(exc, NotFoundError):
+                    failed += 1
+
+    try:
+        await asyncio.wait_for(sample(), AREA_LIMIT_S)
+    except asyncio.TimeoutError:
+        failed += 1
+    if not found:
+        return {"parcels": [], "note": AREA_NOTE if failed else None}
+    counts: dict[str, list] = {}
+    for p in found:
+        counts.setdefault(p.id, [p, 0])[1] += 1
+    parcels = [{"id": p.id, "obreb": p.region, "gmina": p.commune, "numer": p.number, "share": round(100 * n / len(found))}
+               for p, n in sorted(counts.values(), key=lambda x: -x[1])]
+    out = {"parcels": parcels, "note": None}
+    if not failed:
+        _area_cache[key] = out
+    return out

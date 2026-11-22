@@ -7,6 +7,7 @@ import { plForm, shortCounty, formatArea } from '@/lib/format'
 import { ParcelActions } from './ParcelActions'
 import type { SearchPhase } from './types'
 import { useLang } from '@/lib/i18n'
+import { DrawnParcels } from './DrawnParcels'
 import { useParcelTitle } from './parcelTitle'
 
 /** Zwinięta część szuflady: nazwa działki + status + „Raport” (SPEC 12). */
@@ -107,6 +108,7 @@ function ParcelHead({
             ? t('wokół wskazanego punktu')
             : `${t('gm. {gmina}, obręb {obreb}', { gmina: parcel.gmina, obreb: parcel.obreb })} · ${shortCounty(parcel.powiat)}`}
         </p>
+        {drawn && <DrawnParcels parcel={parcel} className="pl-[46px] text-sm leading-5 text-text-muted" />}
         <div className="flex items-center gap-1 pl-[46px]">
           <StatusBadge status={status} size="sm" now={status !== 'no_data'} historical={historical} />
           <span className="flex-1" />

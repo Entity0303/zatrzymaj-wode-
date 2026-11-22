@@ -1332,4 +1332,10 @@ export const EN: Record<string, string> = {
   'źródło: {src}': 'source: {src}',
   // F29: warstwy dla pola narysowanego
   'Nie udało się policzyć warstwy dla narysowanego pola – spróbuj narysować je jeszcze raz.': 'Could not calculate the layer for the drawn field – try drawing it again.',
+  // F30: działki pod polem narysowanym
+  'sprawdzam działki ewidencyjne…': 'checking cadastral parcels…',
+  'Obejmuje działki:': 'Covers parcels:',
+  'ok. {n}%': 'approx. {n}%',
+  'i {n} innych': 'and {n} more',
+  'Nie udało się sprawdzić działek ewidencyjnych – spróbuj za chwilę.': 'Could not check the cadastral parcels – try again in a moment.',
 }

@@ -4,6 +4,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { shortCounty, formatArea } from '@/lib/format'
 import { ParcelActions } from './ParcelActions'
 import { useLang } from '@/lib/i18n'
+import { DrawnParcels } from './DrawnParcels'
 import { useParcelTitle } from './parcelTitle'
 
 /** 1. Nagłówek panelu (SPEC 6.1). */
@@ -70,6 +71,7 @@ export function ParcelHeader({
           <ParcelActions parcel={parcel} saved={saved} onToggleSave={onToggleSave} onCopied={onCopied} />
         </div>
       </div>
+      {drawn && <DrawnParcels parcel={parcel} className="pl-[52px] text-sm leading-5 text-text-muted" />}
     </div>
   )
 }
