@@ -1,21 +1,39 @@
-import { WMSTileLayer } from './leaflet'
+import L from 'leaflet'
+import { useEffect, useRef } from 'react'
+import { useMap } from './leaflet'
 import { SOIL_COLOR } from '@/theme/soil'
+import { useStored } from '@/lib/storage'
 
 /**
- * Podatność gleb na suszę – mapa IUNG-PIB (`Susza:katgl_landuse2024`, ta sama co do analizy, D3) na mapie startowej.
+ * Podatność gleb na suszę – mapa IUNG-PIB (`Susza:katgl_landuse2024`, ta sama co do analizy, D3).
  * Własny styl SLD w kolorach aplikacji (`theme/soil.ts` – jak warstwa „Gleba”): kat. I–IV i gleby organiczne
  * kolorowe, las / woda / zabudowa / drogi przezroczyste. GeoServer IUNG przyjmuje `SLD_BODY` (sprawdzone 21.11.2026).
+ *
+ * F7: tylko na żądanie (domyślnie wyłączona, stan w localStorage) i dopiero od przybliżenia gminy.
+ * Kafle idą prosto z przeglądarki do sgeo.iung.pl (bez proxy w backendzie) – stały URL, więc przeglądarka
+ * bierze je z własnej pamięci przy powrocie w to samo miejsce.
  */
 const IUNG_WMS = 'https://sgeo.iung.pl/geoserver/Susza/wms'
 
-/** Największe przybliżenie, przy którym warstwa jest rysowana (z bliska piksele 5 m wyglądają topornie). */
-export const SOIL_MAX_ZOOM = 11
+/** Od tego przybliżenia warstwa pobiera kafle (skala gminy / kilku wsi). Poniżej – nic nie pobiera. */
+export const SOIL_MIN_ZOOM = 12
 
-/**
- * Czy warstwa jest teraz na mapie – ta sama reguła co Leaflet (kafle dla zaokrąglonego przybliżenia ≤ maxZoom),
- * żeby legenda pojawiała się i znikała razem z warstwą.
- */
-export const soilLayerVisible = (zoom: number) => Math.round(zoom) <= SOIL_MAX_ZOOM
+/** Przybliżenia ponad to – kafle z poziomu 15 powiększane (raster IUNG ma ok. 5 m, ostrzej i tak nie będzie). */
+const SOIL_MAX_NATIVE_ZOOM = 15
+
+/** Polska z małym zapasem – Leaflet nie pyta o kafle poza tym prostokątem. */
+const POLAND_BOUNDS = L.latLngBounds([48.9, 14.0], [55.0, 24.3])
+
+export const SOIL_ATTRIBUTION = 'Podatność gleb na suszę: <a href="https://susza.iung.pulawy.pl">IUNG-PIB</a>'
+
+/** Czy przy tym przybliżeniu warstwa ma kafle – ta sama reguła co Leaflet (zaokrąglony zoom ≥ minZoom). */
+export const soilLayerInRange = (zoom: number) => Math.round(zoom) >= SOIL_MIN_ZOOM
+
+/** Szary tekst przy przełączniku i w legendzie, gdy mapa jest za bardzo oddalona. */
+export const SOIL_ZOOM_HINT = 'Przybliż mapę, aby zobaczyć podatność gleb'
+
+/** Włączona / wyłączona – zapamiętane w przeglądarce (readStored / writeStored mają try/catch). */
+export const useSoilLayerOn = () => useStored<boolean>('zw.soilLayer', false)
 
 const entry = (q: number, opacity: number) => `<ColorMapEntry color="${SOIL_COLOR[q]}" quantity="${q}" opacity="${opacity}"/>`
 const clear = (q: number) => `<ColorMapEntry color="#000000" quantity="${q}" opacity="0"/>`
@@ -36,24 +54,46 @@ const SLD = [
   '</ColorMap></RasterSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>',
 ].join('')
 
-export function SoilSusceptibilityLayer() {
-  return (
-    <WMSTileLayer
-      url={IUNG_WMS}
-      params={{
-        layers: 'Susza:katgl_landuse2024',
-        format: 'image/png',
-        transparent: true,
-        // parametr spoza typów Leaflet – GeoServer: styl przekazany w zapytaniu
-        ...({ sld_body: SLD } as object),
-      }}
-      opacity={0.55}
-      zIndex={5}
-      // tylko przy oddaleniu (regiony) – z bliska piksele 5 m wyglądają topornie i zasłaniają pola
-      maxZoom={SOIL_MAX_ZOOM}
-      attribution='Podatność gleb na suszę: <a href="https://susza.iung.pulawy.pl">IUNG-PIB</a>'
-    />
-  )
+/** Jedna instancja na całe życie mapy – wszystkie opcje stałe, URL kafla zależy tylko od położenia. */
+function createSoilLayer() {
+  return L.tileLayer.wms(IUNG_WMS, {
+    layers: 'Susza:katgl_landuse2024',
+    format: 'image/png',
+    transparent: true,
+    // parametr spoza typów Leaflet – GeoServer: styl przekazany w zapytaniu
+    ...({ sld_body: SLD } as object),
+    tileSize: 512,
+    opacity: 0.55,
+    zIndex: 5,
+    minZoom: SOIL_MIN_ZOOM,
+    maxNativeZoom: SOIL_MAX_NATIVE_ZOOM,
+    maxZoom: 20,
+    bounds: POLAND_BOUNDS,
+    // kafle dopiero po zatrzymaniu mapy, nie w trakcie przesuwania / animacji przybliżania
+    updateWhenIdle: true,
+    updateWhenZooming: false,
+    keepBuffer: 2,
+    attribution: SOIL_ATTRIBUTION,
+  })
+}
+
+/**
+ * Warstwa tworzona RAZ (useRef, przy pierwszym włączeniu); włączanie / wyłączanie = tylko addLayer / removeLayer.
+ * Atrybucja IUNG-PIB w stopce mapy pojawia się i znika razem z warstwą (Leaflet dodaje ją przy addLayer).
+ */
+export function SoilSusceptibilityLayer({ on }: { on: boolean }) {
+  const map = useMap()
+  const layer = useRef<L.TileLayer.WMS | null>(null)
+  useEffect(() => {
+    if (!on) return
+    layer.current ??= createSoilLayer()
+    const l = layer.current
+    map.addLayer(l)
+    return () => {
+      map.removeLayer(l)
+    }
+  }, [on, map])
+  return null
 }
 
 /** Legenda warstwy (te same kategorie i kolory co warstwa „Gleba”). */

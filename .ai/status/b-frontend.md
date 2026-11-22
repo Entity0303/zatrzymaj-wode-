@@ -1,8 +1,9 @@
 # Status – osoba B (Mefju), frontend
 
-_Stan na: 2026-11-22 (B-LIC – A za B, gałąź `f/leaflet`)_
+_Stan na: 2026-11-22 (F7 – A za B, `main`)_
 
 ## Zrobione
+- **F7 (A za B)**: podatność gleb IUNG tylko na żądanie – przełącznik w menu podkładu (prawy dolny róg), domyślnie wyłączona, stan w localStorage; kafle WMS 512 px od zoomu 12, jedna instancja Leafletu, `updateWhenIdle`, granice Polski; legenda i atrybucja tylko gdy włączona.
 - **B-LIC (A za B, `f/leaflet`)**: react-leaflet i @react-leaflet/core (Hippocratic-2.1) usunięte; własna cienka warstwa nad Leafletem w `features/map/leaflet/` (MapContainer, TileLayer, WMSTileLayer, GeoJSON, ImageOverlay, Marker, CircleMarker, Polygon, Polyline, Tooltip, Popup, useMap, useMapEvents) – reszta kodu tylko z podmienionymi importami. Czeka na przeklikanie przez A na :5176 i merge do `main`.
 - **F4 (A za B)**: karta powitalna chowa się przy przybliżaniu/przeciąganiu; publiczny link (VITE_API_URL, vercel.json, render.yaml, DEPLOY.md); README.md.
 - **F3 (A za B)** na mockach: adresy w wyszukiwarce, teren i woda w okolicy liczone w tle, warstwa i karta „Woda w okolicy”, przychód z pola i ceny, „Okres” (zakres dat) z kartą i wykresem, satelita POST dla pola narysowanego. Czeka na backend F3.

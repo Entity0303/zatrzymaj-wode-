@@ -23,7 +23,7 @@ import { PanelCollapsed } from '@/features/parcel-panel/PanelCollapsed'
 import { ExploreBar } from '@/features/intro/ExploreBar'
 import { IntroHero } from '@/features/intro/IntroHero'
 import { useDemoExamples } from '@/features/intro/useDemoExamples'
-import { SOIL_SUSCEPTIBILITY_LEGEND, soilLayerVisible } from '@/features/map/SoilSusceptibilityLayer'
+import { SOIL_SUSCEPTIBILITY_LEGEND, SOIL_ZOOM_HINT, soilLayerInRange, useSoilLayerOn } from '@/features/map/SoilSusceptibilityLayer'
 import { LocateButton } from '@/features/search/LocateButton'
 import { Passport } from '@/features/passport/Passport'
 import { exampleDate, type Example } from '@/features/parcel-panel/examples'
@@ -112,6 +112,8 @@ export default function Start() {
   const [settings] = useSettings()
   const [ui, setUi] = useUiPrefs()
   const [baseMap, setBaseMap] = useState<BaseMap>(settings.baseMap)
+  // F7: podatność gleb na suszę (IUNG) – nakładka na żądanie, domyślnie wyłączona, stan w localStorage
+  const [soilOn, setSoilOn] = useSoilLayerOn()
   const [pendingPoint, setPendingPoint] = useState<[number, number] | null>(null)
   const [userPoint, setUserPoint] = useState<[number, number] | null>(null)
   const [locating, setLocating] = useState(false)
@@ -607,8 +609,9 @@ export default function Start() {
 
   const { forecast, state: forecastState } = useForecast(weatherTarget)
 
-  // poziom przybliżenia – mapa gleb (i jej legenda) tylko przy oddaleniu
+  // poziom przybliżenia (po zakończeniu ruchu) – karta powitalna, podpowiedź „Przybliż mapę…” przy glebach
   const [zoom, setZoom] = useState(POLAND_ZOOM)
+  const soilStatus = soilLayerInRange(zoom) ? 'IUNG-PIB · tereny nierolnicze bez koloru' : SOIL_ZOOM_HINT
   const onMoveEnd = useCallback((lon: number, lat: number, z: number) => {
     setZoom(z)
     setMapCenter((prev) => {
@@ -812,7 +815,7 @@ export default function Start() {
             highlight={infra ? infraMarker : highlight}
             infraRefresh={infraRefresh}
             intro={intro}
-            soil={intro}
+            soil={soilOn}
             insets={insets}
             reducedMotion={reducedMotion}
             onMapClick={onMapClick}
@@ -872,18 +875,18 @@ export default function Start() {
                 </div>
               )}
               {/* prawy dolny róg, nad kartą powitalną (z-index wyżej) – przyciski mapy zawsze widoczne; nad nimi legenda gleb,
-                  tylko gdy warstwa IUNG jest na mapie (ta sama reguła przybliżenia co warstwa – zoom zmienia się dopiero po ruchu) */}
+                  tylko gdy nakładka IUNG jest włączona (poniżej progu przybliżenia – „Przybliż mapę…”) */}
               <div
                 className={cn(
                   'pointer-events-none absolute z-[1250] flex flex-col items-end gap-2 [&>*]:pointer-events-auto',
                   isMobile ? 'right-3 bottom-20' : 'right-4 bottom-4',
                 )}
               >
-                {soilLayerVisible(zoom) && (
+                {soilOn && (
                   <LegendCard
                     title="Podatność gleb na suszę"
                     legend={SOIL_SUSCEPTIBILITY_LEGEND}
-                    status="IUNG-PIB · tereny nierolnicze bez koloru"
+                    status={soilStatus}
                     compact={isMobile}
                     className={isMobile ? 'w-52' : undefined}
                   />
@@ -897,6 +900,9 @@ export default function Start() {
                   canGoBack={false}
                   baseMap={baseMap}
                   onBaseMapChange={setBaseMap}
+                  soilOn={soilOn}
+                  onSoilChange={setSoilOn}
+                  zoom={zoom}
                 />
               </div>
             </>
@@ -953,7 +959,22 @@ export default function Start() {
             canGoBack={!!parcel}
             baseMap={baseMap}
             onBaseMapChange={setBaseMap}
+            soilOn={soilOn}
+            onSoilChange={setSoilOn}
+            zoom={zoom}
           />
+          )}
+
+          {/* ── legenda nakładki gleb IUNG (F7) – tylko gdy włączona; komputer nad przyciskami mapy, telefon pod nimi ── */}
+          {view === '2d' && soilOn && (!isMobile || snap === 'collapsed') && (
+            <LegendCard
+              title="Podatność gleb na suszę"
+              legend={SOIL_SUSCEPTIBILITY_LEGEND}
+              status={soilStatus}
+              compact={isMobile}
+              className={isMobile ? 'absolute right-3 z-[1000] w-52' : 'absolute right-4 bottom-[96px] z-[1000]'}
+              style={isMobile ? { top: parcel ? 304 : 260 } : undefined}
+            />
           )}
 
           {/* ── legenda aktywnej warstwy (SPEC 5.3) ── */}

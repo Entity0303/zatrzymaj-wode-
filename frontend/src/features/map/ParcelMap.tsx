@@ -141,7 +141,7 @@ type Props = {
   highlight?: GeoJSON.Geometry | null
   /** ekran powitalny – widok całej Polski */
   intro?: boolean
-  /** podatność gleb na suszę (IUNG) – mapa startowa */
+  /** podatność gleb na suszę (IUNG) – włączona przełącznikiem w menu podkładu (F7) */
   soil?: boolean
   /** zgłoszenia rowów/zbiorników wokół działki; zmiana `infraRefresh` = ponowne pobranie */
   infraRefresh?: number
@@ -310,7 +310,8 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
       )}
 
       <IntroView active={intro} />
-      {soil && <SoilSusceptibilityLayer />}
+      {/* zawsze zamontowana – jedna instancja Leafletu, włączanie = addLayer / removeLayer (F7) */}
+      <SoilSusceptibilityLayer on={soil} />
       <InfraPins bbox={infraBox} refresh={infraRefresh} />
 
       <FitTo parcel={parcel} candidates={candidates} insets={insets} reducedMotion={reducedMotion} />
