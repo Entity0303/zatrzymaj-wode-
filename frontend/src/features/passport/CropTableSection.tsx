@@ -3,6 +3,7 @@ import { useState, type ReactNode } from 'react'
 import type { AnalysisResponse, CropSuggestion, SuggestionCategory, VerdictStatementLevel } from '@/api/types'
 import { RevenueCell, type RevenueExtras } from '@/features/parcel-panel/RevenueCell'
 import { RankingCard } from '@/features/parcel-panel/RankingCard'
+import { CropLine } from '@/features/parcel-panel/CropLine'
 import { formatNum } from '@/lib/format'
 import { useLang } from '@/lib/i18n'
 import { priceSourceList } from '@/lib/revenue'
@@ -73,9 +74,9 @@ export function CropTableSection({ analysis, refineForm }: { analysis: AnalysisR
       }
     >
       {form && refineForm}
-      <PassportCard className="p-0 md:p-0">
-        {/* nagłówki kolumn – od 768 px */}
-        <div className="hidden grid-cols-[minmax(0,2.2fr)_1fr_1fr_1.25fr_1.3fr] gap-4 border-b border-paper-line px-5 py-3 text-xs font-semibold tracking-wide text-text-muted uppercase md:grid">
+      <PassportCard className="@container p-0 md:p-0">
+        {/* nagłówki kolumn – kontener od 560 px (container query); węziej lista kart bez nagłówków */}
+        <div className="hidden grid-cols-[minmax(0,2.2fr)_1fr_1fr_1.25fr_1.3fr] gap-4 border-b border-paper-line px-5 py-3 text-xs font-semibold tracking-wide text-text-muted uppercase @min-[560px]:grid">
           <span>{t('Uprawa')}</span>
           <span>{t('Plon typowy')}</span>
           <span>{t('Słaby rok')}</span>
@@ -88,7 +89,11 @@ export function CropTableSection({ analysis, refineForm }: { analysis: AnalysisR
             const r = (it as RiskRange).drought_risk_range ?? (it as RiskRange).risk_years_range
             const risk = r && r[0] !== r[1] ? `${r[0]}–${r[1]}` : String(it.drought_risk_years)
             return (
-              <li key={it.crop_id} className="grid gap-2 px-5 py-3.5 md:grid-cols-[minmax(0,2.2fr)_1fr_1fr_1.25fr_1.3fr] md:items-start md:gap-4">
+              <li key={it.crop_id} className="px-5 py-3.5">
+                <div className="flex @min-[560px]:hidden">
+                  <CropLine s={it} priceNow={analysis.price_now?.find((p) => p.crop_id === it.crop_id)} />
+                </div>
+                <div className="hidden grid-cols-[minmax(0,2.2fr)_1fr_1fr_1.25fr_1.3fr] items-start gap-4 @min-[560px]:grid">
                 <div className="flex min-w-0 gap-2.5">
                   <LevelDot level={CAT_LEVEL[it.category]} className="mt-0.5" />
                   <div className="min-w-0">
@@ -96,30 +101,31 @@ export function CropTableSection({ analysis, refineForm }: { analysis: AnalysisR
                     <p className="text-sm leading-5 text-text-muted">{t(it.reason)}</p>
                   </div>
                 </div>
-                <div className="tabular text-sm leading-5 max-md:pl-[34px]">
-                  <span className="text-text-muted md:hidden">{t('Plon typowy:')} </span>
+                <div className="tabular text-sm leading-5">
+                  
                   {num(it.yield_typical_t_ha) ? <b className="font-semibold">{num(it.yield_typical_t_ha)} t/ha</b> : <span className="text-text-muted">{t('brak danych')}</span>}
                   {it.total_typical_t != null && <span className="block text-text-muted">{t('≈ {t} t z pola', { t: num(it.total_typical_t) ?? '' })}</span>}
                 </div>
-                <div className="tabular text-sm leading-5 max-md:pl-[34px]">
-                  <span className="text-text-muted md:hidden">{t('Słaby rok:')} </span>
+                <div className="tabular text-sm leading-5">
+                  
                   {num(it.yield_weak_t_ha) ? <>{num(it.yield_weak_t_ha)} t/ha</> : <span className="text-text-muted">—</span>}
                   {it.weak_year ? <span className="block text-text-muted">{t('({rok})', { rok: it.weak_year })}</span> : null}
                 </div>
-                <div className="text-sm leading-5 max-md:pl-[34px]">
-                  <span className="text-text-muted md:hidden">{t('Ryzyko suszy:')} </span>
+                <div className="text-sm leading-5">
+                  
                   <span className="inline-flex flex-wrap items-center gap-2">
                     <RiskTicks n={it.drought_risk_years} of={it.years_simulated} />
                     <span className="tabular">{t('{n} na {of} lat', { n: risk, of: it.years_simulated || 10 })}</span>
                   </span>
                 </div>
-                <div className="max-md:pl-[34px] md:text-right">
+                <div className="text-right">
                   <RevenueCell
                     revenue={it.revenue}
                     note={(it as CropSuggestion & RevenueExtras).revenue_note}
                     priceSource={(it as CropSuggestion & RevenueExtras).price_source}
                     priceNow={analysis.price_now?.find((p) => p.crop_id === it.crop_id)}
                   />
+                </div>
                 </div>
               </li>
             )

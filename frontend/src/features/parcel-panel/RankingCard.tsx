@@ -1,7 +1,8 @@
 import { ChevronDown, CircleAlert, CircleCheck, CircleX, TreeDeciduous, type LucideIcon } from 'lucide-react'
 import { useState } from 'react'
 import type { CropSuggestion, CropSuggestions, PerennialSuggestion, PriceNow, SuggestionCategory } from '@/api/types'
-import { RevenueCell, type RevenueExtras } from './RevenueCell'
+import { CropLine } from './CropLine'
+import type { RevenueExtras } from './RevenueCell'
 import { hasRevenue, priceNowSource } from '@/lib/revenue'
 import { SourceTag } from '@/components/SourceTag'
 import { formatArea, formatDatePl, formatNum } from '@/lib/format'
@@ -67,39 +68,22 @@ function Details({ s, priceNow }: { s: CropSuggestion | PerennialSuggestion; pri
   )
 }
 
-function Row({ s, area, priceNow }: { s: CropSuggestion; area: number | null; priceNow?: PriceNow | null }) {
+function Row({ s, priceNow }: { s: CropSuggestion; area?: number | null; priceNow?: PriceNow | null }) {
   const { t } = useLang()
   const [open, setOpen] = useState(false)
-  const c = CAT[s.category]
-  const Icon = c.icon
   return (
     <li className="py-2.5">
-      <button type="button" aria-expanded={open} onClick={() => setOpen((o) => !o)} className="flex w-full items-start gap-2.5 text-left">
-        <Icon className="mt-0.5 size-5 shrink-0" style={{ color: c.color }} aria-hidden />
-        <span className="min-w-0 flex-1">
-          {/* F8: kolumny „uprawa i plon” | „przychód z pola”; na telefonie przychód pod plonem */}
-          <span className="block sm:grid sm:grid-cols-[minmax(0,1fr)_8.5rem] sm:gap-3">
-            <span className="block min-w-0">
-              <span className="block text-base leading-6 font-semibold">
-                <span className="sr-only">{t(c.label)}: </span>
-                {t(s.label)}
-              </span>
-              <span className="block text-sm leading-5">
-                <YieldLine s={s} area={area} />
-              </span>
-            </span>
-            <RevenueCell
-              revenue={s.revenue}
-              note={(s as CropSuggestion & RevenueExtras).revenue_note}
-              priceSource={(s as CropSuggestion & RevenueExtras).price_source}
-              priceNow={priceNow}
-              className="mt-0.5 sm:mt-0 sm:pt-0.5 sm:text-right" />
-          </span>
-          {open && <span className="mt-1 block text-sm leading-5 text-text-muted">{t(s.reason)}</span>}
-          {open && <Details s={s} priceNow={priceNow} />}
-        </span>
+      <button type="button" aria-expanded={open} onClick={() => setOpen((o) => !o)} className="flex w-full items-start gap-2 text-left">
+        {/* dopisek: 3 linie zamiast kolumn – w wąskim panelu nic się nie ściska do jednego słowa */}
+        <CropLine s={s} priceNow={priceNow} />
         <ChevronDown className={cn('mt-1 size-4 shrink-0 text-text-muted transition-transform', open && 'rotate-180')} aria-hidden />
       </button>
+      {open && <p className="mt-1 pl-[30px] text-sm leading-5 text-text-muted">{t(s.reason)}</p>}
+      {open && (
+        <div className="pl-[30px]">
+          <Details s={s} priceNow={priceNow} />
+        </div>
+      )}
     </li>
   )
 }
@@ -135,16 +119,11 @@ export function RankingCard({ suggestions, top = 3, priceNow }: { suggestions: C
 
   return (
     <section aria-label={t('Co tu posiać?')} className="tabular rounded-xl border bg-surface">
-      <header className="px-4 pt-3.5">
-        <h3 className="font-display text-lg leading-6 font-semibold">{t('Co tu posiać?')}</h3>
+      {/* jeden tytuł – nagłówek sekcji „Co tu posiać?” nad kartą; w karcie tylko podtytuł */}
+      <header className="px-4 pt-3">
         <p className="text-sm leading-5 text-text-muted">{all ? t('Wszystkie uprawy polowe, od najlepszej') : t('Najlepsze dla tej ziemi i pogody z 10 lat')}</p>
       </header>
 
-      {/* nagłówki kolumn – tylko obok siebie (od 640 px) */}
-      <p aria-hidden className="mt-2 hidden grid-cols-[minmax(0,1fr)_8.5rem] gap-3 pr-[42px] pl-[46px] text-xs leading-4 font-semibold tracking-wide text-text-muted uppercase sm:grid">
-        <span>{t('Uprawa i plon')}</span>
-        <span className="text-right">{t('Przychód z pola')}</span>
-      </p>
       <ul className="divide-y px-4">
         {shown.map((s) => (
           <Row key={s.crop_id} s={s} area={area} priceNow={priceNow?.find((p) => p.crop_id === s.crop_id)} />

@@ -1262,4 +1262,9 @@ export const EN: Record<string, string> = {
   'Przygotowuję…': 'Preparing…',
   // Dopisek: Zgłoszenia w menu
   'Zgłoszenia': 'Reports of ditches',
+  // Dopisek: ranking w 3 liniach
+  'typowo {v} t/ha': 'typically {v} t/ha',
+  'ok. {v} t z pola': 'approx. {v} t from the field',
+  'ryzyko {n} na {of} lat': 'risk {n} in {of} years',
+  'brak ceny': 'no price',
 }
