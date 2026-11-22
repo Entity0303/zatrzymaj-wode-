@@ -788,7 +788,7 @@ export default function Start() {
         // dopisek po A23: pozycja w kolejce zadań w tle, gdy serwer ją poda
         (terrainLayer && layerState.phase === 'waiting' && terrainQueue != null ? ` · ${t('w kolejce: {n}', { n: terrainQueue })}` : '')
   // F27: szara linia na dole legendy – skąd i z kiedy są dane warstwy
-  const legendInfo = layer === 'gleba' ? t('źródło: {src}', { src: 'IUNG-PIB' }) : layerInfoLine(layer, layerState, t, terrainQueue)
+  const legendInfo = layer === 'gleba' ? t('źródło: {src}', { src: 'IUNG-PIB' }) : layerInfoLine(layer, layerState, t, terrainQueue, layerStatusText(layer, layerState, satellite).includes('{date}'))
   const refine = {
     crop,
     onCropChange: (c: CropId | null) => {
@@ -1272,6 +1272,7 @@ export default function Start() {
                   <DateField value={asOf} onChange={setAsOf} compact />
                   {weather(true)}
                 </div>
+                {parcel && <PeriodPicker value={period} onChange={setPeriod} hasCrop={!!crop} asOf={asOf} align="left" />}
                 <ParcelPanel {...panelProps} hideHeader />
                 <FarmDrawer
                   inline

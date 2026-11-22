@@ -41,6 +41,8 @@ export function layerInfoLine(
   state: LayerState,
   t: (key: string, vars?: Record<string, string | number>) => string,
   queue: number | null = null,
+  /** F28: górna linia legendy już podaje datę („Dane z …”, „Zdjęcie satelitarne z …”) – tu samo źródło */
+  dateShown = false,
 ): string | null {
   const terrain = layer === 'teren' || layer === 'splyw'
   switch (state.phase) {
@@ -61,7 +63,7 @@ export function layerInfoLine(
       const src = d.source_tag.source?.trim()
       const date = d.scene_date ?? d.source_tag.date
       const sat = SATELLITE_LAYERS.includes(layer)
-      const when = date ? t(terrain ? 'Policzono {date}' : sat ? 'Zdjęcie z {date}' : 'Dane z {date}', { date: formatDatePl(date) }) : null
+      const when = date && !dateShown ? t(terrain ? 'Policzono {date}' : sat ? 'Zdjęcie z {date}' : 'Dane z {date}', { date: formatDatePl(date) }) : null
       const from = src ? t('źródło: {src}', { src }) : null
       return [when, from].filter(Boolean).join(' · ') || null
     }
