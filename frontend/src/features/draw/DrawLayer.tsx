@@ -1,9 +1,9 @@
 import { useEffect } from 'react'
-import { CircleMarker, Polygon, Polyline, useMap } from 'react-leaflet'
+import { CircleMarker, Polygon, Polyline, useMap } from '@/features/map/leaflet'
 
 /**
  * Rysowane pole na mapie: wielokąt z dotychczasowych punktów (przerywany obrys), wierzchołki jako kropki.
- * Klik w pierwszy wierzchołek (przy ≥ 3 punktach) = zamknięcie pola („Gotowe”). Rysowane wewnątrz MapContainer.
+ * Klik w pierwszy wierzchołek (przy ≥ 3 punktach) = zamknięcie pola („Gotowe”). Rysowane wewnątrz MapContainer (features/map/leaflet).
  */
 export function DrawLayer({ points, onClose }: { points: [number, number][]; onClose: () => void }) {
   const map = useMap()

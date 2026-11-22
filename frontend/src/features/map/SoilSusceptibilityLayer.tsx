@@ -1,4 +1,4 @@
-import { WMSTileLayer } from 'react-leaflet'
+import { WMSTileLayer } from './leaflet'
 import { SOIL_COLOR } from '@/theme/soil'
 
 /**

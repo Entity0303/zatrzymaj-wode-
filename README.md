@@ -140,13 +140,13 @@ tifffile (BSD-3), pypdf (BSD-3); testy: pytest (MIT), respx (BSD-3). Czcionka w 
 (SIL OFL 1.1).
 
 **Sprawdzenie wszystkich zależności frontendu** (całe drzewo z `package-lock.json`, pole `license` każdego pakietu,
-22.11.2026): 290 pakietów – MIT 209, ISC 27, Apache-2.0 23, BSD-3-Clause 7, BSD-2-Clause 3, 0BSD 2, BlueOak-1.0.0 2
-(licencja permisywna), SIL OFL 1.1 2 (czcionki), „MIT AND ISC AND BSD-3-Clause” 1. **Wyjątki:**
+22.11.2026): 288 pakietów – MIT 209, ISC 27, Apache-2.0 23, BSD-3-Clause 7, BSD-2-Clause 3, 0BSD 2, BlueOak-1.0.0 2
+(licencja permisywna), SIL OFL 1.1 2 (czcionki), „MIT AND ISC AND BSD-3-Clause” 1. Komponenty mapy dla Reacta to własna
+cienka warstwa nad Leafletem (`frontend/src/features/map/leaflet/`) – bez react-leaflet. **Jedyny wyjątek:**
 
 | Pakiet | Licencja | Gdzie | Plan |
 |---|---|---|---|
-| `react-leaflet` 5.0.0, `@react-leaflet/core` 3.0.0 | **Hippocratic License 2.1** – nie jest licencją permisywną (MIT/BSD/Apache) | w aplikacji (komponenty mapy dla Reacta) | w kolejnej wersji zastąpimy je cienką własną warstwą nad Leafletem (BSD-2-Clause) – mapa, warstwy, rysowanie pola i pinezki korzystają z niego w kilku plikach `features/map`, `features/draw`, `features/infra-reports` |
-| `lightningcss` (13 pakietów dla różnych systemów) | MPL-2.0 | tylko narzędzie budowania (przez Tailwind CSS), nie trafia do aplikacji | bez zmian – wynikowy CSS nie podlega MPL |
+| `lightningcss` (12 pakietów dla różnych systemów) | MPL-2.0 | tylko narzędzie budowania (przez Tailwind CSS), nie trafia do aplikacji | bez zmian – wynikowy CSS nie podlega MPL |
 
 **Backend i obraz Dockera – zależności przechodnie i systemowe:** `certifi` (MPL-2.0, przez httpx), `Pyphen`
 (do wyboru GPL/LGPL/MPL – przez WeasyPrint; korzystamy z MPL), biblioteki systemowe Pango i GLib (LGPL, łączone

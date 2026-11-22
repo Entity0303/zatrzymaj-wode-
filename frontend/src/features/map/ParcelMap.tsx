@@ -10,7 +10,7 @@ import {
   Tooltip,
   useMap,
   useMapEvents,
-} from 'react-leaflet'
+} from './leaflet'
 import type { LayerResponse, Parcel, VerdictLevel } from '@/api/types'
 import type { Status } from '@/theme/status'
 import { parcelBounds, type MapInsets } from './geo'

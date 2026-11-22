@@ -1,8 +1,9 @@
 # Status – osoba B (Mefju), frontend
 
-_Stan na: 2026-11-22 (F1 – A za B)_
+_Stan na: 2026-11-22 (B-LIC – A za B, gałąź `f/leaflet`)_
 
 ## Zrobione
+- **B-LIC (A za B, `f/leaflet`)**: react-leaflet i @react-leaflet/core (Hippocratic-2.1) usunięte; własna cienka warstwa nad Leafletem w `features/map/leaflet/` (MapContainer, TileLayer, WMSTileLayer, GeoJSON, ImageOverlay, Marker, CircleMarker, Polygon, Polyline, Tooltip, Popup, useMap, useMapEvents) – reszta kodu tylko z podmienionymi importami. Czeka na przeklikanie przez A na :5176 i merge do `main`.
 - **F4 (A za B)**: karta powitalna chowa się przy przybliżaniu/przeciąganiu; publiczny link (VITE_API_URL, vercel.json, render.yaml, DEPLOY.md); README.md.
 - **F3 (A za B)** na mockach: adresy w wyszukiwarce, teren i woda w okolicy liczone w tle, warstwa i karta „Woda w okolicy”, przychód z pola i ceny, „Okres” (zakres dat) z kartą i wykresem, satelita POST dla pola narysowanego. Czeka na backend F3.
 - **F2 (A za B)**: przykłady tylko z `/api/demo/examples`, „Narysuj swoje pole” (POST z `geometry`), stany ładowania/błędów przed wyborem działki, poprawki 390 px (tabele w paszporcie).
@@ -32,7 +33,7 @@ _Stan na: 2026-11-22 (F1 – A za B)_
 1. Widok 3D – zrobiony (B21) na kaflach ~30 m; dokładniej po endpoincie siatki NMT od A (propozycja w dzienniku B21).
 
 ## Blokery / pytania do drugiej osoby
-- **Licencja:** react-leaflet 5 i @react-leaflet/core 3 = Hippocratic-2.1 (niepermisywna) – decyzja: zamiana na własną warstwę nad Leafletem (BSD-2)?
+- **Licencja:** react-leaflet – zrobione na `f/leaflet` (B-LIC), do scalenia po przeklikaniu.
 - Backend (opcjonalnie, DEPLOY.md pkt 8): regex CORS dla podglądów Vercela, seed cache w obrazie dla planu free Render.
 - A: słupki 10 lat – zrobione przez A (`seasonal_balance_by_year`, A5e), frontend podpięty (B28).
 - A: wyszukiwanie miejsc – zrobione przez A (`/api/search`), frontend podpięty (B26).

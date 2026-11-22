@@ -1,7 +1,7 @@
 # Frontend – zasady (osoba B: Mefju)
 
 Uzupełnia główny `CLAUDE.md` (wymagania KOWR, praca zespołowa, pamięć projektu w `.ai/`).
-React + Vite + TypeScript + Tailwind v4 + shadcn/ui + react-leaflet + Recharts. Uruchamianie: `docker compose up` (port 5173, proxy `/api`).
+React + Vite + TypeScript + Tailwind v4 + shadcn/ui + Leaflet (własna cienka warstwa React: `features/map/leaflet/`, bez react-leaflet – licencja Hippocratic) + Recharts. Uruchamianie: `docker compose up` (port 5173, proxy `/api`).
 
 ## Wygląd
 

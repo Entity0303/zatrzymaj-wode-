@@ -1,6 +1,6 @@
 import L from 'leaflet'
 import { useEffect, useState } from 'react'
-import { GeoJSON, ImageOverlay } from 'react-leaflet'
+import { GeoJSON, ImageOverlay } from '../leaflet'
 import type { RasterOverlay } from '@/api/types'
 import type { LayerOverlayProps } from './types'
 

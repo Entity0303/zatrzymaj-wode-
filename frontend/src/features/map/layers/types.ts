@@ -17,7 +17,7 @@ export type LegendSpec =
   | { kind: 'classes'; items: { color: string; label: string }[]; note?: string }
   | { kind: 'symbols'; items: { symbol: 'arrow' | 'spot' | 'outflow' | 'line' | 'pin' | 'pond'; label: string }[] }
 
-/** Co dostaje warstwa rysowana wewnątrz mapy (react-leaflet). */
+/** Co dostaje warstwa rysowana wewnątrz mapy (features/map/leaflet). */
 export type LayerOverlayProps = { parcel: Parcel; analysisDate: string; data: LayerResponse }
 
 /** Jedna warstwa mapy (SPEC 5.3) = jeden plik w tym katalogu. */

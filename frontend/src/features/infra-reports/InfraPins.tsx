@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { CircleMarker, Popup, Tooltip } from 'react-leaflet'
+import { CircleMarker, Popup, Tooltip } from '@/features/map/leaflet'
 import { ApiError, api } from '@/api/client'
 import type { InfraReport } from '@/api/types'
 import { formatDatePl } from '@/lib/format'
