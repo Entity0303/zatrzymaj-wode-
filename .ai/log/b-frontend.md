@@ -4,6 +4,12 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-22 · `main` · F20–F22 (A za B)
+**Co:** F21 – widełki z A21 w panelu, paszporcie i „Twój wybór” (`lib/ranges.ts`), ciche ponawianie przy `ranges_pending`, nota o dacie siewu; zakresy nie łamią się po kresce. F22 – widok „Zgłoszenia” z zakładkami „Zgłoś problem” / „Moje zgłoszenia” (`InfraView`, lista w localStorage – `myReports.ts`, bez zmian w backendzie), własne pinezki wyróżnione, karta „Co dalej z tym pomysłem”.
+**Też w tej sesji (backend/report):** F20/F21 – wykresy na str. 1 PDF, widełki i nazwy stopni w PDF, krój Liberation Sans (pakiet fonts-liberation w Dockerfile).
+**Sprawdzone:** tsc, build, oxlint; pytest -k "report or pdf" (30 passed). W przeglądarce – nie.
+**Kontrakt API:** nie.
+
 ## 2026-11-22 · `main` · dopiski po F6/F18 (A za B)
 **Co:** (1) `ReportActions` – „Raport PDF” / „Paszport wodny” w jednej linii, container query < 440 px = jeden pod drugim, „albo pełny raport” jedną linią. (2) „Zgłoszenia” (#zgloszenia, ikona fal) w lewym menu i dolnych zakładkach zamiast linku w panelu; pinezki `/api/infra-reports` tylko w tym widoku – wcześniej `InfraPins` pobierał je przy każdej wybranej działce (lokalnie ok. 6 ms). (3) Ranking „Co tu posiać?” – `CropLine` w 3 liniach w panelu i w paszporcie < 560 px (container query), jeden tytuł. (4) Obraz gleby IUNG nie zostaje po zmianie warstwy/działki – sprzątanie wszystkich `svg[data-soil-overlay]` (z clipPath), przerwane pobieranie, nakładka danych tylko dla bieżącej warstwy.
 **Też w tej sesji (backend, F19):** raporty PDF w stylu paszportu – `backend/app/report/*` + asercje testów raportu (commity 178e9b6, 712a40e); wpis w a-backend.md – do dopisania przez osobę A.
