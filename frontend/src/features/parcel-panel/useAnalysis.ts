@@ -26,6 +26,13 @@ const REFINE_DEBOUNCE_MS = 400
 /** Overpass (woda w okolicy) bywa wolny – po tylu ms przestajemy czekać i pokazujemy „Ponów”. */
 const HYDRO_TIMEOUT_MS = 75_000
 
+/** F33: wspólne odświeżenie analizy po zadaniach w tle – najwyżej tyle ponownych analiz na działkę */
+const MAX_REFRESHES = 2
+/** F33: gdy nie wszystkie zadania w tle skończyły – odśwież najpóźniej po tylu ms od pierwszego wyniku */
+const REFRESH_MAX_WAIT_MS = 15_000
+/** F33: same widełki rankingu w tle – tyle czekamy przed odświeżeniem (serwer liczy je kilka sekund) */
+const RANGES_WAIT_MS = 4000
+
 /** F23: teren „pending” – co ile i ile razy pytamy ponownie (ok. 1 min) */
 const TERRAIN_WAIT_MS = 3000
 const TERRAIN_TRIES = 20
@@ -121,28 +128,78 @@ export function useAnalysis(
       publish({ phase: 'done', analysis: current, key: key!, hydroFailed })
     }
 
+    // ── F33: JEDNO wspólne odświeżenie analizy zamiast osobnej analizy po satelicie, po terenie i do 3 przy widełkach ──
+    // Zadania w tle (satelita, teren) po zakończeniu wołają scheduleRefresh(). Gdy wszystkie oczekiwane zadania są
+    // gotowe – odświeżamy od razu; inaczej najpóźniej REFRESH_MAX_WAIT_MS od pierwszego wyniku. Najwyżej
+    // MAX_REFRESHES ponownych analiz na działkę; zmiana działki / daty / uprawy (ctrl) anuluje timer.
+    let analysisCalls = 1 // pierwsza analiza; licznik do konsoli w trybie dev
+    const outstanding = new Set<'satellite' | 'terrain'>() // zadania w tle, na które jeszcze czekamy
+    let dirty = false // serwer ma nowe dane (zdjęcie / teren), których bieżąca analiza jeszcze nie uwzględnia
+    let rangesPending = false // widełki rankingu liczą się na serwerze (bez osobnego zapytania)
+    let refreshes = 0
+    let refreshing = false
+    let firstResultAt: number | null = null
+    let refreshTimer: number | null = null
+    const clearRefreshTimer = () => {
+      if (refreshTimer !== null) window.clearTimeout(refreshTimer)
+      refreshTimer = null
+    }
+
+    async function refreshAnalysis() {
+      refreshTimer = null
+      if (ctrl.signal.aborted || refreshing || refreshes >= MAX_REFRESHES || mock) return
+      refreshing = true
+      refreshes += 1
+      dirty = false
+      firstResultAt = null
+      analysisCalls += 1
+      const fresh = await api.analysis(q, ctrl.signal).catch(() => null)
+      refreshing = false
+      if (ctrl.signal.aborted) return
+      if (import.meta.env.DEV) console.debug(`[useAnalysis] /api/analysis ×${analysisCalls} (odświeżenie ${refreshes}/${MAX_REFRESHES})`)
+      if (fresh) {
+        rangesPending = !!fresh.suggestions?.ranges_pending
+        // scalanie jak dotąd: teren / satelita / woda, które już doszły, zostają, gdy świeża analiza ma je jeszcze „pending”
+        update((a) => ({
+          ...fresh,
+          satellite: fresh.satellite?.status === 'pending' ? a.satellite : fresh.satellite,
+          terrain: isPending(fresh.terrain) ? a.terrain : fresh.terrain,
+          terrain_note: isPending(fresh.terrain) ? a.terrain_note : fresh.terrain_note,
+          hydro: fresh.hydro?.status === 'pending' ? a.hydro : fresh.hydro,
+        }))
+      }
+      scheduleRefresh() // coś doszło w trakcie albo widełki nadal się liczą – ostatnie dozwolone odświeżenie
+    }
+
+    function scheduleRefresh() {
+      if (ctrl.signal.aborted || mock || refreshing || refreshes >= MAX_REFRESHES) return
+      if (!dirty && !rangesPending) return
+      if (outstanding.size === 0) {
+        // wszystko gotowe: od razu; same widełki – daj serwerowi chwilę na policzenie
+        clearRefreshTimer()
+        refreshTimer = window.setTimeout(() => void refreshAnalysis(), dirty ? 0 : RANGES_WAIT_MS)
+        return
+      }
+      if (refreshTimer !== null) return // timer „najpóźniej po 15 s od pierwszego wyniku” już biegnie
+      firstResultAt ??= Date.now()
+      refreshTimer = window.setTimeout(() => void refreshAnalysis(), Math.max(0, REFRESH_MAX_WAIT_MS - (Date.now() - firstResultAt)))
+    }
+    const taskDone = (task: 'satellite' | 'terrain', gotData: boolean) => {
+      outstanding.delete(task)
+      if (gotData) dirty = true
+      scheduleRefresh()
+    }
+
     async function loadSatellite(first: AnalysisResponse) {
       try {
         const sat = mock ? await runMockSatellite(ctrl.signal) : await api.satellite(q, ctrl.signal)
-        if (sat.status !== 'ok' || mock) return update((a) => ({ ...a, satellite: sat }))
-        // zdjęcie jest w cache serwera – ta sama analiza jeszcze raz, już z satelitą (werdykt „Rośliny”, wskaźniki);
-        // teren i woda, które już doszły, zostają
-        const fresh = await api.analysis(q, ctrl.signal).catch((e) => {
-          if (aborted(e)) throw e
-          return null
-        })
-        update((a) =>
-          fresh && fresh.satellite?.status === 'ok'
-            ? {
-                ...fresh,
-                terrain: isPending(fresh.terrain) ? a.terrain : fresh.terrain,
-                terrain_note: isPending(fresh.terrain) ? a.terrain_note : fresh.terrain_note,
-                hydro: fresh.hydro?.status === 'pending' ? a.hydro : fresh.hydro,
-              }
-            : { ...a, satellite: sat },
-        )
+        update((a) => ({ ...a, satellite: sat }))
+        // zdjęcie jest w cache serwera – wspólne odświeżenie dołoży werdykt „Rośliny” i wskaźniki
+        taskDone('satellite', sat.status === 'ok' && !mock)
       } catch (e) {
-        if (!aborted(e)) update((a) => ({ ...a, satellite: satelliteFailed(first.satellite) }))
+        if (aborted(e)) return
+        update((a) => ({ ...a, satellite: satelliteFailed(first.satellite) }))
+        taskDone('satellite', false)
       }
     }
 
@@ -174,24 +231,15 @@ export function useAnalysis(
       try {
         const terrain = await fetchTerrain()
         update((a) => ({ ...a, terrain }))
-        if (mock) return
-        // teren jest już w cache serwera – analiza jeszcze raz (werdykt „Teren”, reguły zastawki / oczka korzystają z terenu);
-        // satelita i woda, które już doszły, zostają
-        const fresh = await api.analysis(q, ctrl.signal).catch((err) => {
-          if (aborted(err)) throw err
-          return null
-        })
-        if (fresh && !isPending(fresh.terrain))
-          update((a) => ({
-            ...fresh,
-            satellite: fresh.satellite?.status === 'pending' ? a.satellite : fresh.satellite,
-            hydro: fresh.hydro?.status === 'pending' ? a.hydro : fresh.hydro,
-          }))
+        // teren jest już w cache serwera – wspólne odświeżenie dołoży werdykt „Teren” i reguły zastawki / oczka
+        taskDone('terrain', !mock)
       } catch (e) {
+        if (aborted(e)) return
         // komunikat błędu z serwera (detail.message), gdy jest – inaczej nasze zdanie
         const detail = e instanceof ApiError ? (e.detail as { message?: unknown } | null) : null
         const msg = serverMessage(typeof detail?.message === 'string' ? detail.message : null) ?? TERRAIN_NODATA
-        if (!aborted(e)) update((a) => ({ ...a, terrain: null, terrain_note: msg }))
+        update((a) => ({ ...a, terrain: null, terrain_note: msg }))
+        taskDone('terrain', false)
       }
     }
 
@@ -219,35 +267,25 @@ export function useAnalysis(
     }
     retryHydroRef.current = () => void loadHydro()
 
-    // F21: widełki rankingu (pola *_range) liczą się w tle – co ok. 2 s ponowne zapytanie (maks. 3 razy), bez ekranu
-    // ładowania; podmieniamy tylko ranking (suggestions), reszta wyniku zostaje
-    async function loadRanges() {
-      for (let i = 0; i < 3; i++) {
-        await new Promise<void>((res) => setTimeout(res, 2000))
-        if (ctrl.signal.aborted) return
-        const fresh = await api.analysis(q, ctrl.signal).catch(() => null)
-        if (ctrl.signal.aborted) return
-        if (fresh?.suggestions && !fresh.suggestions.ranges_pending) {
-          const sug = fresh.suggestions
-          update((a) => ({ ...a, suggestions: sug }))
-          return
-        }
-      }
-    }
-
     request.then(
       (analysis) => {
         current = analysis
         publish({ phase: 'done', analysis, key })
-        if (analysis.satellite?.status === 'pending') void loadSatellite(analysis)
-        if (isPending(analysis.terrain)) void loadTerrain()
-        if (analysis.hydro?.status === 'pending') void loadHydro()
-        if (analysis.suggestions?.ranges_pending && !mock) void loadRanges()
+        // F33: najpierw lista oczekiwanych zadań, potem ich start – odświeżenie czeka na wszystkie (albo 15 s)
+        if (analysis.satellite?.status === 'pending') outstanding.add('satellite')
+        if (isPending(analysis.terrain)) outstanding.add('terrain')
+        rangesPending = !!analysis.suggestions?.ranges_pending && !mock
+        if (import.meta.env.DEV) console.debug('[useAnalysis] /api/analysis ×1 (pierwsza analiza)')
+        if (outstanding.has('satellite')) void loadSatellite(analysis)
+        if (outstanding.has('terrain')) void loadTerrain()
+        if (analysis.hydro?.status === 'pending') void loadHydro() // woda w okolicy: osobny wynik, bez odświeżania analizy
+        scheduleRefresh() // same widełki (bez satelity i terenu w tle) – jedno odświeżenie po chwili
       },
       (e) => publish({ phase: 'error', error: describeAnalysisError(e) }),
     )
     return () => {
       ctrl.abort()
+      clearRefreshTimer()
       retryHydroRef.current = null
     }
     // opts zawarte w `key`; start dopiero, gdy klucz „odczekał” (effKey)
