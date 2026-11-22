@@ -334,3 +334,9 @@ Weryfikacja: `tsc -b` przechodzi; `vite build` – lokalnie i w kontenerze brak 
 
 **Dla Mefju:** kafel `features/groundwater/GroundwaterTile.tsx` + `useGroundwater.ts` już jest (panel: „Dlaczego?”, paszport: pod kaflem EDO). Wynik zależy od terenu (spadek, obniżenia) – hook pyta ponownie, gdy `analysis.terrain` przestaje być `pending`. `useAnalysis.ts` nie był zmieniany.
 **Łamie zgodność:** nie (nowy endpoint).
+
+### 2026-11-22 · `main` · A27c – nowe teksty w `/api/groundwater` (kształt bez zmian)
+- `infiltration.label_pl`: teraz `dużo` / `mało` / `bardzo mało` (było „dobre / słabe / bardzo słabe wsiąkanie”); `short_pl`: „Z opadów zostaje w glebie …”; `sentence_pl` na lekkiej glebie z dopiskiem o przepuszczaniu wody. `level` i nazwy pól bez zmian.
+
+**Dla Mefju:** kafel pokazuje „Ile opadu zostaje w glebie:” nad etykietą – nie składaj już „… wsiąkanie” z `label_pl`.
+**Łamie zgodność:** nie.

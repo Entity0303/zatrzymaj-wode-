@@ -4,6 +4,10 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-22 07:50 · `main` · A27c: „zapas z opadów” zamiast „wsiąkania”
+Zmiana nazw w tekstach dla rolnika (D117) – reguły, kafel, PDF; bez zmian w obliczeniach i kontrakcie. PDF skrócony 201305 30.06.2018 i Pożarowo 10.07.2018 – 2 strony, pełny 201305 – 13. Testy: 686 bez sieci, `tsc`, build, oxlint bez nowych ostrzeżeń.
+**Pliki:** `backend/app/analysis/{groundwater.py,rules/groundwater.yaml}`, `schemas/groundwater.py`, `routers/groundwater.py`, `report/{builder.py,templates/report.html}`, `tests/test_a27.py`, `frontend/src/features/groundwater/*`, `api/{client,types}.ts` (komentarze), `FieldOverview.tsx`, `VerdictSection.tsx` (komentarze). **Kontrakt:** kształt bez zmian, nowe teksty.
+
 ## 2026-11-22 07:45 · `main` · A27: „Wody gruntowe i wsiąkanie” – endpoint, kafel, PDF
 `/api/groundwater` (D116): obszary zagrożone podtopieniami z PIG-PIB (głębokości zwierciadła PIG nie udostępnia punktowo – `depth_m = null`), wsiąkanie z opadu, parowania, gleby IUNG i spadku (progi w `rules/groundwater.yaml`). Na żywo: 201305 dziś – dobre (27 / 14 mm), 30.06.2018 – bardzo słabe (19 / 120 mm), Pożarowo 10.07.2018 – bardzo słabe (15 / 119 mm), Żuławy dziś – dobre, obszar podtopień + 40% obniżeń → ryzyko podtopień po ulewie. Kafel w panelu i paszporcie; PDF skrócony – zdanie w „Gleba” (2 strony), pełny – sekcja (13 stron). Poprawka krytyczna: `charts._ticks` dla cen > 3000 zł/t (raport pełny dawał 500). Testy: 686 bez sieci, `tsc`, build, oxlint bez nowych ostrzeżeń.
 **Pliki:** `backend/app/sources/pig.py`, `analysis/groundwater.py`, `analysis/rules/groundwater.yaml`, `routers/groundwater.py`, `schemas/groundwater.py`, `main.py`, `report/{builder.py,charts.py,templates/report.html}`, `tests/test_a27.py`, `frontend/src/features/groundwater/*`, `api/{client,types}.ts`, `features/parcel-panel/FieldOverview.tsx`, `features/passport/VerdictSection.tsx`. **Kontrakt:** tak – nowy endpoint.
