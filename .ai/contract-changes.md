@@ -312,3 +312,10 @@ Weryfikacja: `tsc -b` przechodzi; `vite build` – lokalnie i w kontenerze brak 
 
 **Dla Mefju:** w „Dlaczego?” traktuj `informational === true` tak jak dziś `factor === 'teren'` (napis „informacyjnie”, bez paska) – inaczej nowe pozycje pokażą „0%”. `soil.organic_matter.sentence` do karty gleby; przy próchnicy pokaż ograniczenie (SoilGrids bywa zawyżony).
 **Łamie zgodność:** nie.
+
+### 2026-11-22 · `main` · A26 – tło suszowe EDO: `GET / POST /api/drought-context`
+- Parametry: `parcel_id` | `lon` + `lat` | (POST) `geometry`; `date` (domyślnie dziś); `our_status` (opcjonalnie: `ok | warn | risk | danger` albo nagłówek statusu z analizy).
+- Odpowiedź `DroughtContext` (typ w `types.ts`): `unavailable`, `note_pl`, `cdi {class, label_pl, date, decade_label}`, `soil_moisture_anomaly {value, class, label_pl, date}`, `agri_risk {class, label_pl, date}`, `sentence`, `agrees`, `resolution_note`, `source`, `source_url`, `fetched_at`, `analysis_date`.
+
+**Dla Mefju (F31):** wołaj po analizie z `our_status = status.level`; pokaż `sentence` + `resolution_note` + `source`. Gdy `unavailable` – pokaż `note_pl` (HTTP jest 200). Pierwsze wywołanie 0,5–3 s, potem z cache. `cdi.class` ma polską literę: `ostrzeżenie`. `soil_moisture_anomaly.value` to środek przedziału z legendy (−2,5 / −1,75 / −1,25 / 0 / …), nie dokładny pomiar – pokazuj raczej `label_pl`.
+**Łamie zgodność:** nie (nowy endpoint).

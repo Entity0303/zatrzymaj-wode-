@@ -4,6 +4,10 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-22 07:10 · `main` · A26: tło suszowe z Europejskiego Obserwatorium Suszy (EDO)
+Nowy endpoint `/api/drought-context` (D114): CDI, anomalia wilgotności gleby, ryzyko dla rolnictwa z WMS EDO (kolor piksela GetMap – GetFeatureInfo nie działa), zdanie porównujące z naszą oceną. Na żywo: 201305 dziś – brak suszy (dekada 1–10.11.2026); 201305 30.06.2018 – ostrzeżenie, bardzo sucho (dekada 11–20.06.2018); Pożarowo 10.07.2018 – ostrzeżenie, bardzo sucho, ryzyko średnie (dekada 21–30.06.2018). Testy: 671 bez sieci.
+**Pliki:** `backend/app/sources/edo.py`, `analysis/drought_context.py`, `routers/drought.py`, `schemas/drought.py`, `main.py` (rejestracja), `tests/test_a26.py`, `frontend/src/api/types.ts`. **Kontrakt:** tak – nowy endpoint.
+
 ## 2026-11-22 07:00 · `main` · A24: okresy bez opadu, upał, próchnica (informacyjnie)
 `analysis/extremes.py` + przyczyny informacyjne, zdanie w werdykcie „Opady”, reguła próchnicy, pola kontraktu (D113). 201305: 2018 – 23 dni bez deszczu (zwykle 14), 18 dni > 25°C (zwykle 6); dziś – 19 dni, 13 dni > 30°C (zwykle 4); próchnica 6,4% wg SoilGrids (podejrzanie wysoka – ograniczenie). Testy: 659 bez sieci.
 **Pliki:** `backend/app/analysis/{extremes,causes,period}.py`, `rules/retencja.yaml`, `routers/analysis.py`, `schemas/analysis.py`, `frontend/src/api/types.ts`, `tests/test_a24.py`. **Kontrakt:** tak – pola opcjonalne.
