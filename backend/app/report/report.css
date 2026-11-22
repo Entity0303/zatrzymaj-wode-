@@ -1,9 +1,9 @@
 /* F19: raport PDF w stylu paszportu wodnego – A4, białe tło, kafle białe z kolorowym akcentem (pasek z boku / kolor
    liczby), bez gradientów i ciemnych teł (czytelny w druku czarno-białym). Krój bezszeryfowy z kontenera
-   (DejaVu Sans / Liberation Sans), tekst min. 10 pt. Kolory: marka #2F6B47, ok #5BB37F, uwaga #E8B931,
+   (Liberation Sans, zapasowo DejaVu Sans), tekst min. 10 pt. Kolory: marka #2F6B47, ok #5BB37F, uwaga #E8B931,
    ryzyko #E07B39, źle #C8453B, woda #2F80C9, ziemia #8B6B4A. Stopka (@page) – w szablonie (data, adres). */
 * { box-sizing: border-box; }
-body { font-family: "DejaVu Sans", "Liberation Sans", sans-serif; color: #1E2A23; font-size: 10pt; line-height: 1.36;
+body { font-family: "Liberation Sans", Arial, "DejaVu Sans", sans-serif; color: #1E2A23; font-size: 10pt; line-height: 1.36;
        margin: 0; font-variant-numeric: tabular-nums; }
 p { margin: 0 0 3pt; }
 b, strong { font-weight: 700; }
@@ -123,3 +123,8 @@ table.src td { padding: 2pt 4pt; border-bottom: 1pt solid #EFECE4; vertical-alig
 .csent { margin: 0 0 2pt; }
 .legend i.dash { background: none; border-top: 1.6pt dashed #5F6B64; height: 0; }
 .legend i.hatch { background: #F6D2B8; border: 1pt solid #E07B39; }
+
+/* F20 pkt 7: zakresy nie łamią się po kresce – cały zakres w jednym bloku; w kaflu pod „ok.”, mniejszą czcionką (min. 10 pt) */
+.nw { white-space: nowrap; }
+.tile .v .vr { display: block; white-space: nowrap; font-size: 11pt; }
+.tile .v .vr.vr10 { font-size: 10pt; }

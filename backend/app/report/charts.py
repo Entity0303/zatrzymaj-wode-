@@ -13,7 +13,7 @@ C = {
     "muted": "#5F6B64", "border": "#E3DED4", "text": "#1E2A23", "nodata": "#B8BDB9", "earth": "#8B6B4A",
 }
 MONTHS = ["sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paź", "lis", "gru"]
-FONT = 'font-family="DejaVu Sans, Liberation Sans, sans-serif"'
+FONT = 'font-family="Liberation Sans, Arial, DejaVu Sans, sans-serif"'
 
 
 def _num(v: float) -> str:

@@ -20,6 +20,7 @@ from markupsafe import Markup
 from shapely.geometry import shape
 
 from app.analysis.crops import CROPS
+from app.analysis.scoring import status_cfg
 from app.core.config import settings
 from app.core.geo import to_2180
 from app.core.cache import TTLCache, cached_fetch
@@ -40,7 +41,7 @@ STATUS = {  # SPEC 2.2
 CATEGORY = {"retencja": ("Zatrzymanie wody", "#2F80C9"), "agrotechnika": ("Zmiany w uprawie", "#8B6B4A"),
             "nawadnianie": ("Nawadnianie", "#2F6B47")}
 PERMIT_ICON = {"none": "✓", "maybe": "!", "required": "§"}
-SOURCE_ICON = {"ok": "✓", "czesciowo": "⚠", "brak": "✕"}
+SOURCE_ICON = {"ok": "✓", "czesciowo": "⚠", "brak": "×"}
 CONFIDENCE = {"wysoka": "wysoka", "srednia": "średnia", "ograniczona": "ograniczona"}
 RAIN = {"ucieka": "szybko wsiąka i ucieka w głąb", "zatrzymuje": "dobrze ją zatrzymuje",
         "splywa": "ryzyko spływu i zastoisk"}
@@ -174,8 +175,8 @@ def zones_overlay(a: AnalysisResponse, bbox: tuple[float, float, float, float], 
     return charts.zones_svg(shapes, px, px)
 
 
-LEVEL = {"ok": ("✓", "#5BB37F"), "warn": ("!", "#E8B931"), "bad": ("✕", "#C8453B"), "info": ("i", "#2F80C9")}
-CAT_ICON = {"polecane": ("✓", "#5BB37F"), "mozliwe": ("~", "#E8B931"), "odradzane": ("✕", "#C8453B")}
+LEVEL = {"ok": ("✓", "#5BB37F"), "warn": ("!", "#E8B931"), "bad": ("×", "#C8453B"), "info": ("i", "#2F80C9")}
+CAT_ICON = {"polecane": ("✓", "#5BB37F"), "mozliwe": ("~", "#E8B931"), "odradzane": ("×", "#C8453B")}
 KIND_LABEL = {"gleba": "Gleba", "opady": "Opady", "teren": "Teren", "rosliny": "Rośliny (z satelity)", "uprawy": "Co siać",
               "woda": "Woda",
               "uprawa_wybrana": "Wybrana uprawa"}
@@ -415,15 +416,22 @@ def soil_chart_sentence(a: AnalysisResponse) -> str:
 
 def precip_chart_sentence(a: AnalysisResponse) -> str:
     """Zdanie-wniosek nad wykresem opadów: miesiące poniżej 70% normy."""
-    names = ["styczeń", "luty", "marzec", "kwiecień", "maj", "czerwiec", "lipiec", "sierpień", "wrzesień",
-             "październik", "listopad", "grudzień"]
     ms = [m for m in a.history.monthly_precip if m.current_mm is not None]
     if not ms:
         return "Brak danych o opadach w miesiącach."
-    dry = [names[m.month - 1] for m in ms if m.mean_mm and m.current_mm < 0.7 * m.mean_mm]
+    loc = ["styczniu", "lutym", "marcu", "kwietniu", "maju", "czerwcu", "lipcu", "sierpniu", "wrześniu",
+           "październiku", "listopadzie", "grudniu"]
+    dry = [m for m in ms if m.mean_mm and m.current_mm < 0.7 * m.mean_mm]
     if not dry:
-        return "W każdym miesiącu opady co najmniej 70% normy z 10 lat."
-    return f"Poniżej 70% normy: {', '.join(dry)}."
+        return "W każdym miesiącu spadło co najmniej 70% tego, co zwykle."
+    # łączny niedobór w suchych miesiącach względem normy z 10 lat (z liczb wykresu)
+    norm = sum(m.mean_mm for m in dry)
+    less = round((1 - sum(m.current_mm for m in dry) / norm) * 100 / 5) * 5
+    mn = [loc[m.month - 1] for m in dry]
+    if len(mn) > 3:
+        return f"W {len(mn)} miesiącach spadło łącznie o ok. {less}% mniej niż zwykle."
+    txt = mn[0] if len(mn) == 1 else ", ".join(mn[:-1]) + " i " + mn[-1]
+    return f"{'We' if txt.startswith('wrz') else 'W'} {txt} spadło o ok. {less}% mniej niż zwykle."
 
 
 def app_url() -> str:
@@ -634,7 +642,7 @@ def render_html(a: AnalysisResponse, ortho: str | None, generated: dt.datetime |
         "generated_txt": (generated or dt.datetime.now(dt.timezone.utc)).astimezone().strftime("%d.%m.%Y %H:%M"),
         "app_host": app_url().split("//", 1)[-1],
         # F20: wykresy strony 1 (z danych analizy – stan działki i opady miesięczne)
-        "chart_soil_season": Markup(charts.soil_season_chart(a.field_state, low_pct=40.0, height=140) or "") if a.field_state else "",
+        "chart_soil_season": Markup(charts.soil_season_chart(a.field_state, low_pct=float(status_cfg()["risk_max_pct"]), height=140) or "") if a.field_state else "",
         "chart_precip_norm": Markup(charts.precip_norm_chart(a.history.monthly_precip, height=140) or ""),
         "soil_sentence": soil_chart_sentence(a),
         "precip_sentence": precip_chart_sentence(a),

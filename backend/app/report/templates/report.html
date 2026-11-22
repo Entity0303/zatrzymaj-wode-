@@ -46,7 +46,7 @@
     {% for tl in tiles %}
     <div class="tile" style="border-left-color: {{ tl.color }}">
       <div class="t">{{ tl.title }}</div>
-      <div class="v" style="color: {{ tl.color if tl.color != '#2F80C9' and tl.color != '#2F6B47' else '#1E2A23' }}">{{ tl.value }}{% if tl.unit %} <span class="u">{{ tl.unit }}</span>{% endif %}</div>
+      <div class="v" style="color: {{ tl.color if tl.color != '#2F80C9' and tl.color != '#2F6B47' else '#1E2A23' }}">{% if '–' in tl.value and tl.value.startswith('ok. ') %}ok. <span class="vr{% if tl.value|length > 18 %} vr10{% endif %}">{{ tl.value[4:] }}</span>{% else %}<span class="nw">{{ tl.value }}</span>{% endif %}{% if tl.unit %} <span class="u">{{ tl.unit }}</span>{% endif %}</div>
       {% if tl.bar is not none %}<div class="tbar"><i style="width: {{ [[tl.bar, 0]|max, 100]|min }}%"></i></div>{% endif %}
       <div class="s">{{ tl.sub }}</div>
     </div>
@@ -114,7 +114,7 @@
       <td class="n">{{ yield_text(i.yield_typical_t_ha, i.yield_typical_range) }}{% if i.total_typical_t is not none %}<div class="muted">{{ tonnes(i.total_typical_t) }}</div>{% endif %}</td>
       <td class="n">{{ yield_text(i.yield_weak_t_ha, i.yield_weak_range) }}{% if i.weak_year %} <span class="muted">({{ i.weak_year }})</span>{% endif %}</td>
       <td class="n">{{ risk_text(i) }}</td>
-      <td>{% if zl_range(i.revenue) %}<b>{{ zl_range(i.revenue) }}</b>{% if zl(i.revenue.weak_year_zl) %}<div class="muted">słaby rok {{ zl(i.revenue.weak_year_zl) }}</div>{% endif %}
+      <td>{% if zl_range(i.revenue) %}<b class="nw">{{ zl_range(i.revenue) }}</b>{% if zl(i.revenue.weak_year_zl) %}<div class="muted nw">słaby rok {{ zl(i.revenue.weak_year_zl) }}</div>{% endif %}
         {% else %}<span class="muted">{{ i.revenue_note or 'brak ceny skupu' }}</span>{% endif %}</td>
     </tr>
     {% endfor %}
