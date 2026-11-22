@@ -269,3 +269,10 @@ Weryfikacja: `tsc -b` przechodzi; `vite build` – lokalnie i w kontenerze brak 
 
 **Dla Mefju:** `revenue_note` jest w kontrakcie – rzutowanie `RevenueExtras` można usunąć. Przy `price_source` zaczynającym się od „ZSRIR” pokaż je wprost (już jest czytelne). Zakres > rok – komunikat z `detail.message`.
 **Łamie zgodność:** nie.
+
+### 2026-11-22 · `main` · A16 – rozjazd opadu IMGW / NASA
+- `PrecipSources.precip_disagreement: number[]` (domyślnie `[]`) – lata, w których suma opadu IV–VII ze stacji IMGW różni się od NASA o > 30%. Zdanie dla rolnika jest już w `precip_sources.sentence` i w `reliability.limitations`.
+- Bez zmian w kształcie, ale zależne od daty analizy: `revenue` / `revenue_note` / `price_now` (tylko ceny sprzed daty), `yield_*` i `yields_by_year` (trend plonów GUS), źródło GUS w `source_tags` („podlaskie, 2016–2025, z trendem plonów”).
+
+**Dla Mefju:** pole można pokazać przy opadzie (np. oznaczenie lat na wykresie „Na tle 10 lat”); nic nie jest wymagane. Dla dat sprzed 2022 r. przychód zwykle `null` z `revenue_note`.
+**Łamie zgodność:** nie.

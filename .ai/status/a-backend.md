@@ -1,6 +1,6 @@
 # Status – osoba A (Dominik), backend
 
-_Stan na: 2026-11-22 06:00 (A15)_
+_Stan na: 2026-11-22 08:30 (A16)_
 
 ## Zrobione
 - Wyszukiwanie działki ULDK: pełny identyfikator, „obręb numer”, punkt; `GET /api/parcel` (409 lista kandydatów, 404, 502 z nazwą źródła), timeout 10 s + jedna ponowna próba, cache 24 h.
@@ -84,7 +84,8 @@ _Stan na: 2026-11-22 06:00 (A15)_
 - **A12:** ceny skupu GUS BDL (P2967, 7 produktów, woj. + Polska, 2021–2025, `app/data/prices/`), przychód z pola w rankingu / wyborze / alternatywach, `price_now` z pliku ZSRIR (dziś null), zdanie o przychodzie w werdykcie (D99).
 - **A9b:** okres analizy `period=30d|since_sowing|season` / `date_from`+`date_to` – sumy, norma 10 lat, percentyl, zdanie, dni stresu, przebieg dzienny (D100).
 - **A15:** poprawki z weryfikacji V1 – nagłówek „Trudna”, zboża na dobrej glebie, kompleksy górskie, satelita 12 h i słowami (D101).
-- Testy: **544 bez sieci** (`docker run --network none`) + 5 live.
+- **A16:** plon i ceny tylko sprzed daty analizy, trend plonów GUS (Theil–Sen), flaga rozjazdu opadu IMGW / NASA (D103).
+- Testy: **550 bez sieci** (cudze pliki w wersji z HEAD) + 5 live.
 
 ## W trakcie (gałąź)
 - **INT3 (22.11 ok. 00:55): `c/research`, `a/backend`, `b/frontend` scalone do `main` (bez konfliktów) i wypchnięte.** Od 22.11 00:45 praca bezpośrednio na `main` (zasady w CLAUDE.md); gałęzie `a/backend` itp. już nieużywane. Główny folder `zatrzymaj-wode-` przełączony na `main`, kontenery przebudowane.

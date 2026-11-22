@@ -4,6 +4,10 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-22 08:30 · `main` · A16: plon i ceny sprzed daty analizy, trend plonów, rozjazd opadu IMGW / NASA
+Ym z plonów GUS < rok daty analizy, trend Theil–Sen (±3%/rok) × P90 reszt; ceny GUS z 3 lat przed rokiem analizy, ZSRIR tylko z notowań ≤ data; `precip_disagreement` (IV–VII, > 30%) + zdanie + pewność o poziom niżej przy ≥ 2 z 5 lat (D103). Burzyn: dane bez luk i podejrzanych zer – reguła niepotrzebna. Test wsteczny (201305, Krusza 57; pszenica, rzepak): r 0,09/0,64/0,60/0,72 → 0,60/0,76/0,83/0,88, MAPE 20,2/8,4/11,3/11,6 → 12,4/7,3/9,6/10,2%. `confidence.py` – w indeksie tylko fragmenty A16 (reszta pliku to niezacommitowane zmiany A18 innej sesji).
+**Pliki:** `backend/app/analysis/{suggestions,prices,precip,confidence}.py`, `rules/{ranking,precip}.yaml`, `routers/analysis.py`, `schemas/analysis.py`, `frontend/src/api/types.ts` (1 pole), `backend/tests/{test_a16,test_a5b2}.py`. **Kontrakt:** tak – `PrecipSources.precip_disagreement`.
+
 ## 2026-11-22 06:00 · `main` · A15: poprawki z weryfikacji V1
 Nagłówek „Trudna” (Stryjno, Szczytno 126/3 → „Dobra ziemia, ale w suche lata brakuje wody”), zboża na dobrej glebie bez „gleba nie pasuje” (zdanie o kompleksie z mapy), kompleksy górskie 10/11 w `crops.csv` (Bruśnik: jęczmień ozimy, pszenica, owies – polecane), satelita „brak zdjęcia” 12 h i bez słowa „scena” (5 działek przeliczonych), notatki kondycji / wilgotności słowami, ograniczenie FAO prostym językiem (D101). V1 ponownie: zniknęły nagłówki sprzeczne z glebą, odradzanie zbóż na dobrej glebie, „wszystko możliwe” w Bruśniku, 25 s czekania na satelitę, NDVI / NDMI w notatkach. Testy: 544 bez sieci (`test_a15.py` – 5).
 **Pliki:** `backend/app/{analysis/{suggestions,satellite,verdict}.py, analysis/rules/verdict.yaml, data/crops/crops.csv, routers/analysis.py}`, `backend/tests/test_a15.py`. **Kontrakt:** nie.
