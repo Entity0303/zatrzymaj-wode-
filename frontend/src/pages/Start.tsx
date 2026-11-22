@@ -93,6 +93,9 @@ export default function Start() {
   const [search, setSearch] = useState<SearchPhase>({ phase: 'idle' })
   const [candidates, setCandidates] = useState<Parcel[]>([])
   const [crops, setCrops] = useState<Record<string, CropId | null>>({})
+  // F-MASTER A2: data siewu wpisana przez rolnika (per działka) – backend nie przyjmuje daty siewu, więc ustawia
+  // ona okres „od siewu” od tej daty (date_from = data siewu, date_to = data analizy)
+  const [sowings, setSowings] = useState<Record<string, string | null>>({})
   // B3 „Doprecyzuj”: historia pola (indeks 0 = rok temu) i powierzchnia uprawy – na działkę
   const [histories, setHistories] = useState<Record<string, string[]>>({})
   const [areas, setAreas] = useState<Record<string, number | null>>({})
@@ -179,7 +182,9 @@ export default function Start() {
   const approxPoint = parcel ? (approxPoints[parcel.id] ?? null) : null
   const drawnGeom = parcel ? (drawnGeoms[parcel.id] ?? null) : null
   // F3: „od siewu” ma sens tylko z uprawą
-  const periodUsed = period === 'od_siewu' && !crop ? null : period
+  const sowing = parcel ? (sowings[parcel.id] ?? null) : null
+  const periodUsed =
+    period === 'od_siewu' ? (sowing && sowing < asOf ? `${sowing}_${asOf}` : crop ? period : null) : period
   const { run, retry: retryAnalysis, retryHydro } = useAnalysis(parcel?.id ?? null, crop, asOf, {
     point: approxPoint,
     geometry: drawnGeom,
@@ -629,7 +634,8 @@ export default function Start() {
       : null,
   )
   // „Pobierz raport” otwiera formularz „Przygotuj raport” (skrócony / szczegółowy)
-  const reportUi = { ...report, download: () => setReportFormOpen(true) }
+  // F-MASTER A3: w panelu raport pobierany od razu (skrócony / pełny), w innych miejscach – formularz „Przygotuj raport”
+  const reportUi = { ...report, download: () => setReportFormOpen(true), downloadType: (type: 'short' | 'full') => void report.download(type) }
   const reportIncluded = [
     planned.length ? t('plan: {n}', { n: planned.length }) : null,
     history.some((h) => h && h !== 'nie_wiem') ? t('historia pola') : null,
@@ -747,6 +753,17 @@ export default function Start() {
       if (parcel) setPlans((m) => ({ ...m, [parcel.id]: pl.slice(0, 3) }))
     },
     period: periodUsed,
+    // F-MASTER A2: okres i data siewu w formularzu „Twoja działka”
+    periodValue: period,
+    onPeriodChange: setPeriod,
+    sowing,
+    onSowingChange: (d: string | null) => {
+      if (!parcel) return
+      setSowings((m) => ({ ...m, [parcel.id]: d }))
+      if (d) setPeriod('od_siewu')
+    },
+    asOf,
+    historical,
   }
   const panelProps = {
     state: search,
@@ -1116,6 +1133,7 @@ export default function Start() {
                       onCollapse={() => setPanelMin(true)}
                       onOpenPassport={openPassport}
                       onShowOnMap={showOnMap}
+                      report={reportUi}
                     />
                   </div>
                 ) : (

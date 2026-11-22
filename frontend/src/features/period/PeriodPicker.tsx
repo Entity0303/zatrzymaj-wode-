@@ -21,7 +21,10 @@ export function PeriodPicker({
   prefix,
   emptyLabel,
   disabled,
+  wide,
 }: {
+  /** F-MASTER A2: pole formularza na całą szerokość (karta „Twoja działka”) */
+  wide?: boolean
   /** F8: „Okres:” przed opisem (pasek paszportu) */
   prefix?: string
   /** F8: opis, gdy okres nie jest wybrany (np. „od 1.11.2025 – sezon uprawy”) */
@@ -85,7 +88,7 @@ export function PeriodPicker({
   const label = prefix ? `${t(prefix)} ${desc ?? t('domyślny')}` : (desc ?? t('Okres'))
 
   return (
-    <div ref={root} className="relative">
+    <div ref={root} className={cn('relative', wide && 'w-full')}>
       <button
         type="button"
         aria-expanded={open}
@@ -95,13 +98,13 @@ export function PeriodPicker({
         title={t('Podsumowanie wybranego okresu: opad, parowanie i bilans wody')}
         className={cn(
           'flex h-11 items-center gap-1.5 rounded-full px-3 text-sm font-medium disabled:opacity-60',
-          prefix ? 'max-w-[min(340px,100%)]' : 'max-w-[220px]',
-          bare ? 'hover:bg-surface-2' : 'border bg-surface shadow-card hover:bg-surface-2',
+          wide ? 'w-full rounded-md border bg-surface-2 text-base hover:bg-surface' : prefix ? 'max-w-[min(340px,100%)]' : 'max-w-[220px]',
+          !wide && (bare ? 'hover:bg-surface-2' : 'border bg-surface shadow-card hover:bg-surface-2'),
           value && 'text-brand',
         )}
       >
         <CalendarRange className="size-4 shrink-0 text-brand" aria-hidden />
-        <span className="truncate">{label}</span>
+        <span className={cn('truncate', wide && 'flex-1 text-left')}>{label}</span>
         <ChevronDown className="size-4 shrink-0 text-text-muted" aria-hidden />
       </button>
       {open && (

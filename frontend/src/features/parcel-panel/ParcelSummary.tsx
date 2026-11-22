@@ -1,4 +1,4 @@
-import { BookOpenText, ChevronDown, ChevronUp, Leaf, Loader2, X } from 'lucide-react'
+import { ChevronDown, ChevronUp, Leaf, Loader2, X } from 'lucide-react'
 import type { Parcel } from '@/api/types'
 import { ErrorNotice } from '@/components/ErrorNotice'
 import { useLang } from '@/lib/i18n'
@@ -7,6 +7,7 @@ import { ApproxAreaBanner } from './ApproxAreaBanner'
 import { FieldOverview, type RefineProps } from './FieldOverview'
 import { NonAgriculturalCard } from './NonAgriculturalCard'
 import { RiskSummary } from './RiskSummary'
+import { ReportActions, type PanelReport } from './ReportActions'
 import { useParcelTitle } from './parcelTitle'
 import type { AnalysisRun } from './types'
 
@@ -24,7 +25,10 @@ export function ParcelSummary({
   onCollapse,
   onOpenPassport,
   onShowOnMap,
+  report,
 }: {
+  /** F-MASTER A3: „Pobierz raport PDF” + „Otwórz paszport wodny” pod formularzem */
+  report?: PanelReport
   /** zwija panel do samej belki z nazwą */
   onCollapse?: () => void
   parcel: Parcel
@@ -105,20 +109,17 @@ export function ParcelSummary({
           <div className={cn('transition-opacity', recalc && 'opacity-50')}>
             <RiskSummary analysis={analysis} />
           </div>
-          <FieldOverview analysis={analysis} refine={refine} onShowOnMap={onShowOnMap} recalculating={recalc} />
+          <FieldOverview
+            analysis={analysis}
+            refine={refine}
+            onShowOnMap={onShowOnMap}
+            recalculating={recalc}
+            actions={<ReportActions report={report} onOpenPassport={onOpenPassport} />}
+          />
         </>
       )}
 
       <div className="flex gap-2">
-        {analysis && !analysis.soil.non_agricultural && onOpenPassport && (
-          <button
-            type="button"
-            onClick={onOpenPassport}
-            className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-md bg-brand-dark text-sm font-semibold text-white hover:bg-brand"
-          >
-            <BookOpenText className="size-4" aria-hidden /> {t('Paszport wodny')}
-          </button>
-        )}
         <button
           type="button"
           onClick={onExpand}

@@ -1,8 +1,9 @@
 # Status – osoba B (Mefju), frontend
 
-_Stan na: 2026-11-22 (F17 – A za B, `main`)_
+_Stan na: 2026-11-22 (F-MASTER – A za B, `main`)_
 
 ## Zrobione
+- **F-MASTER (A za B)**: A – panel: status → formularz „Twoja działka” (od razu rozwinięty: uprawa, przedplon, data siewu, okres; „Dodatkowe”) → [Pobierz raport PDF] [Otwórz paszport wodny] → zwijane sekcje szczegółów; B – data historyczna (wodowskaz z datą, pasek pogody, „W dniu analizy:”, „pobrano”); C – bez dymka (F17).
 - **F17 (A za B)**: bez stałego dymka na wybranej działce – obrys w kolorze statusu; podpowiedzi po najechaniu (kandydaci) tylko z myszą.
 - **F14 (A za B)**: karta startowa bez rozjazdów – nagłówek w 2 liniach, wiersz [pole z lupą i lokalizacją | data | „Sprawdź”] jako siatka 48 px, chipy zawijane, karta maks. 760 px.
 - **F13 (A za B)**: „Co rośnie na tej działce?” na górze panelu (uprawa od razu, po wyborze jedna linia „Uprawa: … · zmień”, reszta pod „Więcej szczegółów”), przeliczanie bez skakania (poprzedni wynik przyciemniony, debounce 400 ms), dymek 220–260 px, powierzchnia `formatArea`.

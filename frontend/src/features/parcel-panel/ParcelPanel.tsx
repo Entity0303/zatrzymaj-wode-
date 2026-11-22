@@ -1,34 +1,24 @@
-import { BookOpenText, ChevronDown, FileDown, ListChecks, Loader2, Waves } from 'lucide-react'
-import type { ErrorInfo } from '@/api/client'
+import { Loader2, Waves } from 'lucide-react'
 import { EmptyState } from '@/components/EmptyState'
 import { ErrorNotice } from '@/components/ErrorNotice'
 import { FieldIllustration } from '@/components/FieldIllustration'
 import { LoadingSteps, type Step } from '@/components/LoadingSteps'
 import { SourceTag } from '@/components/SourceTag'
-import { Button } from '@/components/ui/button'
 import { formatDatePl, plForm } from '@/lib/format'
-import { irrigationPracticed, irrigationShown } from '@/lib/crops'
 import { AnalysisLoading } from './AnalysisLoading'
 import { ApproxAreaBanner } from './ApproxAreaBanner'
 import { FieldOverview, type RefineProps } from './FieldOverview'
 import { RiskSummary } from './RiskSummary'
-import { CropSeasonCard } from './CropSeasonCard'
-import { IrrigationCard } from './IrrigationCard'
+import { ReportActions, type PanelReport } from './ReportActions'
 import { KeyMetrics as Metrics } from './KeyMetrics'
 import { NonAgriculturalCard } from './NonAgriculturalCard'
 import { PanelEmpty } from './PanelEmpty'
 import type { Example } from './examples'
 import type { DemoExamples } from '@/features/intro/useDemoExamples'
 import { ParcelHeader } from './ParcelHeader'
-import { SatelliteCard } from './SatelliteCard'
-import { HydroCard } from './HydroCard'
-import { SoilCard } from './SoilCard'
-import { SoilWaterCard } from './SoilWaterCard'
 import { TerrainCard } from './TerrainCard'
-import { StatusCard } from './StatusCard'
 import type { AnalysisRun, ForecastState, SearchPhase } from './types'
 import { useLang } from '@/lib/i18n'
-import { useSettings, useUiPrefs } from '@/lib/storage'
 import { cn } from '@/lib/utils'
 
 /** Panel działki (SPEC 6) – prawa karta na komputerze, treść szuflady na telefonie. */
@@ -73,7 +63,7 @@ export function ParcelPanel({
   /** na telefonie nagłówek jest w zwiniętej części szuflady */
   hideHeader?: boolean
   /** pobieranie raportu PDF (useReportDownload) */
-  report?: { download: () => void; busy: boolean; error: ErrorInfo | null }
+  report?: PanelReport
   /** otwiera paszport wodny (gdy jest wynik analizy) */
   onOpenPassport?: () => void
   /** podświetla miejsce rekomendacji na mapie */
@@ -87,11 +77,6 @@ export function ParcelPanel({
 }) {
   const { t } = useLang()
   const crop = refine.crop
-  const [settings] = useSettings()
-  const [ui, setUi] = useUiPrefs()
-  // tryb doradcy: szczegóły zawsze rozwinięte, satelita i woda w okolicy od razu w widoku głównym
-  const advisor = settings.mode === 'doradca'
-  const showDetails = ui.details || advisor
   if (state.phase === 'idle') return <PanelEmpty onFocusSearch={onFocusSearch} onLocate={onLocate} onExample={onExample} examples={examples} />
 
   if (state.phase === 'loading')
@@ -181,71 +166,28 @@ export function ParcelPanel({
           <div className={cn('transition-opacity', recalc && 'opacity-50')}>
             <RiskSummary analysis={analysis} />
           </div>
-          <FieldOverview analysis={analysis} refine={refine} onShowOnMap={onShowOnMap} recalculating={recalc} />
+          {/* F-MASTER A1: status → formularz „Twoja działka” → przyciski raportu → szczegóły (zwijane) */}
+          <FieldOverview
+            analysis={analysis}
+            refine={refine}
+            onShowOnMap={onShowOnMap}
+            recalculating={recalc}
+            actions={<ReportActions report={report} onOpenPassport={onOpenPassport} />}
+            full
+            steps={steps}
+            onOpenPassport={onOpenPassport}
+          />
         </>
       )}
-      <div className="space-y-2">
-        {report?.error && <ErrorNotice {...report.error} onRetry={report.error.retryable ? report.download : undefined} />}
-        {analysis && onOpenPassport && (
-          <Button onClick={onOpenPassport} className="h-12 w-full rounded-md bg-brand-dark text-base font-semibold text-white hover:bg-brand">
-            <BookOpenText className="size-5" /> {t('Paszport wodny')}
-          </Button>
-        )}
-        {analysis && report && (
-          <Button variant="outline" onClick={report.download} disabled={report.busy} className="h-11 w-full rounded-md bg-surface text-base font-medium">
-            {report.busy ? <Loader2 className="size-5 animate-spin" /> : <FileDown className="size-5 text-brand" />}
-            {t(report.busy ? 'Przygotowuję raport…' : 'Pobierz raport PDF')}
-          </Button>
-        )}
-      </div>
-      {analysis && (
-        <section className="rounded-xl border bg-surface">
-          <button
-            type="button"
-            aria-expanded={showDetails}
-            onClick={() => setUi({ details: !ui.details })}
-            className="flex min-h-12 w-full items-center gap-2 px-4 py-2.5 text-left"
-          >
-            <ListChecks className="size-5 shrink-0 text-brand" aria-hidden />
-            <span className="min-w-0 flex-1">
-              <span className="block text-base leading-6 font-semibold">{t(showDetails ? 'Ukryj szczegóły' : 'Pokaż szczegóły')}</span>
-              <span className="block text-sm leading-5 text-text-muted">
-                {t(
-                  nonAgri
-                    ? 'Teren, postęp analizy'
-                    : !crop
-                      ? advisor
-                        ? 'Liczby, woda w glebie, gleba, teren'
-                        : 'Z satelity, woda w okolicy, liczby, gleba, teren'
-                      : irrigationPracticed(crop) && irrigationShown(analysis)
-                        ? 'Stan uprawy, z satelity, woda w okolicy, nawadnianie, gleba, teren'
-                        : advisor
-                          ? 'Stan uprawy, liczby, faza uprawy, woda w glebie, gleba, teren'
-                          : 'Stan uprawy, z satelity, woda w okolicy, liczby, gleba, teren',
-                )}
-              </span>
-            </span>
-            <ChevronDown className={cn('size-5 shrink-0 text-text-muted transition-transform', showDetails && 'rotate-180')} aria-hidden />
-          </button>
-          {showDetails && (
-            <div className="space-y-3 border-t p-3">
-              {/* tryb Rolnik: to, czego nie ma w krótkim widoku głównym */}
-              {!nonAgri && crop && <StatusCard crop={crop} analysis={analysis} onOpen={onOpenPassport} />}
-              {!nonAgri && !advisor && analysis.satellite && <SatelliteCard satellite={analysis.satellite} />}
-              {!nonAgri && !advisor && <HydroCard hydro={analysis.hydro} historicalDate={analysis.historical ? analysis.analysis_date : null} />}
-              {!nonAgri && <Metrics analysis={analysis} />}
-              {analysis && !nonAgri && analysis.crop_season && <CropSeasonCard season={analysis.crop_season} analysisDate={analysis.analysis_date} />}
-              {analysis && !nonAgri && <SoilWaterCard state={analysis.soil_water} />}
-              {analysis && !nonAgri && analysis.irrigation && irrigationShown(analysis) && <IrrigationCard plan={analysis.irrigation} />}
-              {analysis && !nonAgri && <SoilCard soil={analysis.soil} />}
-              {analysis && <TerrainCard terrain={analysis.terrain} note={analysis.terrain_note} />}
-              <div className="rounded-xl border bg-surface p-3.5">
-                <p className="text-sm font-medium">{t('Postęp analizy')}</p>
-                <LoadingSteps steps={steps} className="mt-3" />
-              </div>
-            </div>
-          )}
-        </section>
+      {nonAgri && analysis && (
+        <>
+          <ReportActions report={report} onOpenPassport={onOpenPassport} />
+          <TerrainCard terrain={analysis.terrain} note={analysis.terrain_note} />
+          <div className="rounded-xl border bg-surface p-3.5">
+            <p className="text-sm font-medium">{t('Postęp analizy')}</p>
+            <LoadingSteps steps={steps} className="mt-3" />
+          </div>
+        </>
       )}
       {onReportInfra && (
         <button

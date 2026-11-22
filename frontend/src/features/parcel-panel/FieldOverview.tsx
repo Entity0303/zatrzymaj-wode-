@@ -1,4 +1,8 @@
+import { BookOpenText, Layers, ListChecks, Mountain, Sprout, Wrench } from 'lucide-react'
+import type { ReactNode } from 'react'
 import type { AnalysisResponse, CropId } from '@/api/types'
+import { LoadingSteps, type Step } from '@/components/LoadingSteps'
+import { irrigationShown } from '@/lib/crops'
 import { useLang } from '@/lib/i18n'
 import { formatDatePl } from '@/lib/format'
 import { cn } from '@/lib/utils'
@@ -10,7 +14,14 @@ import { SatelliteCard } from './SatelliteCard'
 import { HydroCard } from './HydroCard'
 import { PeriodCard } from '@/features/period/PeriodCard'
 import { useSettings } from '@/lib/storage'
-import { SectionTitle } from './SectionTitle'
+import { CropSeasonCard } from './CropSeasonCard'
+import { DetailSection } from './DetailSection'
+import { IrrigationCard } from './IrrigationCard'
+import { KeyMetrics } from './KeyMetrics'
+import { SoilCard } from './SoilCard'
+import { SoilWaterCard } from './SoilWaterCard'
+import { StatusCard } from './StatusCard'
+import { TerrainCard } from './TerrainCard'
 import { WhatToDo } from './WhatToDo'
 import { VerdictCard } from './VerdictCard'
 
@@ -23,8 +34,16 @@ export type RefineProps = {
   /** A5e: plan upraw (do 3) */
   planned: string[]
   onPlannedChange: (p: string[]) => void
-  /** F3: wybrany okres (znacznik) – karta „Okres” na górze */
+  /** F3: okres użyty w zapytaniu (znacznik) – karta „Okres” */
   period?: string | null
+  /** F-MASTER A2: okres wybrany w formularzu (stan widoku) i jego zmiana */
+  periodValue?: string | null
+  onPeriodChange?: (p: string | null) => void
+  /** data siewu wpisana przez rolnika – początek okresu „od siewu” */
+  sowing?: string | null
+  onSowingChange?: (d: string | null) => void
+  asOf?: string
+  historical?: boolean
 }
 
 /** Grupy upraw, które backend przyjmuje w planie (wybierze najlepszy gatunek z grupy). */
@@ -49,25 +68,36 @@ export function NowLine({ analysis }: { analysis: AnalysisResponse }) {
 }
 
 /**
- * Główny widok działki (F5, tryb Rolnik – krótko): zdania werdyktu (3 + „Pokaż wszystko”; nagłówek i „Teraz / Na dłuższą
- * metę” są wyżej w RiskSummary), „Teraz: …” tylko gdy stan wody nie jest dobry, „Co tu posiać?” (wybór + 3 najlepsze),
- * „Co mogę zrobić?” (maks. 3 działania). Na górze „Co rośnie na tej działce?” (F13), pod nią karta „Okres” (F3).
- * Tryb Doradca: dodatkowo od razu „Z satelity” i „Woda w okolicy” (w trybie Rolnik są w „Szczegółach”).
+ * Widok działki pod kartą statusu (F-MASTER A1–A4): formularz „Twoja działka” (od razu rozwinięty) → przyciski
+ * raportu (`actions`) → szczegóły w zwijanych sekcjach: „Dlaczego?” (rozwinięta – okres, werdykt: gleba, opady, teren,
+ * rośliny), „Gleba i woda w glebie”, „Teren, rowy i satelita”, „Co tu posiać?” (ranking z przychodem),
+ * „Co mogę zrobić?”, „Skąd dane”. `full` – panel działki (wszystkie sekcje); bez – zwinięty panel komputera
+ * (Dlaczego, Co tu posiać, Co mogę zrobić). Przy przeliczaniu (F13) treść pod formularzem przyciemniona.
  */
 export function FieldOverview({
   analysis,
   refine,
   onShowOnMap,
   recalculating,
+  actions,
+  full,
+  steps,
+  onOpenPassport,
 }: {
-  /** F13: trwa przeliczanie – reszta przyciemniona, „Co rośnie na tej działce?” zostaje aktywne */
+  /** F13: trwa przeliczanie – reszta przyciemniona, formularz zostaje aktywny */
   recalculating?: boolean
   analysis: AnalysisResponse
   refine: RefineProps
   /** „Pokaż na mapie” w działaniach */
   onShowOnMap?: (g: GeoJSON.Geometry) => void
+  /** przyciski raportu i paszportu – zaraz pod formularzem */
+  actions?: ReactNode
+  /** wszystkie sekcje szczegółów (panel działki) */
+  full?: boolean
+  /** kroki analizy – sekcja „Skąd dane” */
+  steps?: Step[]
+  onOpenPassport?: () => void
 }) {
-  const { t } = useLang()
   const [settings] = useSettings()
   const advisor = settings.mode === 'doradca'
   const s = analysis.suggestions
@@ -75,24 +105,59 @@ export function FieldOverview({
     ? [...PLAN_GROUPS, ...s.groups.flatMap((g) => g.items.map((i) => ({ id: i.crop_id, label: i.label }))), ...(s.perennials?.items ?? []).map((i) => ({ id: i.crop_id, label: i.label }))]
     : []
   const area = s?.area ?? (analysis.cultivated_area_ha ? { value_ha: analysis.cultivated_area_ha, estimated: false, note: '' } : null)
+  const crop = refine.crop
+  const historicalDate = analysis.historical ? analysis.analysis_date : null
   return (
     <div className="space-y-3">
-      {/* F13: wybór uprawy na górze (obowiązkowy krok KOWR) – zawsze ten sam element, bez odmontowania */}
-      <RefineCard {...refine} area={area} rotationHint={s?.rotation_hint} planOptions={planOptions} />
+      {/* formularz – zawsze ten sam element (bez odmontowania przy przeliczaniu) */}
+      <RefineCard
+        {...refine}
+        period={refine.periodValue ?? refine.period}
+        typicalSowing={crop ? (analysis.crop_season?.season_start ?? null) : null}
+        area={area}
+        rotationHint={s?.rotation_hint}
+        planOptions={planOptions}
+      />
+      {actions}
       <div aria-busy={recalculating || undefined} className={cn('space-y-3 transition-opacity', recalculating && 'pointer-events-none opacity-50')}>
-      <PeriodCard period={analysis.period} requested={!!refine.period} />
-      {analysis.verdict && <VerdictCard verdict={analysis.verdict} bare limit={3} hideCrops={!!s} precip={analysis.precip_sources} />}
-      {analysis.status.level !== 'ok' && analysis.status.level !== 'no_data' && <NowLine analysis={analysis} />}
-      {advisor && analysis.satellite && <SatelliteCard satellite={analysis.satellite} />}
-      {advisor && <HydroCard hydro={analysis.hydro} historicalDate={analysis.historical ? analysis.analysis_date : null} />}
-      {s && <ChoiceCard suggestions={s} priceNow={analysis.price_now} />}
-      {s && s.groups.some((g) => g.items.length) && <RankingCard suggestions={s} priceNow={analysis.price_now} />}
-      {analysis.recommendations.length > 0 && (
-        <section className="space-y-3 pt-1">
-          <SectionTitle>{t('Co mogę zrobić?')}</SectionTitle>
-          <WhatToDo analysis={analysis} onShowOnMap={onShowOnMap} />
-        </section>
-      )}
+        <DetailSection title="Dlaczego?" hint="Gleba, opady, teren i rośliny na tej działce" icon={ListChecks} defaultOpen>
+          <PeriodCard period={analysis.period} requested={!!refine.period} />
+          {analysis.verdict && <VerdictCard verdict={analysis.verdict} bare hideCrops={!!s} precip={analysis.precip_sources} />}
+          {analysis.status.level !== 'ok' && analysis.status.level !== 'no_data' && <NowLine analysis={analysis} />}
+        </DetailSection>
+        {full && (
+          <DetailSection title="Gleba i woda w glebie" hint="Zapas wody, faza uprawy, kategoria gleby" icon={Layers}>
+            {crop && <StatusCard crop={crop} analysis={analysis} onOpen={onOpenPassport} />}
+            <KeyMetrics analysis={analysis} />
+            {analysis.crop_season && <CropSeasonCard season={analysis.crop_season} analysisDate={analysis.analysis_date} />}
+            <SoilWaterCard state={analysis.soil_water} />
+            <SoilCard soil={analysis.soil} />
+          </DetailSection>
+        )}
+        {(full || advisor) && (
+          <DetailSection title="Teren, rowy i satelita" hint="Ukształtowanie terenu, woda w okolicy, zdjęcie satelitarne" icon={Mountain}>
+            {full && <TerrainCard terrain={analysis.terrain} note={analysis.terrain_note} />}
+            <HydroCard hydro={analysis.hydro} historicalDate={historicalDate} />
+            {analysis.satellite && <SatelliteCard satellite={analysis.satellite} />}
+          </DetailSection>
+        )}
+        {s && (s.groups.some((g) => g.items.length) || (s.choice?.length ?? 0) > 0) && (
+          <DetailSection title="Co tu posiać?" hint="Ranking upraw z plonem i przychodem z pola" icon={Sprout}>
+            <ChoiceCard suggestions={s} priceNow={analysis.price_now} />
+            {s.groups.some((g) => g.items.length) && <RankingCard suggestions={s} priceNow={analysis.price_now} />}
+          </DetailSection>
+        )}
+        {analysis.recommendations.length > 0 && (
+          <DetailSection title="Co mogę zrobić?" hint="Najpierw zatrzymanie wody, potem uprawa, na końcu nawadnianie" icon={Wrench}>
+            <WhatToDo analysis={analysis} onShowOnMap={onShowOnMap} />
+            {full && analysis.irrigation && irrigationShown(analysis) && <IrrigationCard plan={analysis.irrigation} />}
+          </DetailSection>
+        )}
+        {full && steps && (
+          <DetailSection title="Skąd dane" hint="Źródła i przebieg analizy" icon={BookOpenText}>
+            <LoadingSteps steps={steps} />
+          </DetailSection>
+        )}
       </div>
     </div>
   )
