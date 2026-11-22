@@ -23,8 +23,10 @@ const cache = new Map<string, PriceWeather>()
 
 // wymiary wykresu (viewBox) – SVG skaluje się do szerokości karty
 const W = 640
-const H = 250
-const PAD = { l: 44, r: 52, t: 12, b: 26 }
+const H = 268
+// F35: górny margines mieści jednostki („mm”, „zł/t”) NAD osiami – nie nachodzą na najwyższe wartości (600, 3500)
+const PAD = { l: 44, r: 52, t: 30, b: 26 }
+const UNIT_Y = 12
 const COLOR = { rain: '#2F80C9', dry: '#E07B39', price: '#1E2A23', yield: '#2F6B47', grid: '#E4E0D6', muted: '#6B746E' }
 
 function niceMax(v: number, step: number) {
@@ -117,10 +119,10 @@ export function PriceWeatherCard({ analysis }: { analysis: AnalysisResponse }) {
               </text>
             </g>
           ))}
-          <text x={PAD.l - 6} y={PAD.t - 1} textAnchor="end" fontSize={11} fill={COLOR.rain}>
+          <text x={PAD.l - 6} y={UNIT_Y} textAnchor="end" fontSize={11} fill={COLOR.rain}>
             mm
           </text>
-          <text x={W - PAD.r + 6} y={PAD.t - 1} fontSize={11} fill={COLOR.price}>
+          <text x={W - PAD.r + 6} y={UNIT_Y} fontSize={11} fill={COLOR.price}>
             zł/t
           </text>
           {rows.map((r, i) => (

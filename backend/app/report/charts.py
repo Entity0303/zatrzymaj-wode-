@@ -231,6 +231,8 @@ def season_bars(years, mean_mm: float | None, width: int = 680, height: int = 19
     parts.append(f'<line x1="{pad_l}" x2="{width - pad_r}" y1="{y0:.1f}" y2="{y0:.1f}" stroke="{C["muted"]}" stroke-width="0.9"/>')
     bw = (width - pad_l - pad_r) / len(ys)
     below_mean = mean_mm is not None and ys[-1].balance_mm < mean_mm
+    ym = y_of(mean_mm) if mean_mm is not None else None
+    labels = []  # podpisy rysujemy PO linii średniej, żeby jej nie przecinała
     for i, y in enumerate(ys):
         x = pad_l + i * bw + bw * 0.18
         top, bot = sorted((y_of(y.balance_mm), y0))
@@ -241,18 +243,21 @@ def season_bars(years, mean_mm: float | None, width: int = 680, height: int = 19
         # F20: dodatnie – nad słupkiem; ujemne – pod słupkiem, ale zawsze nad osią lat (z odstępem)
         # F24: mała wartość (słupek niższy niż 3 px) – tuż przy osi zera
         lab_y = (min(top, y0) - 3) if y.balance_mm >= 0 else min(max(bot, y0) + 10, height - 19)
+        # F35: podpis (wys. ok. 8 px nad linią pisma) nie może leżeć na linii średniej – odsuwamy go pod / nad linię
+        if ym is not None and lab_y - 9 <= ym <= lab_y + 2.5:
+            lab_y = min(ym + 10.5, height - 19) if y.balance_mm < 0 else ym - 3.5
         weight = ' font-weight="700"' if y.current else ""
-        parts.append(f'<text x="{x + bw * 0.32:.1f}" y="{lab_y:.1f}" text-anchor="middle" font-size="8.5" '
-                     f'fill="{C["text"] if y.current else C["muted"]}"{weight}>{_num(y.balance_mm)}</text>')
+        labels.append(f'<text x="{x + bw * 0.32:.1f}" y="{lab_y:.1f}" text-anchor="middle" font-size="8.5" '
+                      f'fill="{C["text"] if y.current else C["muted"]}"{weight}>{_num(y.balance_mm)}</text>')
         parts.append(f'<text x="{x + bw * 0.32:.1f}" y="{height - 6}" text-anchor="middle" '
                      f'fill="{C["text"] if y.current else C["muted"]}"{weight}>{y.year}</text>')
     if mean_mm is not None:
-        ym = y_of(mean_mm)
         parts.append(f'<line x1="{pad_l}" x2="{width - pad_r}" y1="{ym:.1f}" y2="{ym:.1f}" stroke="{C["water"]}" '
                      f'stroke-width="1.4" stroke-dasharray="5 3"/>')
         tx = width - pad_r + 4  # F24: podpis po prawej stronie linii, poza słupkami
         parts.append(f'<text x="{tx}" y="{ym - 1:.1f}" fill="{C["water"]}" font-weight="600">średnia</text>')
         parts.append(f'<text x="{tx}" y="{ym + 10:.1f}" fill="{C["water"]}" font-weight="600">{_num(mean_mm)} mm</text>')
+    parts.extend(labels)
     parts.append("</svg>")
     return "".join(parts)
 
@@ -408,7 +413,8 @@ def price_weather_chart(rows: list[dict], dry_years: list[int], width: int = 660
     rows = [r for r in rows if r.get("precip_mm") is not None or r.get("price_pln_t") is not None or r.get("yield_t_ha") is not None]
     if len(rows) < 2:
         return None
-    pad_l, pad_r, pad_t, pad_b = 36, 44, 14, 22
+    # F35: górny margines mieści jednostki („mm”, „zł/t”) nad osiami – nie nachodzą na najwyższe wartości
+    pad_l, pad_r, pad_t, pad_b = 36, 44, 26, 22
     w, hh = width - pad_l - pad_r, height - pad_t - pad_b
     rain_max = max([r["precip_mm"] or 0 for r in rows] + [100]) * 1.08
     price_max = max([r["price_pln_t"] or 0 for r in rows] + [500]) * 1.08
@@ -429,8 +435,8 @@ def price_weather_chart(rows: list[dict], dry_years: list[int], width: int = 660
         parts.append(f'<text x="{pad_l - 4}" y="{yy + 3:.1f}" text-anchor="end" fill="{C["water"]}">{_num(t)}</text>')
     for t in _ticks(0, price_max, 3):
         parts.append(f'<text x="{width - pad_r + 4}" y="{y(t, price_max) + 3:.1f}" fill="{C["text"]}">{_num(t)}</text>')
-    parts.append(f'<text x="{pad_l - 4}" y="{pad_t - 4}" text-anchor="end" fill="{C["water"]}">mm</text>')
-    parts.append(f'<text x="{width - pad_r + 4}" y="{pad_t - 4}" fill="{C["text"]}">zł/t</text>')
+    parts.append(f'<text x="{pad_l - 4}" y="9" text-anchor="end" fill="{C["water"]}">mm</text>')
+    parts.append(f'<text x="{width - pad_r + 4}" y="9" fill="{C["text"]}">zł/t</text>')
     dry = set(dry_years)
     for i, r in enumerate(rows):
         if r.get("precip_mm") is not None:
