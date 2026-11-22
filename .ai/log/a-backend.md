@@ -4,6 +4,10 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-22 06:10 · `main` · A23 cd.: kolejka zadań w tle, A17 (okres z Open-Meteo), jedna liczba zapasu wody, niepełny NMT
+Szczegóły: D112. Testy: 645 bez sieci. Na żywo lokalnie: nowe działki – analiza ok. 7 s, teren po 11–12 s; 201305_2.0038.8/5 – komplet terenu.
+**Pliki:** `backend/app/core/{background,config}.py`, `analysis/{terrain,terrain_interpret,satellite,hydro,variants,period}.py`, `sources/{soilgrids,nmt}.py`, `routers/analysis.py`, `schemas/analysis.py`, `frontend/src/api/types.ts` (pola okresu), testy `test_background`, `test_a17`, `test_a23`, `test_a23_nmt` (+ a5, a6, a22). **Kontrakt:** tak – `PeriodSummary.requested_to / data_until / filled_days / note`.
+
 ## 2026-11-22 17:30 · `main` · A23: teren po IPv4, komplet mapy gleb, nagłówek zgodny z rankingiem, plony 2017–2018
 Przyczyna braku terenu lokalnie: DNS AAAA dla NMT GUGiK w Dockerze – klient HTTP tylko po IPv4. Mapa glebowo-rolnicza bez łącznego limitu 7,5 s i bez bezpiecznika po pierwszym błędzie; nagłówek „Lekka ziemia…” gdy ranking nic nie odradza; plony z własnego województwa także przy 1–2 latach; pamięć rankingu 256 (D111). Testy: 631 bez sieci.
 **Pliki:** `backend/app/core/{http,config}.py`, `analysis/{suggestions,variants,verdict}.py`, `rules/verdict.yaml`, `sources/soil_map.py`, `routers/analysis.py`, `tests/test_a23.py`. **Kontrakt:** nie.

@@ -1,6 +1,6 @@
 # Status – osoba A (Dominik), backend
 
-_Stan na: 2026-11-22 17:30 (A23)_
+_Stan na: 2026-11-22 06:10 (A23 cd., A17)_
 
 ## Zrobione
 - **A19:** wyszukiwanie „gmina + numer” (obręby gminy z PRNG → ULDK sekwencyjnie, maks. 10, cache) i gmina jako filtr obrębu; `CORS_ORIGINS` JSON albo przecinki (błąd nie wywraca startu), `CORS_ORIGIN_REGEX` domyślnie *.vercel.app.
@@ -93,7 +93,8 @@ _Stan na: 2026-11-22 17:30 (A23)_
 - **A21:** widełki rankingu (warianty opadu i gleby), `sowing_date` (D109).
 - **A22:** SoilGrids z budżetem 5 s, rozgrzewka po 120 s, próg widełek 4 lata (D110).
 - **A23:** teren po IPv4, komplet mapy gleb, nagłówek zgodny z rankingiem, plony 2017–2018 z własnego województwa (D111).
-- Testy: **631 bez sieci** + 5 live.
+- **A23 cd. / A17:** kolejka zadań w tle, okres z Open-Meteo, jedna liczba zapasu wody, dopytywanie NMT (D112).
+- Testy: **645 bez sieci** + 5 live.
 
 ## W trakcie (gałąź)
 - **INT3 (22.11 ok. 00:55): `c/research`, `a/backend`, `b/frontend` scalone do `main` (bez konfliktów) i wypchnięte.** Od 22.11 00:45 praca bezpośrednio na `main` (zasady w CLAUDE.md); gałęzie `a/backend` itp. już nieużywane. Główny folder `zatrzymaj-wode-` przełączony na `main`, kontenery przebudowane.

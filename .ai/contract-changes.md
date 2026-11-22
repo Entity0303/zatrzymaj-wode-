@@ -299,3 +299,9 @@ Weryfikacja: `tsc -b` przechodzi; `vite build` – lokalnie i w kontenerze brak 
 
 **Dla Mefju:** gdy `suggestions.ranges_pending` – ponów `/api/analysis` po ok. 2 s (odpowiedź z pamięci, ok. 0,1 s) i podmień ranking; przy `min == max` pokaż jedną liczbę. `sowing_note` pokaż pod polem daty siewu.
 **Łamie zgodność:** nie (wszystko opcjonalne).
+
+### 2026-11-22 · `main` · A17 – okres uzupełniany z Open-Meteo
+- `PeriodSummary`: `requested_to`, `data_until` (`ISODate | null`), `filled_days` (`number`), `note` (`string | null`) – dodane w `types.ts` (frontend czytał je przez typ lokalny `PeriodDataExtras`).
+
+**Dla Mefju:** typ lokalny w `PeriodCard.tsx` można zastąpić polami z `PeriodSummary`. Gdy `filled_days > 0`, `to` = koniec wybrany przez rolnika, a `note` mówi, które dni są z modelu.
+**Łamie zgodność:** nie.
