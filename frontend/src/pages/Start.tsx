@@ -231,7 +231,7 @@ export default function Start() {
   const [layerAttempt, setLayerAttempt] = useState(0)
   const layerRefresh = `${satLayer ? (satStatus ?? '') : ''}|${terrainLayer ? String(terrainPending) : ''}|${layer === 'woda' ? (hydroStatus ?? '') : ''}|${layerAttempt}`
   // F10: „Gleba” to obraz IUNG z WMS (SoilParcelOverlay), nie /api/layers – bez zapytania do serwera
-  const layerState = useLayerData(layer, layer === 'gleba' ? null : (parcel?.id ?? null), asOf, layerRefresh, layerWaiting, drawnGeom)
+  const layerState = useLayerData(layer, layer === 'gleba' ? null : (parcel?.id ?? null), asOf, layerRefresh, layerWaiting, drawnGeom, approxPoint)
   const terrainQueue = (layerState.phase === 'waiting' ? layerState.queue : null) ?? queuePosition(analysis?.terrain)
   const retryLayer = layerState.phase === 'error' ? () => setLayerAttempt((n) => n + 1) : undefined
   const carrying = !!parcel && passportCarry === parcel.id && !!lastAnalysis

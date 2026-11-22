@@ -43,6 +43,8 @@ export function useLayerData(
   waiting: string | null = null,
   /** F3: pole narysowane – warstwy satelity POST-em z obrysem */
   geometry: GeoJSON.Polygon | null = null,
+  /** F29: obszar przybliżony – punkt [lon, lat]; warstwy POST-em jak analiza */
+  point: [number, number] | null = null,
 ): LayerState {
   const key = parcelId && !waiting ? `${layer}|${parcelId}|${date}|${refresh}` : null
   const [result, setResult] = useState<{ key: string; state: LayerState } | null>(null)
@@ -53,7 +55,7 @@ export function useLayerData(
     const request =
       import.meta.env.DEV && mockRequested() && (layer === 'kondycja' || layer === 'wilgotnosc' || layer === 'woda')
         ? mockLayer(layer).then((d) => d ?? Promise.reject(new ApiError(404, null)))
-        : api.layer(layer, parcelId, date, ctrl.signal, geometry)
+        : api.layer(layer, parcelId, date, ctrl.signal, geometry, point)
     const terrain = layer === 'teren' || layer === 'splyw'
     // F23: teren / spływ – odpowiedź „pending” (serwer jeszcze liczy) = „Liczę…” i ponowne zapytanie co 3 s, najwyżej
     // 20 razy; brak odpowiedzi w 45 s = „brak danych” (nigdy wieczne „Wczytuję…”). Zmiana warstwy / działki / daty przerywa.
@@ -78,7 +80,7 @@ export function useLayerData(
         }
         if (limit) clearTimeout(limit)
         setResult({ key, state: { phase: 'waiting', reason: 'Liczę teren i spływ… (do ok. minuty)', queue: queuePosition(data) } })
-        again = setTimeout(() => api.layer(layer, parcelId, date, ctrl.signal, geometry).then(onData, onError), PENDING_WAIT_MS)
+        again = setTimeout(() => api.layer(layer, parcelId, date, ctrl.signal, geometry, point).then(onData, onError), PENDING_WAIT_MS)
         return
       }
       done()
@@ -90,7 +92,12 @@ export function useLayerData(
         if (ctrl.signal.aborted || timedOut) return
         const unavailable = e instanceof ApiError && (e.status === 404 || e.status === 501)
         const detail = e instanceof ApiError ? (e.detail as { message?: unknown } | null) : null
-        const message = typeof detail?.message === 'string' && detail.message.trim() ? detail.message.trim() : null
+        // F29: pole narysowane – bez technicznych komunikatów; prosto, co zrobić
+        const message = geometry && !unavailable
+          ? 'Nie udało się policzyć warstwy dla narysowanego pola – spróbuj narysować je jeszcze raz.'
+          : typeof detail?.message === 'string' && detail.message.trim()
+            ? detail.message.trim()
+            : null
         setResult({ key, state: { phase: unavailable ? 'unavailable' : 'error', message } })
     }
     request.then(onData, onError)

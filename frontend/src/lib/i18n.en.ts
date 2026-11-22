@@ -1330,4 +1330,6 @@ export const EN: Record<string, string> = {
   'Policzono {date}': 'Calculated {date}',
   'Zdjęcie z {date}': 'Image from {date}',
   'źródło: {src}': 'source: {src}',
+  // F29: warstwy dla pola narysowanego
+  'Nie udało się policzyć warstwy dla narysowanego pola – spróbuj narysować je jeszcze raz.': 'Could not calculate the layer for the drawn field – try drawing it again.',
 }

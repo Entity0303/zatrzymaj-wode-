@@ -90,7 +90,13 @@ def test_terrain_post_geometry_and_satellite_layer_post(client, monkeypatch):
     r = client.post("/api/layers/kondycja", json={"geometry": geom, "date": "2026-11-20"})
     assert r.status_code == 200, r.text
     assert r.json()["raster"]["image_url"].startswith("data:image/png;base64,")
-    assert client.post("/api/layers/teren", json={"geometry": geom}).status_code == 501
+    # F29: teren i spływ dla pola narysowanego – POST z obrysem (dawniej 501, mapa była pusta)
+    for lay in ("teren", "splyw"):
+        r = client.post(f"/api/layers/{lay}", json={"geometry": geom})
+        assert r.status_code == 200, r.text
+        body = r.json()
+        assert body["layer"] == lay and body["parcel_id"].startswith("narysowane_") and body["features"]["features"]
+    assert client.post("/api/layers/gleba", json={"geometry": geom}).status_code == 501
 
 
 # ── CZĘŚĆ 2: adresy w wyszukiwarce ─────────────────────────────────────────────────────────

@@ -163,11 +163,21 @@ export const api = {
   /** GET /api/search?q= – jedno pole wyszukiwania: identyfikator, „obręb numer” albo nazwa miejscowości (A5c) */
   search: (q: string, signal?: AbortSignal) => get<SearchResponse>('/api/search', { q }, signal),
   /** GET /api/layers/{layer} – warstwa przycięta do obrysu działki (raster PNG + bbox, GeoJSON) */
-  layer: (layer: LayerKey, parcelId: string, date: string, signal?: AbortSignal, geometry?: GeoJSON.Polygon | null) =>
-    // F3: pole narysowane – warstwy satelity POST-em z obrysem
-    geometry && (layer === 'kondycja' || layer === 'wilgotnosc')
+  layer: (
+    layer: LayerKey,
+    parcelId: string,
+    date: string,
+    signal?: AbortSignal,
+    geometry?: GeoJSON.Polygon | null,
+    /** F29: obszar przybliżony – punkt [lon, lat] zamiast działki */
+    point?: [number, number] | null,
+  ) =>
+    // F3/F29: pole narysowane (obrys) i obszar przybliżony (punkt) – wszystkie warstwy POST-em, jak analiza
+    geometry
       ? post<LayerResponse>(`/api/layers/${layer}`, { geometry, date }, signal)
-      : get<LayerResponse>(`/api/layers/${layer}`, { parcel_id: parcelId, date }, signal),
+      : point
+        ? post<LayerResponse>(`/api/layers/${layer}`, { lon: point[0], lat: point[1], date }, signal)
+        : get<LayerResponse>(`/api/layers/${layer}`, { parcel_id: parcelId, date }, signal),
   /** GET /api/layers/{layer}/point – wartość warstwy w klikniętym punkcie (SPEC 5.4) */
   layerPoint: (layer: LayerKey, lon: number, lat: number, date: string) =>
     get<PointValue>(`/api/layers/${layer}/point`, { lon: lon.toFixed(7), lat: lat.toFixed(7), date }),

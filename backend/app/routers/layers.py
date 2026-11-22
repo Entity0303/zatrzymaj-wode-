@@ -38,8 +38,13 @@ async def get_layer(layer: LayerKey, parcel_id: str = Query(), date: dt.date | N
         return await water_layer(parcel_id, date)
     if layer not in ("teren", "splyw"):
         raise not_implemented(f"Warstwa „{layer}”")
+    return await terrain_layer(layer, parcel_id, date)
+
+
+async def terrain_layer(layer: str, parcel_id: str | None, date: dt.date | None, parcel=None) -> LayerResponse:
+    """Teren / spływ z NMT dla działki (GET) albo dla podanego obrysu (F29: POST z geometry – `parcel`)."""
     try:
-        p = await resolve_parcel(parcel_id, None, None)
+        p = parcel or await resolve_parcel(parcel_id, None, None)
         res = await asyncio.wait_for(terrain_mod.live(p.geom_2180, p.id), TERRAIN_LIMIT_S)  # A9: wspólne zadanie
     except SourceError as exc:
         raise http_error(exc) from exc
@@ -62,13 +67,13 @@ async def get_layer(layer: LayerKey, parcel_id: str = Query(), date: dt.date | N
     )
 
 
-async def water_layer(parcel_id: str, date: dt.date | None) -> LayerResponse:
+async def water_layer(parcel_id: str | None, date: dt.date | None, parcel=None) -> LayerResponse:
     """A9: cieki, rowy, kanały, zbiorniki ≤ 500 m od działki (OSM) – GeoJSON przycięty do promienia."""
     from app.analysis import hydro as hydro_mod
     from app.routers.hydro import hydro_for
 
     try:
-        p = await resolve_parcel(parcel_id, None, None)
+        p = parcel or await resolve_parcel(parcel_id, None, None)
     except SourceError as exc:
         raise http_error(exc) from exc
     on = date or dt.date.today()
@@ -86,12 +91,20 @@ SAT_LEGEND = {"kondycja": ("Kondycja upraw", (0.0, 0.9)), "wilgotnosc": ("Wilgot
 
 @router.post("/{layer}", response_model=LayerResponse, responses={404: {"description": "Brak zdjęcia"}})
 async def post_layer(layer: LayerKey, req: AnalysisRequest) -> LayerResponse:
-    """A9: warstwy satelitarne dla pola narysowanego – treść `{geometry, date}` (albo parcel_id / lon+lat)."""
+    """A9: warstwy dla pola narysowanego – treść `{geometry, date}` (albo parcel_id / lon+lat). F29: także teren,
+    spływ i woda w okolicy (ten sam kod co dla działki – obrys z treści zamiast z ULDK)."""
     from app.routers.satellite import resolve_any
 
-    if layer not in ("kondycja", "wilgotnosc"):
+    if layer not in ("kondycja", "wilgotnosc", "teren", "splyw", "woda"):
         raise not_implemented(f"Warstwa „{layer}” (POST)")
-    p = await resolve_any(req.parcel_id, req.lon, req.lat, req.geometry)
+    try:
+        p = await resolve_any(req.parcel_id, req.lon, req.lat, req.geometry)
+    except SourceError as exc:
+        raise http_error(exc) from exc
+    if layer == "woda":
+        return await water_layer(None, req.date, parcel=p)
+    if layer in ("teren", "splyw"):
+        return await terrain_layer(layer, None, req.date, parcel=p)
     return await satellite_layer(layer, p.id, req.date, parcel=p)
 
 
