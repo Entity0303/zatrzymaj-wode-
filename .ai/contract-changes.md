@@ -282,3 +282,12 @@ Weryfikacja: `tsc -b` przechodzi; `vite build` – lokalnie i w kontenerze brak 
 
 **Dla Mefju:** przy `nasa` nie pokazuj ostrzeżenia – zdanie w `sentence` mówi, że przyjmujemy pomiar ze stacji. Ceny historyczne: dla dat 2014–2021 przychód jest teraz liczony (GUS z 3 lat przed rokiem analizy).
 **Łamie zgodność:** nie.
+
+### 2026-11-22 · `main` · A20 – szczegóły źródeł opadu, „pobrano”, stopnie braku wody
+- `PrecipSources.details: string[]` – szczegóły źródeł (porównanie z NASA w %, lata rozjazdu, uzupełnione dni); `sentence` ma teraz najwyżej 2 zdania.
+- `SourceStatus.fetched_at: ISODate | null` – „pobrano”, gdy pobranie później niż data analizy; `data_date` nigdy po dacie analizy.
+- GET `/api/terrain?…&date=` – opcjonalna data analizy (data wyniku ≤ niej); POST bierze `date` z treści.
+- Bez zmiany kształtu: `status.level` i `field_state.status.level` z tych samych progów (z uprawą i bez), nagłówki „W normie / Uwaga / Mało wody / Bardzo mało wody”; `when_label` „w dniu analizy” przy dacie historycznej.
+
+**Dla Mefju:** `details` pokaż w „szczegółach źródeł” / trybie Doradca; przy `fetched_at` – „pobrano DD.MM.RRRR”; w wywołaniu `/api/terrain` dla daty historycznej dodaj `date`. Etykiety stopni w UI ujednolić do słownika (risk = „Mało wody”, danger = „Bardzo mało wody”).
+**Łamie zgodność:** nie.
