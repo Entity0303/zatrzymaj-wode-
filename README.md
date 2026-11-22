@@ -6,7 +6,7 @@ Zespół **Molekuły** · HackNation 2026 · zadanie Krajowego Ośrodka Wsparcia
 |---|---|
 | Aplikacja | <https://wodoskop.vercel.app> |
 | API | <https://wodoskop-api.onrender.com> (dokumentacja: `/docs`, stan źródeł: `/api/status`). Pierwsze wywołanie po bezczynności albo po wdrożeniu może trwać dłużej. |
-| Film (do 3 min) | LINK_FILM |
+| Film (do 3 min) | <https://youtu.be/uP2QK-R33yc> |
 | Prezentacja | [Wodoskop_Molekuly_prezentacja.pdf](docs/zgloszenie/Wodoskop_Molekuly_prezentacja.pdf) |
 | Przykładowe raporty PDF | katalog [`reports/examples/`](reports/examples/) |
 
