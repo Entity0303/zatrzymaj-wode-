@@ -62,14 +62,14 @@
     {% if points %}
       {% for st in points %}
       <div class="point"><span class="ico" style="background: {{ LV[st.level][1] }}">{{ LV[st.level][0] }}</span>
-        <div><span class="k">{{ KIND[st.kind] }}:</span> {{ st.text if full else (st.text|sentences(1)|clip(150)) }}</div></div>
+        <div><span class="k">{{ KIND[st.kind] }}:</span> {{ st.text if full else (st.text|sentences(1)|clip(cp.pt_clip)) }}</div></div>
       {% endfor %}
     {% else %}<p>{{ a.status.summary }}</p>{% endif %}
     {% if v %}
     <div class="crops">
       {% if v.crops_good %}<div class="crow"><span class="lab">Siej:</span>{% for c in v.crops_good %}<span class="chip good">✓ {{ c.label }}</span>{% endfor %}</div>{% endif %}
       {% if avoid %}
-        {% for reason, crops in avoid %}<p class="avoid"><b>Unikaj:</b> {% if full or crops|length <= 4 %}{{ crops|join(', ') }}{% else %}{{ crops[:3]|join(', ') }} i {{ crops|length - 3 }} innych{% endif %} – {{ reason }}.</p>{% endfor %}
+        {% for reason, crops in avoid %}<p class="avoid"><b>Unikaj:</b> {% if full or crops|length <= cp.avoid_crops + 1 %}{{ crops|join(', ') }}{% else %}{{ crops[:cp.avoid_crops]|join(', ') }} i {{ crops|length - cp.avoid_crops }} innych{% endif %} – {{ reason }}.</p>{% endfor %}
       {% else %}<p class="avoid muted">Żadna z popularnych upraw polowych nie jest tu odradzana.</p>{% endif %}
     </div>
     {% endif %}
@@ -127,7 +127,7 @@
     {% for r in acts %}
     <li class="{{ 'first' if loop.first else '' }}" style="{% if not loop.first %}border-left-color: {{ CATEGORY[r.category][1] }}{% endif %}">
       <div><span class="atitle">{{ r.title }}</span> <span class="awhen">· {% if loop.first %}<span class="atag">Najważniejsze</span> · {% endif %}{% if r.when == 'teraz' and a.historical %}w dniu analizy{% else %}{{ r.when_label }}{% endif %}</span></div>
-      <div>{% if full %}{{ r.description|sentences(3) }}{% else %}{{ r.description|sentences(1)|clip(125) }}{% endif %}{% if is_ditch(r) %} <span class="muted">Rów wg OpenStreetMap – sprawdź na miejscu.</span>{% endif %}
+      <div>{% if full %}{{ r.description|sentences(3) }}{% elif cp.act_clip %}{{ r.description|sentences(1)|clip(cp.act_clip) }}{% endif %}{% if is_ditch(r) %} <span class="muted">Rów wg OpenStreetMap – sprawdź na miejscu.</span>{% endif %}
         <span class="ameta">· {{ PERMIT_TEXT[r.permit] }}{% if full and r.permit_note %} – {{ r.permit_note }}{% endif %}{% if r.eco_scheme %} · ekoschemat: {{ r.eco_scheme.name }}{% endif %}</span></div>
       {% if full %}<div class="ameta"><b>Dlaczego:</b> {{ r.why|first_sentence }}</div>{% if r.warning %}<div class="warning">{{ r.warning }}</div>{% endif %}{% endif %}
     </li>

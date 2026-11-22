@@ -566,8 +566,20 @@ def area_text(a: AnalysisResponse, short: bool = False) -> str:
     return ha
 
 
+# Raport skrócony = dokładnie 2 strony. Gdy tekstu jest za dużo, kolejne stopnie skracają LISTY i zdania (nie czcionkę):
+# (znaki punktu werdyktu, punktów, upraw w „Unikaj”, grup „Unikaj”, znaki opisu działania, działań, wierszy rankingu)
+COMPACT = [
+    {"pt_clip": 150, "pt_n": 4, "avoid_crops": 3, "avoid_groups": 2, "act_clip": 125, "act_n": 3, "rank_n": 5},
+    {"pt_clip": 110, "pt_n": 4, "avoid_crops": 2, "avoid_groups": 1, "act_clip": 90, "act_n": 3, "rank_n": 5},
+    {"pt_clip": 90, "pt_n": 3, "avoid_crops": 2, "avoid_groups": 1, "act_clip": 70, "act_n": 2, "rank_n": 4},
+    {"pt_clip": 70, "pt_n": 3, "avoid_crops": 1, "avoid_groups": 1, "act_clip": 0, "act_n": 2, "rank_n": 3},
+]
+
+
 def render_html(a: AnalysisResponse, ortho: str | None, generated: dt.datetime | None = None,
-                report_type: str = "short") -> str:
+                report_type: str = "short", compact: int = 0) -> str:
+    cp = COMPACT[max(0, min(compact, len(COMPACT) - 1))]
+    full_rep = report_type == "full"
     bbox, outline = map_frame(a.parcel.geometria)
     sat_png, sat_style = satellite_overlay(a, bbox) if report_type == "full" else (None, "")
     url = analysis_url(a)
@@ -623,14 +635,15 @@ def render_html(a: AnalysisResponse, ortho: str | None, generated: dt.datetime |
                            and a.seasonal_balance_by_year[-1].balance_mm < a.seasonal_balance_mean_mm),
         # F19: układ w stylu paszportu
         "tiles": tiles(a),
-        "points": verdict_points(a),
+        "points": verdict_points(a) if full_rep else verdict_points(a, cp["pt_n"]),
+        "cp": cp,
         "now_label": ("W dniu analizy" if a.historical else "Teraz"),
         "now_text": NOW_LABEL.get(a.status.level, ""),
         "long_text": LONG_LABEL.get(a.verdict.level) if a.verdict else None,
-        "avoid": avoid_groups(a),
-        "rank_rows": field_items(a) if report_type == "full" else (top_items(a) or field_items(a))[:5],
+        "avoid": avoid_groups(a) if full_rep else avoid_groups(a, cp["avoid_groups"]),
+        "rank_rows": field_items(a) if report_type == "full" else (top_items(a) or field_items(a))[:cp["rank_n"]],
         "CATT": CAT_TEXT, "PERMIT_TEXT": PERMIT_TEXT,
-        "acts": actions(a, None if report_type == "full" else 3),
+        "acts": actions(a, None if full_rep else cp["act_n"]),
         "is_ditch": is_ditch,
         "sources_line": sources_line(a, None if report_type == "full" else 3),
         "source_date": source_date,
@@ -656,8 +669,23 @@ def html_to_pdf(html: str) -> bytes:
     return HTML(string=html, base_url=str(HERE)).write_pdf()
 
 
+def short_pdf(render) -> bytes:
+    """Raport skrócony: dokładnie 2 strony. `render(compact)` → HTML; gdy wychodzi więcej stron, kolejny stopień
+    skracania list (COMPACT). Zwykle wystarcza pierwszy układ – wtedy jest tylko jedno składanie."""
+    from weasyprint import HTML
+
+    doc = None
+    for level in range(len(COMPACT)):
+        doc = HTML(string=render(level), base_url=str(HERE)).render()
+        if len(doc.pages) <= 2:
+            break
+    return doc.write_pdf()
+
+
 async def build_pdf(a: AnalysisResponse, report_type: str = "short") -> bytes:
     bbox, _ = map_frame(a.parcel.geometria)
     ortho = await ortho_image(bbox)
+    if report_type != "full":
+        return await asyncio.to_thread(short_pdf, lambda level: render_html(a, ortho, None, report_type, level))
     html = render_html(a, ortho, report_type=report_type)
     return await asyncio.to_thread(html_to_pdf, html)
