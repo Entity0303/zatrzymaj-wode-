@@ -20,14 +20,22 @@ Gałąź `c/research`, tylko folder `research/`, **bez merge do main**. Testy: `
 | C7 IUNG SMSR | `research/validation/` (`smsr.md`) | zgodność 1725/1728 (kat. gleby działek); kat. I: susza IUNG 171 → IMGW wykrywa 61, NASA 12; nasz KBW ~30 mm (IMGW) wilgotniejszy niż IUNG; SMSR ma tylko lata 2020–2026 |
 
 ## W toku
-- **C9 Sentinel-2** (`research/satellite/`):
-  - **gotowe:** `sentinel.py` (STAC Earth Search, własny odczyt kafli COG przez HTTP Range + `tifffile`, SCL, NDVI, NDMI, UTM bez pyproj) i `run_satellite.py`,
-  - **pomiar:** STAC 1,9 s; kafel 10 m ≈ 1,4 MB, kafel SCL ≈ 30 kB, więc najpierw SCL, pasma tylko dla czystych scen (maks. 1 na 15 dni),
-  - **do zrobienia:** wynik dla Podlasia (pełny szereg 2 lata), kandydaci (ostatnia scena + rok wcześniej), testy offline, commit.
-- **C8 hydrologia** (`research/hydro/`), jeszcze nie zaczęte. Źródła spoza GUGiK:
-  - MPHP (Wody Polskie/KZGW),
-  - IMGW `api/data/hydro` + archiwum dobowe,
-  - OSM Overpass (dane na licencji ODbL – wymagane przypisanie).
+- **C9 Sentinel-2** (`research/satellite/`).
+  - **Kod gotowy i przetestowany (88 testów w `research/` przechodzi):**
+    - `sentinel.py`: STAC Earth Search; własny odczyt kafli COG przez HTTP Range + `tifffile`, bez przekierowań; maska SCL; NDVI i NDMI; UTM bez pyproj,
+    - `run_satellite.py`: mapy PNG z legendą, warstwa na mapę (PNG ~300 B + bbox EPSG:4326 zamiast siatki GeoJSON ~16 kB), wykres szeregu.
+  - **Pomiar (Podlasie, 201305):**
+    - STAC 2,0 s, 66 dat w 24 miesiącach,
+    - kafel 10 m ≈ 1,1–1,4 MB, kafel SCL ≈ 30 kB,
+    - pełny szereg 2 lata (30 czystych scen + 66 masek): **879 s, 127 MB** – za ciężkie na żywo (wymóg KOWR < 30 s).
+  - **Dla backendu:** ostatnia czysta scena + scena sprzed roku ≈ 8–15 MB i ok. 20–40 s → liczyć w tle i cache'ować (np. raz na 5 dni); szereg tylko z cache.
+  - **Naprawiony błąd:** metadane STAC podają offset −0,1, ale pliki COG są już zharmonizowane (DN czerwieni nad roślinnością = 356). Z offsetem wychodziło NDVI > 1, teraz `APPLY_STAC_OFFSET = False`. Błędne wyniki usunięte.
+  - **DO ZROBIENIA:** ponownie przeliczyć wyniki: `python research/satellite/run_satellite.py` (Podlasie ok. 15 min z szeregiem, kandydaci po ok. 1 min), obejrzeć `out/*_mapa.png`, potem commit `research/satellite/out/`.
+- **C8 hydrologia** (`research/hydro/`) – rozpoznanie źródeł (kodu jeszcze nie ma):
+  - **IMGW `https://danepubliczne.imgw.pl/api/data/hydro` – DZIAŁA:** 0,3 s, stacje wodowskazowe z `lon`, `lat`, `rzeka`, `stan_wody`, `stan_ostrzegawczy`, `stan_alarmowy`. Archiwum dobowe: `.../dane_hydrologiczne/dobowe/{rok}/codz_{rok}.zip` (format `CODZ_publiczne_format.txt`), stąd norma (percentyle stanu w tym samym miesiącu).
+  - **OSM Overpass – NIE DZIAŁA z tej sieci:** overpass-api.de, kumi.systems i mail.ru – brak połączenia po 21–45 s. Zapytanie gotowe: `way["waterway"~"ditch|drain|canal|stream|river"](around:500,lat,lon); way["natural"="water"](around:500,lat,lon)`. Licencja ODbL – wymagane „© OpenStreetMap contributors”.
+  - **MPHP (Wody Polskie/KZGW) – nie sprawdzone,** wyszukiwarka niedostępna (limit). Znaleźć adres WMS/WFS albo plik do pobrania.
+  - **Następny krok:** `hydro.py` – najbliższy wodowskaz + stan vs norma (IMGW); cieki i zbiorniki z OSM, gdy Overpass działa (inna sieć); zdanie dla rolnika z kierunkiem odpływu z `research/terrain/out/*.facts.json`.
 
 ## Kluczowe liczby do zgłoszenia
 NASA vs IMGW +16–23 %; 58 mm vs 3,5 mm (15.07.2021); kalibracja GUS ±7–13 % (D61); test słabej ziemi Notecka (❌ pszenica/rzepak, ✅ żyto/łubin); IUNG SMSR: IMGW wykrywa 5× więcej susz niż NASA (61 vs 12 z 171).

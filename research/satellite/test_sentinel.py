@@ -76,6 +76,7 @@ def test_points_in_ring_and_square():
     ({"ndvi": 0.70, "ndmi": 0.2}, {"ndvi": 0.68, "ndmi": 0.2}, 6, "podobna"),
     ({"ndvi": 0.80, "ndmi": 0.3}, {"ndvi": 0.60, "ndmi": 0.2}, 6, "lepsza"),
     ({"ndvi": 0.25, "ndmi": 0.0}, {"ndvi": 0.27, "ndmi": 0.0}, 11, "Poza sezonem"),
+    ({"ndvi": 0.85, "ndmi": 0.3}, {"ndvi": 0.86, "ndmi": 0.3}, 11, "podobna"),
     ({"ndvi": None, "ndmi": None}, None, 6, "Brak bezchmurnego"),
     ({"ndvi": 0.5, "ndmi": 0.1}, None, 6, "brak zdjęcia"),
 ])
@@ -115,3 +116,12 @@ def test_no_redirects():
         assert hits == ["/x.tif"]
     finally:
         srv.shutdown()
+
+
+def test_stac_offset_not_applied():
+    """Pliki COG Earth Search są zharmonizowane (sprawdzone na żywo) – offset −0,1 dawał NDVI > 1."""
+    assert S.APPLY_STAC_OFFSET is False
+    red = S.reflectance(np.array([356], dtype=np.uint16), 0.0001, 0.0)
+    nir = S.reflectance(np.array([4023], dtype=np.uint16), 0.0001, 0.0)
+    ndvi = (nir - red) / (nir + red)
+    assert 0 < ndvi[0] < 1 and ndvi[0] == pytest.approx(0.837, abs=0.002)

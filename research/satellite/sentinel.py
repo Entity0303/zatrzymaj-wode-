@@ -47,6 +47,11 @@ SCL_SNOW = (11,)
 CLEAR_MAX_CLOUD = 10.0        # scena „czysta” dla działki: chmury + śnieg <= 10 % obrysu
 USABLE_MIN_VALID = 50.0       # minimum ważnych pikseli, żeby liczyć mediany (%)
 
+# Offset −0,1 z metadanych STAC (`raster:bands`) NIE jest stosowany: sprawdzone na żywo 2026-11-22
+# (S2C_34UED_20260806, działka 201305) – DN czerwieni nad roślinnością: mediana 356, czyli pliki COG są już
+# zharmonizowane (bez +1000). Z offsetem odbicie czerwieni wychodzi ujemne i NDVI > 1.
+APPLY_STAC_OFFSET = False
+
 # progi zdań (SZACUNEK – do kalibracji): różnica median NDVI / NDMI względem tego samego okresu rok wcześniej
 DNDVI = 0.10
 DNDMI = 0.08
@@ -431,11 +436,12 @@ def read_scene(scene: Scene, grid: ParcelGrid, bands: bool = True, src_override:
         for k in ("red", "nir"):
             a, s = read_window(src[k], (r0, r1), (c0, c1))
             st.add(s)
-            out[k] = reflectance(a, scene.assets[k]["scale"], scene.assets[k]["offset"])
+            out[k] = reflectance(a, scene.assets[k]["scale"],
+                                 scene.assets[k]["offset"] if APPLY_STAC_OFFSET else 0.0)
         a, s = read_window(src["swir16"], (r0 // 2, r1 // 2), (c0 // 2, c1 // 2))
         st.add(s)
         out["swir16"] = reflectance(upsample2(a, 0, 0, shape), scene.assets["swir16"]["scale"],
-                                    scene.assets["swir16"]["offset"])
+                                    scene.assets["swir16"]["offset"] if APPLY_STAC_OFFSET else 0.0)
     out["stats"] = st
     return out
 
@@ -489,7 +495,8 @@ def compare_sentence(now: dict, last_year: dict | None, month: int) -> str:
     if now.get("ndvi") is None:
         return "Brak bezchmurnego zdjęcia satelitarnego działki – nie oceniamy zieleni."
     off_season = month in (11, 12, 1, 2, 3)
-    base = ("Poza sezonem wegetacji – niska zieleń o tej porze jest normalna. " if off_season else "")
+    base = ("Poza sezonem wegetacji – niska zieleń o tej porze jest normalna. "
+            if off_season and now["ndvi"] < 0.5 else "")
     if not last_year or last_year.get("ndvi") is None:
         return base + f"Zieleń (NDVI) {now['ndvi']:.2f}; brak zdjęcia z tego okresu rok temu do porównania."
     d = now["ndvi"] - last_year["ndvi"]
