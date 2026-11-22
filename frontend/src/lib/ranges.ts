@@ -43,3 +43,13 @@ export function fmtRisk(s: CropSuggestion): string {
   const r = riskSpan(s)
   return join(String(r.min), String(r.max))
 }
+
+/** F24: przychód z „ok.” tylko przy jednej kwocie – „ok. 4 900 zł”; zakres bez „ok.” – „4 600–5 200 zł”. */
+export function fmtRevenue(rev: CropRevenue, t: (key: string, vars?: Record<string, string | number>) => string): string {
+  const s = span(rev.revenue_range)
+  return s && formatZl(s.min) !== formatZl(s.max) ? fmtZlRange(rev) : t('ok. {zl}', { zl: formatZl(rev.typical_zl) })
+}
+
+/** F24: od tylu % zapasu nie porównujemy lat – o tej porze gleba zwykle jest pełna (tak samo w raporcie PDF). */
+export const FULL_RESERVE_PCT = 80
+export const FULL_RESERVE_TEXT = 'Zapas prawie pełny – typowo dla tej pory roku'

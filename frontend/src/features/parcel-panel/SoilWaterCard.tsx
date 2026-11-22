@@ -4,12 +4,13 @@ import { SourceTag } from '@/components/SourceTag'
 import { formatNum } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { useLang } from '@/lib/i18n'
+import { FULL_RESERVE_PCT, FULL_RESERVE_TEXT } from '@/lib/ranges'
 
 /**
  * Stan wody w glebie (kontrakt `soil_water`) – także poza sezonem: zakres (strefa korzeni / profil),
  * opis, porównanie z tym samym dniem w 10 latach, podsumowanie zakończonego sezonu.
  */
-export function SoilWaterCard({ state }: { state: SoilWaterState }) {
+export function SoilWaterCard({ state, pct }: { state: SoilWaterState; /** zapas wody, % pełnego – od 80% bez porównania lat */ pct?: number | null }) {
   const { t } = useLang()
   const { rank, last_season: last } = state
   return (
@@ -28,7 +29,9 @@ export function SoilWaterCard({ state }: { state: SoilWaterState }) {
         </div>
       </div>
 
-      {rank && rank.of_years > 0 && (
+      {pct != null && pct >= FULL_RESERVE_PCT ? (
+        <p className="mt-3 text-sm leading-5">{t(FULL_RESERVE_TEXT)}</p>
+      ) : rank && rank.of_years > 0 && (
         <div className="mt-3">
           {/* jeden znacznik = jeden rok; wypełnione = lata, w których tego dnia było MNIEJ wody niż teraz */}
           <div className="flex gap-1" aria-hidden>

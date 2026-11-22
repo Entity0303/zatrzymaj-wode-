@@ -4,6 +4,7 @@ import { HYDRO_KIND, formatDistance } from '@/lib/hydro'
 import { balanceText, formatDatePl, formatNum } from '@/lib/format'
 import { seasonBalance } from '@/lib/seasonBalance'
 import { useLang } from '@/lib/i18n'
+import { FULL_RESERVE_PCT, FULL_RESERVE_TEXT } from '@/lib/ranges'
 import { cn } from '@/lib/utils'
 import { LevelDot } from './LevelDot'
 import { PassportCard } from './PassportCard'
@@ -119,7 +120,9 @@ export function VerdictSection({ analysis }: { analysis: AnalysisResponse }) {
                 {ind.soil_capacity.value != null && (
                   <p className="text-sm leading-5 text-text-muted">{t('pełny zapas tej gleby: ok. {n} mm', { n: formatNum(ind.soil_capacity.value, 0) })}</p>
                 )}
-                {rank && rank.of_years > 0 && (
+                {water >= FULL_RESERVE_PCT ? (
+                  <p className="text-sm leading-5 text-text-muted">{t(FULL_RESERVE_TEXT)}.</p>
+                ) : rank && rank.of_years > 0 && (
                   <p className="text-sm leading-5 text-text-muted">
                     {rank.lower_years === 0
                       ? t('O tej porze roku mniej wody nie było w żadnym z {of} lat.', { of: rank.of_years })

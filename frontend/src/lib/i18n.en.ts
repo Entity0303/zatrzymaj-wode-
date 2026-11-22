@@ -1288,4 +1288,7 @@ export const EN: Record<string, string> = {
   'Brak danych o terenie – spróbuj za chwilę': 'No terrain data – try again in a moment',
   // Dopisek po A23: kolejka
   'w kolejce: {n}': 'in queue: {n}',
+  // F24: zapas prawie pełny, zakres bez ok.
+  '{zl} z pola (bez kosztów)': '{zl} from the field (before costs)',
+  'Zapas prawie pełny – typowo dla tej pory roku': 'Reserve almost full – typical for this time of year',
 }

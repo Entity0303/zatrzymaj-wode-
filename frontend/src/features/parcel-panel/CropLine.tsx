@@ -1,4 +1,4 @@
-import { fmtNumRange, fmtRisk, fmtZlRange } from '@/lib/ranges'
+import { fmtNumRange, fmtRevenue, fmtRisk } from '@/lib/ranges'
 import { CircleAlert, CircleCheck, CircleX, type LucideIcon } from 'lucide-react'
 import type { CropSuggestion, PriceNow, SuggestionCategory } from '@/api/types'
 import { formatNum, formatZl } from '@/lib/format'
@@ -62,7 +62,7 @@ export function CropLine({ s, priceNow }: { s: CropSuggestion; priceNow?: PriceN
             {t(s.label)}
           </span>
           <span className={rev ? 'tabular shrink-0 text-base font-semibold whitespace-nowrap' : 'shrink-0 text-sm whitespace-nowrap text-text-muted'}>
-            {rev ? t('ok. {zl}', { zl: fmtZlRange(rev) }) : t('brak ceny')}
+            {rev ? fmtRevenue(rev, t) : t('brak ceny')}
           </span>
         </span>
         <Parts parts={line2} className="block text-sm leading-5 text-text-muted" />

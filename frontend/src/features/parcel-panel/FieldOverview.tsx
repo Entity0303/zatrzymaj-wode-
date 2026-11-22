@@ -131,7 +131,7 @@ export function FieldOverview({
             {crop && <StatusCard crop={crop} analysis={analysis} onOpen={onOpenPassport} />}
             <KeyMetrics analysis={analysis} />
             {analysis.crop_season && <CropSeasonCard season={analysis.crop_season} analysisDate={analysis.analysis_date} />}
-            <SoilWaterCard state={analysis.soil_water} />
+            <SoilWaterCard state={analysis.soil_water} pct={analysis.indicators.soil_water_pct.value} />
             <SoilCard soil={analysis.soil} />
           </DetailSection>
         )}
