@@ -29,7 +29,7 @@ import { LocateButton } from '@/features/search/LocateButton'
 import { Passport } from '@/features/passport/Passport'
 import { RefineCard } from '@/features/parcel-panel/RefineCard'
 import { exampleDate, type Example } from '@/features/parcel-panel/examples'
-import { InfraReportWizard } from '@/features/infra-reports/InfraReportWizard'
+import { InfraView } from '@/features/infra-reports/InfraView'
 import { DrawLayer } from '@/features/draw/DrawLayer'
 import { DrawToolbar } from '@/features/draw/DrawToolbar'
 import { drawProblem, ringAreaHa, toPolygon } from '@/lib/geoArea'
@@ -633,6 +633,11 @@ export default function Start() {
     setInfra({ point: c ? [c.lng, c.lat] : mapCenter, picking: false })
     if (isMobile) setSnap('full')
   }
+  // F22: „Pokaż na mapie” z listy „Moje zgłoszenia” – środek mapy i znacznik w tym miejscu (pinezki pobierane wokół)
+  const showInfraPoint = (p: [number, number]) => {
+    setInfra({ point: p, picking: false })
+    mapRef.current?.setView([p[1], p[0]], 16, { animate: !reducedMotion })
+  }
   const closeInfra = () => {
     setInfra(null)
     if (page === 'infra') goTo('start')
@@ -1154,12 +1159,13 @@ export default function Start() {
               <div className="min-h-0 flex-1 overflow-y-auto p-5">
                 {infraOpen ? (
                   <div className="-m-5 h-[calc(100%+40px)]">
-                    <InfraReportWizard
+                    <InfraView
                       parcel={parcel}
                       point={infra.point}
                       onPickPoint={() => setInfra({ point: infra.point, picking: true })}
                       onClose={closeInfra}
                       onSaved={() => setInfraRefresh((n) => n + 1)}
+                      onShow={showInfraPoint}
                       hydro={analysis?.hydro}
                     />
                   </div>
@@ -1222,7 +1228,7 @@ export default function Start() {
             >
               {infraOpen ? (
                 <div className="-mx-4 -mb-6">
-                  <InfraReportWizard
+                  <InfraView
                     parcel={parcel}
                     point={infra.point}
                     onPickPoint={() => {
@@ -1231,7 +1237,11 @@ export default function Start() {
                     }}
                     onClose={closeInfra}
                     onSaved={() => setInfraRefresh((n) => n + 1)}
-                      hydro={analysis?.hydro}
+                    onShow={(p) => {
+                      showInfraPoint(p)
+                      setSnap('collapsed')
+                    }}
+                    hydro={analysis?.hydro}
                   />
                 </div>
               ) : (

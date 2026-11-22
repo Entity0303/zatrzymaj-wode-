@@ -5,6 +5,7 @@ import type { InfraReport } from '@/api/types'
 import { formatDatePl } from '@/lib/format'
 import { useLang } from '@/lib/i18n'
 import { OBJECT, PROBLEM, TONE_HEX } from './infra'
+import { useMyReports } from './myReports'
 
 /**
  * Zgłoszenia rolników na mapie (SPEC 11): pinezki w kolorze stanu, liczba potwierdzeń, data;
@@ -16,6 +17,8 @@ export function InfraPins({ bbox, refresh }: { bbox: [number, number, number, nu
   const [reports, setReports] = useState<InfraReport[]>([])
   const [note, setNote] = useState<Record<string, string>>({})
   const key = bbox?.map((v) => v.toFixed(4)).join(',')
+  // F22: zgłoszenia wysłane z tej przeglądarki – wyróżnione na mapie (ciemna obwódka, większa pinezka)
+  const mineIds = new Set(useMyReports().map((r) => r.id))
 
   useEffect(() => {
     if (!bbox) return
@@ -45,13 +48,14 @@ export function InfraPins({ bbox, refresh }: { bbox: [number, number, number, nu
     <>
       {reports.map((r) => {
         const color = TONE_HEX[PROBLEM[r.problem].tone]
-        const label = `${t(OBJECT[r.object_type].label)} · ${t(PROBLEM[r.problem].label)}`
+        const mine = mineIds.has(r.id)
+        const label = (mine ? t('Twoje zgłoszenie') + ' · ' : '') + `${t(OBJECT[r.object_type].label)} · ${t(PROBLEM[r.problem].label)}`
         return (
           <CircleMarker
             key={r.id}
             center={[r.lat, r.lon]}
-            radius={9}
-            pathOptions={{ color: '#FFFFFF', weight: 2.5, fillColor: color, fillOpacity: 1 }}
+            radius={mine ? 12 : 9}
+            pathOptions={{ color: mine ? '#1F4E79' : '#FFFFFF', weight: mine ? 4 : 2.5, fillColor: color, fillOpacity: 1 }}
           >
             <Tooltip direction="top" offset={[0, -8]}>
               {label}

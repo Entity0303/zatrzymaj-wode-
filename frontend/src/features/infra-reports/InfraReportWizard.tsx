@@ -1,7 +1,7 @@
 import { ArrowLeft, Camera, Check, Droplets, FileDown, Loader2, MapPin, MousePointerClick, Save, X } from 'lucide-react'
 import { useState } from 'react'
 import { ApiError, api } from '@/api/client'
-import type { Hydro, HydroFeature, InfraProblem, InfraReportIn, Parcel, WaterLevel, WaterObjectType } from '@/api/types'
+import type { Hydro, HydroFeature, InfraProblem, InfraReport, InfraReportIn, Parcel, WaterLevel, WaterObjectType } from '@/api/types'
 import { formatDistance, HYDRO_KIND } from '@/lib/hydro'
 import { cn } from '@/lib/utils'
 import { useLang } from '@/lib/i18n'
@@ -27,7 +27,10 @@ export function InfraReportWizard({
   onClose,
   onSaved,
   hydro,
+  embedded = false,
 }: {
+  /** F22: w widoku „Zgłoszenia” – bez własnego tytułu i przycisku zamknięcia (są nad zakładkami) */
+  embedded?: boolean
   /** F3: woda w okolicy – podpowiedź najbliższego rowu */
   hydro?: Hydro | null
   parcel: Parcel | null
@@ -36,7 +39,8 @@ export function InfraReportWizard({
   /** przełącza mapę w tryb wskazywania miejsca */
   onPickPoint: () => void
   onClose: () => void
-  onSaved?: () => void
+  /** zapisano na serwerze: wysłane dane i odpowiedź (id, data) */
+  onSaved?: (sent: InfraReportIn, created: InfraReport | null) => void
 }) {
   const { t } = useLang()
   const [step, setStep] = useState(0)
@@ -74,9 +78,9 @@ export function InfraReportWizard({
     if (!report) return
     setSave({ phase: 'saving' })
     try {
-      await api.createInfraReport(report)
+      const created = await api.createInfraReport(report)
       setSave({ phase: 'saved' })
-      onSaved?.()
+      onSaved?.(report, created ?? null)
     } catch (e) {
       setSave({ phase: e instanceof ApiError && (e.status === 404 || e.status === 501) ? 'unavailable' : 'error' })
     }
@@ -91,12 +95,14 @@ export function InfraReportWizard({
   return (
     <section aria-label={t('Zgłoś stan wody w okolicy')} className="flex max-h-full flex-col">
       <header className="space-y-3 border-b px-5 pt-4 pb-3">
-        <div className="flex items-center gap-2">
-          <h2 className="font-display min-w-0 flex-1 text-xl leading-7 font-semibold">{t('Zgłoś stan rowu lub zbiornika')}</h2>
-          <button type="button" onClick={onClose} aria-label={t('Zamknij')} className="flex size-11 items-center justify-center rounded-full hover:bg-surface-2">
-            <X className="size-5" />
-          </button>
-        </div>
+        {!embedded && (
+          <div className="flex items-center gap-2">
+            <h2 className="font-display min-w-0 flex-1 text-xl leading-7 font-semibold">{t('Zgłoś stan rowu lub zbiornika')}</h2>
+            <button type="button" onClick={onClose} aria-label={t('Zamknij')} className="flex size-11 items-center justify-center rounded-full hover:bg-surface-2">
+              <X className="size-5" />
+            </button>
+          </div>
+        )}
         <ol className="grid grid-cols-4 gap-1.5" aria-label={t('Kroki zgłoszenia')}>
           {STEPS.map((s, i) => (
             <li key={s} className="space-y-1">
@@ -223,6 +229,7 @@ export function InfraReportWizard({
                 placeholder={t('Np. przepust pod drogą zatkany gałęziami, woda stoi na polu.')}
                 className="w-full rounded-md border bg-surface p-3 text-base outline-none focus-visible:border-brand"
               />
+              <span className="block text-sm leading-5 text-text-muted">{t('Nie podawaj imienia, telefonu ani adresu.')}</span>
             </label>
           </>
         )}
@@ -270,7 +277,7 @@ export function InfraReportWizard({
               className="flex h-11 w-full items-center justify-center gap-2 rounded-md border bg-surface text-sm font-medium hover:bg-surface-2 disabled:opacity-70"
             >
               {save.phase === 'saving' ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4 text-brand" />}
-              {t(save.phase === 'saved' ? 'Zapisano na mapie' : 'Pokaż zgłoszenie innym rolnikom na mapie')}
+              {t(save.phase === 'saved' ? 'Zapisano na mapie' : embedded ? 'Wyślij zgłoszenie na mapę' : 'Pokaż zgłoszenie innym rolnikom na mapie')}
             </button>
             {save.phase === 'unavailable' && (
               <p role="status" className="rounded-md bg-amber-soft px-3 py-2 text-sm leading-5">
