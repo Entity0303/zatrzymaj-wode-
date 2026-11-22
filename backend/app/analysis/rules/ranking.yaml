@@ -3,6 +3,11 @@
 ranking:
   # Plon potencjalny Ym = percentyl plonów GUS w województwie (10 lat) × współczynnik gleby
   gus_percentile: 90
+  # A16: tylko plony GUS z lat < rok daty analizy; Ym(rok sezonu) = trend liniowy plonów województwa × P90 reszt
+  # względnych (plon / trend; trend Theil–Sen – odporny na pojedyncze lata suszy) – bez trendu lata 2016–2019 były zawyżone, a 2023–2025 zaniżone (GUS +25–40% w 10 lat)
+  yield_trend:
+    min_years: 5          # mniej lat GUS – bez trendu (P90 surowych plonów)
+    max_slope_pct: 3.0    # trend przycięty do ±3% średniej plonu na rok
   # A7 (D84): korekta progu Ym po przejściu na opad ze stacji IMGW (suchszy o 14–23% niż NASA POWER) – tylko uprawy,
   # których średni plon symulowany na przeciętnej glebie odbiegał od średniej GUS o więcej niż ±15%
   # (scripts/calibrate_ranking.py: podlaskie, lubelskie, wielkopolskie, kujawsko-pomorskie). Ky z danych C bez zmian.

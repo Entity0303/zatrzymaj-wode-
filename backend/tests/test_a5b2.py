@@ -114,8 +114,13 @@ def test_potential_yield_from_gus_p90():
     rows = [float(r["plon_dt_ha"]) / 10 for r in csv.DictReader(open(S.DATA / "gus_yields_woj.csv", encoding="utf-8", newline=""))
             if r["crop_id"] == "pszenica_ozima" and r["woj_nazwa"] == "podlaskie"]
     pot = S.potential("pszenica_ozima", "podlaskie")
-    assert pot.scope == "wojewodztwo" and pot.years == len(rows) == 10
-    assert pot.ym_t_ha == pytest.approx(np.percentile(rows, 90)) and pot.mean_t_ha == pytest.approx(np.mean(rows))
+    assert pot.scope == "wojewodztwo" and pot.years == len(rows) == 10 and pot.trend  # A16: trend + P90 reszt
+    yrs = np.arange(2016, 2016 + len(rows))
+    line = pot.intercept + pot.slope * yrs
+    assert pot.factor == pytest.approx(np.percentile(np.array(rows) / line, 90))
+    assert pot.ym_t_ha == pytest.approx(pot.at(2026)) and pot.mean_t_ha == pytest.approx(np.mean(rows))
+    flat = S.potential("pszenica_ozima", "podlaskie", before_year=2020)  # 2016–2019: < 5 lat – P90 jak przed A16
+    assert not flat.trend and flat.ym_t_ha == pytest.approx(np.percentile(rows[:4], 90))
     assert S.potential("pszenica_ozima", "Podlaskie ").ym_t_ha == pot.ym_t_ha
     assert S.potential("pszenica_ozima", "nieznane").scope == "kraj"
 
@@ -129,8 +134,9 @@ def test_calibration_average_soil_close_to_gus_mean(woj):
         if crop.kind == "wieloletnia":
             continue
         assert S.reference_level(w, crop, LAST) == pytest.approx(1.0)  # mokre lata – brak strat na glebie odniesienia
-        pot = S.potential(crop.id, woj)
-        assert 1.0 <= pot.ym_t_ha / pot.mean_t_ha <= 1.30, (crop.id, woj)
+        pot = S.potential(crop.id, woj)  # A16: P90 reszt względem trendu (bez ym_adjust) – 0–30% nad linią trendu
+        adj = S.config().get("ym_adjust", {}).get(crop.id, 1.0)
+        assert 1.0 <= pot.factor / adj <= 1.30, (crop.id, woj)
 
 
 def test_reference_normalization():
@@ -192,7 +198,9 @@ def test_ranking_structure_and_item_fields():
     assert w.weak_year == 2018 and w.yield_weak_t_ha < w.yield_typical_t_ha <= w.yield_potential_t_ha
     assert w.drought_risk_years == sum(y.relative < 0.8 for y in w.yields_by_year) and w.years_simulated == 10
     assert w.reason.count(".") <= 2 and w.reason.endswith(".") and w.price is None
-    assert w.irrigation_practice == "not_practiced" and w.confidence == "srednia" and len(w.source_tags) == 2
+    # A16: analiza z 2018 r. – plony GUS tylko z 2016–2017 (dane sprzed daty), seria krótka → pewność ograniczona
+    assert w.irrigation_practice == "not_practiced" and w.confidence == "ograniczona" and len(w.source_tags) == 2
+    assert "krótka albo niepełna seria plonów GUS" in w.confidence_note
     low = items(sug)["lubin"]
     assert low.confidence == "ograniczona" and "szacunek" in low.confidence_note and "łubinu nie ma" in low.confidence_note
     assert next(p for p in sug.perennials.items if p.crop_id == "krzewy_owocowe").confidence == "ograniczona"

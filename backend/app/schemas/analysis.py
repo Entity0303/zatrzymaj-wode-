@@ -963,6 +963,8 @@ class PrecipSources(Contract):
     windows: list[PrecipWindow] = Field(default_factory=list)
     sentence: str = Field(description="Jedno zdanie dla rolnika, np. 'Opady liczymy ze stacji IMGW Burzyn (27 km). …'")
     confidence_lowered: bool = Field(False, description="True: stacje daleko albo źródła mocno się różnią – pewność o poziom niżej")
+    precip_disagreement: list[int] = Field(
+        default_factory=list, description="A16: lata, w których suma IV–VII ze stacji IMGW różni się od NASA o > 30%")
     source_tag: SourceTag
 
 

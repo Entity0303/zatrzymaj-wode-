@@ -114,24 +114,72 @@ def gus_yields() -> dict[tuple[str, str], dict[int, float]]:
 
 @dataclass
 class Potential:
-    ym_t_ha: float | None  # percentyl GUS (bez współczynnika gleby)
+    """A16: Ym(rok) = trend liniowy plonów GUS (lata sprzed daty analizy) w danym roku × P90 reszt względnych
+    (`ratio`) × ym_adjust; przy < `trend_min_years` latach – bez trendu (P90 surowych plonów, jak przed A16)."""
+
+    ym_t_ha: float | None  # Ym w roku docelowym (rok daty analizy; bez współczynnika gleby)
     mean_t_ha: float | None
-    years: int
+    years: int  # liczba plonów GUS użytych do Ym
     scope: str  # "wojewodztwo" | "kraj" | "brak"
+    first_year: int | None = None
+    last_year: int | None = None
+    trend: bool = False
+    intercept: float = 0.0  # linia trendu: a + b × rok [t/ha]
+    slope: float = 0.0
+    factor: float = 1.0  # P90 reszt względnych × ym_adjust (przy trendzie) albo Ym (bez trendu)
+
+    def at(self, year: int) -> float | None:
+        """Ym w roku sezonu; poza latami GUS: wstecz – poziom pierwszego roku, w przód – najwyżej rok za ostatnim."""
+        if not self.trend:
+            return self.ym_t_ha
+        y = min(max(year, self.first_year), self.last_year + 1)
+        return max(0.0, self.factor * (self.intercept + self.slope * y))
+
+    @property
+    def span(self) -> str:
+        if self.first_year is None:
+            return ""
+        return f"{self.first_year}" if self.first_year == self.last_year else f"{self.first_year}–{self.last_year}"
 
 
-def potential(crop_id: str, voivodeship: str | None) -> Potential:
+def potential(crop_id: str, voivodeship: str | None, before_year: int | None = None,
+              target_year: int | None = None) -> Potential:
+    """Plon potencjalny z plonów GUS województwa (A16: tylko lata < `before_year` – rok daty analizy; bez danych
+    z „przyszłości”). `target_year` – rok, dla którego podajemy `ym_t_ha` (domyślnie rok po ostatnim roku GUS)."""
+    cfg = config()
     data = gus_yields()
-    vals = list((data.get((crop_id, (voivodeship or "").strip().lower())) or {}).values())
+
+    def keep(d: dict[int, float]) -> list[tuple[int, float]]:
+        return [(y, v) for y, v in d.items() if before_year is None or y < before_year]
+
+    pts = keep(data.get((crop_id, (voivodeship or "").strip().lower())) or {})
     scope = "wojewodztwo"
-    if len(vals) < 3:  # brak danych dla województwa (np. uprawa lokalna) – wszystkie województwa
-        vals = [v for (c, _w), d in data.items() if c == crop_id for v in d.values()]
-        scope = "kraj" if vals else "brak"
-    if not vals:
+    if len(pts) < 3:  # brak danych dla województwa (np. uprawa lokalna) – wszystkie województwa
+        pts = [p for (c, _w), d in data.items() if c == crop_id for p in keep(d)]
+        scope = "kraj" if pts else "brak"
+    if not pts:
         return Potential(None, None, 0, "brak")
-    adjust = float(config().get("ym_adjust", {}).get(crop_id, 1.0))  # A7 (D84): korekta progu Ym po zmianie opadu
-    return Potential(float(np.percentile(vals, config()["gus_percentile"])) * adjust, float(np.mean(vals)), len(vals),
-                     scope)
+    adjust = float(cfg.get("ym_adjust", {}).get(crop_id, 1.0))  # A7 (D84): korekta progu Ym po zmianie opadu
+    x = np.array([p[0] for p in pts], dtype=float)
+    v = np.array([p[1] for p in pts], dtype=float)
+    y0, y1 = int(x.min()), int(x.max())
+    mean = float(v.mean())
+    q = cfg["gus_percentile"]
+    tr = cfg.get("yield_trend", {})
+    if len(set(x.tolist())) < int(tr.get("min_years", 5)):
+        ym = float(np.percentile(v, q)) * adjust
+        return Potential(ym, mean, len(pts), scope, y0, y1, factor=ym)
+    # trend odporny na pojedyncze lata suszy (Theil–Sen: mediana nachyleń par lat), przycięty do ±3% średniej na rok
+    i, j = np.triu_indices(len(x), 1)
+    ok = x[j] != x[i]
+    b = float(np.median((v[j] - v[i])[ok] / (x[j] - x[i])[ok]))
+    cap = float(tr.get("max_slope_pct", 3.0)) / 100.0 * mean
+    b = float(np.clip(b, -cap, cap))
+    a = float(np.median(v - b * x))
+    ratio = float(np.percentile(v / (a + b * x), q)) * adjust
+    pot = Potential(None, mean, len(pts), scope, y0, y1, True, a, b, ratio)
+    pot.ym_t_ha = pot.at(target_year if target_year is not None else y1 + 1)
+    return pot
 
 
 # ── symulacja ───────────────────────────────────────────────────────────────────────────────
@@ -402,8 +450,9 @@ def build(w: DailyWeather, analysis_date: date, ctx: Context, years: int = 10) -
                            and ctx.wod_mm >= CEREAL_GOOD_SOIL_WOD_MM)
         if cereal_override:  # A15: nie „nie siej – gleba nie pasuje”, najwyżej „możliwe” (powód ekonomiczny)
             suit = "neutralna"
-        pot = potential(crop.id, ctx.voivodeship)
-        ym = None if pot.ym_t_ha is None else pot.ym_t_ha * cfg["soil_factor"][suit]
+        pot = potential(crop.id, ctx.voivodeship, before_year=analysis_date.year, target_year=analysis_date.year)
+        sf = cfg["soil_factor"][suit]
+        ym = None if pot.ym_t_ha is None else pot.ym_t_ha * sf  # A16: Ym w roku daty analizy (trend GUS)
         typ = None if ym is None else ym * median_rel
         weak = None if ym is None else ym * weak_rel
         rot = rotation(crop, ctx.history)
@@ -418,7 +467,9 @@ def build(w: DailyWeather, analysis_date: date, ctx: Context, years: int = 10) -
             low.append("współczynnik Ky (reakcja plonu na brak wody) to szacunek")
         if crop.id in GUS_SUBSTITUTE:
             low.append(f"plon potencjalny: {GUS_SUBSTITUTE[crop.id]}")
-        if pot.scope != "wojewodztwo" or pot.years < 8:
+        if pot.scope == "brak":
+            low.append(f"brak plonów GUS sprzed {analysis_date.year} r. – bez plonu w tonach")
+        elif pot.scope != "wojewodztwo" or pot.years < 8:
             low.append("krótka albo niepełna seria plonów GUS dla województwa")
         if n < 8:
             low.append(f"tylko {n} pełnych sezonów z danymi pogodowymi")
@@ -440,13 +491,16 @@ def build(w: DailyWeather, analysis_date: date, ctx: Context, years: int = 10) -
             soil_suitability=suit, soil_suitability_label=SUIT_LABEL[suit], rotation=rot,
             irrigation_practice=crop.irrigation_practice, drought_sensitivity=crop.sensitivity,
             confidence="ograniczona" if low else "srednia", confidence_note="; ".join(low) or None, notes=notes,
-            yields_by_year=[YearYield(year=y, relative=round(r, 2), yield_t_ha=None if ym is None else round(ym * r, 1),
+            yields_by_year=[YearYield(year=y, relative=round(r, 2),
+                                      yield_t_ha=None if ym is None else round(pot.at(y) * sf * r, 1),
                                       water_deficit_mm=round(d)) for y, r, d in sim],
             source_tags=[
                 SourceTag(kind="szacunek_modelu", date=last, source=f"{MODEL_SOURCE} (Ky {_n(crop.ky_total, 2)})"),
                 SourceTag(kind="pomiar" if pot.scope == "wojewodztwo" else "brak_danych" if pot.scope == "brak" else "obliczenia",
-                          source=f"{GUS_SOURCE}" + (f" ({ctx.voivodeship}, 2016–2025)" if pot.scope == "wojewodztwo"
-                                                    else " (wszystkie województwa)" if pot.scope == "kraj" else "")),
+                          source=f"{GUS_SOURCE}" + (f" ({ctx.voivodeship}, {pot.span}" if pot.scope == "wojewodztwo"
+                                                    else f" (wszystkie województwa, {pot.span}" if pot.scope == "kraj"
+                                                    else f" (brak lat sprzed {analysis_date.year}")
+                          + (", z trendem plonów)" if pot.trend else ")")),
             ],
         )
         groups["wieloletnie" if crop.kind == "wieloletnia" else "polowe"].append(item)

@@ -33,6 +33,7 @@ PENALTY = {
     "gleba_konflikt": 10,
     "opad_stacje_daleko": 10,  # A7: brak stacji IMGW ≤ 30 km – stacje do 50 km
     "opad_zrodla_rozne": 10,  # A7: stacje IMGW i NASA mocno się różnią (> 35%)
+    "opad_lata_rozne": 0,  # A16: ≥ 2 z ostatnich 5 sezonów z rozjazdem IV–VII > 30% – pewność o CAŁY poziom niżej
     "pole_narysowane": 4,  # obrys rolnika – brak EGiB, dokładny obrys z mapy (D75)
     "obszar_przyblizony": 15,  # brak granic działki z ULDK – kwadrat 1 ha wokół punktu (D69)  # źródła gleby różnią się (mapa glebowo-rolnicza / IUNG / SoilGrids, D49)
 }
@@ -116,6 +117,10 @@ def premises(i: ConfidenceInputs) -> list[Premise]:
                 add("opad_stacje_daleko", "najbliższe stacje opadowe IMGW są dalej niż 30 km")
             if i.precip.agreement == "mocno_sie_roznia":
                 add("opad_zrodla_rozne", "stacje IMGW i dane NASA mocno się różnią – możliwe lokalne burze")
+            if getattr(i.precip, "disagreement_lowers", False):
+                n = len(i.precip.disagreement_years)
+                add("opad_lata_rozne", f"w {n} {'latach' if n > 1 else 'roku'} opad ze stacji IMGW różni się od danych "
+                                       "satelitarnych o ponad 30%")
         else:
             add("pogoda_nasa", f"pogoda uśredniona dla obszaru {i.weather_resolution}")
         if i.weather_until and (i.analysis_date - i.weather_until).days - 1 > 3:
@@ -158,6 +163,12 @@ def level(points: int, capped: bool, stale: bool = False) -> Confidence:
     return ORDER[min(ORDER.index(lv) + 1, 2)] if stale else lv
 
 
+def precip_disagreement_text(p) -> str:
+    from app.analysis.precip import disagreement_sentence
+
+    return disagreement_sentence(p).strip()
+
+
 def stale_text(h: StaleHit) -> str:
     try:
         from zoneinfo import ZoneInfo
@@ -183,6 +194,8 @@ def reliability(i: ConfidenceInputs) -> tuple[Reliability, list[Premise], int]:
     conf = level(points, capped=not (i.satellite and i.terrain), stale=bool(i.stale))
     top = sorted(prem, key=lambda p: -p.points)[:3]
     reason = ("Ograniczenia: " + "; ".join(p.text for p in top) + ".") if top else "Wszystkie źródła danych dostępne."
+    if any(p.key == "opad_lata_rozne" for p in prem):  # A16: rozjazd IMGW / NASA w ≥ 2 z 5 ostatnich sezonów
+        conf = ORDER[min(ORDER.index(conf) + 1, 2)]
     if i.stale:
         reason = "Część danych z pamięci podręcznej (źródło nie odpowiadało) – pewność obniżona. " + reason
 
@@ -255,6 +268,8 @@ def reliability(i: ConfidenceInputs) -> tuple[Reliability, list[Premise], int]:
         names = ", ".join(f"{p.name} ({p.dist_km:.0f} km)" for p, _w in i.precip.stations)
         lim.insert(0, f"Opad ze stacji IMGW: {names} – lokalna burza nad polem może ominąć stację; parowanie (ET0) "
                       f"uśrednione dla obszaru {i.weather_resolution}.")
+        if getattr(i.precip, "disagreement_years", None):  # A16
+            lim.insert(1, precip_disagreement_text(i.precip))
         if i.precip.filled_days:
             lim.insert(1, f"Ostatnie {i.precip.filled_days} dni opadu (od {i.precip.filled_from:%d.%m.%Y}) – dane NASA "
                           "przeliczone do poziomu stacji (archiwum IMGW publikuje dane z opóźnieniem).")

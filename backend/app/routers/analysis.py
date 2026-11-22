@@ -573,6 +573,7 @@ def precip_contract(info: "precip_mod.PrecipInfo | None", data_until: dt.date | 
         windows=[PrecipWindow(key=x.key, label=x.label, start=x.start, end=x.end, imgw_mm=x.imgw_mm, nasa_mm=x.nasa_mm,
                               difference_pct=x.difference_pct, rating=x.rating) for x in info.windows],
         sentence=info.sentence, confidence_lowered=info.confidence_lowered,
+        precip_disagreement=list(info.disagreement_years),
         source_tag=SourceTag(kind="pomiar" if measured else "szacunek_modelu", date=data_until,
                              source=imgw.SOURCE if measured else precip_mod.NASA_LABEL))
 
@@ -924,7 +925,7 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
         except Exception as exc:  # noqa: BLE001 – ranking nie może wywrócić analizy
             steps.append(_step("suggestions", "Ranking „Co tu posiać?”", "error", note=exc.__class__.__name__))
     suggestions = choice_mod.attach(suggestions, planned, soil_prof.group == "lekka")
-    suggestions = prices_mod.attach(suggestions, p.voivodeship)  # A12: przychód z pola (ceny skupu GUS)
+    suggestions = prices_mod.attach(suggestions, p.voivodeship, analysis_date)  # A12/A16: ceny sprzed daty analizy
     if suggestions is not None:
         steps.append(_step("suggestions", "Ranking „Co tu posiać?” (17 upraw × 10 sezonów)", "done",
                            ms=int((perf_counter() - s) * 1000)))
@@ -959,7 +960,7 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
         terrain=terrain_c if terrain_c is not None else (TerrainPending() if tr_pending else None),
         terrain_note=terrain_note,
         hydro=hydro_c,
-        price_now=prices_mod.price_now() if suggestions is not None else None,
+        price_now=prices_mod.price_now(analysis_date) if suggestions is not None else None,
         period=period_c,
         verdict=verdict,
         approximate_area=approx,

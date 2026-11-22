@@ -8,6 +8,9 @@ Przychód: typowy plon (t/ha) × powierzchnia uprawy × cena, zaokrąglony do 10
 „Cena teraz” (ZSRIR MRiRW): tylko gdy jest plik prices_zsrir_latest.csv (przepisany ręcznie z biuletynu) – bez zgadywania.
 A12b: brak średniej GUS, a jest notowanie ZSRIR → przychód z ceny ZSRIR (źródło „ZSRIR, lipiec 2026 (notowanie
 05.07.2026)”); cena GUS jest – bez zmian (ZSRIR tylko jako price_now). Brak każdej ceny → `revenue_note` z powodem.
+A16: ceny zależne od daty analizy – średnia GUS z 3 lat POPRZEDZAJĄCYCH rok daty analizy, notowanie ZSRIR tylko gdy
+jego data ≤ data analizy (inaczej brak ceny bieżącej). Plik GUS ma lata 2021–2025 – dla analizy sprzed 2022 r. brak ceny
+(revenue_note: „brak ceny skupu sprzed daty analizy w danych aplikacji”).
 """
 
 from __future__ import annotations
@@ -37,14 +40,29 @@ MONTH_NOM = ("styczeń", "luty", "marzec", "kwiecień", "maj", "czerwiec", "lipi
 NO_PRICE = {"kukurydza_kiszonka": "pasza na własne potrzeby, brak ceny skupu",
             "burak_cukrowy": "cena z umowy z cukrownią"}
 NO_PRICE_DEFAULT = "brak ceny skupu w danych publicznych"
+NO_PRICE_BEFORE = "brak ceny skupu sprzed daty analizy w danych aplikacji"  # A16
 
 
-def no_price_reason(crop_id: str) -> str:
+def no_price_reason(crop_id: str, analysis_date: date | None = None, voivodeship: str | None = None) -> str | None:
+    """Powód braku ceny (None – cena jest, brakuje tylko plonu); cena jest w danych, ale dopiero z lat / dni po
+    dacie analizy → NO_PRICE_BEFORE (A16)."""
+    if price(crop_id, voivodeship, analysis_date) is not None or zsrir_price(crop_id, analysis_date) is not None:
+        return None
+    if analysis_date is not None and (price(crop_id, voivodeship) is not None or zsrir_price(crop_id) is not None):
+        return NO_PRICE_BEFORE
     return NO_PRICE.get(crop_id, NO_PRICE_DEFAULT)
 
 
-def zsrir_price(crop_id: str) -> tuple[float, str] | None:
-    """(zł/t, źródło) z notowania ZSRIR – „ZSRIR, lipiec 2026 (notowanie 05.07.2026)”."""
+def _row_date(r: dict) -> date | None:
+    try:
+        return date.fromisoformat((r.get("date") or "").strip())
+    except ValueError:
+        return None
+
+
+def zsrir_price(crop_id: str, analysis_date: date | None = None) -> tuple[float, str] | None:
+    """(zł/t, źródło) z notowania ZSRIR – „ZSRIR, lipiec 2026 (notowanie 05.07.2026)”; A16: notowanie po dacie
+    analizy (albo bez daty przy analizie z datą) → None."""
     rows = {r.get("crop_id"): r for r in _zsrir_rows()}
     r = rows.get(crop_id)
     if r is None:
@@ -53,11 +71,10 @@ def zsrir_price(crop_id: str) -> tuple[float, str] | None:
         zl = float(r["zl_t"])
     except (KeyError, ValueError):
         return None
-    try:
-        d = date.fromisoformat((r.get("date") or "").strip())
-        when = f"{MONTH_NOM[d.month - 1]} {d.year}"
-    except ValueError:
-        when = "notowanie bieżące"
+    d = _row_date(r)
+    if analysis_date is not None and (d is None or d > analysis_date):
+        return None
+    when = f"{MONTH_NOM[d.month - 1]} {d.year}" if d else "notowanie bieżące"
     return round(zl), f"ZSRIR, {when} (notowanie {r.get('week', '').strip()})"
 
 
@@ -75,13 +92,15 @@ def _table() -> dict[str, dict[str, dict[int, float]]]:
     return {p: dict(u) for p, u in out.items()}
 
 
-def price(crop_id: str, voivodeship: str | None) -> tuple[float, str] | None:
-    """(zł/t, opis źródła) – średnia z 3 ostatnich lat dla województwa, inaczej średnia krajowa; brak → None."""
+def price(crop_id: str, voivodeship: str | None, analysis_date: date | None = None) -> tuple[float, str] | None:
+    """(zł/t, opis źródła) – średnia z 3 ostatnich lat dla województwa, inaczej średnia krajowa; brak → None.
+    A16: z datą analizy – tylko lata < rok daty analizy (3 lata poprzedzające)."""
     prod = CROP_PRODUCT.get(crop_id)
     units = _table().get(prod or "", {})
     woj = (voivodeship or "").strip().lower().replace("województwo ", "")
     for unit, label in ((woj, f"woj. {woj}"), ("polska", "Polska")):
-        by_year = units.get(unit)
+        by_year = {y: v for y, v in (units.get(unit) or {}).items()
+                   if analysis_date is None or y < analysis_date.year}
         if not by_year:
             continue
         ys = sorted(by_year)[-YEARS:]
@@ -99,8 +118,9 @@ def _round100(x: float) -> float:
 
 
 def revenue(crop_id: str, typical_t_ha: float | None, weak_t_ha: float | None, area_ha: float | None,
-            voivodeship: str | None) -> CropRevenue | None:
-    p = price(crop_id, voivodeship) or zsrir_price(crop_id)  # A12b: GUS, a gdy brak – notowanie ZSRIR
+            voivodeship: str | None, analysis_date: date | None = None) -> CropRevenue | None:
+    # A12b: GUS, a gdy brak – notowanie ZSRIR; A16: obie tylko sprzed daty analizy
+    p = price(crop_id, voivodeship, analysis_date) or zsrir_price(crop_id, analysis_date)
     if p is None or typical_t_ha is None or not area_ha:
         return None
     zl_t, src = p
@@ -109,8 +129,9 @@ def revenue(crop_id: str, typical_t_ha: float | None, weak_t_ha: float | None, a
                        weak_year_zl=_round100(weak * area_ha * zl_t), for_area_ha=round(area_ha, 2))
 
 
-def attach(sug: CropSuggestions | None, voivodeship: str | None) -> CropSuggestions | None:
-    """Przychód dla każdej uprawy rankingu, wyboru rolnika i lepszych możliwości (plony z rankingu)."""
+def attach(sug: CropSuggestions | None, voivodeship: str | None, analysis_date: date | None = None) -> CropSuggestions | None:
+    """Przychód dla każdej uprawy rankingu, wyboru rolnika i lepszych możliwości (plony z rankingu); ceny sprzed
+    daty analizy (A16)."""
     if sug is None:
         return None
     area = sug.area.value_ha if sug.area else None
@@ -120,14 +141,14 @@ def attach(sug: CropSuggestions | None, voivodeship: str | None) -> CropSuggesti
         items = []
         for it in g.items:
             yields[it.crop_id] = (it.yield_typical_t_ha, it.yield_weak_t_ha)
-            rv = revenue(it.crop_id, it.yield_typical_t_ha, it.yield_weak_t_ha, area, voivodeship)
-            items.append(it.model_copy(update={"revenue": rv,
-                                               "revenue_note": None if rv is not None else no_price_reason(it.crop_id)}))
+            rv = revenue(it.crop_id, it.yield_typical_t_ha, it.yield_weak_t_ha, area, voivodeship, analysis_date)
+            note = None if rv is not None else no_price_reason(it.crop_id, analysis_date, voivodeship)
+            items.append(it.model_copy(update={"revenue": rv, "revenue_note": note}))
         groups.append(g.model_copy(update={"items": items}))
 
     def rev(crop_id: str) -> CropRevenue | None:
         ty, wk = yields.get(crop_id, (None, None))
-        return revenue(crop_id, ty, wk, area, voivodeship)
+        return revenue(crop_id, ty, wk, area, voivodeship, analysis_date)
 
     choice = [c.model_copy(update={"revenue": rev(c.crop_id)}) for c in sug.choice]
     alts = [a.model_copy(update={"revenue": rev(a.crop_id)}) for a in sug.alternatives]
@@ -142,11 +163,13 @@ def _zsrir_rows() -> list[dict]:
     return []
 
 
-def price_now() -> list[PriceNow] | None:
+def price_now(analysis_date: date | None = None) -> list[PriceNow] | None:
     """Bieżące ceny ZSRIR – tylko z ręcznie przepisanego pliku (kolumny: crop_id, zl_t, week, [date, source], url);
-    brak pliku → None."""
+    brak pliku → None. A16: z datą analizy – tylko notowania z datą ≤ data analizy."""
     out = []
     for r in _zsrir_rows():
+        if analysis_date is not None and ((d := _row_date(r)) is None or d > analysis_date):
+            continue
         try:
             out.append(PriceNow(crop_id=r["crop_id"], zl_t=float(r["zl_t"]), week=r["week"].strip(),
                                 source=(r.get("source") or "").strip() or "ZSRIR MRiRW",

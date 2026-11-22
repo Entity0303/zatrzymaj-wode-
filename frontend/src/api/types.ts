@@ -817,6 +817,8 @@ export type PrecipSources = {
   sentence: string
   /** true: stacje daleko albo źródła mocno się różnią – pewność o poziom niżej */
   confidence_lowered?: boolean
+  /** A16: lata, w których suma IV–VII ze stacji IMGW różni się od NASA o > 30% */
+  precip_disagreement?: number[]
   source_tag: SourceTag
 }
 

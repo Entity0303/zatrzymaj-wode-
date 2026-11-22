@@ -9,6 +9,13 @@ precip:
     factor_min: 0.5           # … i w rozsądnych granicach
     factor_max: 1.5
     same_pct: 5               # różnica wielolecia do 5% = „zgodne z pomiarem”
+  # A16: rozjazd w sezonie – suma IV–VII ze stacji (IDW) vs surowa NASA, rok po roku
+  season_disagreement:
+    months: [4, 7]            # kwiecień–lipiec (pełny okres – tylko sezony zakończone przed datą analizy)
+    min_valid: 0.9            # ≥ 90% dni okresu z danymi w obu źródłach
+    max_pct: 30               # |IMGW − NASA| / NASA > 30% → rok oznaczony
+    recent_years: 5           # pewność o poziom niżej, gdy oznaczonych lat ≥ 2 z ostatnich 5
+    recent_min: 2
   labels:
     zgodne: "zgodne"
     roznia_sie: "różnią się"
@@ -34,4 +41,9 @@ precip:
     nasa_outdated_factor: "Najbliższa stacja IMGW {station} ({km}) nie ma aktualnych danych (pomiary do {last}) – opady z danych satelitarno-modelowych NASA przeliczonych do poziomu tej stacji (×{factor}); pewność niższa."
     nasa_outdated: "Najbliższa stacja IMGW {station} ({km}) nie ma aktualnych danych (pomiary do {last}) – opady z danych satelitarno-modelowych NASA (siatka ok. 50 km); pewność niższa."
     nasa_only: "W promieniu 50 km nie ma stacji IMGW z danymi – opady z danych satelitarno-modelowych NASA (siatka ok. 50 km); na nizinach zwykle zawyżają one opad o 15–20%."
+    disagree: " W {years} {who} o ok. {pct}% {direction} opadu niż dane satelitarne – wynik dla {which} jest mniej pewny."
+    disagree_mixed: " W {years} {who_mixed} od danych satelitarnych o ok. {pct}% opadu – wynik dla {which} jest mniej pewny."
+    disagree_who: ["stacja IMGW pokazuje", "stacje IMGW pokazują"]
+    disagree_who_mixed: ["stacja IMGW różni się", "stacje IMGW różnią się"]
+    disagree_which: ["tego roku", "tych lat"]
     nasa_no_store: "Opady z danych satelitarno-modelowych NASA (siatka ok. 50 km) – dane ze stacji IMGW są niedostępne."
