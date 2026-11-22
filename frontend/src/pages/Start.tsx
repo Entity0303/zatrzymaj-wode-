@@ -6,7 +6,7 @@ import { ChevronUp, Loader2 } from 'lucide-react'
 import { ErrorNotice } from '@/components/ErrorNotice'
 import L from 'leaflet'
 import { ApiError, api, describeError } from '@/api/client'
-import type { CropId, Parcel, ParcelCandidates, SearchResult } from '@/api/types'
+import type { AnalysisResponse, CropId, Parcel, ParcelCandidates, SearchResult } from '@/api/types'
 import { OfflineBanner } from '@/components/OfflineBanner'
 import { SampleDataBanner } from '@/components/SampleDataBanner'
 import { parcelBounds, parcelContains, type MapInsets } from '@/features/map/geo'
@@ -39,6 +39,7 @@ import { useForecast } from '@/features/weather/useForecast'
 import { WeatherWidget } from '@/features/weather/WeatherWidget'
 import { DateField } from '@/components/DateField'
 import { PeriodPicker } from '@/features/period/PeriodPicker'
+import { periodShortLabel } from '@/lib/period'
 import { LayerMenu } from '@/features/map/LayerMenu'
 import { FarmDrawer } from '@/layout/FarmDrawer'
 import { BottomTabs } from '@/layout/BottomTabs'
@@ -47,7 +48,7 @@ import { Sidebar } from '@/layout/Sidebar'
 import { TopBar } from '@/layout/TopBar'
 import { todayIso } from '@/lib/dates'
 import { cn } from '@/lib/utils'
-import { formatHa } from '@/lib/format'
+import { formatDatePl, formatHa } from '@/lib/format'
 import { BRAND_NAME, BRAND_TAGLINE } from '@/lib/brand'
 import { readLink, shareLink, writeLink } from '@/lib/deepLink'
 import { rememberAnalysis, useSettings, useUiPrefs } from '@/lib/storage'
@@ -125,6 +126,14 @@ export default function Start() {
   // paszport wodny: przypięty do konkretnego przeliczenia (klucz) – nowa analiza go zamyka,
   // dociągnięte zdjęcie satelitarne (ten sam klucz) – nie
   const [passportFor, setPassportFor] = useState<string | null>(null)
+  // F8: zmiana okresu przy otwartym paszporcie – paszport zostaje otwarty dla tej działki (id), a do czasu
+  // nowego wyniku pokazuje poprzedni, przyciemniony
+  const [passportCarry, setPassportCarry] = useState<string | null>(null)
+  /** zamyka paszport (i nie przenosi go na wynik, który się jeszcze liczy) */
+  const hidePassport = () => {
+    setPassportFor(null)
+    setPassportCarry(null)
+  }
   const [highlight, setHighlight] = useState<GeoJSON.Geometry | null>(null)
   // zgłoszenie rowu/zbiornika: otwarty kreator, wskazane miejsce, tryb wskazywania na mapie
   const [infra, setInfra] = useState<{ point: [number, number] | null; picking: boolean } | null>(null)
@@ -178,6 +187,9 @@ export default function Start() {
   })
   const analysis = run.phase === 'done' ? run.analysis : null
   const runKey = run.phase === 'done' ? run.key : null
+  // F8: ostatni gotowy wynik – paszport pokazuje go (przyciemniony) w trakcie przeliczania dla nowego okresu
+  const [lastAnalysis, setLastAnalysis] = useState<AnalysisResponse | null>(null)
+  if (analysis && analysis !== lastAnalysis) setLastAnalysis(analysis)
   // A11: zdjęcie satelitarne liczone osobno – warstwy Kondycja / Wilgotność odświeżamy, gdy przyjdzie
   const satellite = analysis?.satellite ?? null
   const satStatus = satellite?.status ?? null
@@ -199,7 +211,12 @@ export default function Start() {
   const layerRefresh = `${satLayer ? (satStatus ?? '') : ''}|${terrainLayer ? String(terrainPending) : ''}|${layer === 'woda' ? (hydroStatus ?? '') : ''}|${layerAttempt}`
   const layerState = useLayerData(layer, parcel?.id ?? null, asOf, layerRefresh, layerWaiting, drawnGeom)
   const retryLayer = layerState.phase === 'error' ? () => setLayerAttempt((n) => n + 1) : undefined
-  const passportOpen = !!analysis && passportFor === runKey
+  const carrying = !!parcel && passportCarry === parcel.id && !!lastAnalysis && lastAnalysis.parcel.id === parcel.id
+  const passportOpen = (!!analysis && passportFor === runKey) || carrying
+  // treść paszportu: bieżący wynik albo – w trakcie przeliczania / po błędzie nowego okresu – poprzedni
+  const passportAnalysis = analysis && passportFor === runKey ? analysis : carrying ? lastAnalysis : analysis
+  const passportLoading = carrying && run.phase !== 'done' && run.phase !== 'error'
+  const passportError = carrying && run.phase === 'error' ? run.error : null
 
   // wysokość obszaru mapy – do położeń szuflady
   useLayoutEffect(() => {
@@ -383,7 +400,7 @@ export default function Start() {
     userActed.current = true
     setHero(false)
     setInsidePopup(null)
-    setPassportFor(null)
+    hidePassport()
     setInfra(null)
     setView('2d')
     setDraw([])
@@ -507,11 +524,27 @@ export default function Start() {
   }
 
   // ── paszport wodny i „Pokaż na mapie” ──────────────────────────────────────────────────────
+  /** F8: okres zmieniony w paszporcie – paszport zostaje otwarty, analiza liczy się od nowa */
+  function changePeriodInPassport(v: string | null) {
+    if (parcel) setPassportCarry(parcel.id)
+    setPeriod(v)
+  }
+  useEffect(() => {
+    if (!passportCarry || !runKey) return
+    setPassportFor(runKey)
+    setPassportCarry(null)
+    // tylko nowy wynik (albo ten sam okres wybrany ponownie)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [runKey, passportCarry, period])
+
   function openPassport() {
     if (!runKey) return
     setPassportFor(runKey)
   }
-  const closePassport = useCallback(() => setPassportFor(null), [])
+  const closePassport = useCallback(() => {
+    setPassportFor(null)
+    setPassportCarry(null)
+  }, [])
   useEffect(() => {
     if (!passportOpen) return
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && closePassport()
@@ -537,7 +570,7 @@ export default function Start() {
   useEffect(() => setHighlight(null), [runKey])
 
   function showOnMap(g: GeoJSON.Geometry) {
-    setPassportFor(null)
+    hidePassport()
     setHighlight(g)
     if (isMobile) setSnap('collapsed')
     const map = mapRef.current
@@ -557,7 +590,7 @@ export default function Start() {
     userActed.current = true
     setHero(false)
     pendingCrop.current = e.crop
-    setPassportFor(null)
+    hidePassport()
     setAsOf(exampleDate(e))
     expandAfterFind.current = true
     searchByNumber(e.parcel)
@@ -567,7 +600,7 @@ export default function Start() {
   // ── zgłoszenia rowów i zbiorników (SPEC 11) ─────────────────────────────────────────────
   function openInfra() {
     const c = parcel ? parcelBounds(parcel).getCenter() : null
-    setPassportFor(null)
+    hidePassport()
     setInfra({ point: c ? [c.lng, c.lat] : null, picking: false })
     if (isMobile) setSnap('full')
   }
@@ -581,7 +614,7 @@ export default function Start() {
   // ── raport PDF: te same parametry co analiza ─────────────────────────────────────────────
   const report = useReportDownload(
     parcel && analysis
-      ? { parcelId: parcel.id, point: approxPoint, geometry: drawnGeom, numer: drawnGeom ? 'pole-narysowane' : approxPoint ? 'obszar' : parcel.numer, crop: analysis.crop, date: asOf, cropHistory: history, area, plannedCrops: planned }
+      ? { parcelId: parcel.id, point: approxPoint, geometry: drawnGeom, numer: drawnGeom ? 'pole-narysowane' : approxPoint ? 'obszar' : parcel.numer, crop: analysis.crop, date: asOf, cropHistory: history, area, plannedCrops: planned, period: periodUsed }
       : null,
   )
   // „Pobierz raport” otwiera formularz „Przygotuj raport” (skrócony / szczegółowy)
@@ -590,9 +623,10 @@ export default function Start() {
     planned.length ? t('plan: {n}', { n: planned.length }) : null,
     history.some((h) => h && h !== 'nie_wiem') ? t('historia pola') : null,
     area ? `${formatHa(area)} ha` : null,
+    periodUsed ? t('okres: {p}', { p: t(periodShortLabel(periodUsed)) }) : null,
   ].filter(Boolean) as string[]
   const clearReportError = report.clearError
-  useEffect(() => clearReportError(), [parcel?.id, crop, asOf, history, area, planned, clearReportError])
+  useEffect(() => clearReportError(), [parcel?.id, crop, asOf, history, area, planned, periodUsed, clearReportError])
   // telefon: błąd raportu ma być widoczny – szuflada do połowy
   useEffect(() => {
     if (report.error && isMobile) setSnap('half')
@@ -744,7 +778,7 @@ export default function Start() {
     reqId.current++
     setSearch({ phase: 'idle' })
     setCandidates([])
-    setPassportFor(null)
+    hidePassport()
     setInfra(null)
     setHighlight(null)
     setInsidePopup(null)
@@ -1167,14 +1201,36 @@ export default function Start() {
           )}
 
           {/* paszport wodny – pełny ekran nad mapą i panelem (nic nie prześwituje) */}
-          {passportOpen && analysis && (
-            <Passport analysis={analysis} onClose={closePassport} report={reportUi} onCopyLink={copyLink} onShowOnMap={showOnMap} />
+          {passportOpen && passportAnalysis && (
+            <Passport
+              analysis={passportAnalysis}
+              onClose={closePassport}
+              report={passportLoading ? undefined : reportUi}
+              onCopyLink={copyLink}
+              onShowOnMap={showOnMap}
+              period={{
+                picker: (
+                  <PeriodPicker
+                    value={period}
+                    onChange={changePeriodInPassport}
+                    hasCrop={!!crop}
+                    asOf={asOf}
+                    prefix="Okres:"
+                    emptyLabel={t('od {d} (sezon uprawy)', { d: formatDatePl(passportAnalysis.history.season_start) })}
+                    disabled={passportLoading}
+                  />
+                ),
+                loading: passportLoading,
+                error: passportError,
+                onRetry: retryAnalysis,
+              }}
+            />
           )}
 
           {/* wydruk paszportu: osobna kopia poza układem mapy (window.print) */}
-          {passportOpen && analysis && createPortal(
+          {passportOpen && passportAnalysis && createPortal(
             <div className="hidden bg-white p-8 text-text print:block">
-              <Passport analysis={analysis} print />
+              <Passport analysis={passportAnalysis} print />
             </div>,
             document.body,
           )}

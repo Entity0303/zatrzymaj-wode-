@@ -1,14 +1,15 @@
 import { CalendarRange, Check, ChevronDown, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { minAnalysisIso, todayIso } from '@/lib/dates'
 import { useLang } from '@/lib/i18n'
-import { customRange, PERIOD_OPTIONS, periodShortLabel, type PeriodToken } from '@/lib/period'
+import { customRange, PERIOD_OPTIONS, periodMaxIso, periodMinIso, periodShortLabel, rangeError, type PeriodToken } from '@/lib/period'
 import { cn } from '@/lib/utils'
 
 /**
  * „Okres” (F3) przy dacie analizy: gotowe okresy (ostatnie 30 dni, od siewu – tylko z uprawą, sezon)
  * albo własny zakres od–do (natywne pola daty, bez nowej biblioteki). Wybór trafia do zapytania analizy
- * (`period=` / `date_from` + `date_to`) i do adresu (`?okres=`). Wynik pokazuje karta „Okres”.
+ * (`period=` / `date_from` + `date_to`) i do adresu (`?okres=` / `?od=&do=`). Wynik pokazuje karta „Okres”.
+ * F8: walidacja własnego zakresu (od < do, koniec ≤ data analizy i nie w przyszłość, początek ≥ pobrana pogoda) –
+ * błąd po polsku pod polami; w paszporcie przycisk „Okres: …” (`prefix`, `emptyLabel` – co widać bez okresu).
  */
 export function PeriodPicker({
   value,
@@ -17,7 +18,16 @@ export function PeriodPicker({
   asOf,
   bare,
   align = 'right',
+  prefix,
+  emptyLabel,
+  disabled,
 }: {
+  /** F8: „Okres:” przed opisem (pasek paszportu) */
+  prefix?: string
+  /** F8: opis, gdy okres nie jest wybrany (np. „od 1.11.2025 – sezon uprawy”) */
+  emptyLabel?: string
+  /** trwa przeliczanie – bez kolejnej zmiany */
+  disabled?: boolean
   value: PeriodToken | null
   onChange: (v: PeriodToken | null) => void
   hasCrop: boolean
@@ -32,7 +42,20 @@ export function PeriodPicker({
   const root = useRef<HTMLDivElement>(null)
   const range = customRange(value)
   const [from, setFrom] = useState(range?.from ?? '')
-  const [to, setTo] = useState(range?.to ?? asOf)
+  const [to, setTo] = useState(range?.to ?? periodMaxIso(asOf))
+  // błąd pokazujemy po pierwszej próbie albo gdy oba pola są wypełnione
+  const [tried, setTried] = useState(false)
+
+  /** otwarcie: pola z bieżącego okresu (albo pusty początek i koniec = data analizy) */
+  const toggle = () => {
+    if (!open) {
+      const r = customRange(value)
+      setFrom(r?.from ?? '')
+      setTo(r?.to ?? periodMaxIso(asOf))
+      setTried(false)
+    }
+    setOpen((o) => !o)
+  }
 
   // zamknięcie: klik poza okienkiem, Esc
   useEffect(() => {
@@ -51,8 +74,15 @@ export function PeriodPicker({
     onChange(v)
     setOpen(false)
   }
-  const customOk = !!customRange(from && to ? `${from}_${to}` : null)
-  const label = value ? periodShortLabel(value) : t('Okres')
+  const error = rangeError(from, to, asOf)
+  const showError = !!error && (tried || (!!from && !!to))
+  const applyCustom = () => {
+    setTried(true)
+    if (!error) pick(`${from}_${to}`)
+  }
+  // emptyLabel przychodzi już przetłumaczony (zawiera datę)
+  const desc = value ? t(periodShortLabel(value)) : (emptyLabel ?? null)
+  const label = prefix ? `${t(prefix)} ${desc ?? t('domyślny')}` : (desc ?? t('Okres'))
 
   return (
     <div ref={root} className="relative">
@@ -60,16 +90,18 @@ export function PeriodPicker({
         type="button"
         aria-expanded={open}
         aria-haspopup="dialog"
-        onClick={() => setOpen((o) => !o)}
+        disabled={disabled}
+        onClick={toggle}
         title={t('Podsumowanie wybranego okresu: ile spadło, ile wyparowało')}
         className={cn(
-          'flex h-11 max-w-[220px] items-center gap-1.5 rounded-full px-3 text-sm font-medium',
+          'flex h-11 items-center gap-1.5 rounded-full px-3 text-sm font-medium disabled:opacity-60',
+          prefix ? 'max-w-[min(340px,100%)]' : 'max-w-[220px]',
           bare ? 'hover:bg-surface-2' : 'border bg-surface shadow-card hover:bg-surface-2',
           value && 'text-brand',
         )}
       >
         <CalendarRange className="size-4 shrink-0 text-brand" aria-hidden />
-        <span className="truncate">{value ? t(label) : label}</span>
+        <span className="truncate">{label}</span>
         <ChevronDown className="size-4 shrink-0 text-text-muted" aria-hidden />
       </button>
       {open && (
@@ -112,8 +144,10 @@ export function PeriodPicker({
                 <input
                   type="date"
                   value={from}
-                  min={minAnalysisIso()}
-                  max={to || todayIso()}
+                  min={periodMinIso(asOf)}
+                  max={to || periodMaxIso(asOf)}
+                  aria-invalid={showError}
+                  aria-describedby={showError ? 'period-range-error' : undefined}
                   onChange={(e) => setFrom(e.target.value)}
                   className="mt-0.5 h-11 w-full rounded-md border bg-surface-2 px-2 text-sm text-text"
                 />
@@ -123,17 +157,24 @@ export function PeriodPicker({
                 <input
                   type="date"
                   value={to}
-                  min={from || minAnalysisIso()}
-                  max={todayIso()}
+                  min={from || periodMinIso(asOf)}
+                  max={periodMaxIso(asOf)}
+                  aria-invalid={showError}
+                  aria-describedby={showError ? 'period-range-error' : undefined}
                   onChange={(e) => setTo(e.target.value)}
                   className="mt-0.5 h-11 w-full rounded-md border bg-surface-2 px-2 text-sm text-text"
                 />
               </label>
             </div>
+            {showError && (
+              <p id="period-range-error" role="alert" className="mt-1.5 text-sm leading-5 text-danger">
+                {t(error!)}
+              </p>
+            )}
             <button
               type="button"
-              disabled={!customOk}
-              onClick={() => pick(`${from}_${to}`)}
+              disabled={showError}
+              onClick={applyCustom}
               className="mt-2 h-11 w-full rounded-md bg-brand-dark text-sm font-semibold text-white hover:bg-brand disabled:opacity-40"
             >
               {t('Pokaż ten okres')}
@@ -145,7 +186,7 @@ export function PeriodPicker({
               onClick={() => pick(null)}
               className="mt-1 flex min-h-11 w-full items-center justify-center gap-1.5 rounded-lg text-sm font-medium text-text-muted hover:bg-surface-2"
             >
-              <X className="size-4" aria-hidden /> {t('Bez okresu')}
+              <X className="size-4" aria-hidden /> {t(emptyLabel ? 'Wróć do domyślnego' : 'Bez okresu')}
             </button>
           )}
         </div>

@@ -1,9 +1,10 @@
 import { ChevronDown, CircleAlert, CircleCheck, CircleX, TreeDeciduous, type LucideIcon } from 'lucide-react'
 import { useState } from 'react'
 import type { CropSuggestion, CropSuggestions, PerennialSuggestion, PriceNow, SuggestionCategory } from '@/api/types'
-import { RevenueLine } from './RevenueLine'
+import { RevenueCell, type RevenueExtras } from './RevenueCell'
+import { hasRevenue, priceNowMonth } from '@/lib/revenue'
 import { SourceTag } from '@/components/SourceTag'
-import { formatDatePl } from '@/lib/format'
+import { formatDatePl, formatHa, formatNum } from '@/lib/format'
 import { useLang } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
 
@@ -30,13 +31,23 @@ function YieldLine({ s, area }: { s: CropSuggestion | PerennialSuggestion; area:
   )
 }
 
-/** Szczegóły jednej uprawy: słaby rok, ryzyko, płodozmian, uwagi. */
-function Details({ s }: { s: CropSuggestion | PerennialSuggestion }) {
+/** „10–16.11.2026” → „10–16.11” */
+const shortWeek = (w: string) => w.replace(/\.\d{4}$/, '')
+
+/** Szczegóły jednej uprawy: słaby rok, ryzyko, płodozmian, uwagi; cena za tonę (przychód – kolumna obok). */
+function Details({ s, priceNow }: { s: CropSuggestion | PerennialSuggestion; priceNow?: PriceNow | null }) {
   const { t } = useLang()
   const rot = 'rotation' in s ? s.rotation : null
   const notes = 'notes' in s ? (s.notes ?? []) : []
+  const rev = 'revenue' in s && hasRevenue(s.revenue) ? s.revenue : null
   return (
     <ul className="mt-1.5 space-y-1 text-sm leading-5 text-text-muted">
+      {rev && Number.isFinite(rev.price_zl_t) && rev.price_zl_t > 0 && (
+        <li>
+          {t('przychód: {p} zł/t × plon z {area} ha (bez kosztów i dopłat)', { p: formatNum(rev.price_zl_t, 0), area: formatHa(rev.for_area_ha) })}
+          {priceNow && ` · ${t('cena teraz: {p} zł/t ({src}, {week})', { p: formatNum(priceNow.zl_t, 0), src: priceNow.source.split(' ')[0], week: shortWeek(priceNow.week) })}`}
+        </li>
+      )}
       {s.yield_weak_t_ha != null && (
         <li>
           {t('w słabym roku ({rok}): {t} t/ha', { rok: s.weak_year, t: num(s.yield_weak_t_ha) ?? '' })}
@@ -66,16 +77,21 @@ function Row({ s, area, priceNow }: { s: CropSuggestion; area: number | null; pr
       <button type="button" aria-expanded={open} onClick={() => setOpen((o) => !o)} className="flex w-full items-start gap-2.5 text-left">
         <Icon className="mt-0.5 size-5 shrink-0" style={{ color: c.color }} aria-hidden />
         <span className="min-w-0 flex-1">
-          <span className="block text-base leading-6 font-semibold">
-            <span className="sr-only">{t(c.label)}: </span>
-            {t(s.label)}
+          {/* F8: kolumny „uprawa i plon” | „przychód z pola”; na telefonie przychód pod plonem */}
+          <span className="block sm:grid sm:grid-cols-[minmax(0,1fr)_8.5rem] sm:gap-3">
+            <span className="block min-w-0">
+              <span className="block text-base leading-6 font-semibold">
+                <span className="sr-only">{t(c.label)}: </span>
+                {t(s.label)}
+              </span>
+              <span className="block text-sm leading-5">
+                <YieldLine s={s} area={area} />
+              </span>
+            </span>
+            <RevenueCell revenue={s.revenue} note={(s as CropSuggestion & RevenueExtras).revenue_note} priceNow={priceNow} className="mt-0.5 sm:mt-0 sm:pt-0.5 sm:text-right" />
           </span>
-          <span className="block text-sm leading-5">
-            <YieldLine s={s} area={area} />
-          </span>
-          <RevenueLine revenue={s.revenue} priceNow={priceNow} details={open} className="mt-0.5" />
           {open && <span className="mt-1 block text-sm leading-5 text-text-muted">{t(s.reason)}</span>}
-          {open && <Details s={s} />}
+          {open && <Details s={s} priceNow={priceNow} />}
         </span>
         <ChevronDown className={cn('mt-1 size-4 shrink-0 text-text-muted transition-transform', open && 'rotate-180')} aria-hidden />
       </button>
@@ -98,6 +114,16 @@ export function RankingCard({ suggestions, top = 3, priceNow }: { suggestions: C
   const area = suggestions.area?.value_ha ?? null
   const per = suggestions.perennials
   const counts = (['polecane', 'mozliwe', 'odradzane'] as const).map((k) => [k, items.filter((i) => i.category === k).length] as const)
+  // F8: źródło cen (np. „GUS – ceny skupu, woj. podlaskie, 2023–2025”) – bez powtórzeń; brak pola = nic
+  const priceSources = [...new Set(shown.map((s) => (hasRevenue(s.revenue) ? s.revenue.price_source?.trim() : '')).filter(Boolean))]
+  // cena bieżąca ZSRIR dla upraw bez ceny GUS w tabeli: „rzepak – cena z lipca 2026 (ZSRIR)”
+  const nowSources = shown
+    .filter((s) => !hasRevenue(s.revenue))
+    .flatMap((s) => {
+      const p = priceNow?.find((x) => x.crop_id === s.crop_id)
+      return p ? [`${t(s.label).toLowerCase()} – ${t('cena z {m} ({src})', { m: priceNowMonth(p.week), src: p.source.split(' ')[0] })}`] : []
+    })
+  const allSources = [...priceSources.map((x) => t(x)), ...nowSources]
 
   return (
     <section aria-label={t('Co tu posiać?')} className="rounded-xl border bg-surface">
@@ -106,6 +132,11 @@ export function RankingCard({ suggestions, top = 3, priceNow }: { suggestions: C
         <p className="text-sm leading-5 text-text-muted">{all ? t('Wszystkie uprawy polowe, od najlepszej') : t('Najlepsze dla tej ziemi i pogody z 10 lat')}</p>
       </header>
 
+      {/* nagłówki kolumn – tylko obok siebie (od 640 px) */}
+      <p aria-hidden className="mt-2 hidden grid-cols-[minmax(0,1fr)_8.5rem] gap-3 pr-[42px] pl-[46px] text-xs leading-4 font-semibold tracking-wide text-text-muted uppercase sm:grid">
+        <span>{t('Uprawa i plon')}</span>
+        <span className="text-right">{t('Przychód z pola')}</span>
+      </p>
       <ul className="divide-y px-4">
         {shown.map((s) => (
           <Row key={s.crop_id} s={s} area={area} priceNow={priceNow?.find((p) => p.crop_id === s.crop_id)} />
@@ -176,6 +207,7 @@ export function RankingCard({ suggestions, top = 3, priceNow }: { suggestions: C
       )}
 
       <footer className="space-y-1.5 border-t px-4 py-2.5 text-xs leading-4 text-text-muted">
+        {allSources.length > 0 && <p>{t('Ceny: {src}. Przychód bez kosztów i dopłat.', { src: allSources.join('; ') })}</p>}
         <p>{t(suggestions.note)}</p>
         <SourceTag
           kind={suggestions.source_tag.kind}

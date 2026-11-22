@@ -98,6 +98,8 @@ function analysisBody(q: AnalysisQuery): AnalysisRequest {
     cultivated_area_ha: q.area && q.area > 0 ? q.area : null,
     planned_crops: q.plannedCrops?.length ? q.plannedCrops.slice(0, 3) : null,
     report_type: q.reportType ?? null,
+    // F8: okres także dla pola narysowanego (POST /api/analysis i /api/report.pdf przyjmują period / date_from / date_to)
+    ...(periodParams(q.period, q.date) as Pick<AnalysisRequest, 'period' | 'date_from' | 'date_to'>),
   }
 }
 
@@ -113,7 +115,7 @@ function analysisParams(q: AnalysisQuery): Record<string, string | number> {
   if (q.area && q.area > 0) params.cultivated_area_ha = q.area
   if (q.plannedCrops?.length) params.planned_crops = q.plannedCrops.slice(0, 3).join(',')
   if (q.reportType) params.report_type = q.reportType
-  Object.assign(params, periodParams(q.period))
+  Object.assign(params, periodParams(q.period, q.date))
   return params
 }
 

@@ -83,6 +83,15 @@ export function SectionB({ analysis, chartWidth }: { analysis: AnalysisResponse;
             {t('od {a} · dane pogodowe do {b}', { a: formatDatePl(h.season_start), b: formatDatePl(until) })}
           </span>
         </div>
+        {/* F8: przy wybranym okresie jasno – ta karta dotyczy sezonu uprawy, nie wybranego okresu */}
+        {analysis.period && (
+          <p className="text-sm leading-5 text-text-muted">
+            {t('Okres: sezon uprawy {a}–{b} (zawsze od początku sezonu – wybrany okres jest w karcie wyżej).', {
+              a: formatDatePl(h.season_start),
+              b: formatDatePl(until),
+            })}
+          </p>
+        )}
         {season.mm != null && (
           <p className="text-base leading-6">
             {t('od {d}:', { d: formatDayLong(season.from) })}{' '}
@@ -154,15 +163,18 @@ export function SectionB({ analysis, chartWidth }: { analysis: AnalysisResponse;
           )}
           <div className="space-y-2 rounded-xl bg-surface p-4 shadow-card">
             <h4 className="text-base leading-6 font-semibold">{t('Woda od początku sezonu, dzień po dniu')}</h4>
+            <p className="text-sm leading-5 text-text-muted">{t('Okres: {a}–{b}', { a: formatDatePl(h.season_start), b: formatDatePl(until) })}</p>
             <BalanceChart history={h} width={chartWidth} />
           </div>
           <div className="grid gap-3 lg:grid-cols-2">
             <div className="min-w-0 space-y-2 rounded-xl bg-surface p-4 shadow-card">
               <h4 className="text-base leading-6 font-semibold">{t('Dni, w których roślinom brakowało wody')}</h4>
+              <p className="text-sm leading-5 text-text-muted">{t('Okres: cały sezon uprawy w każdym roku')}</p>
               <StressChart years={h.stress_days_by_year} width={chartWidth ? chartWidth / 2 - 24 : undefined} />
             </div>
             <div className="min-w-0 space-y-2 rounded-xl bg-surface p-4 shadow-card">
               <h4 className="text-base leading-6 font-semibold">{t('Deszcz w kolejnych miesiącach')}</h4>
+              <p className="text-sm leading-5 text-text-muted">{t('Okres: {a}–{b}', { a: formatDatePl(h.season_start), b: formatDatePl(until) })}</p>
               <PrecipChart months={h.monthly_precip} width={chartWidth ? chartWidth / 2 - 24 : undefined} />
             </div>
           </div>

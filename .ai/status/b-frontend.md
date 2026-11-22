@@ -1,8 +1,9 @@
 # Status – osoba B (Mefju), frontend
 
-_Stan na: 2026-11-22 (F7 – A za B, `main`)_
+_Stan na: 2026-11-22 (F8 – A za B, `main`)_
 
 ## Zrobione
+- **F8 (A za B)**: okres w paszporcie („Okres: …” w pasku, walidacja zakresu, przeliczanie z przyciemnionym poprzednim wynikiem, `?okres=` / `?od=&do=`, ten sam okres w PDF i dla pola narysowanego); kolumna „Przychód z pola” w rankingu „Co tu posiać?” (typowy / słaby rok, źródło cen, cena ZSRIR przy braku ceny GUS).
 - **F7 (A za B)**: podatność gleb IUNG tylko na żądanie – przełącznik w menu podkładu (prawy dolny róg), domyślnie wyłączona, stan w localStorage; kafle WMS 512 px od zoomu 12, jedna instancja Leafletu, `updateWhenIdle`, granice Polski; legenda i atrybucja tylko gdy włączona.
 - **B-LIC (A za B, `f/leaflet`)**: react-leaflet i @react-leaflet/core (Hippocratic-2.1) usunięte; własna cienka warstwa nad Leafletem w `features/map/leaflet/` (MapContainer, TileLayer, WMSTileLayer, GeoJSON, ImageOverlay, Marker, CircleMarker, Polygon, Polyline, Tooltip, Popup, useMap, useMapEvents) – reszta kodu tylko z podmienionymi importami. Czeka na przeklikanie przez A na :5176 i merge do `main`.
 - **F4 (A za B)**: karta powitalna chowa się przy przybliżaniu/przeciąganiu; publiczny link (VITE_API_URL, vercel.json, render.yaml, DEPLOY.md); README.md.

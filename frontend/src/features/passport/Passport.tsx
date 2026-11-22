@@ -1,6 +1,6 @@
 import { parcelShortName } from '@/features/parcel-panel/parcelTitle'
 import { ArrowLeft, FileDown, Link2, Loader2, MoreHorizontal, Printer } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import type { ErrorInfo } from '@/api/client'
 import type { AnalysisResponse } from '@/api/types'
 import { ErrorNotice } from '@/components/ErrorNotice'
@@ -33,6 +33,17 @@ const NAV = [
 ] as const
 
 /** Treść paszportu – wspólna dla ekranu i wydruku. */
+/** F8: wybór okresu w pasku paszportu + stan przeliczania (stare dane przyciemnione) / błąd nowego okresu */
+export type PassportPeriod = {
+  /** przycisk „Okres: …” (PeriodPicker) */
+  picker: ReactNode
+  /** trwa przeliczanie dla nowego okresu – widać poprzedni wynik, przyciemniony */
+  loading: boolean
+  /** nowy okres się nie policzył – poprzedni wynik zostaje, komunikat z „Spróbuj ponownie” */
+  error?: ErrorInfo | null
+  onRetry?: () => void
+}
+
 function Content({ analysis, print, onShowOnMap }: { analysis: AnalysisResponse; print?: boolean; onShowOnMap?: (g: GeoJSON.Geometry) => void }) {
   const approx = (analysis.parcel.source === 'approximate' || analysis.approximate_area) && <ApproxAreaBanner />
   if (analysis.soil.non_agricultural)
@@ -76,7 +87,9 @@ export function Passport({
   onCopyLink,
   onShowOnMap,
   print,
+  period,
 }: {
+  period?: PassportPeriod
   analysis: AnalysisResponse
   onClose?: () => void
   report?: { download: () => void; busy: boolean; error: ErrorInfo | null }
@@ -130,6 +143,7 @@ export function Passport({
           <p className="text-sm text-text-muted">
             {t('stan na')} {formatDatePl(analysis.analysis_date)} · {t('gm. {gmina}, obręb {obreb}', { gmina: p.gmina, obreb: p.obreb })}
           </p>
+          {analysis.period && <p className="text-sm text-text-muted">{t('Okres: {label}', { label: t(analysis.period.label) })}</p>}
         </header>
         <Content analysis={analysis} print />
       </article>
@@ -161,6 +175,7 @@ export function Passport({
             </p>
             <h2 className={cn('font-name truncate font-semibold transition-all', small ? 'text-base leading-6' : 'text-xl leading-7')}>{title}</h2>
           </div>
+          {period && !analysis.soil.non_agricultural && <div className="shrink-0 max-sm:hidden">{period.picker}</div>}
           {report && (
             <Tooltip>
               <TooltipTrigger asChild>
@@ -195,6 +210,7 @@ export function Passport({
             </DropdownMenuContent>
           </DropdownMenu>
         </header>
+        {period && !analysis.soil.non_agricultural && <div className="px-3 pb-1 sm:hidden">{period.picker}</div>}
         {!analysis.soil.non_agricultural && (
           <nav aria-label={t('Sekcje paszportu')} className="scrollbar-none mx-auto flex max-w-5xl gap-1 overflow-x-auto px-3 pb-2 md:px-6">
             {NAV.map(([id, label]) => (
@@ -217,7 +233,15 @@ export function Passport({
 
       <article className="relative z-0 mx-auto max-w-5xl space-y-6 px-3 py-6 md:px-6 [&_section[id^=pass-]]:scroll-mt-28">
         {report?.error && <ErrorNotice {...report.error} onRetry={report.error.retryable ? report.download : undefined} />}
-        <Content analysis={analysis} onShowOnMap={onShowOnMap} />
+        {period?.error && <ErrorNotice {...period.error} onRetry={period.error.retryable ? period.onRetry : undefined} />}
+        {period?.loading && (
+          <p role="status" className="sticky top-[136px] z-10 mx-auto flex w-fit items-center gap-2 rounded-full bg-surface px-4 py-2 text-sm font-medium shadow-float">
+            <Loader2 className="size-4 animate-spin text-brand" aria-hidden /> {t('Przeliczam dla wybranego okresu…')}
+          </p>
+        )}
+        <div aria-busy={period?.loading || undefined} className={cn('space-y-6 transition-opacity', period?.loading && 'pointer-events-none opacity-50')}>
+          <Content analysis={analysis} onShowOnMap={onShowOnMap} />
+        </div>
       </article>
     </div>
   )

@@ -1,11 +1,12 @@
 import type { CropId } from '@/api/types'
 import { CROPS, HISTORY_UNKNOWN, isHistoryCrop } from './crops'
 import { minAnalysisIso, todayIso } from './dates'
-import { parsePeriod } from './period'
+import { customRange, parsePeriod } from './period'
 
 /**
  * Stan aplikacji w adresie (link do udostępnienia, jury: wszystko 1 klik od wejścia):
  * ?dzialka=<id lub „obręb numer”>&uprawa=<CropId>&data=RRRR-MM-DD&historia=<1–3 uprawy po przecinku, pierwsza = rok temu>&widok=paszport&okres=30d
+ * (F8: własny zakres okresu jako ?od=RRRR-MM-DD&do=RRRR-MM-DD; stary ?okres=RRRR-MM-DD_RRRR-MM-DD też czytany)
  * (stary ?przedplon= czytany jako „rok temu”)
  * Otwarcie takiego linku od razu wyszukuje działkę i liczy analizę. Inne parametry (np. ?dane=przykladowe)
  * zostają nietknięte.
@@ -57,7 +58,8 @@ export function readLink(search = window.location.search): LinkState {
       .filter((x) => /^[a-z_]{2,40}$/.test(x))
       .slice(0, 3),
     widok: q.get(P.widok) === 'paszport' ? 'paszport' : null,
-    okres: parsePeriod(q.get(P.okres)),
+    // F8: własny zakres ?od=&do= ma pierwszeństwo przed ?okres=
+    okres: (q.get('od') && q.get('do') ? parsePeriod(`${q.get('od')}_${q.get('do')}`) : null) ?? parsePeriod(q.get(P.okres)),
   }
 }
 
@@ -67,6 +69,18 @@ function withState(base: string, s: Partial<LinkState>): URL {
     if (!(k in s)) continue
     const raw = s[k]
     const v = Array.isArray(raw) ? raw.join(',') : raw
+    if (k === 'okres') {
+      // F8: gotowy okres → ?okres=30d; własny zakres → ?od=…&do=…
+      const r = customRange(v)
+      url.searchParams.delete('od')
+      url.searchParams.delete('do')
+      if (r) {
+        url.searchParams.delete(P.okres)
+        url.searchParams.set('od', r.from)
+        url.searchParams.set('do', r.to)
+        continue
+      }
+    }
     if (v) url.searchParams.set(P[k], v)
     else url.searchParams.delete(P[k])
     if (k === 'historia') url.searchParams.delete('przedplon')
