@@ -12,6 +12,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import math
+from collections import OrderedDict
 from dataclasses import dataclass
 from typing import Any
 
@@ -145,13 +146,25 @@ async def admin_for(lon: float, lat: float) -> Admin:
                  "Województwo przybliżone (najbliższy środek województwa) – gmina i powiat nieznane.", uldk.SOURCE_URL)
 
 
+_registry: "OrderedDict[str, uldk.Parcel]" = OrderedDict()  # pola narysowane w tym procesie (warstwy po id; A8)
+
+
+def registered(parcel_id: str) -> uldk.Parcel | None:
+    return _registry.get(parcel_id)
+
+
 async def build_parcel(poly_4326: Polygon) -> uldk.Parcel:
     """Pole narysowane jako `uldk.Parcel` (source = drawn) – dalej analiza traktuje je jak działkę."""
     rp = poly_4326.representative_point()
     adm = await admin_for(rp.x, rp.y)
-    return uldk.Parcel(id=drawn_id(poly_4326), voivodeship=adm.wojewodztwo, county=adm.powiat, commune=adm.gmina,
-                       region=adm.obreb, number="—", geom_2180=to_2180(poly_4326), source="drawn", name=NAME,
-                       teryt=adm.teryt, admin_note=adm.note, admin_url=adm.url)
+    p = uldk.Parcel(id=drawn_id(poly_4326), voivodeship=adm.wojewodztwo, county=adm.powiat, commune=adm.gmina,
+                    region=adm.obreb, number="—", geom_2180=to_2180(poly_4326), source="drawn", name=NAME,
+                    teryt=adm.teryt, admin_note=adm.note, admin_url=adm.url)
+    _registry[p.id] = p
+    _registry.move_to_end(p.id)
+    while len(_registry) > 256:
+        _registry.popitem(last=False)
+    return p
 
 
 async def resolve(geometry: dict | None) -> uldk.Parcel:

@@ -64,6 +64,10 @@ def main() -> int:
                         f"; teren: brak ({b.get('terrain_note')})"
                 elif code == 200 and path.startswith("/api/layers/"):
                     note = f"{len(r.json()['features']['features'])} obiektów, {len(r.content) // 1000} kB"
+                elif code == 409 and path == "/api/parcel" and any(
+                        c.get("id") == d.get("id") for c in r.json()["detail"].get("candidates", [])):
+                    note = (f"{r.json()['detail']['total']} działki o tym numerze w Polsce – ta jest na liście do wyboru "
+                            "(poprawnie)")
                 elif code != 200:
                     ok = False
                     try:

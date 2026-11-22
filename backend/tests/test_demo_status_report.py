@@ -54,15 +54,15 @@ def test_demo_examples(client):
     r = client.get("/api/demo/examples")
     assert r.status_code == 200
     ex = {e["id"]: e for e in r.json()}
-    assert list(ex) == ["susza-2018", "mokry-rok-2021", "kukurydza-dzis", "to-nie-jest-pole"]
-    assert ex["susza-2018"] == {
-        "id": "susza-2018", "title": "Susza 2018", "description": ex["susza-2018"]["description"],
-        "parcel_id": "201305_2.0038.6/1", "crop": "zboza_ozime", "date": "2018-06-10", "previous_crop": "zboza_ozime",
-    }
-    assert ex["mokry-rok-2021"]["date"] == "2021-07-15" and ex["mokry-rok-2021"]["previous_crop"] is None
+    # A8: 6 działek do pokazu – dobra, słaba, stok, obniżenie, susza (Kujawy), Żuławy; analiza na dziś
+    assert list(ex) == ["dobra-dzialka", "slaba-ziemia", "stok-pogorze", "obnizenie-pojezierze", "susza-kujawy",
+                        "mady-zulawy"]
     today = date.today().isoformat()
-    assert ex["kukurydza-dzis"]["date"] == today and ex["kukurydza-dzis"]["crop"] == "kukurydza_ziarno"
-    assert ex["to-nie-jest-pole"]["parcel_id"] == "143203_2.0027.112/11" and ex["to-nie-jest-pole"]["date"] == today
+    assert ex["dobra-dzialka"] == {
+        "id": "dobra-dzialka", "title": "Dobra działka", "description": ex["dobra-dzialka"]["description"],
+        "parcel_id": "201305_2.0038.6/1", "crop": "zboza_ozime", "date": today, "previous_crop": None,
+    }
+    assert ex["slaba-ziemia"]["parcel_id"] == "302408_5.0017.70/4" and all(e["date"] == today for e in ex.values())
     # tylko parametry – żadnych zapisanych wyników
     assert not any(k in e for e in r.json() for k in ("status", "recommendations"))
 
@@ -78,7 +78,7 @@ def test_warmup_runs_examples_through_normal_analysis(monkeypatch):
     states = asyncio.run(demo.warmup_once())
     assert [s.id for s in states] == [e.id for e in demo.EXAMPLES]
     assert all(s.state == "gotowe" and s.duration_ms is not None and s.finished_at for s in states), states
-    assert len(uldk._cache) >= 1 and len(demo.warmup_state()) == 4  # dane źródeł trafiły do cache
+    assert len(uldk._cache) >= 1 and len(demo.warmup_state()) == len(demo.EXAMPLES)  # dane źródeł trafiły do cache
 
 
 @respx.mock
@@ -113,7 +113,7 @@ def test_status_all_ok(client):
     names = [s["name"] for s in b["services"]]
     assert names[:3] == ["ULDK GUGiK", "NASA POWER", "Open-Meteo"] and "SoilGrids (ISRIC)" in names
     assert all(s["response_ms"] is not None and s["cache_entries"] >= 0 for s in b["services"])
-    assert b["warmup_enabled"] is False and len(b["warmup"]) == 4
+    assert b["warmup_enabled"] is False and len(b["warmup"]) == len(demo.EXAMPLES)
 
 
 @respx.mock

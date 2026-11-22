@@ -86,3 +86,56 @@ def test_soil_shares_and_wod():
     assert res.shares[2] == 0.5
     assert res.agricultural_share == 0.75
     assert res.wod_mm == pytest.approx((2 * 148.7 + 186.2) / 3, abs=0.1)
+
+
+# ── A8 (D89): blokada pojedynczych źródeł (OFFLINE_SOURCES) ────────────────────────────────
+
+
+def test_offline_sources_block_only_listed(monkeypatch):
+    import asyncio as _asyncio
+
+    from app.core import http as H
+    from app.core.cache import offline
+
+    monkeypatch.setattr(H.settings, "offline_sources", "uldk,nmt,kieg,uug,bdot")
+    assert H.source_offline("ULDK GUGiK") and H.source_offline("NMT GUGiK") and H.source_offline("KIEG / EGiB GUGiK")
+    assert H.source_offline("BDOT10k GUGiK")
+    for name in ("IMGW-PIB (stacje)", "Sentinel-2 L2A (Earth Search)", "NASA POWER (społeczność AG)",
+                 "IUNG-PIB SMSR (kategorie glebowe)", "SoilGrids (ISRIC)", "Open-Meteo (prognoza)"):
+        assert not H.source_offline(name) and not offline(name)
+    with pytest.raises(H.SourceError) as e:  # zapytanie do wyłączonego źródła nie wychodzi z aplikacji
+        _asyncio.run(H.request("GET", "https://uldk.gugik.gov.pl/", source="ULDK GUGiK", timeout_s=1))
+    assert "OFFLINE_SOURCES" in e.value.message
+    monkeypatch.setattr(H.settings, "offline_sources", "")
+    assert not H.source_offline("ULDK GUGiK")
+
+
+def test_gugik_requests_limited_to_two_at_once_with_gap(monkeypatch):
+    """A8 (D89): usługi GUGiK – najwyżej 2 zapytania naraz i odstęp między startami; inne źródła bez limitu."""
+    import asyncio as _asyncio
+    import time as _time
+
+    from app.core import http as H
+
+    monkeypatch.setattr(H.settings, "gugik_parallel", 2)
+    monkeypatch.setattr(H.settings, "gugik_min_interval_s", 0.05)
+    active, peak, starts = [0], [0], []
+
+    async def fake(method, url, *, source, **kw):
+        starts.append(_time.monotonic())
+        active[0] += 1
+        peak[0] = max(peak[0], active[0])
+        await _asyncio.sleep(0.1)
+        active[0] -= 1
+        return "ok"
+
+    monkeypatch.setattr(H, "_request", fake)
+
+    async def run(src):
+        return await _asyncio.gather(*(H.request("GET", "https://x", source=src, timeout_s=1) for _ in range(5)))
+
+    _asyncio.run(run("ULDK GUGiK"))
+    assert peak[0] == 2 and min(b - a for a, b in zip(starts, starts[1:])) >= 0.045
+    active[0], peak[0], starts[:] = 0, 0, []
+    _asyncio.run(run("IMGW-PIB (stacje)"))
+    assert peak[0] == 5  # nie-GUGiK – bez limitu

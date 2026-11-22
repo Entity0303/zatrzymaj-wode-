@@ -386,14 +386,25 @@ def to_contract(res: LiveResult) -> Satellite:
         note=NOTE, source_tag=tag)
 
 
+FAIL_TTL_S = 1800.0  # wynik „brak sceny” – 30 min (A8)
+
+
 def _ttl(on: date) -> float:
     return settings.sentinel_cache_ttl_today_s if on >= date.today() else FOREVER
 
 
 def _store(geom: BaseGeometry, on: date, sat: Satellite, layers: dict | None) -> None:
     k = geom_key(geom)
-    _cache.set(("live", k, on.isoformat()), {"satellite": sat.model_dump(mode="json"), "layers": layers}, _ttl(on))
-    _cache.set(("latest", k), {"on": on.isoformat()}, FOREVER)
+    # brak sceny (często: budżet czasu przy wolnym S3 / duża działka) – krótko, potem ponowna próba (A8)
+    ttl = _ttl(on) if sat.status == "ok" else FAIL_TTL_S
+    _cache.set(("live", k, on.isoformat()), {"satellite": sat.model_dump(mode="json"), "layers": layers}, ttl)
+    prev = _lookup(("latest", k))
+    if prev is None or prev["on"] <= on.isoformat():  # „latest” nie cofa się do starszej daty (przykład historyczny)
+        _cache.set(("latest", k), {"on": on.isoformat()}, FOREVER)
+    if sat.status == "ok" and sat.date is not None:  # indeks zapisanych scen działki (A8, D90)
+        idx = [x for x in (_lookup(("index", k)) or {}).get("entries", []) if x["on"] != on.isoformat()]
+        idx.append({"on": on.isoformat(), "scene": sat.date.isoformat()})
+        _cache.set(("index", k), {"entries": idx[-50:]}, FOREVER)
 
 
 def _lookup(key: tuple) -> dict | None:
@@ -405,12 +416,33 @@ def _lookup(key: tuple) -> dict | None:
 
 
 def _entry(geom: BaseGeometry, on: date) -> dict | None:
+    """Wpis pod dokładną datą analizy, a gdy go nie ma – NAJNOWSZA zapisana scena z datą ≤ data analizy (najwyżej
+    `days_back` dni wcześniej), np. scena 16.11 dla analizy 22.11 (A8, D90). Dla daty historycznej scena nigdy nie jest
+    późniejsza niż ta data."""
     k = geom_key(geom)
     hit = _lookup(("live", k, on.isoformat()))
-    if hit is None and on >= date.today() - timedelta(days=1):
-        latest = _lookup(("latest", k))  # „dziś” bez wpisu – ostatni wynik z ≤ 10 dni (tryb offline / demo)
-        if latest and (on - date.fromisoformat(latest["on"])).days <= 10:
-            hit = _lookup(("live", k, latest["on"]))
+    if hit is not None and hit["satellite"].get("status") != "ok" and _cache.get(("live", k, on.isoformat())) is None:
+        hit = None  # przeterminowana porażka – nie zwracamy jej jako wyniku
+    if hit is not None and hit["satellite"].get("status") == "ok":
+        return hit
+    cands = list((_lookup(("index", k)) or {}).get("entries", []))
+    latest = _lookup(("latest", k))  # wpisy sprzed indeksu
+    if latest and not any(x["on"] == latest["on"] for x in cands):
+        e = _lookup(("live", k, latest["on"]))
+        if e and e["satellite"].get("date"):
+            cands.append({"on": latest["on"], "scene": e["satellite"]["date"]})
+    days = cfg()["live"]["days_back"]
+    if not cands:  # wpisy sprzed indeksu – zapisane dni wstecz od daty analizy
+        for d in range(1, days + 1):
+            day = (on - timedelta(days=d)).isoformat()
+            e = _lookup(("live", k, day))
+            if e and e["satellite"].get("date"):
+                cands.append({"on": day, "scene": e["satellite"]["date"]})
+    ok = [x for x in cands if x.get("scene") and 0 <= (on - date.fromisoformat(x["scene"])).days <= days]
+    for x in sorted(ok, key=lambda x: (x["scene"], x["on"]), reverse=True):
+        e = _lookup(("live", k, x["on"]))
+        if e is not None and e["satellite"].get("status") == "ok":
+            return e
     return hit
 
 
@@ -466,11 +498,11 @@ async def live(geom: BaseGeometry, on: date) -> Satellite:
 
 
 async def _compute_and_store(geom: BaseGeometry, on: date) -> Satellite:
-    if not settings.sentinel_enabled:
-        return Satellite(status="brak_danych", warning="Zdjęcia satelitarne wyłączone w ustawieniach.", note=NOTE,
+    if not settings.sentinel_enabled:  # bez zapytań – tylko zapisane sceny (komunikat neutralny dla rolnika)
+        return Satellite(status="brak_danych", warning="Brak zapisanego zdjęcia satelitarnego tej działki.", note=NOTE,
                          source_tag=SourceTag(kind="brak_danych", source=S.SOURCE))
     if offline():
-        return Satellite(status="brak_danych", warning="Tryb demo offline – brak zdjęcia tej działki w pamięci podręcznej.",
+        return Satellite(status="brak_danych", warning="Brak zapisanego zdjęcia satelitarnego tej działki.",
                          note=NOTE, source_tag=SourceTag(kind="brak_danych", source=S.SOURCE))
     try:
         res = await asyncio.wait_for(compute_live(geom, on), settings.sentinel_budget_s + 10)

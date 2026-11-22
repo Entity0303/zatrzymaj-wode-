@@ -333,8 +333,17 @@ def note_stale(source: str, stored_at: dt.datetime, reason: str) -> None:
         hits.append(StaleHit(source, stored_at, reason))
 
 
-def offline() -> bool:
-    return bool(settings.demo_offline)
+def offline(source: str | None = None) -> bool:
+    """Tryb demo offline (wszystko z cache) albo – gdy podano źródło – to źródło wyłączone w OFFLINE_SOURCES (D89)."""
+    from app.core.http import source_offline
+
+    return bool(settings.demo_offline) or source_offline(source)
+
+
+def offline_message(source: str | None = None) -> str:
+    from app.core.http import SOURCE_OFF_MESSAGE
+
+    return OFFLINE_MESSAGE if settings.demo_offline else f"brak tych danych w pamięci podręcznej ({SOURCE_OFF_MESSAGE})"
 
 
 async def cached_fetch(
@@ -347,10 +356,10 @@ async def cached_fetch(
     hit = cache.get(key)
     if hit is not None:
         return hit
-    if offline():
+    if offline(source) or offline(cache.name):
         stale = cache.get_stale(key)
         if stale is None:
-            raise SourceError(source, OFFLINE_MESSAGE)
+            raise SourceError(source, offline_message(source))
         return stale[0]  # w trybie demo offline stary wpis to zamierzone użycie, nie awaria
     try:
         b = breaker(cache.name)

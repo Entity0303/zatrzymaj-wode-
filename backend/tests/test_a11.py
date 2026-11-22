@@ -410,3 +410,26 @@ def test_layers_satellite_404_without_scene(client, monkeypatch):
         return SM.LiveResult(None, None, None, S.Stats(), 0)
     monkeypatch.setattr(SM, "compute_live", none)
     assert client.get("/api/layers/kondycja", params={"parcel_id": PID}).status_code == 404
+
+
+# ── 7. A8 (D90): najnowsza zapisana scena ≤ data analizy ───────────────────────────────────
+
+
+def _sat_ok(d: date) -> Satellite:
+    return Satellite(status="ok", date=d, ndvi=0.8, sentence=f"Zdjęcie z {d}", source_tag={"kind": "pomiar", "source": S.SOURCE})
+
+
+def test_cached_result_picks_newest_scene_not_after_analysis_date():
+    SM._store(PARCEL, date(2026, 11, 22), _sat_ok(date(2026, 11, 16)), None)
+    SM._store(PARCEL, date(2026, 11, 5), _sat_ok(date(2026, 11, 2)), None)
+    assert SM.cached_result(PARCEL, date(2026, 11, 22)).date == date(2026, 11, 16)  # dokładna data
+    assert SM.cached_result(PARCEL, date(2026, 11, 20)).date == date(2026, 11, 16)  # scena 16.11 ≤ 20.11
+    assert SM.cached_result(PARCEL, date(2026, 11, 10)).date == date(2026, 11, 2)   # 16.11 byłaby z przyszłości
+    assert SM.cached_result(PARCEL, date(2026, 10, 30)) is None                      # obie sceny późniejsze
+    assert SM.cached_result(PARCEL, date(2027, 3, 1)) is None                        # > 60 dni po scenie
+
+
+def test_disabled_satellite_message_is_neutral(monkeypatch):
+    monkeypatch.setattr(settings, "sentinel_enabled", False)
+    sat = asyncio.run(SM.live(PARCEL, date(2026, 11, 22)))
+    assert sat.status == "brak_danych" and "ustawieniach" not in (sat.warning or "")

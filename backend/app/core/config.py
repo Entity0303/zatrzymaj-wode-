@@ -38,8 +38,16 @@ class Settings(BaseSettings):
     # pogoda z ostatnich 7 dni (NASA uzupełnia je z opóźnieniem) – 6 h; dni zakończone wcześniej – bez wygasania
     cache_ttl_current_s: float = 6 * 3600
     cache_ttl_forecast_s: float = 3600
-    # tryb demo offline (D55): żadnych zapytań zewnętrznych, tylko cache
+    # tryb demo offline (D55): żadnych zapytań zewnętrznych, tylko cache – na prezentację
     demo_offline: bool = False
+    # A8 (D89): źródła wyłączone pojedynczo – tylko cache (GUGiK blokuje sieć); reszta (IMGW, Earth Search, NASA, IUNG,
+    # SoilGrids, prognoza Open-Meteo) działa normalnie. Klucze: uldk, nmt, kieg, uug, bdot, prng, soil_map, ortho.
+    # Pusty napis = wszystkie źródła włączone. Env: OFFLINE_SOURCES="uldk,nmt,kieg,uug,bdot".
+    offline_sources: str = "uldk,nmt,kieg,uug,bdot"
+    # A8 (D89): usługi GUGiK (nazwa źródła zawiera „GUGiK”) – wspólny limit: najwyżej tyle zapytań naraz i odstęp
+    # między startami kolejnych zapytań; bezpiecznik (cached_fetch) jak dotąd
+    gugik_parallel: int = 2
+    gugik_min_interval_s: float = 0.5
     # działki demo z app/data/demo_parcels.json ładowane do indeksu działek przy starcie (D54)
     demo_parcels_preload: bool = True
     # ULDK: blokada (302 / 429 / HTML) – ponowienia po 1 s i 3 s, potem bezpiecznik na 60 s (D54)

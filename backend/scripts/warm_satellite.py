@@ -30,6 +30,9 @@ async def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--no-series", action="store_true")
     ap.add_argument("--date", default=None)
+    ap.add_argument("--demo", action="store_true", help="działki przykładów z /api/demo/examples (A8)")
+    ap.add_argument("--ids", nargs="*", help="tylko te działki (id)")
+    ap.add_argument("--max-checks", type=int, default=None, help="więcej masek SCL niż na żywo (domyślnie z YAML)")
     ap.add_argument("--live", action="store_true", help="budżet jak na żywo (15 s, 10 MB) – tylko pomiar, bez zapisu")
     a = ap.parse_args()
     on = date.fromisoformat(a.date) if a.date else date.today()
@@ -38,7 +41,21 @@ async def main() -> None:
         settings.sentinel_budget_s, settings.sentinel_budget_mb, settings.sentinel_timeout_s = 90.0, 40.0, 20.0
     store()
     uldk.load_known()
-    for name, pt in TARGETS:
+    targets = TARGETS
+    if a.demo:
+        from app import demo
+        targets = [(e.parcel_id, None) for e in demo.EXAMPLES]
+    if a.ids:
+        targets = [(i, None) for i in a.ids]
+    if a.max_checks:  # przygotowanie cache: więcej scen niż w trybie na żywo (listopad – dużo chmur)
+        base = sat_mod.cfg
+
+        def cfg_more() -> dict:
+            c = base()
+            c["live"]["max_scl_checks"] = a.max_checks
+            return c
+        sat_mod.cfg = cfg_more
+    for name, pt in targets:
         if pt is None:
             p = uldk.known_by_id(name)
             if p is None:

@@ -160,26 +160,26 @@
       "uwagi": "Punkt osoby C leży w działce (9.16 ha, ok. 334 × 514 m), 36 m od granicy."
     },
     {
-      "id": "061410_5.0009.344",
-      "query": "Łopatki 344",
-      "label": "Lessowy stok – Płaskowyż Nałęczowski (Łopatki 344, gm. Wąwolnica)",
+      "id": "061408_5.0008.203",
+      "query": "Drzewce-Kolonia 203",
+      "label": "Lessowy stok – Płaskowyż Nałęczowski (Drzewce-Kolonia 203, gm. Nałęczów)",
       "wojewodztwo": "lubelskie",
       "powiat": "powiat puławski",
-      "gmina": "Wąwolnica",
-      "obreb": "Łopatki",
-      "numer": "344",
-      "geom_wkt_2180": "POLYGON ((720912.466181818 388032.927147408, 720970.344355852 388199.709598682, 720949.739200485 388221.703662863, 720835.613068822 387916.02070495, 720760.078457842 387706.015529143, 720771.325632067 387706.962413969, 720773.498509769 387709.812410965, 720785.30124366 387713.495169602, 720802.077072183 387723.715249133, 720823.791263767 387731.109213827, 720828.123648426 387730.697218958, 720846.807116846 387742.489727764, 720853.381343704 387743.499231161, 720843.620760974 387800.278231907, 720844.86107267 387844.293757624, 720849.417689604 387880.407596279, 720854.976196771 387922.330297188, 720859.620468747 387944.59284227, 720873.511353436 387987.242914204, 720889.486396977 388012.155091153, 720907.528897251 388029.111520074, 720912.466181818 388032.927147408))",
-      "fetched_at": "2026-11-22T00:02:17.502040+00:00",
-      "source": "ULDK GUGiK (GetParcelByXY z punktu osoby C, 22.11.2026)",
+      "gmina": "Nałęczów",
+      "obreb": "Drzewce-Kolonia",
+      "numer": "203",
+      "geom_wkt_2180": "POLYGON ((721077.903525272 388216.1965787, 721026.007475794 388126.417696976, 721024.592512057 388124.018478788, 721042.553739116 388096.640880769, 721000.945191814 387996.049628954, 721018.287185123 387989.91080605, 721107.225628559 388198.801397862, 721077.903525272 388216.1965787))",
+      "fetched_at": "2026-11-22T00:23:36.545988+00:00",
+      "source": "ULDK GUGiK (GetParcelByXY, 22.11.2026)",
       "needs_fetch": false,
       "demo_key": "less-erozja",
       "punkt_c": [
-        22.17122,
-        51.31662
+        22.173336,
+        51.316981
       ],
       "scenariusz_c": "Lessowy stok – erozja, pas buforowy w poprzek spływu",
       "expected_c": "✅ pszenica/burak (dobra gleba), teren: stok > 5 %, propozycja pasa buforowego w poprzek spływu",
-      "uwagi": "Punkt osoby C leży w działce (1.64 ha, ok. 75 × 549 m), 8 m od granicy."
+      "uwagi": "Zamiast Łopatki 344 (061410_5.0009.344 – 52% lasu wg IUNG, wąwóz): sąsiednie pole ok. 250 m na NE; punkt wybrany z siatki kategorii IUNG (same grunty orne kat. III/IV); działka 0.68 ha, ok. 47 × 233 m, punkt 18 m od granicy."
     },
     {
       "id": "281003_2.0015.79/5",
