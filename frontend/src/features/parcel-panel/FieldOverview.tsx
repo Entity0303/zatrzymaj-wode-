@@ -50,14 +50,17 @@ export function NowLine({ analysis }: { analysis: AnalysisResponse }) {
 /**
  * Główny widok działki (F5, tryb Rolnik – krótko): zdania werdyktu (3 + „Pokaż wszystko”; nagłówek i „Teraz / Na dłuższą
  * metę” są wyżej w RiskSummary), „Teraz: …” tylko gdy stan wody nie jest dobry, „Co tu posiać?” (wybór + 3 najlepsze),
- * „Co zrobić?” (maks. 3 działania), „Doprecyzuj” (zwinięte). Na górze karta „Okres”, gdy wybrano okres (F3).
+ * „Co mogę zrobić?” (maks. 3 działania). Na górze „Co rośnie na tej działce?” (F13), pod nią karta „Okres” (F3).
  * Tryb Doradca: dodatkowo od razu „Z satelity” i „Woda w okolicy” (w trybie Rolnik są w „Szczegółach”).
  */
 export function FieldOverview({
   analysis,
   refine,
   onShowOnMap,
+  recalculating,
 }: {
+  /** F13: trwa przeliczanie – reszta przyciemniona, „Co rośnie na tej działce?” zostaje aktywne */
+  recalculating?: boolean
   analysis: AnalysisResponse
   refine: RefineProps
   /** „Pokaż na mapie” w działaniach */
@@ -73,6 +76,9 @@ export function FieldOverview({
   const area = s?.area ?? (analysis.cultivated_area_ha ? { value_ha: analysis.cultivated_area_ha, estimated: false, note: '' } : null)
   return (
     <div className="space-y-3">
+      {/* F13: wybór uprawy na górze (obowiązkowy krok KOWR) – zawsze ten sam element, bez odmontowania */}
+      <RefineCard {...refine} area={area} rotationHint={s?.rotation_hint} planOptions={planOptions} />
+      <div aria-busy={recalculating || undefined} className={cn('space-y-3 transition-opacity', recalculating && 'pointer-events-none opacity-50')}>
       <PeriodCard period={analysis.period} requested={!!refine.period} />
       {analysis.verdict && <VerdictCard verdict={analysis.verdict} bare limit={3} hideCrops={!!s} precip={analysis.precip_sources} />}
       {analysis.status.level !== 'ok' && analysis.status.level !== 'no_data' && <NowLine analysis={analysis} />}
@@ -86,7 +92,7 @@ export function FieldOverview({
           <WhatToDo analysis={analysis} onShowOnMap={onShowOnMap} />
         </section>
       )}
-      <RefineCard {...refine} area={area} rotationHint={s?.rotation_hint} planOptions={planOptions} />
+      </div>
     </div>
   )
 }

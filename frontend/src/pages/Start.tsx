@@ -32,7 +32,7 @@ import { InfraReportWizard } from '@/features/infra-reports/InfraReportWizard'
 import { DrawLayer } from '@/features/draw/DrawLayer'
 import { DrawToolbar } from '@/features/draw/DrawToolbar'
 import { drawProblem, ringAreaHa, toPolygon } from '@/lib/geoArea'
-import type { SearchPhase } from '@/features/parcel-panel/types'
+import type { AnalysisRun, SearchPhase } from '@/features/parcel-panel/types'
 import { useAnalysis } from '@/features/parcel-panel/useAnalysis'
 import { HydroRetryContext } from '@/features/parcel-panel/hydroRetry'
 import { SearchBar } from '@/features/search/SearchBar'
@@ -191,8 +191,13 @@ export default function Start() {
   const analysis = run.phase === 'done' ? run.analysis : null
   const runKey = run.phase === 'done' ? run.key : null
   // F8: ostatni gotowy wynik – paszport pokazuje go (przyciemniony) w trakcie przeliczania dla nowego okresu
-  const [lastAnalysis, setLastAnalysis] = useState<AnalysisResponse | null>(null)
-  if (analysis && analysis !== lastAnalysis) setLastAnalysis(analysis)
+  // (F13: razem z id działki z mapy – pole narysowane ma po stronie serwera inny identyfikator)
+  const [lastRun, setLastRun] = useState<{ analysis: AnalysisResponse; parcelId: string } | null>(null)
+  if (analysis && parcel && (analysis !== lastRun?.analysis || parcel.id !== lastRun.parcelId)) setLastRun({ analysis, parcelId: parcel.id })
+  const lastAnalysis = lastRun && parcel && lastRun.parcelId === parcel.id ? lastRun.analysis : null
+  // F13: panel w trakcie przeliczania (zmiana uprawy / okresu…) – poprzedni wynik tej działki, przyciemniony, bez
+  // odmontowania treści (scroll i fokus zostają); pierwsze liczenie działki – zwykły ekran ładowania
+  const panelRun: AnalysisRun = run.phase === 'loading' && lastAnalysis ? { phase: 'done', analysis: lastAnalysis, key: run.key, recalculating: true } : run
   // A11: zdjęcie satelitarne liczone osobno – warstwy Kondycja / Wilgotność odświeżamy, gdy przyjdzie
   const satellite = analysis?.satellite ?? null
   const satStatus = satellite?.status ?? null
@@ -217,7 +222,7 @@ export default function Start() {
   // F10: „Gleba” to obraz IUNG z WMS (SoilParcelOverlay), nie /api/layers – bez zapytania do serwera
   const layerState = useLayerData(layer, layer === 'gleba' ? null : (parcel?.id ?? null), asOf, layerRefresh, layerWaiting, drawnGeom)
   const retryLayer = layerState.phase === 'error' ? () => setLayerAttempt((n) => n + 1) : undefined
-  const carrying = !!parcel && passportCarry === parcel.id && !!lastAnalysis && lastAnalysis.parcel.id === parcel.id
+  const carrying = !!parcel && passportCarry === parcel.id && !!lastAnalysis
   const passportOpen = (!!analysis && passportFor === runKey) || carrying
   // treść paszportu: bieżący wynik albo – w trakcie przeliczania / po błędzie nowego okresu – poprzedni
   const passportAnalysis = analysis && passportFor === runKey ? analysis : carrying ? lastAnalysis : analysis
@@ -748,7 +753,7 @@ export default function Start() {
     refine,
     asOf,
     forecastState,
-    run,
+    run: panelRun,
     onRetryAnalysis: retryAnalysis,
     saved: parcel ? isSaved(parcel.id) : false,
     onToggleSave: () => {
@@ -1097,7 +1102,7 @@ export default function Start() {
                     <ParcelSummary
                       parcel={parcel}
                       refine={refine}
-                      run={run}
+                      run={panelRun}
                       onRetryAnalysis={retryAnalysis}
                       onExpand={() => setUi({ panel: true })}
                       onClose={backToExplore}

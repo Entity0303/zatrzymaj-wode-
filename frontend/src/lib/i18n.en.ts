@@ -1132,4 +1132,10 @@ export const EN: Record<string, string> = {
   'Brak bezchmurnego zdjęcia przed tą datą – reszta wyniku jest pełna': 'No cloud-free image before this date – the rest of the result is complete',
   'Wybierz działkę – pokażemy bilans wody w sezonie (opad minus parowanie)': 'Choose a parcel – we will show the season water balance (rain minus evaporation)',
   'Liczę bilans wody (opad minus parowanie)': 'Calculating the water balance (rain minus evaporation)',
+  // F13: wybór uprawy na górze panelu, przeliczanie
+  'Co rośnie na tej działce?': 'What is growing on this parcel?',
+  'zmień': 'change',
+  'Więcej szczegółów': 'More details',
+  'Wybierz uprawę – wynik będzie dokładniejszy': 'Choose a crop – the result will be more accurate',
+  'Przeliczam…': 'Recalculating…',
 }

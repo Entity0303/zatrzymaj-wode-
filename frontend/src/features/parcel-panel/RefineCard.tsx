@@ -1,4 +1,4 @@
-import { ChevronDown, Plus, SlidersHorizontal, X } from 'lucide-react'
+import { ChevronDown, Plus, SlidersHorizontal, Sprout, X } from 'lucide-react'
 import { useState } from 'react'
 import type { CropId, CultivatedArea } from '@/api/types'
 import { Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -42,9 +42,12 @@ function AreaInput({ value, onCommit }: { value: number | null; onCommit: (ha: n
 }
 
 /**
- * „Doprecyzuj” (B3): to, co zmienia wynik, ale nie jest wymagane – zwinięte. Uprawa (ocena dla konkretnej
- * rośliny), historia pola z 3 lat z „Nie wiem” (`crop_history` → płodozmian w rankingu, `rotation_hint`)
- * i powierzchnia uprawy (wstępnie z działki, `suggestions.area`) → tony z pola w rankingu.
+ * „Co rośnie na tej działce?” (F13 – obowiązkowy krok KOWR: rolnik wybiera aktualną uprawę) – na górze panelu,
+ * zaraz pod stanem „Teraz / Na dłuższą metę”. Pole uprawy widoczne od razu; bez uprawy karta wyróżniona
+ * („Wybierz uprawę – wynik będzie dokładniejszy”), po wyborze jedna linia „Uprawa: pszenica ozima · zmień”.
+ * Pod „Więcej szczegółów”: plan upraw, historia pola z 3 lat z „Nie wiem” (`crop_history` → płodozmian,
+ * `rotation_hint`) i powierzchnia uprawy (wstępnie z działki, `suggestions.area`) → tony z pola w rankingu.
+ * Karta nie jest odmontowywana przy przeliczaniu (F13) – pola nie tracą fokusu.
  */
 export function RefineCard({
   crop,
@@ -76,8 +79,9 @@ export function RefineCard({
   const { t } = useLang()
   const known = history.filter((h) => h && h !== HISTORY_UNKNOWN)
   const [open, setOpen] = useState(false)
+  // „zmień” przy wybranej uprawie – pole wyboru znów widoczne; po wyborze karta wraca do jednej linii
+  const [editing, setEditing] = useState(false)
   const summary = [
-    crop ? cropLabel(crop) : null,
     planned.length ? t('plan: {n}', { n: planned.map((id) => planOptions.find((o) => o.id === id)?.label ?? id).map((l) => t(l)).join(', ') }) : null,
     known.length ? t('historia: {n} z 3 lat', { n: known.length }) : null,
     area ? formatArea(area.value_ha) : null,
@@ -91,16 +95,57 @@ export function RefineCard({
     onHistoryChange(next)
   }
 
+  const details = (
+    <button
+      type="button"
+      aria-expanded={open}
+      onClick={() => setOpen((o) => !o)}
+      className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-md px-2 text-sm font-semibold text-brand hover:bg-sage-soft"
+    >
+      <SlidersHorizontal className="size-4" aria-hidden />
+      {t('Więcej szczegółów')}
+      <ChevronDown className={cn('size-4 transition-transform', open && 'rotate-180')} aria-hidden />
+    </button>
+  )
+
   return (
-    <section className="rounded-xl border bg-surface">
-      <button type="button" aria-expanded={open} onClick={() => setOpen((o) => !o)} className="flex min-h-12 w-full items-center gap-2.5 px-4 py-2.5 text-left">
-        <SlidersHorizontal className="size-5 shrink-0 text-brand" aria-hidden />
-        <span className="min-w-0 flex-1">
-          <span className="block text-base leading-6 font-semibold">{t('Doprecyzuj')}</span>
-          <span className="block truncate text-sm leading-5 text-text-muted">{summary.length ? summary.join(' · ') : t('plan upraw, co rosło wcześniej, powierzchnia')}</span>
-        </span>
-        <ChevronDown className={cn('size-5 shrink-0 text-text-muted transition-transform', open && 'rotate-180')} aria-hidden />
-      </button>
+    <section
+      aria-label={t('Co rośnie na tej działce?')}
+      className={cn('rounded-xl border bg-surface', !crop && 'border-brand/60 bg-ok-soft/60 ring-1 ring-brand/20')}
+    >
+      {crop && !editing ? (
+        // po wyborze – jedna linia
+        <div className="flex min-h-12 flex-wrap items-center gap-x-2 gap-y-1 py-1.5 pr-2 pl-4">
+          <Sprout className="size-5 shrink-0 text-brand" aria-hidden />
+          <p className="min-w-0 flex-1 text-base leading-6">
+            <span className="text-text-muted">{t('Uprawa:')}</span> <b className="font-semibold">{t(cropLabel(crop) ?? '')}</b>
+            <span className="text-text-muted"> · </span>
+            <button type="button" onClick={() => setEditing(true)} className="font-semibold text-brand underline-offset-2 hover:underline">
+              {t('zmień')}
+            </button>
+          </p>
+          {details}
+        </div>
+      ) : (
+        <div className="space-y-2 px-4 pt-3.5 pb-2">
+          <h3 className="flex items-center gap-2 text-base leading-6 font-semibold">
+            <Sprout className="size-5 shrink-0 text-brand" aria-hidden /> {t('Co rośnie na tej działce?')}
+          </h3>
+          <CropField
+            crop={crop}
+            onChange={(c) => {
+              onCropChange(c)
+              setEditing(false)
+            }}
+            optional
+          />
+          {!crop && <p className="text-sm leading-5 font-medium text-brand-dark">{t('Wybierz uprawę – wynik będzie dokładniejszy')}</p>}
+          <div className="flex items-center justify-between gap-2">
+            <span className="min-w-0 truncate text-sm text-text-muted">{summary.join(' · ')}</span>
+            {details}
+          </div>
+        </div>
+      )}
 
       {open && (
         <div className="space-y-4 border-t px-4 py-3.5">
@@ -145,12 +190,6 @@ export function RefineCard({
               <p className="text-xs leading-4 text-text-muted">{t('Ocenimy Twój wybór i podpowiemy lepsze możliwości.')}</p>
             </div>
           )}
-
-          <div className="space-y-1.5">
-            <p className="text-sm font-semibold">{t('Co uprawiasz w tym roku?')}</p>
-            <CropField crop={crop} onChange={onCropChange} optional />
-            <p className="text-xs leading-4 text-text-muted">{t('Po wybraniu – ocena i zalecenia dla tej rośliny.')}</p>
-          </div>
 
           <div className="space-y-1.5">
             <p className="text-sm font-semibold">{t('Co rosło tu wcześniej?')}</p>

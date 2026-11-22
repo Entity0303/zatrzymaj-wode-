@@ -2,6 +2,7 @@ import { BookOpenText, ChevronDown, ChevronUp, Leaf, Loader2, X } from 'lucide-r
 import type { Parcel } from '@/api/types'
 import { ErrorNotice } from '@/components/ErrorNotice'
 import { useLang } from '@/lib/i18n'
+import { cn } from '@/lib/utils'
 import { ApproxAreaBanner } from './ApproxAreaBanner'
 import { FieldOverview, type RefineProps } from './FieldOverview'
 import { NonAgriculturalCard } from './NonAgriculturalCard'
@@ -39,6 +40,7 @@ export function ParcelSummary({
 }) {
   const { t } = useLang()
   const analysis = run.phase === 'done' ? run.analysis : null
+  const recalc = run.phase === 'done' && !!run.recalculating
   const steps = run.phase === 'loading' ? run.steps : []
   const done = steps.filter((x) => x.state === 'done').length
   const { title, sub } = useParcelTitle(parcel)
@@ -95,8 +97,15 @@ export function ParcelSummary({
       {analysis?.soil.non_agricultural && <NonAgriculturalCard soil={analysis.soil} onPickOther={onClose} />}
       {analysis && !analysis.soil.non_agricultural && (
         <>
-          <RiskSummary analysis={analysis} />
-          <FieldOverview analysis={analysis} refine={refine} onShowOnMap={onShowOnMap} />
+          {recalc && (
+          <p role="status" className="sticky top-2 z-10 mx-auto flex w-fit items-center gap-2 rounded-full bg-surface px-4 py-2 text-sm font-medium shadow-float">
+            <Loader2 className="size-4 animate-spin text-brand" aria-hidden /> {t('Przeliczam…')}
+          </p>
+          )}
+          <div className={cn('transition-opacity', recalc && 'opacity-50')}>
+            <RiskSummary analysis={analysis} />
+          </div>
+          <FieldOverview analysis={analysis} refine={refine} onShowOnMap={onShowOnMap} recalculating={recalc} />
         </>
       )}
 

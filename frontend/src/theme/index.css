@@ -249,6 +249,8 @@
   border: 0;
   box-shadow: none;
   padding: 0;
+  /* F13: Leaflet daje tooltipom nowrap – etykieta działki łamie się w swoich 220–260 px (ParcelLabel) */
+  white-space: normal;
 }
 .leaflet-tooltip.parcel-label::before {
   display: none;

@@ -4,6 +4,15 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-22 · `main` · F13 (A za B): „Co rośnie na tej działce?” na górze, bez skakania panelu, dymek, powierzchnia
+**Uprawa:** `RefineCard` przeniesiona na górę `FieldOverview` (zaraz pod RiskSummary „Teraz / Na dłuższą metę”, przed werdyktem i przyczynami; ta sama kolejność na telefonie): tytuł „Co rośnie na tej działce?”, pole uprawy od razu; bez uprawy karta wyróżniona (ramka brand, tło ok-soft) + „Wybierz uprawę – wynik będzie dokładniejszy”; po wyborze jedna linia „Uprawa: pszenica ozima · zmień”; plan upraw, historia pola i powierzchnia pod „Więcej szczegółów”.
+**Bez skakania:** `useAnalysis` – debounce 400 ms dla zmian tej samej działki (nowa działka od razu); `Start` – `lastRun` (wynik + id działki z mapy) i `panelRun`: w trakcie przeliczania panel dostaje poprzedni wynik z `recalculating: true` → ta sama struktura komponentów (bez odmontowania, scroll i fokus zostają), RiskSummary i treść pod kartą uprawy przyciemnione, „Przeliczam…” przyklejone u góry; karta uprawy aktywna. Pierwsze liczenie działki – dotychczasowy ekran ładowania. Paszport (F8) korzysta z tego samego `lastRun`.
+**Dymek:** `ParcelLabel` `w-max min-w-[220px] max-w-[260px]`, `.leaflet-tooltip.parcel-label { white-space: normal }` (Leaflet daje tooltipom nowrap, a pozycjonowanie absolutne zwężało etykietę do słowa w wierszu). To tooltip, nie popup – opcje minWidth/maxWidth popupu nie dotyczą.
+**Powierzchnia:** `formatArea` (F12) – wszystkie miejsca w UI; < 0,1 ha w m².
+**Sprawdzone:** `npx tsc --noEmit`, `npm run build`, `npx oxlint`. W przeglądarce – nie.
+**Pliki:** `frontend/src/features/parcel-panel/{RefineCard,FieldOverview,ParcelPanel,ParcelSummary,useAnalysis,types}.ts(x)`, `features/map/ParcelLabel.tsx`, `pages/Start.tsx`, `theme/index.css`, `lib/i18n.en.ts`.
+**Kontrakt API:** nie.
+
 ## 2026-11-22 · `main` · F12 (A za B): ekran startowy pod jury, formaty numeru działki, teksty z audytu V3
 **Ekran startowy:** karta powitalna na środku: duże pole „Wpisz numer działki lub adres”, pod nim „np. 201305_2.0038.6/1 albo: Kobylin-Borzymy, Wnory-Wandy 6/1”, obok data analizy (`DateField`, ten sam stan `asOf` co górny pasek), „albo kliknij swoje pole na mapie” + „Narysuj swoje pole”, jedna linijka chipów „lub zobacz przykład:” (zamiast kart i 3 kroków). Enter = szukaj.
 **Numer działki:** `lib/parcelQuery.ts` `normalizeParcelQuery` (wklejka z tab/nową linią, spacje, prefiks „dz.”/„działka”/„nr”, przecinek → kropka w identyfikatorze, „-”/„\” → „/” w numerze, „gmina, obręb numer” → „obręb numer”) przed /api/search i Enter. curl (10 zapytań) – backend rozumie: pełny id, id ze spacjami, „Wnory-Wandy 6/1” (też małymi), Pożarowo 70/4 i 302408_5.0017.70/4; nie rozumie: przecinka, myślnika, „Kobylin-Borzymy 6/1” i „Kobylin-Borzymy, Wnory-Wandy 6/1” (zwraca samą gminę) – dwa pierwsze i trzeci wariant poprawia front, „gmina + numer” bez obrębu – do backendu. Błąd „nie znaleziono” z podpowiedzią (tytuł + wiadomość pod polem); 502 ewidencji / nieoczekiwany błąd analizy bez technicznego {detail}.

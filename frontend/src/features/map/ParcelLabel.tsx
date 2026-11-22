@@ -7,7 +7,7 @@ import type { Status } from '@/theme/status'
 /**
  * Etykieta-pigułka w środku działki (SPEC 5.1, 14 ParcelLabel): nazwa działki, pod nią stan w dwóch równych wierszach
  * (wspólny `StatusRows`, jak w panelu) – „Teraz: woda w normie” / „Na dłuższą metę: wysokie ryzyko suszy”
- * (dziś ≠ ryzyko na lata, bez pozornej sprzeczności). Bez kropki-separatora, maks. 260 px szerokości.
+ * (dziś ≠ ryzyko na lata, bez pozornej sprzeczności). Bez kropki-separatora, 220–260 px szerokości (F13).
  */
 export function ParcelLabel({
   number,
@@ -22,7 +22,9 @@ export function ParcelLabel({
   longTerm?: VerdictLevel | null
 }) {
   return (
-    <span className="flex max-w-[260px] items-center gap-1.5 rounded-2xl bg-surface py-1 pr-3 pl-1.5 text-text shadow-float">
+    // F13: w-max + min 220 / max 260 px – tooltip Leafletu jest pozycjonowany absolutnie i bez tego zwęża się do
+    // jednego słowa w wierszu; StatusRows w dwóch czytelnych wierszach
+    <span className="flex w-max max-w-[260px] min-w-[220px] items-center gap-1.5 rounded-2xl bg-surface py-1 pr-3 pl-1.5 text-text shadow-float">
       <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-ok-soft text-brand">
         <Leaf className="size-4" aria-hidden />
       </span>

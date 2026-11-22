@@ -23,4 +23,9 @@ export type AnalysisRun =
       key: string
       /** F6: woda w okolicy nie przyszła (502 / limit czasu) – karta z „Ponów” */
       hydroFailed?: boolean
+      /**
+       * F13: poprzedni wynik tej samej działki pokazywany w trakcie przeliczania (zmiana uprawy / okresu…) –
+       * treść przyciemniona z „Przeliczam…”, ta sama struktura komponentów (bez skakania i utraty fokusu)
+       */
+      recalculating?: boolean
     }

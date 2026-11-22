@@ -128,6 +128,7 @@ export function ParcelPanel({
 
   const { parcel } = state
   const analysis = run.phase === 'done' ? run.analysis : null
+  const recalc = run.phase === 'done' && !!run.recalculating
   const nonAgri = !!analysis?.soil.non_agricultural
   const steps: Step[] = analysis
     ? analysis.steps.map((s) => ({ label: s.label, state: s.state, note: s.note ?? undefined }))
@@ -171,8 +172,16 @@ export function ParcelPanel({
       {nonAgri && analysis && <NonAgriculturalCard soil={analysis.soil} onPickOther={onClose} />}
       {!nonAgri && analysis && (
         <>
-          <RiskSummary analysis={analysis} />
-          <FieldOverview analysis={analysis} refine={refine} onShowOnMap={onShowOnMap} />
+          {/* F13: przeliczanie – poprzedni wynik przyciemniony, ta sama struktura (scroll i fokus zostają) */}
+          {recalc && (
+          <p role="status" className="sticky top-2 z-10 mx-auto flex w-fit items-center gap-2 rounded-full bg-surface px-4 py-2 text-sm font-medium shadow-float">
+            <Loader2 className="size-4 animate-spin text-brand" aria-hidden /> {t('Przeliczam…')}
+          </p>
+          )}
+          <div className={cn('transition-opacity', recalc && 'opacity-50')}>
+            <RiskSummary analysis={analysis} />
+          </div>
+          <FieldOverview analysis={analysis} refine={refine} onShowOnMap={onShowOnMap} recalculating={recalc} />
         </>
       )}
       <div className="space-y-2">

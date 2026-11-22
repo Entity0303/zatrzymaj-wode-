@@ -1,8 +1,9 @@
 # Status – osoba B (Mefju), frontend
 
-_Stan na: 2026-11-22 (F12 – A za B, `main`)_
+_Stan na: 2026-11-22 (F13 – A za B, `main`)_
 
 ## Zrobione
+- **F13 (A za B)**: „Co rośnie na tej działce?” na górze panelu (uprawa od razu, po wyborze jedna linia „Uprawa: … · zmień”, reszta pod „Więcej szczegółów”), przeliczanie bez skakania (poprzedni wynik przyciemniony, debounce 400 ms), dymek 220–260 px, powierzchnia `formatArea`.
 - **F12 (A za B)**: ekran startowy pod jury (duże pole numeru + data analizy, podpowiedź formatu, chipy przykładów), normalizacja numeru działki przed /api/search, teksty z audytu V3 (bilans wody / „zabrakło”, zapas wody w glebie, „Bardzo mało wody”, „Paszport wodny”, zakładki = nagłówki sekcji, bez „w budowie / wkrótce”), `formatArea` (ha z 2 miejscami, < 0,1 ha w m²).
 - **F10 (A za B)**: „Gleba” w menu warstw = jeden obraz WMS IUNG przycięty do obrysu działki (bez kafli na całą mapę z F7, przycisk podkładu znów jednym kliknięciem), udziały kategorii w legendzie; teksty pustych warstw; wspólny `StatusRows` (dymek + panel); nota okresu `data_until`; systemowy krój zamiast Inter + Fraunces.
 - **F9 (A za B)**: dymek działki w dwóch wierszach (bez kropki, maks. 260 px), własny zakres okresu maks. 366 dni, legenda gleb na telefonie przy działce zwinięta do „Podatność gleb ▾”, podpis ceny z API (`price_source`) z fallbackiem.

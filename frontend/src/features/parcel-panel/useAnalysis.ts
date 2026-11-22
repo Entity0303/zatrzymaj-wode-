@@ -19,6 +19,9 @@ const REAL_STEPS: Step[] = [
 
 const IDLE: AnalysisRun = { phase: 'idle' }
 
+/** F13: zmiana uprawy / historii / powierzchni / okresu tej samej działki – liczymy dopiero po tej przerwie. */
+const REFINE_DEBOUNCE_MS = 400
+
 /** Overpass (woda w okolicy) bywa wolny – po tylu ms przestajemy czekać i pokazujemy „Ponów”. */
 const HYDRO_TIMEOUT_MS = 75_000
 
@@ -66,8 +69,19 @@ export function useAnalysis(
   // „Ponów” w karcie „Woda w okolicy” – ponawia tylko /api/hydro w bieżącym przebiegu
   const retryHydroRef = useRef<(() => void) | null>(null)
 
+  // F13: debounce ok. 400 ms dla zmian tej samej działki (kilka kliknięć w „Doprecyzuj” = jedno przeliczenie);
+  // nowa działka / pierwsze wejście – od razu (klucz ustawiany w renderze)
+  const [effKey, setEffKey] = useState(key)
+  const samePlace = !!effKey && !!key && effKey.split('|')[0] === key.split('|')[0]
+  if (key !== effKey && !samePlace) setEffKey(key)
   useEffect(() => {
-    if (!parcelId || !key) return
+    if (key === effKey || !samePlace) return
+    const id = window.setTimeout(() => setEffKey(key), REFINE_DEBOUNCE_MS)
+    return () => window.clearTimeout(id)
+  }, [key, effKey, samePlace])
+
+  useEffect(() => {
+    if (!parcelId || !key || effKey !== key) return
     const ctrl = new AbortController()
     const publish = (run: AnalysisRun) => {
       if (!ctrl.signal.aborted) setResult({ key, run })
@@ -185,9 +199,9 @@ export function useAnalysis(
       ctrl.abort()
       retryHydroRef.current = null
     }
-    // opts zawarte w `key`
+    // opts zawarte w `key`; start dopiero, gdy klucz „odczekał” (effKey)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [parcelId, crop, date, key])
+  }, [effKey])
 
   const run: AnalysisRun = !key
     ? IDLE
