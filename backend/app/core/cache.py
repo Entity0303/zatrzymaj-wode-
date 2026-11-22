@@ -126,6 +126,45 @@ def store() -> Store | None:
     return _store
 
 
+# ── seed: gotowy cache w obrazie (A13, hosting bez trwałego dysku) ──────────────────────────
+
+SEED_FILE = Path(__file__).parents[1] / "data" / "seed" / "cache_seed.sqlite.gz"
+# przestrzenie, które nie trafiają do seeda – wygasają w ciągu godziny (prognoza, bieżące stany wód)
+SEED_EXCLUDE = ("Open-Meteo", "IMGW-PIB (stany wód)")
+
+
+def load_seed(seed_file: Path | None = None) -> int:
+    """Gdy trwały cache jest pusty (np. Render Free po uśpieniu) – wczytuje seed z obrazu (`INSERT OR IGNORE`, wpis
+    z wolumenu zawsze wygrywa). Zwraca liczbę wczytanych wpisów; brak seeda / pliku cache = 0."""
+    import gzip
+    import shutil
+    import tempfile
+
+    st = store()
+    seed = seed_file or SEED_FILE
+    if st is None or not settings.cache_seed or not seed.exists():
+        return 0
+    with st._lock:
+        n = st._con.execute("SELECT COUNT(*) FROM cache").fetchone()[0]
+    if n:
+        return 0
+    with tempfile.NamedTemporaryFile(suffix=".sqlite", delete=False) as tmp:
+        with gzip.open(seed, "rb") as src:
+            shutil.copyfileobj(src, tmp)
+        tmp_path = tmp.name
+    try:
+        with st._lock:
+            st._con.execute("ATTACH DATABASE ? AS seed", (tmp_path,))
+            st._con.execute("INSERT OR IGNORE INTO cache SELECT ns, k, stored_at, ttl_s, value FROM seed.cache")
+            st._con.commit()
+            st._con.execute("DETACH DATABASE seed")
+            loaded = st._con.execute("SELECT COUNT(*) FROM cache").fetchone()[0]
+    finally:
+        Path(tmp_path).unlink(missing_ok=True)
+    log.info("Cache pusty – wczytano seed %s: %d wpisów", seed.name, loaded)
+    return loaded
+
+
 # ── bezpiecznik (wspólny dla źródła) ────────────────────────────────────────────────────────
 
 

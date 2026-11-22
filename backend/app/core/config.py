@@ -9,6 +9,10 @@ class Settings(BaseSettings):
     http_timeout_s: float = 20.0
     user_agent: str = "Wodoskop/0.1 (HackNation 2026)"  # uczciwy User-Agent dla wszystkich źródeł (A6)
     cors_origins: list[str] = ["http://localhost:5173"]
+    # A13: podglądy Vercela mają zmienne adresy – np. CORS_ORIGIN_REGEX=https://wodoskop(-[a-z0-9-]+)?\.vercel\.app
+    cors_origin_regex: str = ""
+    # A13: gotowy cache w obrazie (app/data/seed/cache_seed.sqlite.gz) – wczytywany, gdy trwały cache jest pusty
+    cache_seed: bool = True
 
     uldk_url: str = "https://uldk.gugik.gov.pl/"
     uldk_timeout_s: float = 10.0
