@@ -19,6 +19,7 @@ import numpy as np
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
 
+from app.core import clock
 from app.core.format import date_pl, num
 from app.analysis.et0 import DailyWeather
 from app.analysis.crops import get_crop, with_sowing
@@ -198,8 +199,8 @@ async def dev_weather_history(
     date: dt.date | None = Query(None, description="Data analizy (domyślnie dziś)"),
 ) -> DevWeatherHistory:
     """TYMCZASOWE: sekcja historii pogody i bilansu wody dla punktu."""
-    analysis_date = date or dt.date.today()
-    if analysis_date > dt.date.today():
+    analysis_date = date or clock.today_pl()
+    if analysis_date > clock.today_pl():
         raise HTTPException(status_code=422, detail={"message": "Data analizy nie może być z przyszłości."})
     if not in_poland(lon, lat):
         raise HTTPException(status_code=404, detail={"source": None, "message": "Punkt leży poza Polską."})
@@ -393,7 +394,7 @@ async def dev_water(
 ) -> DevWater:
     """TYMCZASOWE: stan wody w glebie (także poza sezonem), faza uprawy, ryzyko 7 dni, dni stresu, nawadnianie."""
     t0 = perf_counter()
-    today = dt.date.today()
+    today = clock.today_pl()
     analysis_date = date or today
     if analysis_date > today:
         raise HTTPException(status_code=422, detail={"message": "Data analizy nie może być z przyszłości."})
@@ -669,7 +670,7 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
                sowing_date: dt.date | None = None, variants_wait_s: float | None = 1.0,
                ) -> AnalysisResponse:
     t0 = perf_counter()
-    today = dt.date.today()
+    today = clock.today_pl()
     analysis_date = date or today
     crop, previous_crop = species_to_group(crop), species_to_group(previous_crop)
     validate_params(crop, analysis_date, previous_crop, today)

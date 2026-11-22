@@ -6,6 +6,7 @@ import datetime as dt
 
 from fastapi import APIRouter, HTTPException, Query
 
+from app.core import clock
 from app.analysis import drought_context
 from app.core.http import SourceError, http_error
 from app.routers.satellite import resolve_any
@@ -15,7 +16,7 @@ router = APIRouter(prefix="/api", tags=["tło suszowe"])
 
 
 async def _context(parcel_id, lon, lat, geometry, date: dt.date | None, our_status: str | None) -> DroughtContext:
-    today = dt.date.today()
+    today = clock.today_pl()
     analysis_date = date or today
     if analysis_date > today:
         raise HTTPException(status_code=422, detail={"message": "Data analizy nie może być z przyszłości."})

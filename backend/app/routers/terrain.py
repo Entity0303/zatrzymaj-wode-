@@ -13,6 +13,7 @@ import datetime as dt
 
 from fastapi import APIRouter, Query
 
+from app.core import clock
 from app.analysis import soil_consistency, soil_label, terrain_interpret
 from app.analysis import terrain as terrain_mod
 from app.analysis.soil import assess_soil
@@ -51,7 +52,7 @@ async def terrain_contract(p: uldk.Parcel, analysis_date: dt.date | None = None)
     except asyncio.TimeoutError as exc:
         raise http_error(SourceError("NMT GUGiK", "teren liczy się dłużej niż zwykle – spróbuj za chwilę")) from exc
     saved = res.facts.get("saved_note")
-    today = dt.date.today()
+    today = clock.today_pl()
     return terrain_interpret.to_contract(res.facts, group, data_date=None if saved else min(today, analysis_date or today),
                                          saved_note=saved, soil_text=text)
 

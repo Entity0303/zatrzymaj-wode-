@@ -14,6 +14,7 @@ from datetime import date, datetime
 import httpx
 import numpy as np
 
+from app.core import clock
 from app.analysis.et0 import DailyWeather, apply_et0, densify
 
 from app.core.cache import FOREVER, TTLCache, cached_fetch
@@ -208,7 +209,7 @@ def parse_archive(payload: dict) -> DailyWeather:
 
 async def fetch_archive(lon: float, lat: float, start: date, end: date) -> DailyWeather:
     key = (round(lon, 1), round(lat, 1), start.isoformat(), end.isoformat())
-    recent = (date.today() - end).days <= 7
+    recent = (clock.today_pl() - end).days <= 7
     ttl = settings.cache_ttl_current_s if recent else FOREVER  # D53
     return await cached_fetch(_archive_cache, key, ARCHIVE_SOURCE_SHORT, lambda: _download_archive(key, start, end), ttl)
 

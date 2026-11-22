@@ -10,6 +10,7 @@ import datetime as dt
 
 from fastapi import APIRouter, Query
 
+from app.core import clock
 from app.analysis import hydro as hydro_mod
 from app.analysis import terrain as terrain_mod
 from app.analysis import terrain_interpret
@@ -49,11 +50,11 @@ async def get_hydro(
 ) -> Hydro:
     """Cieki, rowy, kanały, zbiorniki ≤ 500 m (odległość, czy w kierunku odpływu) + najbliższy wodowskaz i zdanie."""
     p = await resolve_any(parcel_id, lon, lat)
-    return (await hydro_for(p, date or dt.date.today()))[0]
+    return (await hydro_for(p, date or clock.today_pl()))[0]
 
 
 @router.post("/hydro", response_model=Hydro)
 async def post_hydro(req: AnalysisRequest) -> Hydro:
     """Jak GET – dla pola narysowanego (`geometry`)."""
     p = await resolve_any(req.parcel_id, req.lon, req.lat, req.geometry)
-    return (await hydro_for(p, req.date or dt.date.today()))[0]
+    return (await hydro_for(p, req.date or clock.today_pl()))[0]

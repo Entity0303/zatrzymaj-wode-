@@ -29,6 +29,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Generic, Hashable, TypeVar
 
+from app.core import clock
 from app.core.config import settings
 from app.core.http import NotFoundError, SourceError
 
@@ -193,7 +194,7 @@ class BreakerState:
 
             return dt.datetime.fromtimestamp(self.until, ZoneInfo("Europe/Warsaw"))
         except Exception:  # noqa: BLE001 – brak bazy stref czasowych
-            return dt.datetime.fromtimestamp(self.until).astimezone()
+            return clock.to_pl(dt.datetime.fromtimestamp(self.until, dt.timezone.utc))  # A29: czas polski
 
 
 BREAKERS: dict[str, BreakerState] = {}

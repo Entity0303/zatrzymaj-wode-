@@ -14,6 +14,7 @@ from time import perf_counter
 
 from fastapi import APIRouter, Query, Response
 
+from app.core import clock
 from app.core.config import settings
 from app.core.http import not_implemented
 from app.report.builder import build_pdf, filename
@@ -73,7 +74,7 @@ async def _satellite_first(parcel_id, lon, lat, geometry, date) -> None:
     # 20–30 s terenu + do 55 s Overpass po kolei); niżej hydro_for składa wynik z cache (kierunek odpływu z terenu)
     *_rest, hydro_res = await asyncio.gather(
         asyncio.wait_for(terrain_mod.live(p.geom_2180, p.id), 30),
-        satellite_mod.live(p.geom_4326, date or dt.date.today()),
+        satellite_mod.live(p.geom_4326, date or clock.today_pl()),
         asyncio.wait_for(hydro_mod.fetch(p.geom_4326), settings.overpass_timeout_s + 10),
         return_exceptions=True)
     if isinstance(hydro_res, BaseException):  # P1: Overpass nie odpowiedział – bez drugiej próby po kolei
@@ -81,7 +82,7 @@ async def _satellite_first(parcel_id, lon, lat, geometry, date) -> None:
     try:  # A9: woda w okolicy (po terenie – kierunek odpływu); dane Overpass już w cache – tylko złożenie wyniku
         from app.routers.hydro import hydro_for
 
-        await asyncio.wait_for(hydro_for(p, date or dt.date.today()), settings.overpass_timeout_s + 15)
+        await asyncio.wait_for(hydro_for(p, date or clock.today_pl()), settings.overpass_timeout_s + 15)
     except Exception:  # noqa: BLE001 – raport bez sekcji wody
         pass
 

@@ -380,7 +380,7 @@ def test_api_satellite_source_error_is_brak_danych(client, monkeypatch):
 @respx.mock
 def test_api_satellite_future_date_and_missing_args(client):
     assert client.get("/api/satellite").status_code == 422
-    d = (date.today() + timedelta(days=3)).isoformat()
+    d = (__import__("app.core.clock", fromlist=["today_pl"]).today_pl() + timedelta(days=3)).isoformat()
     mock_all()
     assert client.get("/api/satellite", params={"parcel_id": PID, "date": d}).status_code == 422
 

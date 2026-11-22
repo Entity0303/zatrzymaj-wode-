@@ -16,6 +16,7 @@ import datetime as dt
 
 from fastapi import APIRouter, Query
 
+from app.core import clock
 from app.analysis import terrain_interpret
 from app.analysis import terrain as terrain_mod
 from app.core.http import SourceError, http_error, not_implemented
@@ -60,9 +61,9 @@ async def terrain_layer(layer: str, parcel_id: str | None, date: dt.date | None,
         features = terrain_interpret.layer_splyw(res.geojson, res.facts, parcel_4326)
         value_range = None
     return LayerResponse(
-        parcel_id=p.id, layer=layer, analysis_date=date or dt.date.today(), features=features,
+        parcel_id=p.id, layer=layer, analysis_date=date or clock.today_pl(), features=features,
         value_range=value_range,
-        source_tag=SourceTag(kind="pomiar", date=None if saved else dt.date.today(),
+        source_tag=SourceTag(kind="pomiar", date=None if saved else clock.today_pl(),
                              source="NMT GUGiK" + (" (zapisany wynik z 21.11.2026)" if saved else "")),
     )
 
@@ -76,7 +77,7 @@ async def water_layer(parcel_id: str | None, date: dt.date | None, parcel=None) 
         p = parcel or await resolve_parcel(parcel_id, None, None)
     except SourceError as exc:
         raise http_error(exc) from exc
-    on = date or dt.date.today()
+    on = date or clock.today_pl()
     _hydro, objs = await hydro_for(p, on)
     legend = [LegendStop(value=i, color=hydro_mod.KIND_COLOR[k], label=hydro_mod.KIND_LABEL[k])
               for i, k in enumerate(("rzeka", "ciek", "row", "kanal", "zbiornik"))]
@@ -119,7 +120,7 @@ async def satellite_layer(layer: str, parcel_id: str, date: dt.date | None, parc
         p = parcel or await resolve_parcel(parcel_id, None, None)
     except SourceError as exc:
         raise http_error(exc) from exc
-    on = date or dt.date.today()
+    on = date or clock.today_pl()
     sat = await satellite_mod.live(p.geom_4326, on)
     lay = satellite_mod.cached_layers(p.geom_4326, on)
     if sat.status != "ok" or not lay:

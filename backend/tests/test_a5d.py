@@ -78,7 +78,7 @@ def test_history_weather_never_expires():
     from app.sources.weather_power import ttl_for
 
     assert ttl_for(dt.date(2018, 6, 9)) == FOREVER
-    assert ttl_for(dt.date.today() - dt.timedelta(days=1)) == settings.cache_ttl_current_s
+    assert ttl_for(__import__("app.core.clock", fromlist=["today_pl"]).today_pl() - dt.timedelta(days=1)) == settings.cache_ttl_current_s
 
 
 def test_persistent_entry_used_when_source_down(db):
@@ -275,7 +275,7 @@ def test_demo_examples_hide_unavailable_when_offline_or_uldk_blocked(db, client)
     BREAKERS.clear()
     mock_all()
     respx.get(settings.open_meteo_forecast_url).mock(return_value=httpx.Response(503))  # A8: przykłady „na dziś”
-    client.get("/api/analysis", params={"parcel_id": PID, "crop": "zboza_ozime", "date": dt.date.today().isoformat()})
+    client.get("/api/analysis", params={"parcel_id": PID, "crop": "zboza_ozime", "date": __import__("app.core.clock", fromlist=["today_pl"]).today_pl().isoformat()})
     settings.demo_offline = True
     ids = [e["id"] for e in client.get("/api/demo/examples").json()]
     assert ids == ["dobra-dzialka"]  # offline: tylko to, co liczy się z samego cache

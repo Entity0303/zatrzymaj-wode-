@@ -19,6 +19,7 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 from markupsafe import Markup
 from shapely.geometry import shape
 
+from app.core import clock
 from app.analysis.crops import CROPS
 from app.analysis.scoring import status_cfg
 from app.core.config import settings
@@ -67,7 +68,7 @@ def date_pl(d) -> str:
     if d is None:
         return "brak"
     if isinstance(d, dt.datetime):
-        return d.astimezone().strftime("%d.%m.%Y %H:%M")
+        return clock.to_pl(d).strftime("%d.%m.%Y %H:%M")  # A29: czas polski, nie czas serwera
     return d.strftime("%d.%m.%Y")
 
 
@@ -728,7 +729,7 @@ def render_html(a: AnalysisResponse, ortho: str | None, generated: dt.datetime |
     h = a.history
     ctx = {
         "a": a,
-        "generated": generated or dt.datetime.now(dt.timezone.utc),
+        "generated": generated or clock.utcnow(),
         # F19: jeden tytuł niezależnie od uprawy
         "title": "Paszport wodny działki",
         "crop_label": CROPS[a.crop].label if a.crop else None,
@@ -799,7 +800,8 @@ def render_html(a: AnalysisResponse, ortho: str | None, generated: dt.datetime |
         "area_text": area_text(a, short=report_type != "full"),
         "tonnes": tonnes, "zl": zl, "risk_text": risk_text, "yield_text": yield_text, "zl_range": zl_range, "balance_words": balance_words,
         "price_sources": sorted({i.revenue.price_source for i in field_items(a) if i.revenue and i.revenue.price_source}),
-        "generated_txt": (generated or dt.datetime.now(dt.timezone.utc)).astimezone().strftime("%d.%m.%Y %H:%M"),
+        # A29: stopka „wygenerowano …” w czasie polskim (kontener działa w UTC)
+        "generated_txt": clock.to_pl(generated or clock.utcnow()).strftime("%d.%m.%Y %H:%M"),
         "app_host": app_url().split("//", 1)[-1],
         # F20: wykresy strony 1 (z danych analizy – stan działki i opady miesięczne)
         "chart_soil_season": Markup(charts.soil_season_chart(a.field_state, low_pct=float(status_cfg()["risk_max_pct"]), height=140) or "") if a.field_state else "",

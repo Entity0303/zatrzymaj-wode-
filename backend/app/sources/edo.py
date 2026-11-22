@@ -24,6 +24,7 @@ from datetime import date
 
 import httpx
 
+from app.core import clock
 from app.core.cache import TTLCache, cached_fetch
 from app.core.http import RedirectBlocked, SourceError, request
 
@@ -76,7 +77,7 @@ async def pixel(layer: str, lon: float, lat: float, time: date, today: date | No
     """Kolor piksela warstwy w punkcie dla dekady `time` (GetMap 3×3 px, bbox ok. 2 km wokół punktu). Cache: 24 h dla
     dekad z ostatnich 30 dni, 30 dni dla starszych."""
     key = (layer, round(lon, 2), round(lat, 2), time.isoformat())
-    recent = (today or date.today()) - time
+    recent = (today or clock.today_pl()) - time
     ttl = TTL_TODAY_S if recent.days <= 30 else TTL_HISTORY_S
 
     async def download() -> tuple[int, int, int, int]:

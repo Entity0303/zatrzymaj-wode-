@@ -12,6 +12,7 @@ from __future__ import annotations
 import asyncio
 from datetime import date, datetime, timedelta, timezone
 
+from app.core import clock
 from app.core.http import SourceError, log_source_error
 from app.schemas.drought import AgriRisk, Cdi, DroughtContext, SoilMoistureAnomaly
 from app.sources import edo
@@ -115,7 +116,7 @@ def build(start: date, cd, rc, sm, rk, analysis_date: date, our_status: str | No
 async def context(lon: float, lat: float, analysis_date: date, our_status: str | None = None,
                   today: date | None = None) -> DroughtContext:
     """Tło suszowe dla punktu (środek działki). Błąd / brak odpowiedzi w 8 s → `unavailable` z notą."""
-    today = today or date.today()
+    today = today or clock.today_pl()
 
     async def run() -> DroughtContext:
         starts = [last_complete_decade(analysis_date)]

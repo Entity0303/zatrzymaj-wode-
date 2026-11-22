@@ -333,7 +333,7 @@ def test_dev_water_non_agricultural_parcel(client):
 def test_live_water_model_table():
     import time
 
-    today = date.today().isoformat()
+    today = __import__("app.core.clock", fromlist=["today_pl"]).today_pl().isoformat()
     rows = []
     with TestClient(app) as c:
         for pid in ("201305_2.0038.6/1", "061704_2.0011.383/2"):

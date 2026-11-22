@@ -8,6 +8,7 @@ import datetime as dt
 
 from fastapi import APIRouter, HTTPException, Query
 
+from app.core import clock
 from app.analysis import groundwater as gw
 from app.core.http import SourceError, http_error, log_source_error
 from app.routers.satellite import resolve_any
@@ -59,7 +60,7 @@ async def context_for_parcel(p, analysis_date: dt.date) -> GroundwaterContext:
 
 
 async def _context(parcel_id, lon, lat, geometry, date: dt.date | None) -> GroundwaterContext:
-    today = dt.date.today()
+    today = clock.today_pl()
     analysis_date = date or today
     if analysis_date > today:
         raise HTTPException(status_code=422, detail={"message": "Data analizy nie może być z przyszłości."})

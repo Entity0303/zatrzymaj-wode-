@@ -13,6 +13,7 @@ import datetime as dt
 
 from fastapi import APIRouter, HTTPException, Query
 
+from app.core import clock
 from app.analysis import drawn_field
 from app.analysis import satellite as satellite_mod
 from app.core.config import settings
@@ -47,7 +48,7 @@ async def resolve_any(parcel_id: str | None, lon: float | None, lat: float | Non
 
 
 def _date(d: dt.date | None) -> dt.date:
-    today = dt.date.today()
+    today = clock.today_pl()
     d = d or today
     if d > today:
         raise HTTPException(status_code=422, detail={"message": "Data analizy nie może być z przyszłości."})

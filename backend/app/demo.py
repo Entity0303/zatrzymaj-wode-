@@ -11,6 +11,7 @@ import logging
 from dataclasses import dataclass
 from time import perf_counter
 
+from app.core import clock
 from app.core.config import settings
 from app.schemas.demo import DemoExample
 from app.schemas.status import WarmupItem
@@ -58,7 +59,7 @@ EXAMPLES: tuple[Example, ...] = (
 
 
 def examples(today: dt.date | None = None) -> list[DemoExample]:
-    today = today or dt.date.today()
+    today = today or clock.today_pl()
     return [DemoExample(id=e.id, title=e.title, description=e.description, parcel_id=e.parcel_id, crop=e.crop,
                         date=e.date or today, previous_crop=e.previous_crop) for e in EXAMPLES]
 

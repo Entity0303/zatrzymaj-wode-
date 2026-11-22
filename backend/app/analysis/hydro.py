@@ -16,6 +16,7 @@ from shapely.geometry import LineString, Point, Polygon, mapping
 from shapely.geometry.base import BaseGeometry
 from shapely.ops import nearest_points, unary_union
 
+from app.core import clock
 from app.core.cache import offline
 from app.core.geo import to_2180, to_wgs84
 from app.core.http import SourceError
@@ -158,7 +159,7 @@ def sentence(feats: list[HydroFeature], gauge: HydroGauge | None) -> str:
 
 
 def _gauge(gs: list | None, parcel_4326: BaseGeometry, on: date) -> HydroGauge | None:
-    if not gs or on < date.today() - timedelta(days=1):
+    if not gs or on < clock.today_pl() - timedelta(days=1):
         return None  # data historyczna – bieżący stan nie dotyczy (archiwum stanów – tylko percentyle)
     c = parcel_4326.centroid
     hit = imgw_hydro.nearest(gs, c.x, c.y, on.month)

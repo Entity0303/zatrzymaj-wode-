@@ -4,6 +4,7 @@ import datetime as dt
 
 from fastapi import APIRouter, HTTPException, Query
 
+from app.core import clock
 from app.analysis import price_weather as PW
 from app.schemas.price_weather import PriceWeather
 
@@ -22,4 +23,4 @@ async def price_weather(
     key = PW.region_key(region)
     if key is None:
         raise HTTPException(status_code=422, detail={"message": "Podaj województwo (np. podlaskie) albo PL – całą Polskę."})
-    return PriceWeather.model_validate(PW.cached(key, crop.strip(), to_year or dt.date.today().year))
+    return PriceWeather.model_validate(PW.cached(key, crop.strip(), to_year or clock.today_pl().year))

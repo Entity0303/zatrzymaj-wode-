@@ -57,7 +57,7 @@ def test_demo_examples(client):
     # A8: 6 działek do pokazu – dobra, słaba, stok, obniżenie, susza (Kujawy), Żuławy; analiza na dziś
     assert list(ex) == ["dobra-dzialka", "slaba-ziemia", "stok-pogorze", "obnizenie-pojezierze", "susza-kujawy",
                         "less-drzewce"]
-    today = date.today().isoformat()
+    today = __import__("app.core.clock", fromlist=["today_pl"]).today_pl().isoformat()
     assert ex["dobra-dzialka"] == {
         "id": "dobra-dzialka", "title": "Dobra działka", "description": ex["dobra-dzialka"]["description"],
         "parcel_id": "201305_2.0038.6/1", "crop": "zboza_ozime", "date": today, "previous_crop": None,

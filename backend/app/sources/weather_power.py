@@ -12,6 +12,7 @@ from datetime import date
 
 import numpy as np
 
+from app.core import clock
 from app.analysis.et0 import DailyWeather, apply_et0, densify
 from app.core.cache import FOREVER, TTLCache, cached_fetch
 from app.core.config import settings
@@ -88,7 +89,7 @@ def slice_weather(w: DailyWeather, start: date, end: date) -> DailyWeather | Non
 def _covering(lon: float, lat: float, start: date, end: date) -> DailyWeather | None:
     """P1: zapisana seria tego samego punktu siatki obejmująca [start, end] (najkrótsza) – bez nowego pobrania przy
     zmianie daty analizy. Tylko dla zakresów kończących się ponad tydzień temu (dane NASA już się nie zmieniają)."""
-    if (date.today() - end).days <= STABLE_AFTER_DAYS:
+    if (clock.today_pl() - end).days <= STABLE_AFTER_DAYS:
         return None
     lo, la = round(lon, 1), round(lat, 1)
     cands = []
@@ -124,7 +125,7 @@ async def fetch(lon: float, lat: float, start: date, end: date) -> DailyWeather:
 def ttl_for(end: date) -> float:
     """Dni zakończone ponad tydzień temu już się nie zmieniają – bez wygasania; bieżące (NASA uzupełnia je
     z opóźnieniem) – 6 h (D53)."""
-    recent = (date.today() - end).days <= 7
+    recent = (clock.today_pl() - end).days <= 7
     return settings.cache_ttl_current_s if recent else FOREVER
 
 

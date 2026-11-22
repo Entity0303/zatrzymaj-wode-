@@ -325,7 +325,7 @@ def test_analysis_validation_422(client, params, msg):
 def test_live_full_analysis():
     import time
 
-    today = date.today().isoformat()
+    today = __import__("app.core.clock", fromlist=["today_pl"]).today_pl().isoformat()
     cases = [
         ("201305_2.0038.6/1", "zboza_ozime", "2018-06-10"),
         ("201305_2.0038.6/1", "zboza_ozime", today),

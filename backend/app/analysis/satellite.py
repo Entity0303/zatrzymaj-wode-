@@ -29,6 +29,7 @@ import yaml
 from pyproj import Transformer
 from shapely.geometry.base import BaseGeometry
 
+from app.core import clock
 from app.core.cache import FOREVER, TTLCache, offline
 from app.core.config import settings
 from app.core.format import plural
@@ -393,7 +394,7 @@ NO_IMAGE_TTL_S = 43_200.0  # A15: „brak bezchmurnego zdjęcia” to nie awaria
 
 
 def _ttl(on: date) -> float:
-    return settings.sentinel_cache_ttl_today_s if on >= date.today() else FOREVER
+    return settings.sentinel_cache_ttl_today_s if on >= clock.today_pl() else FOREVER
 
 
 def _store(geom: BaseGeometry, on: date, sat: Satellite, layers: dict | None) -> None:
