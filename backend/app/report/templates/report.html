@@ -95,8 +95,9 @@
 </section>
 
 {# ═══ STRONA 2: bilans 10 lat, ranking, teren, co mogę zrobić, skąd dane i pewność ═══ #}
-<section class="page-break">
-  <h2 style="margin-top:0">Bilans wody na tle 10 lat</h2>
+{# F37: raport pełny płynie bez wymuszonych nowych stron (znikają puste połówki stron); skrócony – dokładnie 2 strony #}
+<section class="{{ 'flow' if full else 'page-break' }}">
+  <h2 {% if not full %}style="margin-top:0"{% endif %}>Bilans wody na tle 10 lat</h2>
   {% if a.history.summary %}<p class="lead">{{ a.history.summary }}</p>{% endif %}
   {% if chart_years_small %}<div class="chart">{{ chart_years_small }}</div>
   <div class="legend"><i style="background:{{ '#E07B39' if year_below else '#2F80C9' }}"></i>ten sezon<i style="background:#C9CCC6"></i>poprzednie lata<i style="background:#2F80C9;height:2pt"></i>średnia · mm{% if a.weather_data_until %} · dane pogodowe do {{ weather_until }}{% endif %}</div>
@@ -147,7 +148,7 @@
   </ol>
 
   <div class="grid2 nobreak" style="margin-top:8pt">
-    <div style="flex: 0.9">
+    <div style="{{ 'flex: 0 0 46%' if full else 'flex: 0.9' }}">
     <h2 style="margin-top:0">Teren</h2>
   {% if terrain %}
   <div class="zbar">{{ zone_bar }}</div>
@@ -169,8 +170,8 @@
 
 {% if full %}
 {# ═══ RAPORT PEŁNY: dlaczego, źródła opadów, satelita, woda w okolicy, gleba i teren, skąd dane, szczegóły ═══ #}
-<section class="page-break">
-  <h2 style="margin-top:0">Dlaczego?</h2>
+<section class="flow">
+  <h2>Dlaczego?</h2>
   {% for c in a.causes %}
   <div class="cause">
     <div class="row"><span>{{ c.title }}</span><span>{% if c.factor == 'teren' or c.informational %}informacyjnie{% else %}{{ c.share|pct }}{% endif %}</span></div>
@@ -225,11 +226,11 @@
 </section>
 
 {% if sat and sat.status == 'ok' %}
-<section class="page-break">
-  <h2 style="margin-top:0">Z satelity</h2>
+<section class="flow">
+  <h2>Z satelity</h2>
   <p class="lead">{{ sat.sentence }}</p>
   {% if sat.warning %}<div class="warning">{{ sat.warning }}</div>{% endif %}
-  <div class="grid2">
+  <div class="grid2 nobreak">
     <div class="map">
       {% if ortho %}<img src="{{ ortho }}" alt="ortofotomapa">{% else %}<div class="nomap">Ortofotomapa niedostępna</div>{% endif %}
       {% if sat_png %}<img class="sat-overlay" src="{{ sat_png }}" style="position:absolute; {{ sat_style }}" alt="kondycja upraw">{% endif %}
@@ -250,9 +251,9 @@
 </section>
 {% endif %}
 
-<section class="page-break">
+<section class="flow">
   {% if hydro %}
-  <h2 style="margin-top:0">Woda w okolicy</h2>
+  <h2>Woda w okolicy</h2>
   <p>{{ hydro.sentence }}</p>
   {% if hydro.features %}
   <table class="src">
@@ -265,7 +266,7 @@
   <p class="muted">Rowy wg OpenStreetMap – małe rowy mogą nie być zaznaczone, sprawdź na miejscu. Zastawka na rowie wymaga zgody właściciela rowu lub spółki wodnej.</p>
   {% endif %}
 
-  <h2 {% if not hydro %}style="margin-top:0"{% endif %}>Gleba i teren</h2>
+  <h2>Gleba i teren</h2>
   <div class="grid2">
     <div class="box">
       <h3>Gleba</h3>
@@ -301,21 +302,14 @@
   <ul>{% for l in limitations %}<li>{{ l }}</li>{% endfor %}{% for l in std_limits %}<li>{{ l }}</li>{% endfor %}<li>Brak danych podajemy wprost – nigdy nie wstawiamy zera ani przykładowej wartości.</li></ul>
 </section>
 
-<section class="page-break">
-  <h2 style="margin-top:0">Szczegóły techniczne</h2>
+<section class="flow">
+  <h2>Szczegóły techniczne</h2>
   <table class="kv">
     <tr><td>Działka</td><td>{{ a.parcel.id }} · {{ parcel_place }}</td></tr>
     <tr><td>Data analizy</td><td>{{ a.analysis_date|date_pl }}{% if a.historical %} (analiza historyczna){% endif %} · wygenerowano {{ generated_txt }}</td></tr>
     {% if a.history.details %}<tr><td>Bilans sezonu</td><td>{{ a.history.details }}</td></tr>{% endif %}
   </table>
-  {% if chart_balance %}<h3 style="margin-top:6pt">Bilans wody dzień po dniu (opad minus parowanie, narastająco), mm</h3><div class="chart">{{ chart_balance }}</div>
-  <div class="legend"><i style="background:#C8453B"></i>ten sezon<i style="background:#2F80C9"></i>średnia<i style="background:#E3F0FB;height:8pt"></i>zakres z 10 lat</div>{% endif %}
-  <div class="grid2" style="margin-top:6pt">
-    {% if chart_precip %}<div><h3>Deszcz w miesiącach, mm</h3><div class="chart">{{ chart_precip }}</div></div>{% endif %}
-    {% if chart_stress %}<div><h3>Dni, w których roślinom brakowało wody</h3><div class="chart">{{ chart_stress }}</div></div>{% endif %}
-  </div>
-  {% if field and chart_field %}<h3 style="margin-top:6pt">Zapas wody w glebie od {{ field.series_start|date_pl }}, %</h3><div class="chart">{{ chart_field }}</div>{% endif %}
-  <div class="grid2" style="margin-top:6pt">
+  <div class="grid2 nobreak" style="margin-top:6pt">
     {% if a.soil.texture %}{% set tx = a.soil.texture %}<div class="box"><h3>Uziarnienie (SoilGrids 250 m)</h3>
       <p>Piasek {{ tx.sand_pct|num(0, '%') }} · pył {{ tx.silt_pct|num(0, '%') }} · ił {{ tx.clay_pct|num(0, '%') }} · klasa: {{ tx.texture_class }}</p>
       {% if a.soil.permeability %}<p>Przepuszczalność: {{ a.soil.permeability.label }} (ok. {{ a.soil.permeability.ksat_mm_h|num(0, 'mm/h') }}). {{ a.soil.permeability.description }}</p>{% endif %}</div>{% endif %}
@@ -323,6 +317,13 @@
       <p>Wysokość {{ t.elev_min_m|num(1, 'm') }}–{{ t.elev_max_m|num(1, 'm') }}; spadek maks. {{ t.slope_max_pct|num(1, '%') }}; zagłębienia bez odpływu: {{ t.depressions_count }}{% if t.largest_depression %} (największe ok. {{ t.largest_depression.volume_m3|num(0, 'm³') }}){% endif %}.</p>
       <p class="muted">Siatka {{ t.details.grid_step_m|num(1, 'm') }}, wygładzanie {{ t.details.smoothing_sigma_m|num(0, 'm') }}; {{ t.details.method }}.</p></div>{% endif %}
   </div>
+  {% if chart_balance %}<h3 style="margin-top:6pt">Bilans wody dzień po dniu (opad minus parowanie, narastająco), mm</h3><div class="chart">{{ chart_balance }}</div>
+  <div class="legend"><i style="background:#C8453B"></i>ten sezon<i style="background:#2F80C9"></i>średnia<i style="background:#E3F0FB;height:8pt"></i>zakres z 10 lat</div>{% endif %}
+  <div class="grid2 pair nobreak" style="margin-top:6pt">
+    {% if chart_precip %}<div><h3>Deszcz w miesiącach, mm</h3><div class="chart">{{ chart_precip }}</div></div>{% endif %}
+    {% if chart_stress %}<div><h3>Dni, w których roślinom brakowało wody</h3><div class="chart">{{ chart_stress }}</div></div>{% endif %}
+  </div>
+  {% if field and chart_field %}<h3 style="margin-top:6pt">Zapas wody w glebie od {{ field.series_start|date_pl }}, %</h3><div class="chart">{{ chart_field }}</div>{% endif %}
 </section>
 {% endif %}
 

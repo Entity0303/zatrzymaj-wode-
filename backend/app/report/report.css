@@ -138,3 +138,14 @@ table.src td { padding: 2pt 4pt; border-bottom: 1pt solid #EFECE4; vertical-alig
 .tiles5 .tile .v .vr.vr10 { font-size: 10pt; }
 .edo { margin: 5pt 0 0; font-size: 10pt; }
 .edo .dot { display: inline-block; width: 7pt; height: 7pt; border-radius: 50%; margin-right: 4pt; }
+
+/* F37: raport pełny płynie bez wymuszonych nowych stron – dzielić wolno między kartami, nie w środku wykresu / karty */
+.flow { break-before: auto; }
+.chart { break-inside: avoid; }
+h3 { break-after: avoid; }
+.legend { break-before: avoid; }
+/* pojedynczy mały wykres w parze (np. bez „dni stresu”, gdy nie wybrano uprawy) – połowa szerokości, nie cała */
+.grid2.pair > div:only-child { flex: 0 0 49%; }
+/* wiersz tabeli nie jest rozcinany między strony; zdanie-wniosek zostaje przy tym, co opisuje */
+tr { break-inside: avoid; }
+.lead { break-after: avoid; }
