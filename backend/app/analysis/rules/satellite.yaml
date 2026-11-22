@@ -65,3 +65,145 @@ satellite:
       left: "Sucho"
       right: "Wilgotno"
     cloud: "#FFFFFF"
+  # ── A25: interpretacja zależna od uprawy i pory roku (KOWR 3.2) ─────────────────────────────────────────────────
+  # Typowy zakres NDVI ZDROWEGO łanu w Polsce dla miesiąca zdjęcia: [min, max, faza]. To ORIENTACYJNE progi z typowej
+  # fenologii (terminy siewu / zbioru jak w data/crops/crops.csv; poziomy NDVI wg klas wyżej: gleba 0,1–0,2,
+  # rzadka roślinność 0,2–0,5, gęsty łan > 0,6) – do kalibracji z agronomem; region i odmiana przesuwają je o 2–3 tyg.
+  crop_tolerance: 0.03         # margines wokół zakresu – dopiero poza nim „słabiej” / „wyżej niż typowo”
+  crop_dense_ndvi: 0.5         # „gęsty łan” – od tej zieleni oceniamy wilgotność roślin (NDMI); wyjątki w crop_dense
+  crop_dense: {burak: 0.55, kukurydza: 0.55}
+  crop_groups:                 # kod uprawy (15 upraw IUNG + gatunki rankingu) → grupa tabeli; brak = ogólne zdanie
+    zboza_ozime: zboza_ozime
+    pszenica_ozima: zboza_ozime
+    zyto: zboza_ozime
+    pszenzyto_ozime: zboza_ozime
+    jeczmien_ozimy: zboza_ozime
+    rzepak: rzepak_ozimy
+    rzepak_jesien: rzepak_ozimy
+    zboza_jare: zboza_jare
+    jeczmien_jary: zboza_jare
+    owies: zboza_jare
+    kukurydza_ziarno: kukurydza
+    kukurydza_kiszonka: kukurydza
+    ziemniak: ziemniak
+    burak_cukrowy: burak
+    straczkowe: straczkowe
+    lubin: straczkowe
+  crop_ndvi:
+    zboza_ozime:
+      1: [0.25, 0.55, "spoczynek zimowy"]
+      2: [0.25, 0.55, "spoczynek zimowy"]
+      3: [0.30, 0.60, "ruszenie wegetacji"]
+      4: [0.50, 0.80, "krzewienie i strzelanie w źdźbło"]
+      5: [0.65, 0.90, "pełnia wegetacji"]
+      6: [0.55, 0.85, "kłoszenie i nalewanie ziarna"]
+      7: [0.20, 0.50, "dojrzewanie i żniwa"]
+      8: [0.10, 0.30, "po zbiorze – ściernisko"]
+      9: [0.10, 0.30, "po zbiorze – goła ziemia lub świeży siew"]
+      10: [0.20, 0.50, "po wschodach"]
+      11: [0.30, 0.70, "po wschodach, krzewienie"]
+      12: [0.25, 0.60, "spoczynek zimowy"]
+    rzepak_ozimy:
+      1: [0.30, 0.65, "spoczynek zimowy (rozeta)"]
+      2: [0.30, 0.65, "spoczynek zimowy (rozeta)"]
+      3: [0.35, 0.70, "ruszenie wegetacji"]
+      4: [0.60, 0.85, "pąkowanie"]
+      5: [0.45, 0.75, "kwitnienie (żółty łan obniża zieleń)"]
+      6: [0.55, 0.80, "łuszczyny"]
+      7: [0.20, 0.45, "dojrzewanie i zbiór"]
+      8: [0.10, 0.30, "po zbiorze – ściernisko lub siew"]
+      9: [0.25, 0.60, "po wschodach"]
+      10: [0.45, 0.80, "rozeta"]
+      11: [0.50, 0.85, "rozeta przed zimą"]
+      12: [0.40, 0.75, "spoczynek zimowy (rozeta)"]
+    zboza_jare:
+      1: [0.08, 0.25, "przed siewem – goła ziemia"]
+      2: [0.08, 0.25, "przed siewem – goła ziemia"]
+      3: [0.08, 0.25, "przed siewem – goła ziemia"]
+      4: [0.15, 0.40, "wschody"]
+      5: [0.45, 0.80, "krzewienie i strzelanie w źdźbło"]
+      6: [0.65, 0.90, "pełnia wegetacji"]
+      7: [0.30, 0.65, "dojrzewanie"]
+      8: [0.10, 0.30, "po zbiorze – ściernisko"]
+      9: [0.08, 0.30, "po zbiorze – goła ziemia lub ściernisko"]
+      10: [0.08, 0.30, "po zbiorze – goła ziemia lub ściernisko"]
+      11: [0.08, 0.30, "po zbiorze – goła ziemia lub ściernisko"]
+      12: [0.08, 0.30, "po zbiorze – goła ziemia lub ściernisko"]
+    kukurydza:
+      1: [0.08, 0.25, "przed siewem – goła ziemia"]
+      2: [0.08, 0.25, "przed siewem – goła ziemia"]
+      3: [0.08, 0.25, "przed siewem – goła ziemia"]
+      4: [0.08, 0.25, "przed siewem – goła ziemia"]
+      5: [0.12, 0.35, "wschody"]
+      6: [0.35, 0.70, "szybki wzrost"]
+      7: [0.65, 0.90, "pełnia wegetacji"]
+      8: [0.65, 0.90, "pełnia wegetacji – kwitnienie i nalewanie ziarna"]
+      9: [0.40, 0.75, "dojrzewanie"]
+      10: [0.15, 0.45, "dojrzewanie i zbiór"]
+      11: [0.08, 0.25, "po zbiorze – goła ziemia lub ściernisko"]
+      12: [0.08, 0.25, "po zbiorze – goła ziemia lub ściernisko"]
+    ziemniak:
+      1: [0.08, 0.25, "przed sadzeniem – goła ziemia"]
+      2: [0.08, 0.25, "przed sadzeniem – goła ziemia"]
+      3: [0.08, 0.25, "przed sadzeniem – goła ziemia"]
+      4: [0.08, 0.25, "przed sadzeniem – goła ziemia"]
+      5: [0.15, 0.40, "wschody"]
+      6: [0.50, 0.85, "zwieranie rzędów"]
+      7: [0.65, 0.90, "pełnia wegetacji"]
+      8: [0.40, 0.75, "dojrzewanie – zasychanie naci"]
+      9: [0.12, 0.40, "zbiór"]
+      10: [0.08, 0.25, "po zbiorze – goła ziemia"]
+      11: [0.08, 0.25, "po zbiorze – goła ziemia"]
+      12: [0.08, 0.25, "po zbiorze – goła ziemia"]
+    burak:
+      1: [0.08, 0.25, "przed siewem – goła ziemia"]
+      2: [0.08, 0.25, "przed siewem – goła ziemia"]
+      3: [0.08, 0.25, "przed siewem – goła ziemia"]
+      4: [0.10, 0.30, "wschody"]
+      5: [0.25, 0.55, "wzrost liści"]
+      6: [0.55, 0.85, "zwieranie rzędów"]
+      7: [0.70, 0.92, "pełnia wegetacji"]
+      8: [0.70, 0.92, "pełnia wegetacji"]
+      9: [0.60, 0.88, "przyrost korzeni"]
+      10: [0.35, 0.75, "zbiór"]
+      11: [0.10, 0.35, "po zbiorze – goła ziemia"]
+      12: [0.08, 0.25, "po zbiorze – goła ziemia"]
+    straczkowe:
+      1: [0.08, 0.25, "przed siewem – goła ziemia"]
+      2: [0.08, 0.25, "przed siewem – goła ziemia"]
+      3: [0.08, 0.25, "przed siewem – goła ziemia"]
+      4: [0.12, 0.35, "wschody"]
+      5: [0.40, 0.75, "wzrost"]
+      6: [0.65, 0.90, "kwitnienie – pełnia wegetacji"]
+      7: [0.40, 0.75, "dojrzewanie"]
+      8: [0.10, 0.35, "po zbiorze – ściernisko"]
+      9: [0.08, 0.30, "po zbiorze – goła ziemia lub ściernisko"]
+      10: [0.08, 0.30, "po zbiorze – goła ziemia lub ściernisko"]
+      11: [0.08, 0.30, "po zbiorze – goła ziemia lub ściernisko"]
+      12: [0.08, 0.30, "po zbiorze – goła ziemia lub ściernisko"]
+    uzytki_zielone:            # w modelu nie ma dziś takiego kodu uprawy – tabela gotowa na łąki i pastwiska
+      1: [0.30, 0.60, "spoczynek zimowy"]
+      2: [0.30, 0.60, "spoczynek zimowy"]
+      3: [0.35, 0.65, "ruszenie wegetacji"]
+      4: [0.55, 0.85, "wzrost runi"]
+      5: [0.65, 0.92, "pełnia wegetacji (pokos obniża zieleń na 2–3 tygodnie)"]
+      6: [0.65, 0.92, "pełnia wegetacji (pokos obniża zieleń na 2–3 tygodnie)"]
+      7: [0.55, 0.88, "odrost po pokosie"]
+      8: [0.55, 0.88, "odrost po pokosie"]
+      9: [0.55, 0.85, "odrost jesienny"]
+      10: [0.45, 0.80, "koniec wegetacji"]
+      11: [0.35, 0.70, "koniec wegetacji"]
+      12: [0.30, 0.60, "spoczynek zimowy"]
+  crop_sentences:
+    months_loc: ["styczniu", "lutym", "marcu", "kwietniu", "maju", "czerwcu", "lipcu", "sierpniu", "wrześniu",
+                 "październiku", "listopadzie", "grudniu"]
+    head: "{crop} w {month}: {phase}. "
+    norma: "Zieleni jest tyle, ile typowo o tej porze – łan wygląda zdrowo."
+    wyzej: "Zieleni jest więcej niż typowo – dobrze rozwinięty łan."
+    wyzej_bare: "Zieleni jest więcej niż typowo o tej porze – samosiewy, międzyplon albo chwasty."
+    slabiej: "Zieleni jest mniej niż typowo – możliwy niedobór wody, późny siew albo uszkodzenia; sprawdź na polu."
+    slabiej_bare: "Zieleni jest mniej niż typowo – pole wygląda na puste."
+    labels: {norma: "w normie dla tej uprawy", wyzej: "wyżej niż typowo", slabiej: "słabiej niż typowo"}
+    no_crop: " Wybierz uprawę, żeby porównać z typowym rozwojem."
+    ndmi_off: "poza sezonem albo za rzadki łan – nie oceniamy"
+    advisor: " Typowy NDVI ({crop}, {month_name}, orientacyjnie): {lo}–{hi}; pole: {ndvi}."

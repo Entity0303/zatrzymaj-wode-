@@ -543,8 +543,10 @@ def _sat_note(sat, which: str) -> str:
     return f"{head}: {word} · zdjęcie z {date_pl(sat.date)}" if word else f"{head} · zdjęcie z {date_pl(sat.date)}"
 
 
-def _sat_indicator(sat, which: str, no_sat: SourceTag) -> SatelliteIndicator:
-    """Wskaźniki kondycji (NDVI → 0–100) i wilgotności roślin (NDMI −0,4…0,4 → 0–100) z wyniku Sentinel-2 (A11)."""
+def _sat_indicator(sat, which: str, no_sat: SourceTag, crop: str | None = None) -> SatelliteIndicator:
+    """Wskaźniki kondycji (NDVI → 0–100) i wilgotności roślin (NDMI −0,4…0,4 → 0–100) z wyniku Sentinel-2 (A11).
+    A25: z wybraną uprawą opis słowny = zieleń na tle typowego zakresu dla uprawy i miesiąca („w normie dla tej
+    uprawy” / „słabiej niż typowo” / „wyżej niż typowo”), wilgotność roślin tylko przy gęstym łanie tej uprawy."""
     if sat is None or sat.status != "ok":
         note = "zdjęcie satelitarne pobierane osobno" if sat is not None and sat.status == "pending" else \
             "brak bezchmurnego zdjęcia satelitarnego"
@@ -554,9 +556,20 @@ def _sat_indicator(sat, which: str, no_sat: SourceTag) -> SatelliteIndicator:
         return SatelliteIndicator(value=None, unit="pkt", status="no_data", note="brak wartości", source_tag=no_sat)
     pts = (min(1.0, max(0.0, raw)) if which == "ndvi" else min(1.0, max(0.0, (raw + 0.4) / 0.8))) * 100
     label = sat.ndvi_label if which == "ndvi" else (sat.ndmi_label or "ocena tylko w sezonie przy gęstym łanie")
+    note = _sat_note(sat, which)
+    a = satellite_mod.crop_assessment(crop, sat.ndvi, sat.ndmi, sat.date)
+    if a is not None:
+        if which == "ndvi":
+            label = f"{sat.ndvi_label} – {a['label']}" if sat.ndvi_label else a["label"]
+            note = f"Kondycja roślin: {a['label']} ({a['phase']}) · zdjęcie z {date_pl(sat.date)}"
+        elif not a["moisture_ok"]:
+            label = satellite_mod.cfg()["crop_sentences"]["ndmi_off"]
+            note = f"Wilgotność roślin: {label} · zdjęcie z {date_pl(sat.date)}"
+        elif sat.ndmi_label:
+            note = f"Wilgotność roślin: {sat.ndmi_label} · zdjęcie z {date_pl(sat.date)}"
     return SatelliteIndicator(
         value=round(pts), unit="pkt", label=label, status=SAT_LEVEL_STATUS.get(sat.level or "info", "ok"),
-        note=_sat_note(sat, which), index_value=raw,
+        note=note, index_value=raw,
         source_tag=SourceTag(kind="pomiar", date=sat.date, source="Sentinel-2 L2A"))
 
 
@@ -713,6 +726,7 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
     if sat is None:
         sat = satellite_mod.pending()
         satellite_mod.start_background(p.geom_4326, analysis_date)
+    sat = satellite_mod.for_crop(sat, crop)  # A25: zdanie i poziom dla wybranej uprawy i miesiąca zdjęcia
 
     # ── 2. źródła równolegle, z łącznym limitem czasu ──
     remaining = max(3.0, ANALYSIS_BUDGET_S - (perf_counter() - t0))
@@ -951,8 +965,8 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
         soil_water_pct=sw_pct,
         soil_water_mm=sw_mm,
         risk_7d=risk7,
-        crop_health=_sat_indicator(sat, "ndvi", no_sat),
-        plant_moisture=_sat_indicator(sat, "ndmi", no_sat),
+        crop_health=_sat_indicator(sat, "ndvi", no_sat, crop),
+        plant_moisture=_sat_indicator(sat, "ndmi", no_sat, crop),
         water_balance_season=_balance_indicator(wb),
         soil_capacity=soil_a.soil_capacity,
     )

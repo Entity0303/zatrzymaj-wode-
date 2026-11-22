@@ -577,3 +577,85 @@ def plant_words(ndvi: float | None, ndmi: float | None, scene_date: date | None)
     else:
         wilg = NDMI_WORD[classify(ndmi, c["ndmi"])[0]]
     return kond, wilg
+
+
+# ── A25: interpretacja zależna od uprawy i pory roku (KOWR 3.2) – tabela rules/satellite.yaml → crop_ndvi ─────────
+
+MONTH_NAMES = ["styczeń", "luty", "marzec", "kwiecień", "maj", "czerwiec", "lipiec", "sierpień", "wrzesień",
+               "październik", "listopad", "grudzień"]
+
+
+def _crop_label(crop_id: str) -> str:
+    from app.analysis.crops import ALL_CROPS
+
+    c = ALL_CROPS.get(crop_id)
+    return c.label if c else crop_id
+
+
+def _dec(v: float) -> str:
+    return f"{v:.2f}".replace(".", ",")
+
+
+def crop_assessment(crop_id: str | None, ndvi: float | None, ndmi: float | None, scene_date: date | None) -> dict | None:
+    """Zieleń zdjęcia na tle TYPOWEGO zakresu dla uprawy i miesiąca zdjęcia. None – bez uprawy, uprawa spoza tabeli
+    albo brak wartości (wtedy zostaje zdanie ogólne). Klucze: group, phase, lo, hi, rating (norma / wyzej / slabiej),
+    label, sentence (dla rolnika – bez liczb), advisor (z liczbami – do szczegółów), moisture_ok, bare."""
+    c = cfg()
+    group = (c.get("crop_groups") or {}).get(crop_id or "")
+    if group is None or ndvi is None or scene_date is None:
+        return None
+    lo, hi, phase = c["crop_ndvi"][group][scene_date.month]
+    tol = c["crop_tolerance"]
+    rating = "slabiej" if ndvi < lo - tol else "wyzej" if ndvi > hi + tol else "norma"
+    dense = (c.get("crop_dense") or {}).get(group, c["crop_dense_ndvi"])
+    bare = hi < 0.35  # o tej porze pole tej uprawy jest zwykle puste (przed siewem / po zbiorze)
+    s = c["crop_sentences"]
+    name = _crop_label(crop_id)
+    key = rating + "_bare" if bare and (rating + "_bare") in s else rating
+    sentence = s["head"].format(crop=name, month=s["months_loc"][scene_date.month - 1], phase=phase) + s[key]
+    advisor = s["advisor"].format(crop=name.lower(), month_name=MONTH_NAMES[scene_date.month - 1], lo=_dec(lo),
+                                  hi=_dec(hi), ndvi=_dec(ndvi))
+    return {"group": group, "phase": phase, "lo": lo, "hi": hi, "rating": rating, "label": s["labels"][rating],
+            "sentence": sentence, "advisor": advisor, "bare": bare,
+            # wilgotność roślin (NDMI) tylko przy gęstym łanie tej uprawy – inaczej widać głównie glebę
+            "moisture_ok": ndmi is not None and ndvi >= dense}
+
+
+def for_crop(sat: Satellite, crop_id: str | None) -> Satellite:
+    """Wynik satelity (liczony raz na działkę, bez uprawy) z interpretacją dla WYBRANEJ uprawy: zdanie „{uprawa} w
+    {miesiącu}: {faza}. Zieleni jest … niż typowo”, porównanie z rokiem wcześniej, wilgotność roślin tylko przy gęstym
+    łanie. Bez uprawy – zdanie ogólne + „Wybierz uprawę, żeby porównać z typowym rozwojem”. Kopia – cache bez zmian."""
+    if sat is None or sat.status != "ok" or sat.ndvi is None or sat.date is None or not sat.sentence:
+        return sat
+    c = cfg()
+    s = c["sentences"]
+    cs = c["crop_sentences"]
+    a = crop_assessment(crop_id, sat.ndvi, sat.ndmi, sat.date)
+    if a is None:
+        if crop_id or cs["no_crop"].strip() in sat.sentence:
+            return sat  # uprawa spoza tabeli (np. sad, warzywa) – zostaje zdanie ogólne
+        return sat.model_copy(update={"sentence": sat.sentence + cs["no_crop"]})
+    nk, _ = classify(sat.ndvi, c["ndvi"])
+    txt = s["prefix"].format(date=f"{sat.date:%d.%m.%Y}") + NDVI_WORD[nk] + ". " + a["sentence"]
+    if sat.trend is None:
+        txt += s["compare"]["none"]
+    else:
+        txt += s["compare"]["better" if sat.trend == "lepiej" else "similar" if sat.trend == "podobnie" else
+                            ("worse_off" if a["bare"] else "worse")]
+    mk, ml = classify(sat.ndmi, c["ndmi"]) if a["moisture_ok"] else (None, None)
+    if mk == "sucho":
+        txt += s["stress"]
+    elif mk == "dobrze" and sat.trend != "gorzej":
+        txt += s["wet"]
+    if sat.warning and sat.valid_pct is not None and "częściowo" in sat.warning:
+        txt += s["partial"].format(valid=sat.valid_pct)
+    # poziom: słabiej niż typowo w porze, gdy łan powinien być zielony = uwaga (z suchymi liśćmi – źle)
+    level = sat.level
+    if a["rating"] == "slabiej" and not a["bare"]:
+        level = "bad" if mk == "sucho" else "warn"
+    elif mk == "sucho":
+        level = "warn" if level in (None, "ok", "info") else level
+    elif sat.trend != "gorzej":
+        level = (sat.level or "info") if a["bare"] else "ok"
+    return sat.model_copy(update={"sentence": txt, "level": level, "ndmi_class": mk, "ndmi_label": ml,
+                                  "note": (sat.note or "") + a["advisor"]})
