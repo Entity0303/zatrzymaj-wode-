@@ -10,8 +10,8 @@ import { useParcelTitle } from './parcelTitle'
 import type { AnalysisRun } from './types'
 
 /**
- * Zwinięty panel działki (komputer) – domyślny widok po wybraniu działki. Mało naraz (uwagi z testów):
- * werdykt, „teraz”, 3 najlepsze uprawy, „Doprecyzuj”; „Pełny raport” (paszport) i „Szczegóły” na życzenie.
+ * Zwinięty panel działki (komputer) – domyślny widok po wybraniu działki. Mało naraz (tryb Rolnik):
+ * werdykt, „Co tu posiać?”, 3 działania, „Doprecyzuj”; „Pełny raport” (paszport) i „Szczegóły” na życzenie.
  */
 export function ParcelSummary({
   parcel,
@@ -22,6 +22,7 @@ export function ParcelSummary({
   onClose,
   onCollapse,
   onOpenPassport,
+  onShowOnMap,
 }: {
   /** zwija panel do samej belki z nazwą */
   onCollapse?: () => void
@@ -33,6 +34,8 @@ export function ParcelSummary({
   /** zamyka działkę – powrót do przeglądania mapy */
   onClose?: () => void
   onOpenPassport?: () => void
+  /** „Pokaż na mapie” w działaniach */
+  onShowOnMap?: (g: GeoJSON.Geometry) => void
 }) {
   const { t } = useLang()
   const analysis = run.phase === 'done' ? run.analysis : null
@@ -93,7 +96,7 @@ export function ParcelSummary({
       {analysis && !analysis.soil.non_agricultural && (
         <>
           <RiskSummary analysis={analysis} />
-          <FieldOverview analysis={analysis} refine={refine} />
+          <FieldOverview analysis={analysis} refine={refine} onShowOnMap={onShowOnMap} />
         </>
       )}
 

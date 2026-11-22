@@ -49,7 +49,7 @@ export function SatelliteCard({ satellite: s, passport, chartWidth }: { satellit
     return (
       <section aria-label={t('Z satelity')} className={box}>
         {head}
-        <p className="text-sm leading-5 text-text-muted">{t(s.warning ?? s.sentence ?? 'Brak zdjęcia satelitarnego dla tej działki.')}</p>
+        <p className="text-sm leading-5 text-text-muted">{t(s.sentence ?? s.warning ?? 'Brak zdjęcia satelitarnego dla tej działki.')}</p>
         <SourceTag kind="brak_danych" title={s.source_tag.source ?? undefined} />
       </section>
     )

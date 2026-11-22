@@ -77,7 +77,7 @@ function AnalysisMetrics({ analysis }: { analysis: AnalysisResponse }) {
         source={health.source_tag.kind}
         sourceDate={tagDate(health)}
       >
-        <ScoreRing value={health.value} size={56} stroke={6} className="self-start" />
+        <ScoreRing value={health.value} size={56} stroke={6} caption="na 100" className="self-start" />
       </MetricCard>
       <MetricCard
         icon={ChartNoAxesCombined}

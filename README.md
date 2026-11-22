@@ -139,13 +139,18 @@ Shapely (BSD-3), pyproj (MIT), PyYAML (MIT), WeasyPrint (BSD-3), Jinja2 (BSD-3),
 tifffile (BSD-3), pypdf (BSD-3); testy: pytest (MIT), respx (BSD-3). Czcionka w PDF: Inter z pakietu `fonts-inter`
 (SIL OFL 1.1).
 
-**Do wyjaśnienia (stan na dziś):**
-- `react-leaflet` 5.0.0 i `@react-leaflet/core` 3.0.0 (komponenty mapy dla Reacta) mają licencję
-  **Hippocratic License 2.1** – to nie jest licencja permisywna (MIT/BSD/Apache). Planujemy zastąpić je własną,
-  cienką warstwą nad Leafletem (BSD-2-Clause).
-- Zależności tylko do budowania lub przechodnie: `lightningcss` (MPL-2.0, używany przez Tailwind przy budowaniu),
-  `certifi` (MPL-2.0, przez httpx), `Pyphen` (do wyboru GPL/LGPL/MPL – przez WeasyPrint), biblioteki systemowe Pango
-  i GLib (LGPL, łączone dynamicznie w obrazie Dockera). Żadna z nich nie jest wkompilowana w nasz kod na licencji GPL/AGPL.
+**Sprawdzenie wszystkich zależności frontendu** (całe drzewo z `package-lock.json`, pole `license` każdego pakietu,
+22.11.2026): 290 pakietów – MIT 209, ISC 27, Apache-2.0 23, BSD-3-Clause 7, BSD-2-Clause 3, 0BSD 2, BlueOak-1.0.0 2
+(licencja permisywna), SIL OFL 1.1 2 (czcionki), „MIT AND ISC AND BSD-3-Clause” 1. **Wyjątki:**
+
+| Pakiet | Licencja | Gdzie | Plan |
+|---|---|---|---|
+| `react-leaflet` 5.0.0, `@react-leaflet/core` 3.0.0 | **Hippocratic License 2.1** – nie jest licencją permisywną (MIT/BSD/Apache) | w aplikacji (komponenty mapy dla Reacta) | w kolejnej wersji zastąpimy je cienką własną warstwą nad Leafletem (BSD-2-Clause) – mapa, warstwy, rysowanie pola i pinezki korzystają z niego w kilku plikach `features/map`, `features/draw`, `features/infra-reports` |
+| `lightningcss` (13 pakietów dla różnych systemów) | MPL-2.0 | tylko narzędzie budowania (przez Tailwind CSS), nie trafia do aplikacji | bez zmian – wynikowy CSS nie podlega MPL |
+
+**Backend i obraz Dockera – zależności przechodnie i systemowe:** `certifi` (MPL-2.0, przez httpx), `Pyphen`
+(do wyboru GPL/LGPL/MPL – przez WeasyPrint; korzystamy z MPL), biblioteki systemowe Pango i GLib (LGPL, łączone
+dynamicznie w obrazie Dockera). Żadna z nich nie jest wkompilowana w nasz kod na licencji GPL/AGPL.
 
 ## 6. Narzędzia AI
 

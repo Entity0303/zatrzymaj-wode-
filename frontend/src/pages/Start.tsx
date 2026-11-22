@@ -1038,6 +1038,7 @@ export default function Start() {
                       onClose={backToExplore}
                       onCollapse={() => setPanelMin(true)}
                       onOpenPassport={openPassport}
+                      onShowOnMap={showOnMap}
                     />
                   </div>
                 ) : (

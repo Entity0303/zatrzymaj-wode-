@@ -8,6 +8,9 @@ import { RefineCard } from './RefineCard'
 import { SatelliteCard } from './SatelliteCard'
 import { HydroCard } from './HydroCard'
 import { PeriodCard } from '@/features/period/PeriodCard'
+import { useSettings } from '@/lib/storage'
+import { SectionTitle } from './SectionTitle'
+import { WhatToDo } from './WhatToDo'
 import { VerdictCard } from './VerdictCard'
 
 export type RefineProps = {
@@ -45,11 +48,24 @@ export function NowLine({ analysis }: { analysis: AnalysisResponse }) {
 }
 
 /**
- * Zakładka „Przegląd” (B3, „mniej na ekranie”): zdania werdyktu (3 + „Pokaż wszystko”; nagłówek jest wyżej
- * w RiskSummary), stan wody teraz, „Z satelity” (A11), „Woda w okolicy” (F3), „Co tu posiać?” (3 najlepsze,
- * z przychodem F3), „Doprecyzuj” (zwinięte). Na samej górze karta „Okres”, gdy rolnik wybrał okres (F3).
+ * Główny widok działki (F5, tryb Rolnik – krótko): zdania werdyktu (3 + „Pokaż wszystko”; nagłówek i „Teraz / Na dłuższą
+ * metę” są wyżej w RiskSummary), „Teraz: …” tylko gdy stan wody nie jest dobry, „Co tu posiać?” (wybór + 3 najlepsze),
+ * „Co zrobić?” (maks. 3 działania), „Doprecyzuj” (zwinięte). Na górze karta „Okres”, gdy wybrano okres (F3).
+ * Tryb Doradca: dodatkowo od razu „Z satelity” i „Woda w okolicy” (w trybie Rolnik są w „Szczegółach”).
  */
-export function FieldOverview({ analysis, refine, showNow = true }: { analysis: AnalysisResponse; refine: RefineProps; showNow?: boolean }) {
+export function FieldOverview({
+  analysis,
+  refine,
+  onShowOnMap,
+}: {
+  analysis: AnalysisResponse
+  refine: RefineProps
+  /** „Pokaż na mapie” w działaniach */
+  onShowOnMap?: (g: GeoJSON.Geometry) => void
+}) {
+  const { t } = useLang()
+  const [settings] = useSettings()
+  const advisor = settings.mode === 'doradca'
   const s = analysis.suggestions
   const planOptions = s
     ? [...PLAN_GROUPS, ...s.groups.flatMap((g) => g.items.map((i) => ({ id: i.crop_id, label: i.label }))), ...(s.perennials?.items ?? []).map((i) => ({ id: i.crop_id, label: i.label }))]
@@ -59,11 +75,17 @@ export function FieldOverview({ analysis, refine, showNow = true }: { analysis: 
     <div className="space-y-3">
       <PeriodCard period={analysis.period} requested={!!refine.period} />
       {analysis.verdict && <VerdictCard verdict={analysis.verdict} bare limit={3} hideCrops={!!s} precip={analysis.precip_sources} />}
-      {showNow && <NowLine analysis={analysis} />}
-      {analysis.satellite && <SatelliteCard satellite={analysis.satellite} />}
-      <HydroCard hydro={analysis.hydro} />
+      {analysis.status.level !== 'ok' && analysis.status.level !== 'no_data' && <NowLine analysis={analysis} />}
+      {advisor && analysis.satellite && <SatelliteCard satellite={analysis.satellite} />}
+      {advisor && <HydroCard hydro={analysis.hydro} />}
       {s && <ChoiceCard suggestions={s} priceNow={analysis.price_now} />}
       {s && s.groups.some((g) => g.items.length) && <RankingCard suggestions={s} priceNow={analysis.price_now} />}
+      {analysis.recommendations.length > 0 && (
+        <section className="space-y-3 pt-1">
+          <SectionTitle>{t('Co zrobić?')}</SectionTitle>
+          <WhatToDo analysis={analysis} onShowOnMap={onShowOnMap} />
+        </section>
+      )}
       <RefineCard {...refine} area={area} rotationHint={s?.rotation_hint} planOptions={planOptions} />
     </div>
   )

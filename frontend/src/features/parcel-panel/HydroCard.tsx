@@ -13,7 +13,7 @@ const GAUGE: Record<HydroGauge['state'], { label: string; cls: string }> = {
 }
 
 /**
- * „Woda w okolicy” (F3, analysis.hydro): jedno zdanie, 3 najbliższe obiekty (rodzaj, nazwa, odległość,
+ * „Woda w okolicy” (F3, analysis.hydro): jedno zdanie, najbliższe obiekty – po jednym z rodzaju, maks. 3 (rodzaj, nazwa, odległość,
  * czy w stronę odpływu wody z działki) i najbliższy wodowskaz ze stanem. `pending` – „Sprawdzam wodę w okolicy…”
  * (dociąga useAnalysis); brak sekcji w odpowiedzi – karty nie ma.
  */
@@ -36,7 +36,9 @@ export function HydroCard({ hydro: h, passport }: { hydro?: Hydro | null; passpo
         </p>
       </section>
     )
-  const near = [...(h.features ?? [])].sort((a, b) => a.distance_m - b.distance_m).slice(0, 3)
+  // 3 najbliższe obiekty, ale po jednym z każdego rodzaju (inaczej często 3 × „Rów melioracyjny” obok siebie)
+  const sorted = [...(h.features ?? [])].sort((a, b) => a.distance_m - b.distance_m)
+  const near = sorted.filter((f, i) => sorted.findIndex((g) => g.kind === f.kind) === i).slice(0, 3)
   const g = h.gauge
   return (
     <section aria-label={t('Woda w okolicy')} className={box}>

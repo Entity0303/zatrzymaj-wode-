@@ -6,7 +6,6 @@ import { FieldIllustration } from '@/components/FieldIllustration'
 import { LoadingSteps, type Step } from '@/components/LoadingSteps'
 import { SourceTag } from '@/components/SourceTag'
 import { Button } from '@/components/ui/button'
-import { WaveDivider } from '@/components/WaveDivider'
 import { formatDatePl, plForm } from '@/lib/format'
 import { irrigationPracticed, irrigationShown } from '@/lib/crops'
 import { AnalysisLoading } from './AnalysisLoading'
@@ -21,13 +20,13 @@ import { PanelEmpty } from './PanelEmpty'
 import type { Example } from './examples'
 import type { DemoExamples } from '@/features/intro/useDemoExamples'
 import { ParcelHeader } from './ParcelHeader'
-import { SectionTitle } from './SectionTitle'
+import { SatelliteCard } from './SatelliteCard'
+import { HydroCard } from './HydroCard'
 import { SoilCard } from './SoilCard'
 import { SoilWaterCard } from './SoilWaterCard'
 import { TerrainCard } from './TerrainCard'
 import { StatusCard } from './StatusCard'
 import type { AnalysisRun, ForecastState, SearchPhase } from './types'
-import { WhatToDo } from './WhatToDo'
 import { useLang } from '@/lib/i18n'
 import { useSettings, useUiPrefs } from '@/lib/storage'
 import { cn } from '@/lib/utils'
@@ -90,8 +89,9 @@ export function ParcelPanel({
   const crop = refine.crop
   const [settings] = useSettings()
   const [ui, setUi] = useUiPrefs()
-  // tryb doradcy: szczegóły zawsze rozwinięte
-  const showDetails = ui.details || settings.mode === 'doradca'
+  // tryb doradcy: szczegóły zawsze rozwinięte, satelita i woda w okolicy od razu w widoku głównym
+  const advisor = settings.mode === 'doradca'
+  const showDetails = ui.details || advisor
   if (state.phase === 'idle') return <PanelEmpty onFocusSearch={onFocusSearch} onLocate={onLocate} onExample={onExample} examples={examples} />
 
   if (state.phase === 'loading')
@@ -172,17 +172,7 @@ export function ParcelPanel({
       {!nonAgri && analysis && (
         <>
           <RiskSummary analysis={analysis} />
-          <FieldOverview analysis={analysis} refine={refine} showNow={!crop} />
-        </>
-      )}
-      {!nonAgri && analysis && crop && (
-        <>
-          <WaveDivider />
-          <StatusCard crop={crop} analysis={analysis} onOpen={onOpenPassport} />
-          <section className="space-y-3">
-            <SectionTitle>{t('Co zrobić?')}</SectionTitle>
-            <WhatToDo analysis={analysis} onShowOnMap={onShowOnMap} />
-          </section>
+          <FieldOverview analysis={analysis} refine={refine} onShowOnMap={onShowOnMap} />
         </>
       )}
       <div className="space-y-2">
@@ -215,10 +205,14 @@ export function ParcelPanel({
                   nonAgri
                     ? 'Teren, postęp analizy'
                     : !crop
-                      ? 'Liczby, woda w glebie, gleba, teren'
+                      ? advisor
+                        ? 'Liczby, woda w glebie, gleba, teren'
+                        : 'Z satelity, woda w okolicy, liczby, gleba, teren'
                       : irrigationPracticed(crop) && irrigationShown(analysis)
-                        ? 'Liczby, faza uprawy, woda w glebie, nawadnianie, gleba, teren'
-                        : 'Liczby, faza uprawy, woda w glebie, gleba, teren',
+                        ? 'Stan uprawy, z satelity, woda w okolicy, nawadnianie, gleba, teren'
+                        : advisor
+                          ? 'Stan uprawy, liczby, faza uprawy, woda w glebie, gleba, teren'
+                          : 'Stan uprawy, z satelity, woda w okolicy, liczby, gleba, teren',
                 )}
               </span>
             </span>
@@ -226,6 +220,10 @@ export function ParcelPanel({
           </button>
           {showDetails && (
             <div className="space-y-3 border-t p-3">
+              {/* tryb Rolnik: to, czego nie ma w krótkim widoku głównym */}
+              {!nonAgri && crop && <StatusCard crop={crop} analysis={analysis} onOpen={onOpenPassport} />}
+              {!nonAgri && !advisor && analysis.satellite && <SatelliteCard satellite={analysis.satellite} />}
+              {!nonAgri && !advisor && <HydroCard hydro={analysis.hydro} />}
               {!nonAgri && <Metrics analysis={analysis} />}
               {analysis && !nonAgri && analysis.crop_season && <CropSeasonCard season={analysis.crop_season} analysisDate={analysis.analysis_date} />}
               {analysis && !nonAgri && <SoilWaterCard state={analysis.soil_water} />}
