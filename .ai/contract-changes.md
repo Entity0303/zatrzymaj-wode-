@@ -319,3 +319,11 @@ Weryfikacja: `tsc -b` przechodzi; `vite build` – lokalnie i w kontenerze brak 
 
 **Dla Mefju (F31):** wołaj po analizie z `our_status = status.level`; pokaż `sentence` + `resolution_note` + `source`. Gdy `unavailable` – pokaż `note_pl` (HTTP jest 200). Pierwsze wywołanie 0,5–3 s, potem z cache. `cdi.class` ma polską literę: `ostrzeżenie`. `soil_moisture_anomaly.value` to środek przedziału z legendy (−2,5 / −1,75 / −1,25 / 0 / …), nie dokładny pomiar – pokazuj raczej `label_pl`.
 **Łamie zgodność:** nie (nowy endpoint).
+
+### 2026-11-22 · `main` · A28 / A28b / A28c – „Ceny i pogoda na tle lat”: `GET /api/price-weather`
+- Parametry: `region` (nazwa albo kod TERYT województwa, albo `PL`), `crop` (kod uprawy albo produkt GUS), `to_year` (rok daty analizy).
+- Odpowiedź `PriceWeather` (`schemas/price_weather.py` ↔ `types.ts`): `region_label`, `crop_label`, `unavailable`, `years[] {year, precip_mm, price_pln_t, yield_t_ha, yield_dev_pct, price_dev_pct}`, `dry_years`, `summary_pl`, `note_pl`, `sources`, **`price_excluded_years: int[]`** (A28c: lata pominięte we wniosku o cenie – dziś 2022; plon i wykres obejmują je normalnie).
+- Uprawy z cenami: pszenica, żyto, jęczmień, owies, pszenżyto, kukurydza na ziarno, ziemniaki, rzepak (A28c: GUS BDL, zmienna 4868); pozostałe – `unavailable: true` z `note_pl`.
+- Karty nie ma w `analysis.sample.json` (osobny endpoint, poza odpowiedzią analizy).
+
+**Łamie zgodność:** nie (nowy endpoint; pole `price_excluded_years` dodane, opcjonalne po stronie frontendu).
