@@ -11,6 +11,7 @@ Zapisujemy tylko komplet (wszystkie paczki pobrane); błąd paczki = ponowienie,
 """
 
 import asyncio
+import logging
 import math
 
 import httpx
@@ -25,6 +26,10 @@ SOURCE_URL = "https://services.gugik.gov.pl/nmt/"
 RESOLUTION = "NMT 1 m (wysokości ±0,1 m)"
 CHUNK_POINTS = 1000
 RETRIES = 2
+log = logging.getLogger("uvicorn.error")
+MISSING_RETRIES = 2   # A23: ile razy dopytujemy o brakujące punkty (tylko o nie)
+MAX_MISSING = 0.3     # do 30% braków – uzupełnienie z sąsiednich punktów (terrain.fill_nans); więcej – teren niepełny
+INCOMPLETE_MESSAGE = "Dane o terenie przyszły niepełne – liczę ponownie, spróbuj za ok. 2 minuty."
 
 _cache: TTLCache[tuple[np.ndarray, dict]] = TTLCache(ttl_s=None, max_items=128, name=SOURCE)
 
@@ -125,24 +130,52 @@ async def _download(e: np.ndarray, n: np.ndarray) -> tuple[np.ndarray, dict]:
     h = np.full(e.size, np.nan)
     for ix, res in results:
         h[ix] = res
-    zeros = 0
-    if np.isfinite(h).any() and np.nanmedian(h) > 5.0:  # 0,0 = brak danych (Żuławy < 0 m zostają)
-        zmask = h == 0.0
-        zeros = int(zmask.sum())
-        h[zmask] = np.nan
+    nodata = np.zeros(e.size, dtype=bool)  # 0,0 = brak danych w NMT (woda, granica arkusza) – o te punkty nie dopytujemy
+
+    def mark_zeros() -> None:
+        if np.isfinite(h).any() and np.nanmedian(h) > 5.0:  # Żuławy < 0 m zostają
+            z = h == 0.0
+            nodata[z] = True
+            h[z] = np.nan
+
+    mark_zeros()
+    first_missing = int((np.isnan(h) & ~nodata).sum())
+    requests = len(idx)
+    # A23: NMT bywa, że odsyła paczkę bez danych (HTTP 200, pusta / obcięta odpowiedź przy równoległych zapytaniach –
+    # na Renderze 2 z 5 paczek = „brak 44%”). Dopytujemy TYLKO o brakujące punkty, po kolei, z odstępem jak dla GUGiK.
+    for attempt in range(MISSING_RETRIES):
+        miss = np.flatnonzero(np.isnan(h) & ~nodata)
+        if miss.size == 0:
+            break
+        for k in range(0, miss.size, CHUNK_POINTS):
+            await asyncio.sleep(settings.gugik_min_interval_s * (attempt + 1))
+            ix = miss[k:k + CHUNK_POINTS]
+            requests += 1
+            try:
+                h[ix] = await _chunk(e[ix], n[ix])
+            except RedirectBlocked:
+                raise
+            except SourceError:
+                continue  # zostają braki – kolejne ponowienie albo uzupełnienie z sąsiadów
+        mark_zeros()
     missing = float(np.isnan(h).mean())
-    if missing > 0.3:
-        raise SourceError(SOURCE, f"brak {round(100 * missing)}% wysokości w odpowiedzi")
-    return h, {"requests": len(idx), "failed_requests": 0, "zero_values": zeros, "missing_share": missing,
-               "points": int(e.size)}
+    left = int((np.isnan(h) & ~nodata).sum())
+    if first_missing or nodata.any():
+        log.info("NMT: %d punktów, po pierwszym pobraniu brak %d (+ %d bez danych w NMT), po dopytaniu brak %d (%.0f%%)",
+                 e.size, first_missing, int(nodata.sum()), left, 100 * missing)
+    if missing > MAX_MISSING:
+        raise SourceError(SOURCE, INCOMPLETE_MESSAGE)
+    return h, {"requests": requests, "failed_requests": 0, "zero_values": int(nodata.sum()), "missing_share": missing,
+               "points": int(e.size), "refetched_points": first_missing - left}
 
 
 async def heights_for_grid(key: tuple, e: np.ndarray, n: np.ndarray) -> tuple[np.ndarray, dict]:
     """Wysokości NMT dla punktów (E, N) siatki działki – z cache albo POST po ≤ 1000 punktów (równolegle)."""
     e = np.asarray(e, dtype=float).ravel()
     n = np.asarray(n, dtype=float).ravel()
+    # A23: bezpiecznik dopiero po 3 błędach w minucie (niepełna odpowiedź dla jednej działki nie blokuje NMT wszystkim)
     return await cached_fetch(_cache, key, SOURCE, lambda: _download(e, n), timeout_s=settings.nmt_total_timeout_s,
-                              breaker_s=120)
+                              breaker_s=120, breaker_after=3, breaker_window_s=60)
 
 
 def clear_cache() -> None:

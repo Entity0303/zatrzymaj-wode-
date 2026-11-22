@@ -124,6 +124,9 @@ def to_contract(facts: dict, group: str | None, data_date: dt.date | None = None
     largest = facts.get("largest_depression")
     method = facts.get("method") or {}
     lim = list(facts.get("limitations") or [])
+    if (facts.get("nmt_missing_pct") or 0) >= 1 and not any("uzupełnion" in x for x in lim):  # A23
+        lim.append("Część wysokości uzupełniona z sąsiednich punktów (usługa NMT nie odesłała wszystkich) – "
+                   "szczegóły rzeźby w tych miejscach są przybliżone.")
     if saved_note:
         lim.insert(0, saved_note)
     conf = facts.get("confidence") or "srednia"

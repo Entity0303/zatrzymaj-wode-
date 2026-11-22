@@ -196,9 +196,9 @@ def test_nmt_mostly_missing_is_error():
     prep = T.prepare(GEOM)
     with pytest.raises(SourceError) as e:
         asyncio.run(nmt.heights_for_grid(prep.key, prep.E, prep.N))
-    assert "brak" in e.value.message
+    assert "niepełne" in e.value.message
 
-
+  # A23: komunikat dla rolnika
 # ── teren × gleba (rules/teren_gleba.yaml) ──────────────────────────────────────────────────
 
 
