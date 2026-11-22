@@ -355,7 +355,7 @@ mapy to własna cienka warstwa nad Leafletem (bez react-leaflet). Krój pisma �
   11–20.06.2018); Pożarowo na 10.07.2018 – „Bardzo mało wody”, EDO „ostrzeżenie”, „bardzo sucho”, ryzyko dla
   rolnictwa średnie (dekada 21–30.06.2018); 201305 na 22.11.2026 – „W normie”, EDO „brak suszy”. To kontrola na
   trzech przypadkach, nie walidacja statystyczna.
-- **Testy automatyczne:** 687 testów backendu bez sieci (pełny `pytest`, stan na 22.11.2026) i 5 na żywo
+- **Testy automatyczne:** 690 testów backendu bez sieci (pełny `pytest`, stan na 22.11.2026) i 5 na żywo
   (`pytest -m live`), w tym zgodność odpowiedzi z kontraktem API; frontend – kontrola typów i budowanie
   (`npm run build`).
 - **Przykładowe raporty PDF:** katalog [`reports/examples/`](reports/examples/).
