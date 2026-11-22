@@ -271,6 +271,33 @@
 </section>
 {% endif %}
 
+{# ═══ RAPORT SZCZEGÓŁOWY: WODA W OKOLICY (A9) ═══ #}
+{% if full and hydro %}
+<section style="margin-top:14pt; break-inside: avoid">
+  <div class="p2-title">Woda w okolicy</div>
+  <p class="lead muted">Cieki, rowy, kanały i zbiorniki w promieniu 500 m od działki · najbliższy wodowskaz IMGW</p>
+  <p class="big2">{{ hydro.sentence }}</p>
+  {% if hydro.features %}
+  <table class="kv" style="margin-top:6pt">
+    <tr><td><b>Obiekt</b></td><td><b>Odległość od działki</b></td><td><b>W kierunku odpływu wody</b></td></tr>
+    {% for f in hydro.features %}
+    <tr><td>{{ hydro_label[f.kind] }}{% if f.name %} {{ f.name }}{% endif %}</td>
+        <td>{% if f.distance_m <= 5 %}przy samej działce{% else %}{{ f.distance_m|num(0) }} m{% endif %}</td>
+        <td>{{ 'tak' if f.toward_outflow else 'nie' }}</td></tr>
+    {% endfor %}
+  </table>
+  {% endif %}
+  {% if hydro.gauge %}
+  <p style="margin-top:8pt"><b>Wodowskaz {{ hydro.gauge.name }}</b> ({{ hydro.gauge.river }}, {{ hydro.gauge.distance_km|num(0) }} km):
+    {{ hydro.gauge.level_cm|num(0) }} cm – stan {{ {'niski': 'niski', 'sredni': 'średni', 'wysoki': 'wysoki'}[hydro.gauge.state] }}
+    ({{ hydro.gauge.date[8:10] }}.{{ hydro.gauge.date[5:7] }}.{{ hydro.gauge.date[:4] }}; względem stanów z tego samego miesiąca w latach 2016–2025).</p>
+  {% endif %}
+  <p class="tiny muted">Źródła: {% for s in hydro.sources %}{{ s.name }}{% if not loop.last %}; {% endif %}{% endfor %}.
+    Małe rowy mogą nie być zaznaczone w OpenStreetMap – sprawdź na miejscu. Zastawka na rowie wymaga zgody właściciela
+    rowu lub spółki wodnej.</p>
+</section>
+{% endif %}
+
 {# ═══ STRONA 4: CO ZROBIĆ Z WODĄ – maks. 4 działania ═══ #}
 <section class="page-break">
   <div class="p2-title">Co zrobić z wodą</div>

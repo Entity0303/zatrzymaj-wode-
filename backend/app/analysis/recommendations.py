@@ -37,7 +37,7 @@ OPS = {"eq", "ne", "in", "not_in", "lt", "lte", "gt", "gte", "exists"}
 # fakty techniczne – nie pokazujemy ich jako „danych wejściowych”
 HIDDEN_FACTS = {"sensitive", "off_season", "crop_kind", "irrigation_status", "season_complete", "non_agricultural",
                 "in_season", "strong_stress", "has_crop", "irrigation_practice", "water_stress_7d", "terrain_pond",
-                "buffer_strip", "culvert_candidate"}
+                "buffer_strip", "culvert_candidate", "hydro_ditch_state", "hydro_zastawka_conf", "hydro_ditch_txt"}
 DISPLAY_FACT = {"phase": "phase_label", "crop": "crop_label", "rain_retention": "rain_retention_label",
                 "light_soil": "soil_txt", "same_crop": "previous_crop_label", "cereal_after_cereal": "previous_crop_label",
                 "soil_species": "texture_label"}

@@ -313,6 +313,9 @@ def render_html(a: AnalysisResponse, ortho: str | None, generated: dt.datetime |
         # A5e: raport krótki (4–5 stron) / pełny
         "full": report_type == "full",
         "sat": a.satellite, "sat_png": sat_png, "sat_style": sat_style,
+        "hydro": a.hydro if a.hydro is not None and a.hydro.status in ("ok", "none") else None,
+        "hydro_label": {"rzeka": "Rzeka", "ciek": "Ciek", "row": "Rów melioracyjny", "kanal": "Kanał",
+                        "zbiornik": "Zbiornik wodny"},
         "chart_sat": Markup(charts.satellite_series(a.satellite.series) or "") if a.satellite and a.satellite.series else "",
         "report_label": REPORT_LABEL.get(report_type, REPORT_LABEL["short"]),
         "chart_years_small": Markup(charts.season_bars(a.seasonal_balance_by_year, a.seasonal_balance_mean_mm,

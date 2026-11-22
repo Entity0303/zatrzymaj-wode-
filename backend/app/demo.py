@@ -46,9 +46,10 @@ EXAMPLES: tuple[Example, ...] = (
     Example("susza-kujawy", "Susza na Kujawach",
             "Dobra gleba w najsuchszym regionie Polski – plon ogranicza woda, nie gleba; opady ze stacji IMGW 6 km obok.",
             "040704_2.0019.57", "zboza_ozime", None),
-    Example("mady-zulawy", "Żuławy",
-            "Płaskie Żuławy: 43% działki to obniżenia, gdzie po ulewach stoi woda – melioracja i zatrzymanie wody.",
-            "220907_5.0001.162", "zboza_ozime", None),
+    Example("less-drzewce", "Less – Drzewce-Kolonia 203 (gm. Nałęczów)",
+            "Stok i erozja na lessie: górka i stok na 86% działki – woda spływa i zabiera glebę, pas zieleni w poprzek "
+            "stoku.",
+            "061408_5.0008.203", "zboza_ozime", None),
 )
 
 

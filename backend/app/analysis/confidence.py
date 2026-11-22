@@ -41,6 +41,9 @@ CONSTANT_LIMITATIONS = [
     "Model wody w glebie FAO-56 z parametrami tabelarycznymi upraw – nie uwzględnia odmiany, nawożenia "
     "ani poziomu wód gruntowych.",
     "Kategorie podatności IUNG opisują tylko gleby mineralne użytków rolnych.",
+    # A9: wprost dla rolnika i jury (Żuławy w przykładach dawały „sucho” przy płytkiej wodzie gruntowej)
+    "Model nie uwzględnia wód gruntowych – na terenach z płytką wodą gruntową (np. Żuławy, doliny rzek) może zawyżać "
+    "ryzyko suszy.",
 ]
 
 

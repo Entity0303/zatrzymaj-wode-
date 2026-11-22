@@ -103,7 +103,15 @@ class Settings(BaseSettings):
     uug_url: str = "https://services.gugik.gov.pl/uug/"
     uug_timeout_s: float = 6.0
     uug_breaker_s: float = 120.0
-    search_addresses: bool = True        # A9: adresy w wyszukiwarce (testy A5c – bez, jawnie włączane w test_a9)
+    search_addresses: bool = True
+    # A9: woda w okolicy – Overpass (OSM) i stany wód IMGW, liczone w tle
+    overpass_url: str = "https://overpass-api.de/api/interpreter"
+    # rezerwowe instancje (po kolei przy 5xx / 429 / przekroczonym czasie) – publiczny Overpass bywa przeciążony
+    overpass_fallback_urls: str = "https://overpass.private.coffee/api/interpreter,https://maps.mail.ru/osm/tools/overpass/api/interpreter"
+    overpass_timeout_s: float = 55.0      # publiczny Overpass bywa przeciążony (22.11: 32 s dla 1 km²)
+    overpass_breaker_s: float = 300.0
+    imgw_hydro_url: str = "https://danepubliczne.imgw.pl/api/data/hydro"
+    hydro_background: bool = True        # A9: adresy w wyszukiwarce (testy A5c – bez, jawnie włączane w test_a9)
     search_timeout_s: float = 14.0        # łączny limit jednego wyszukiwania
 
     # przykłady demo: rozgrzewka cache przy starcie (w tle) i co tyle godzin

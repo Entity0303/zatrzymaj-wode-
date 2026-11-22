@@ -33,6 +33,7 @@ from app.analysis import satellite as satellite_mod
 from app.analysis import verdict as verdict_mod
 from app.analysis import suggestions as sugg
 from app.analysis import terrain_interpret
+from app.analysis import hydro as hydro_mod
 from app.analysis import terrain as terrain_mod
 from app.analysis.terrain import terrain_for_parcel
 from app.analysis.facts import CROP_OFF_PHASES, IN_SEASON_PHASES, build_facts, field_facts
@@ -812,6 +813,12 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
     facts.values["terrain_runoff_pct"] = (None if terrain_c is None else
                                           round(terrain_c.zone_share_pct["stok"] + terrain_c.zone_share_pct["sucha_gorka"]))
     facts.values["terrain_wet_pct"] = None if terrain_c is None else round(terrain_c.zone_share_pct["mokry_dolek"])
+    # A9: woda w okolicy – z cache (Overpass + IMGW); brak → {status: pending} i pobranie w tle
+    hydro_c = hydro_mod.cached(p.geom_4326, terrain_c.outlets if terrain_c else [], analysis_date)
+    if hydro_c is None:
+        hydro_mod.start_background(p.geom_4326)
+        hydro_c = hydro_mod.pending()
+    facts.values.update(hydro_mod.rule_facts(hydro_c))
     status = overall_status(facts, soil_c)
     causes = [] if soil_a.not_agricultural else build_causes(facts)
     available = {"terrain"} if terrain_c is not None else set()
@@ -905,7 +912,7 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
         verdict = verdict_mod.build(soil_prof, soil_a.wod_mm, w, last_usable_day(analysis_date), terrain_c, suggestions,
                                     evaluation.recommendations, field_c.status if field_c else None, chosen,
                                     measured_precip=bool(w_res.precip and w_res.precip.main != "nasa"), satellite=sat,
-                                    terrain_pending=tr_pending)
+                                    terrain_pending=tr_pending, hydro=hydro_c)
     steps.append(_step("total", "Cała analiza", "done", ms=int((perf_counter() - t0) * 1000)))
 
     return AnalysisResponse(
@@ -926,6 +933,7 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
         field_state=field_c,
         terrain=terrain_c if terrain_c is not None else (TerrainPending() if tr_pending else None),
         terrain_note=terrain_note,
+        hydro=hydro_c,
         verdict=verdict,
         approximate_area=approx,
         suggestions=suggestions,

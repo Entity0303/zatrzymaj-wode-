@@ -645,6 +645,46 @@ class TerrainDetails(Contract):
     method: str = Field(description="Np. 'priority-flood (Barnes 2014), D8 + D-infinity (TWI), spadek: Horn 3×3'")
 
 
+HydroStatus = Literal["pending", "ok", "none"]
+HydroKind = Literal["rzeka", "ciek", "row", "kanal", "zbiornik"]
+GaugeState = Literal["niski", "sredni", "wysoki"]
+
+
+class HydroFeature(Contract):
+    """A9: obiekt wodny ≤ 500 m od działki (OSM)."""
+
+    kind: HydroKind
+    name: str | None = None
+    distance_m: float = Field(description="Odległość od granicy działki, m")
+    toward_outflow: bool = Field(description="Czy obiekt leży tam, dokąd woda odpływa z działki (teren, NMT)")
+
+
+class HydroGauge(Contract):
+    """A9: najbliższy wodowskaz IMGW z bieżącym stanem (tylko analiza na dziś)."""
+
+    name: str
+    river: str
+    distance_km: float
+    level_cm: float
+    state: GaugeState = Field(description="Względem P33 / P66 stanu z tego samego miesiąca w latach 2016–2025")
+    date: str
+
+
+class HydroSource(Contract):
+    name: str
+    url: str
+
+
+class Hydro(Contract):
+    """A9: woda w okolicy – cieki, rowy, kanały, zbiorniki w promieniu 500 m + wodowskaz; pending → GET /api/hydro."""
+
+    status: HydroStatus
+    sentence: str | None = None
+    features: list[HydroFeature] = Field(default_factory=list)
+    gauge: HydroGauge | None = None
+    sources: list[HydroSource] = Field(default_factory=list)
+
+
 class TerrainPending(Contract):
     """A9: teren liczony w tle – dociągnij GET /api/terrain (albo POST z geometry)."""
 
@@ -923,6 +963,7 @@ class AnalysisResponse(Contract):
     verdict: Verdict | None = Field(None, description="Werdykt działki (null: grunt nierolny / brak danych)")
     approximate_area: ApproximateArea | None = Field(None, description="Obszar przybliżony zamiast działki (analiza po punkcie)")
     terrain_note: str | None = Field(None, description="Dlaczego brak analizy terenu, np. 'NMT GUGiK nie odpowiada'")
+    hydro: Hydro | None = Field(None, description="A9: woda w okolicy (z cache); {status: pending} → GET /api/hydro")
     suggestions: CropSuggestions | None = Field(None, description="Ranking „Co tu posiać?” (null: grunt nierolny / brak danych)")
     crop_history: list[str] = Field(default_factory=list, description="Historia upraw z zapytania: 1–3 lata, indeks 0 = rok temu (crop_id albo 'nie_wiem')")
     cultivated_area_ha: float | None = Field(None, description="Powierzchnia uprawy użyta w rankingu, ha (podana albo oszacowana)")

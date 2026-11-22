@@ -17,7 +17,7 @@ from pydantic import BaseModel, Field
 
 from app.schemas.analysis import SourceTag
 
-LayerKey = Literal["kondycja", "wilgotnosc", "teren", "splyw", "gleba"]
+LayerKey = Literal["kondycja", "wilgotnosc", "teren", "splyw", "gleba", "woda"]  # A9: woda – cieki, rowy, zbiorniki
 
 
 class RasterOverlay(BaseModel):

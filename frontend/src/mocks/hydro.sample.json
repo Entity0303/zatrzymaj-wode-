@@ -1,48 +1,72 @@
 {
   "status": "ok",
-  "sentence": "Najbliżej jest rów melioracyjny 40 m na południe – w stronę, w którą woda spływa z działki. Rzeka Narew płynie 2,3 km dalej.",
+  "sentence": "Rów melioracyjny przy samej działce. Rów melioracyjny 111 m od działki w kierunku odpływu – zastawka może zatrzymać wodę. Najbliższy wodowskaz: Warta – Wronki (9 km) – stan niski.",
   "features": [
     {
       "kind": "row",
       "name": null,
-      "distance_m": 40,
-      "toward_outflow": true
+      "distance_m": 0.0,
+      "toward_outflow": false
     },
     {
-      "kind": "ciek",
-      "name": "Struga Wnorka",
-      "distance_m": 620,
+      "kind": "row",
+      "name": null,
+      "distance_m": 1.0,
+      "toward_outflow": false
+    },
+    {
+      "kind": "row",
+      "name": null,
+      "distance_m": 13.0,
       "toward_outflow": false
     },
     {
       "kind": "zbiornik",
-      "name": "staw",
-      "distance_m": 850,
+      "name": null,
+      "distance_m": 97.0,
+      "toward_outflow": true
+    },
+    {
+      "kind": "row",
+      "name": null,
+      "distance_m": 111.0,
+      "toward_outflow": true
+    },
+    {
+      "kind": "row",
+      "name": null,
+      "distance_m": 119.0,
       "toward_outflow": false
     },
     {
-      "kind": "rzeka",
-      "name": "Narew",
-      "distance_m": 2300,
+      "kind": "row",
+      "name": null,
+      "distance_m": 123.0,
+      "toward_outflow": false
+    },
+    {
+      "kind": "zbiornik",
+      "name": null,
+      "distance_m": 132.0,
       "toward_outflow": true
     }
   ],
   "gauge": {
-    "name": "Wizna",
-    "river": "Narew",
-    "distance_km": 18.4,
-    "level_cm": 212,
+    "name": "Wronki",
+    "river": "Warta",
+    "distance_km": 8.7,
+    "level_cm": 146.0,
     "state": "niski",
     "date": "2026-11-21"
   },
   "sources": [
     {
-      "name": "BDOT10k GUGiK",
-      "url": "https://www.geoportal.gov.pl"
+      "name": "OpenStreetMap (Overpass API) – © autorzy OpenStreetMap, ODbL",
+      "url": "https://www.openstreetmap.org/copyright"
     },
     {
-      "name": "IMGW-PIB – stany wód",
-      "url": "https://hydro.imgw.pl"
+      "name": "IMGW-PIB – stany wód (dane publiczne)",
+      "url": "https://danepubliczne.imgw.pl"
     }
   ]
 }

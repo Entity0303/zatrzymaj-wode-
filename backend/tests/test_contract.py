@@ -108,7 +108,6 @@ def test_analysis_rejects_unknown_crop(client):
         ("get", "/api/layers/gleba?parcel_id=x"),
         ("get", "/api/layers/gleba/point?lon=20&lat=52"),
         ("post", "/api/reports"),
-        ("get", "/api/infra-reports?lon_min=20&lat_min=52&lon_max=21&lat_max=53"),
     ],
 )
 def test_skeleton_endpoints_501(client, method, path):

@@ -56,7 +56,7 @@ def test_demo_examples(client):
     ex = {e["id"]: e for e in r.json()}
     # A8: 6 działek do pokazu – dobra, słaba, stok, obniżenie, susza (Kujawy), Żuławy; analiza na dziś
     assert list(ex) == ["dobra-dzialka", "slaba-ziemia", "stok-pogorze", "obnizenie-pojezierze", "susza-kujawy",
-                        "mady-zulawy"]
+                        "less-drzewce"]
     today = date.today().isoformat()
     assert ex["dobra-dzialka"] == {
         "id": "dobra-dzialka", "title": "Dobra działka", "description": ex["dobra-dzialka"]["description"],

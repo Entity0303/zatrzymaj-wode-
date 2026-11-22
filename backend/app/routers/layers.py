@@ -34,6 +34,8 @@ async def get_layer(layer: LayerKey, parcel_id: str = Query(), date: dt.date | N
     Gleba – 501 „w budowie”."""
     if layer in ("kondycja", "wilgotnosc"):
         return await satellite_layer(layer, parcel_id, date)
+    if layer == "woda":
+        return await water_layer(parcel_id, date)
     if layer not in ("teren", "splyw"):
         raise not_implemented(f"Warstwa „{layer}”")
     try:
@@ -58,6 +60,24 @@ async def get_layer(layer: LayerKey, parcel_id: str = Query(), date: dt.date | N
         source_tag=SourceTag(kind="pomiar", date=None if saved else dt.date.today(),
                              source="NMT GUGiK" + (" (zapisany wynik z 21.11.2026)" if saved else "")),
     )
+
+
+async def water_layer(parcel_id: str, date: dt.date | None) -> LayerResponse:
+    """A9: cieki, rowy, kanały, zbiorniki ≤ 500 m od działki (OSM) – GeoJSON przycięty do promienia."""
+    from app.analysis import hydro as hydro_mod
+    from app.routers.hydro import hydro_for
+
+    try:
+        p = await resolve_parcel(parcel_id, None, None)
+    except SourceError as exc:
+        raise http_error(exc) from exc
+    on = date or dt.date.today()
+    _hydro, objs = await hydro_for(p, on)
+    legend = [LegendStop(value=i, color=hydro_mod.KIND_COLOR[k], label=hydro_mod.KIND_LABEL[k])
+              for i, k in enumerate(("rzeka", "ciek", "row", "kanal", "zbiornik"))]
+    return LayerResponse(parcel_id=p.id, layer="woda", analysis_date=on, features=hydro_mod.layer(objs), legend=legend,
+                         legend_title="Woda w okolicy (500 m)", note="© autorzy OpenStreetMap (ODbL)",
+                         source_tag=SourceTag(kind="pomiar", date=on, source="OpenStreetMap (Overpass API)"))
 
 
 SAT_LEGEND = {"kondycja": ("NDVI – kondycja roślin", (0.0, 0.9)), "wilgotnosc": ("NDMI – wilgotność roślin", (-0.4, 0.4))}

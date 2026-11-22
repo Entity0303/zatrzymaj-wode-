@@ -159,3 +159,134 @@ def test_search_street_address_falls_back_to_osm_when_uug_blocked(client, monkey
     a = r.results[0]
     assert (a.street, a.house_number, a.locality, a.source) == ("Długa", "5", "Kraków", "osm")
     assert "OpenStreetMap" in (r.attribution or "") and any("UUG" in n for n in r.notices)
+
+
+# ── CZĘŚĆ 3: woda w okolicy (hydrologia), zgłoszenia ───────────────────────────────────────
+
+from datetime import date  # noqa: E402
+
+from shapely.geometry import LineString, Point  # noqa: E402
+
+from app.analysis import hydro as H  # noqa: E402
+from app.core.geo import to_2180, to_wgs84  # noqa: E402
+from app.schemas.analysis import Hydro, TerrainOutlet  # noqa: E402
+from app.sources import imgw_hydro, overpass  # noqa: E402
+from test_a6 import GEOM_4326  # noqa: E402
+
+
+def _line_at(dx_m: float, dy_m: float, length=200.0) -> list[dict]:
+    """Linia (geometria Overpass) przesunięta od środka działki 201305 o (dx, dy) m – pionowo w EPSG:2180."""
+    c = to_2180(GEOM_4326).centroid
+    ln = to_wgs84(LineString([(c.x + dx_m, c.y + dy_m - length / 2), (c.x + dx_m, c.y + dy_m + length / 2)]))
+    return [{"lon": x, "lat": y} for x, y in ln.coords]
+
+
+def osm_elements():
+    return [
+        {"type": "way", "id": 1, "tags": {"waterway": "ditch"}, "geometry": _line_at(-180, -60)},  # rów na zachodzie
+        {"type": "way", "id": 2, "tags": {"waterway": "stream", "name": "Struga"}, "geometry": _line_at(300, 0)},
+        {"type": "way", "id": 3, "tags": {"waterway": "river", "name": "Daleka"}, "geometry": _line_at(2000, 0)},
+    ]
+
+
+def outlet_west():
+    g = to_2180(GEOM_4326)
+    w = to_wgs84(Point(g.bounds[0], g.centroid.y))  # zachodni brzeg działki
+    return [TerrainOutlet(direction="zachód", direction_short="W", azimuth_deg=270.0, share_of_parcel_pct=80.0,
+                          location=[w.x, w.y])]
+
+
+def test_hydro_objects_distance_and_toward_outflow():
+    objs = H.objects(osm_elements(), GEOM_4326, outlet_west())
+    feats = [f for f, _ in objs]
+    assert [f.kind for f in feats] == ["row", "ciek"]  # rzeka 2 km – poza promieniem 500 m
+    row, ciek = feats
+    assert row.toward_outflow and not ciek.toward_outflow and ciek.name == "Struga"
+    assert 0 < row.distance_m < 200 and row.distance_m < ciek.distance_m <= 500
+    s = H.sentence(feats, None)
+    assert s.startswith("Rów melioracyjny") and "w kierunku odpływu wody – zastawka może zatrzymać wodę." in s
+    lay = H.layer(objs)
+    assert lay["type"] == "FeatureCollection" and {f["properties"]["kind"] for f in lay["features"]} == {"row", "ciek"}
+    assert all(f["geometry"]["type"] in ("LineString", "Polygon") for f in lay["features"])
+    assert H.sentence([], None).startswith("W promieniu 500 m od działki nie ma")
+
+
+def test_hydro_rule_facts_states():
+    assert H.rule_facts(None)["hydro_ditch_state"] == "nieznany"
+    assert H.rule_facts(H.pending())["hydro_zastawka_conf"] == "ograniczona"
+    assert H.rule_facts(Hydro(status="none", features=[]))["hydro_ditch_state"] == "brak"
+    h, _ = H.build(osm_elements(), None, GEOM_4326, outlet_west(), date(2026, 11, 22))
+    f = H.rule_facts(h)
+    assert f["hydro_ditch_state"] == "w_kierunku_odplywu" and f["hydro_zastawka_conf"] == "wysoka"
+
+
+def test_gauge_state_from_percentiles_and_warning(monkeypatch):
+    monkeypatch.setattr(imgw_hydro, "_levels", lambda: {"1": {"p": {"11": [100, 150, 200, 250]}}})
+    g = imgw_hydro.parse([{"id_stacji": "1", "stacja": "WIZNA", "rzeka": "Narew", "lon": "22.5", "lat": "53.2",
+                           "stan_wody": "140", "stan_wody_data_pomiaru": "2026-11-22 06:00:00",
+                           "stan_ostrzegawczy": "400", "stan_alarmowy": "450"}])[0]
+    assert g.name == "Wizna" and imgw_hydro.state(g, 11) == "niski"
+    g.level_cm = 180
+    assert imgw_hydro.state(g, 11) == "sredni"
+    g.level_cm = 410
+    assert imgw_hydro.state(g, 11) == "wysoki"  # ≥ ostrzegawczego
+    hit = imgw_hydro.nearest([g], 22.6, 53.05, 11)
+    assert hit and 15 < hit[1] < 25
+
+
+@respx.mock
+def test_analysis_hydro_pending_then_cached_and_zastawka_rule(client):
+    mock_all()
+    nmt_route()
+    a = AnalysisResponse.model_validate(client.get("/api/analysis", params={"parcel_id": PID, "date": D}).json())
+    assert a.hydro.status == "pending"
+    overpass._cache.set(tuple(round(v, 4) for v in H.search_bbox(GEOM_4326)), [])  # Overpass: brak wody w 500 m
+    a2 = AnalysisResponse.model_validate(client.get("/api/analysis", params={"parcel_id": PID, "date": D}).json())
+    assert a2.hydro.status == "none" and a2.hydro.sentence.startswith("W promieniu 500 m")
+    assert "retencja.zastawka_na_rowie" not in [r.rule_id for r in a2.recommendations]
+    assert any("wód gruntowych" in x for x in a2.reliability.limitations)
+
+
+@respx.mock
+def test_hydro_endpoint_and_water_layer(client):
+    mock_all()
+    nmt_route()
+    respx.post(settings.overpass_url).mock(return_value=httpx.Response(200, json={"elements": osm_elements()}))
+    respx.get(settings.imgw_hydro_url).mock(return_value=httpx.Response(200, json=[]))
+    r = client.get("/api/hydro", params={"parcel_id": PID})
+    assert r.status_code == 200, r.text
+    h = Hydro.model_validate(r.json())
+    assert h.status == "ok" and {f.kind for f in h.features} == {"row", "ciek"} and h.sources
+    lay = client.get("/api/layers/woda", params={"parcel_id": PID})
+    assert lay.status_code == 200 and lay.json()["features"]["features"]
+    a = AnalysisResponse.model_validate(client.get("/api/analysis", params={"parcel_id": PID, "date": D}).json())
+    assert a.hydro.status == "ok"
+    assert "Rów melioracyjny" in [s for s in a.verdict.statements if s.kind == "woda"][0].text
+
+
+def test_infra_reports_crud_and_letter(client):
+    from app.routers import infra_reports
+
+    infra_reports.reset()
+    r = client.post("/api/infra-reports", json={"object_type": "row", "lon": 22.6, "lat": 53.05,
+                                                 "problem": "zatkany_przepust", "water_level": "wysoki",
+                                                 "description": "Przepust pod drogą zatkany gałęziami."})
+    assert r.status_code == 201, r.text
+    rep = r.json()
+    assert rep["addressee"] == "Właściciel gruntu lub spółka wodna" and rep["confirmations"] == 0
+    box_in = {"lon_min": 22, "lat_min": 53, "lon_max": 23, "lat_max": 54}
+    assert [x["id"] for x in client.get("/api/infra-reports", params=box_in).json()] == [rep["id"]]
+    box_out = {"lon_min": 14, "lat_min": 50, "lon_max": 15, "lat_max": 51}
+    assert client.get("/api/infra-reports", params=box_out).json() == []
+    assert client.post(f"/api/infra-reports/{rep['id']}/confirm").json()["confirmations"] == 1
+    letter = client.get(f"/api/infra-reports/{rep['id']}/letter")
+    assert letter.status_code == 200 and "Do: Właściciel gruntu lub spółka wodna" in letter.text
+    bad = {"object_type": "ciek", "lon": 10, "lat": 50, "problem": "zamulony"}
+    assert client.post("/api/infra-reports", json=bad).status_code == 422
+    assert client.post("/api/infra-reports/nie-ma/confirm").status_code == 404
+
+
+def test_demo_examples_less_instead_of_zulawy(client):
+    ex = {e["id"]: e for e in client.get("/api/demo/examples").json()}
+    assert "mady-zulawy" not in ex and ex["less-drzewce"]["parcel_id"] == "061408_5.0008.203"
+    assert "stok i erozja na lessie" in ex["less-drzewce"]["description"].lower()

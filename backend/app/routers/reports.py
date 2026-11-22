@@ -14,6 +14,7 @@ from time import perf_counter
 
 from fastapi import APIRouter, Query, Response
 
+from app.core.config import settings
 from app.core.http import not_implemented
 from app.report.builder import build_pdf, filename
 from app.routers.analysis import run_analysis
@@ -45,6 +46,8 @@ def _no_pending(a):
     upd = {}
     if isinstance(a.terrain, TerrainPending):
         upd["terrain"] = None
+    if a.hydro is not None and a.hydro.status == "pending":
+        upd["hydro"] = None
     return a.model_copy(update=upd) if upd else a
 
 
@@ -63,6 +66,12 @@ async def _satellite_first(parcel_id, lon, lat, geometry, date) -> None:
     # A9: teren i zdjęcie równolegle (raport może poczekać – analiza nie); błąd któregoś nie blokuje raportu
     await asyncio.gather(asyncio.wait_for(terrain_mod.live(p.geom_2180, p.id), 30),
                          satellite_mod.live(p.geom_4326, date or dt.date.today()), return_exceptions=True)
+    try:  # A9: woda w okolicy (po terenie – kierunek odpływu); Overpass bywa wolny – najwyżej 45 s
+        from app.routers.hydro import hydro_for
+
+        await asyncio.wait_for(hydro_for(p, date or dt.date.today()), settings.overpass_timeout_s + 15)
+    except Exception:  # noqa: BLE001 – raport bez sekcji wody
+        pass
 
 
 @pdf_router.get("/report.pdf", response_class=Response,

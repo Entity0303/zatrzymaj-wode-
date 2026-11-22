@@ -22,6 +22,7 @@ settings.sentinel_background = False  # A11: bez liczenia satelity w tle w testa
 settings.sentinel_enabled = False  # A11: Earth Search tylko w testach, które go jawnie włączają (respx)
 settings.offline_sources = ""  # A8 (D89): w testach żadne źródło nie jest wyłączone (mocki respx)
 settings.search_addresses = False  # A9: stare testy wyszukiwania – bez UUG / Nominatim (nowe włączają jawnie)
+settings.hydro_background = False  # A9: bez Overpass / IMGW w tle w testach
 settings.terrain_background = False  # A9: stare testy – teren liczony w analizie (nowe włączają tło jawnie)
 settings.gugik_min_interval_s = 0.0  # A8 (D89): bez odstępów między zapytaniami do (mockowanego) GUGiK
 settings.imgw_enabled = False  # A7: magazyn IMGW tylko w testach, które go jawnie włączają

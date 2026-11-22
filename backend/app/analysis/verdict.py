@@ -199,8 +199,20 @@ def crops_statement(sug: CropSuggestions | None, light: bool):
 # ── woda (działania) ────────────────────────────────────────────────────────────────────────
 
 
-def water_statement(recs: list[Recommendation]) -> VerdictStatement:
-    """Lista działań – bez oceny: poziom zawsze „info” (A5b-2c)."""
+def water_statement(recs: list[Recommendation], hydro=None) -> VerdictStatement:
+    """Lista działań – bez oceny: poziom zawsze „info” (A5b-2c); A9: zdanie o rowie / cieku, gdy jest w okolicy."""
+    st = _water_statement(recs)
+    if hydro is not None and getattr(hydro, "status", None) == "ok" and hydro.features:
+        f = next((x for x in hydro.features if x.kind in ("row", "kanal")), hydro.features[0])
+        from app.analysis.hydro import KIND_LABEL, _dist_txt
+
+        extra = f" {KIND_LABEL[f.kind]} {_dist_txt(f.distance_m)}" + (", w kierunku odpływu wody." if f.toward_outflow
+                                                                     else ".")
+        st = st.model_copy(update={"text": st.text + extra})
+    return st
+
+
+def _water_statement(recs: list[Recommendation]) -> VerdictStatement:
     c, t = cfg()["water"], cfg()["thresholds"]
     # retencja przed agrotechniką; pewne (bez ostrzeżenia) przed tymi „do sprawdzenia na miejscu”
     ret = sorted((r for r in recs if r.category in ("retencja", "agrotechnika")),
@@ -246,7 +258,7 @@ def plants_statement(sat) -> VerdictStatement | None:
 def build(prof: SoilProfile, wod_mm: float | None, w: DailyWeather, last: date, terrain: Terrain | None,
           sug: CropSuggestions | None, recs: list[Recommendation], field_status: OverallStatus | None,
           chosen: tuple[str, str, OverallStatus, bool] | None = None, measured_precip: bool = False,
-          satellite=None, terrain_pending: bool = False) -> Verdict:
+          satellite=None, terrain_pending: bool = False, hydro=None) -> Verdict:
     sts = [soil_statement(prof, wod_mm)]
     p = precip_statement(precip_stats(w, last), measured_precip)
     if p:
@@ -258,7 +270,7 @@ def build(prof: SoilProfile, wod_mm: float | None, w: DailyWeather, last: date, 
     crops, good, bad = crops_statement(sug, prof.group == "lekka")
     if crops:
         sts.append(crops)
-    sts.append(water_statement(recs))
+    sts.append(water_statement(recs, hydro))
     if chosen:
         label, phase, status, off = (*chosen, False)[:4]
         tpl = cfg()["chosen_crop_off"] if off else cfg()["chosen_crop"]
