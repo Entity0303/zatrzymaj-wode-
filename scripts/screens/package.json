@@ -1,0 +1,13 @@
+{
+  "name": "wodoskop-screens",
+  "private": true,
+  "type": "module",
+  "description": "Zrzuty ekranu do prezentacji (Playwright, bez okna) – poza frontendem; licencje: Playwright Apache-2.0, tsx MIT.",
+  "scripts": {
+    "shoot": "tsx shoot.ts"
+  },
+  "devDependencies": {
+    "playwright": "1.49.0",
+    "tsx": "^4.19.2"
+  }
+}
