@@ -230,3 +230,20 @@ Weryfikacja: `tsc -b` przechodzi; `vite build` – lokalnie i w kontenerze brak 
 - Przykłady: `mocks/satellite.sample.json`, `mocks/layers.kondycja.sample.json`, `mocks/layers.wilgotnosc.sample.json`, `analysis.choice.sample.json` (z `satellite`).
 **Pliki frontendu zmienione przez A:** `src/api/types.ts`, mocki powyżej. (`tsc`: jedyny błąd – brak `maplibre-gl` w `features/map3d/Terrain3D.tsx`, kod B.)
 **Łamie zgodność:** nie (pola i endpoint dodane; warstwy kondycja / wilgotnosc zamiast 501 zwracają dane albo 404).
+
+### 2026-11-22 · `main` · A9+ – teren w tle, adresy, woda w okolicy, zgłoszenia (kontrakt F3 – zgodny z UI drugiej sesji)
+**Zmiany (addytywne; `backend/app/schemas/{analysis,search,layers}.py` ↔ `frontend/src/api/types.ts` – typy F3 już były; mocki dopasowane do prawdziwych odpowiedzi API bez zmiany nazw pól):**
+- `AnalysisResponse.terrain: Terrain | TerrainPending | null` – `{status: "pending"}` = liczony w tle; **`GET /api/terrain?parcel_id=`** (lon/lat, **POST** `{geometry}`) → `Terrain` (jak dotąd).
+- `AnalysisResponse.hydro: Hydro | null` – `{status: "pending" | "ok" | "none", sentence, features[{kind: rzeka|ciek|row|kanal|zbiornik, name, distance_m, toward_outflow}], gauge{name, river, distance_km, level_cm, state: niski|sredni|wysoki, date} | null, sources[{name, url}]}`; pending → **`GET /api/hydro?parcel_id=`** (lon/lat, **POST** `{geometry}`). `none` = brak wody w 500 m (wodowskaz może być).
+- `LayerKey + "woda"` – **`GET /api/layers/woda?parcel_id=&date=`** → GeoJSON (LineString / Polygon, `properties: kind, color, label, toward_outflow`) + `legend` (5 rodzajów), `note` z atrybucją OSM.
+- **`POST /api/layers/kondycja|wilgotnosc`** z `{geometry, date}` (pole narysowane).
+- `SearchResult.kind = "address"` + `locality`, `street`, `house_number`; `source` = `"prg"` | `"osm"`; `SearchResponse.attribution` („Adresy: PRG GUGiK” albo OSM).
+- `/api/infra-reports` działa (POST 201, GET w prostokącie, `/{id}/confirm`, `/{id}/letter` – tekst).
+- `/api/demo/examples`: `less-drzewce` zamiast `mady-zulawy`.
+
+**Dla Mefju:**
+- Teren i woda ładują się osobno jak satelita: `terrain.status === "pending"` → `api.terrain(q)`; `hydro.status === "pending"` → `api.hydro(q)` (może trwać do ok. 60 s – Overpass; przy 502 pokaż „Nie udało się sprawdzić wody w okolicy – spróbuj za chwilę” i przycisk ponów). Po terenie warto odświeżyć analizę (werdykt „teren” i reguła zastawki biorą teren / wodę z cache).
+- Mocki `terrain.sample.json`, `hydro.sample.json` (Pożarowo 70/4), `layers.woda.sample.json`, `search.address.sample.json` („Drwinia 1”: działka + adres) – prawdziwe odpowiedzi.
+- Wyszukiwarka: grupa „Adresy” pod „Działki”, ikona domu; klik adresu = przybliżenie do `bbox` (bez analizy – rolnik klika pole); pod listą `attribution` drobnym tekstem.
+- Warstwa „Rowy i zbiorniki” = `woda`: linie w `color` (rów jaśniejszy niebieski, rzeka ciemny), zbiorniki – wypełnienie; dymek `label`; `toward_outflow` – można pogrubić.
+**Łamie zgodność:** nie (pola i endpointy dodane; nazwy jak w typach F3).
