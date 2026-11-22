@@ -81,7 +81,7 @@ def infiltration(dates: np.ndarray, precip: np.ndarray, et0: np.ndarray, analysi
     lv = c["levels"]
     level = "dobre" if index >= lv["dobre_min"] else "slabe" if index >= lv["slabe_min"] else "bardzo_slabe"
     tail_key = "bardzo_slabe_heavy" if level == "bardzo_slabe" and key in (3, 4, 5) else level
-    light = key in c["light_soil_codes"]
+    light = key in c["light_soil_codes"] and level in c["light_soil_note_levels"]
     sentence = c["sentence_light" if light else "sentence"].format(
         soil=c["soil_words"][key], p30=_mm(w30[0]), e30=_mm(w30[1]), tail=c["tails"][tail_key])
     if light:

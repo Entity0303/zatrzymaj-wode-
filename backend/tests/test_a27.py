@@ -44,6 +44,19 @@ def test_heavy_soil_and_much_rain_is_good():
     assert inf.short_pl == "Z opadów zostaje w glebie dużo (80 mm opadu w 30 dni przy 40 mm parowania)."
 
 
+def test_light_soil_note_only_when_little_water_stays():
+    """A27d: dopisek o lekkiej glebie tylko przy „mało” i „bardzo mało” – nie przy „dużo” (przypadek Żuław w listopadzie)."""
+    note = "Lekka gleba szybko przepuszcza wodę w głąb i mało jej zatrzymuje."
+    much = GW.infiltration(*_series(16, 12, precip_prev=34, et0_prev=37), D, soil_code=2)  # Żuławy 22.11.2026: 16 / 12 mm
+    assert much.level == "dobre" and much.label_pl == "dużo" and note not in much.sentence_pl
+    assert much.sentence_pl == "Lekka gleba i 16 mm opadu w 30 dni przy 12 mm parowania – opad uzupełnia zapas wody w glebie."
+    little = GW.infiltration(*_series(30, 40), D, soil_code=2)
+    assert little.level == "slabe" and little.sentence_pl.endswith(note) and little.sentence_pl.startswith("30 mm opadu")
+    very_little = GW.infiltration(*_series(15, 119), D, soil_code=1)
+    assert very_little.level == "bardzo_slabe" and very_little.sentence_pl.endswith(note)
+    assert note not in GW.infiltration(*_series(30, 40), D, soil_code=3).sentence_pl  # średnia gleba – nigdy
+
+
 def test_levels_follow_soil_slope_and_60_days():
     same = _series(30, 40)  # opad / parowanie = 0,75
     by_soil = [GW.infiltration(*same, D, soil_code=c).index for c in (1, 2, 3, 4)]

@@ -40,11 +40,13 @@ groundwater:
     4: "Ciężka gleba"
     5: "Gleba organiczna"
     unknown: "Gleba bez określonej kategorii"
-  # zdanie: „{soil} i {p30} mm opadu w 30 dni przy {e30} mm parowania – {tail}”; na lekkiej glebie (kat. I–II) bez
-  # nazwy gleby na początku, za to z dopiskiem `light_soil_note`
+  # zdanie: „{soil} i {p30} mm opadu w 30 dni przy {e30} mm parowania – {tail}”; na lekkiej glebie (kat. I–II) przy
+  # poziomach „mało” i „bardzo mało” – bez nazwy gleby na początku, za to z dopiskiem `light_soil_note` (A27d: przy
+  # „dużo” dopisku nie ma – przeczyłby zdaniu, że opad uzupełnia zapas)
   sentence: "{soil} i {p30} mm opadu w 30 dni przy {e30} mm parowania – {tail}"
   sentence_light: "{p30} mm opadu w 30 dni przy {e30} mm parowania – {tail}"
   light_soil_codes: [1, 2]
+  light_soil_note_levels: [slabe, bardzo_slabe]
   light_soil_note: " Lekka gleba szybko przepuszcza wodę w głąb i mało jej zatrzymuje."
   tails:
     bardzo_slabe: "dla roślin zostaje z tego bardzo mało."
