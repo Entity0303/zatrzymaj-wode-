@@ -116,7 +116,7 @@ const anchorIcon = L.divIcon({ className: '', iconSize: [0, 0] })
 type Props = {
   baseMap: BaseMap
   layer: LayerKey
-  /** dane aktywnej warstwy (null = brak / w budowie) */
+  /** dane aktywnej warstwy (null = brak danych) */
   layerData?: LayerResponse | null
   analysisDate: string
   parcel: Parcel | null

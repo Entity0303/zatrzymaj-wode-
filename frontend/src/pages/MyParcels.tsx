@@ -5,7 +5,7 @@ import { FieldIllustration } from '@/components/FieldIllustration'
 import { StatusBadge } from '@/components/StatusBadge'
 import { PageHeader } from '@/layout/PageShell'
 import { cropLabel } from '@/lib/crops'
-import { formatDatePl, formatHa } from '@/lib/format'
+import { formatDatePl, formatArea } from '@/lib/format'
 import { useSavedParcels } from '@/lib/hooks'
 import { useLang } from '@/lib/i18n'
 import { goTo } from '@/lib/router'
@@ -55,7 +55,7 @@ export default function MyParcels() {
                   <div className="min-w-0">
                     <h2 className="font-name text-xl leading-7 font-bold">{t('Działka {numer}', { numer: p.numer })}</h2>
                     <p className="text-sm leading-5 text-text-muted">
-                      {t('gm. {gmina}, obręb {obreb}', { gmina: p.gmina, obreb: p.obreb })} · {formatHa(p.powierzchnia_ha)} ha
+                      {t('gm. {gmina}, obręb {obreb}', { gmina: p.gmina, obreb: p.obreb })} · {formatArea(p.powierzchnia_ha)}
                     </p>
                   </div>
                   <Star className="size-5 shrink-0 fill-amber text-amber" aria-hidden />

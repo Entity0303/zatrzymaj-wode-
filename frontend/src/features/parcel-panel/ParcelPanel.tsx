@@ -138,11 +138,11 @@ export function ParcelPanel({
       state: forecastState === 'ok' ? 'done' : forecastState === 'error' ? 'error' : 'active',
       note: forecastState === 'error' ? 'Prognoza niedostępna – reszta działa dalej' : undefined,
     },
-    { label: 'Pogoda z 10 lat', state: 'pending', note: 'w budowie' },
-    { label: 'Gleba', state: 'pending', note: 'w budowie' },
-    { label: 'Teren', state: 'pending', note: 'w budowie' },
-    { label: 'Zdjęcia satelitarne', state: 'pending', note: 'w budowie' },
-    { label: 'Bilans wody', state: 'pending', note: 'w budowie' },
+    { label: 'Pogoda z 10 lat', state: 'pending' },
+    { label: 'Gleba', state: 'pending' },
+    { label: 'Teren', state: 'pending' },
+    { label: 'Zdjęcia satelitarne', state: 'pending' },
+    { label: 'Bilans wody', state: 'pending' },
   ]
 
   const header = (
@@ -179,7 +179,7 @@ export function ParcelPanel({
         {report?.error && <ErrorNotice {...report.error} onRetry={report.error.retryable ? report.download : undefined} />}
         {analysis && onOpenPassport && (
           <Button onClick={onOpenPassport} className="h-12 w-full rounded-md bg-brand-dark text-base font-semibold text-white hover:bg-brand">
-            <BookOpenText className="size-5" /> {t('Pełny raport')}
+            <BookOpenText className="size-5" /> {t('Paszport wodny')}
           </Button>
         )}
         {analysis && report && (
@@ -254,7 +254,15 @@ export function ParcelPanel({
           : `GUGiK (ULDK)${forecastState === 'ok' ? ', Open-Meteo' : ''}`}{' '}
         · {t('stan na')} {formatDatePl(asOf)}
         <div className="mt-1.5">
-          <SourceTag kind="pomiar" title={t('Granice i powierzchnia z ewidencji (ULDK GUGiK)')} /> {t('granice i powierzchnia')}
+          {parcel.source === 'drawn' ? (
+            <>
+              <SourceTag kind="obliczenia" title={t('Z Twojego rysunku – powierzchnia przybliżona')} /> {t('Z Twojego rysunku – powierzchnia przybliżona')}
+            </>
+          ) : (
+            <>
+              <SourceTag kind="pomiar" title={t('Granice i powierzchnia z ewidencji (ULDK GUGiK)')} /> {t('granice i powierzchnia')}
+            </>
+          )}
         </div>
       </footer>
     </div>

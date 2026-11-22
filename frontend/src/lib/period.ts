@@ -15,7 +15,7 @@ const PRESETS: Record<string, PeriodPreset> = { '30d': '30d', od_siewu: 'since_s
 
 /** Tylko okresy, które backend obsługuje (`period=30d|since_sowing|season`); inne – „Własny zakres”. */
 export const PERIOD_OPTIONS: { token: PeriodToken; label: string; hint: string; needsCrop?: boolean }[] = [
-  { token: '30d', label: 'Ostatnie 30 dni', hint: 'ile spadło i wyparowało przez ostatni miesiąc' },
+  { token: '30d', label: 'Ostatnie 30 dni', hint: 'opad, parowanie i bilans wody z ostatniego miesiąca' },
   { token: 'od_siewu', label: 'Od siewu', hint: 'od siewu wybranej uprawy do daty analizy', needsCrop: true },
   { token: 'sezon', label: 'Sezon (1.04–30.09)', hint: 'sezon wegetacyjny w roku daty analizy' },
 ]

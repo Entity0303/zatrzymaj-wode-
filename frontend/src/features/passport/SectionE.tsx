@@ -25,7 +25,7 @@ export function SectionE({ analysis }: { analysis: AnalysisResponse }) {
   const c = CONFIDENCE[r.confidence]
   const pct = r.completeness.total ? (r.completeness.available / r.completeness.total) * 100 : 0
   return (
-    <PassportSection id="pass-e" letter="E" title={t('Wiarygodność danych')}>
+    <PassportSection id="pass-e" letter="E" title={t('Skąd dane')}>
       <div className="flex flex-wrap items-start gap-4 rounded-xl bg-surface p-4 shadow-card">
         <div className="min-w-0 flex-1 basis-60 space-y-1.5">
           <p className="text-sm leading-5 text-text-muted">{t('Pewność wyniku')}</p>

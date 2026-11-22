@@ -92,7 +92,7 @@ export function PeriodPicker({
         aria-haspopup="dialog"
         disabled={disabled}
         onClick={toggle}
-        title={t('Podsumowanie wybranego okresu: ile spadło, ile wyparowało')}
+        title={t('Podsumowanie wybranego okresu: opad, parowanie i bilans wody')}
         className={cn(
           'flex h-11 items-center gap-1.5 rounded-full px-3 text-sm font-medium disabled:opacity-60',
           prefix ? 'max-w-[min(340px,100%)]' : 'max-w-[220px]',

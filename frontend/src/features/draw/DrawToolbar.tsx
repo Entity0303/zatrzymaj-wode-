@@ -1,5 +1,5 @@
 import { Check, PenLine, Undo2, X } from 'lucide-react'
-import { formatNum } from '@/lib/format'
+import { formatArea } from '@/lib/format'
 import { drawProblem, ringAreaHa } from '@/lib/geoArea'
 import { useLang } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
@@ -46,7 +46,7 @@ export function DrawToolbar({
         </div>
         <p className="shrink-0 text-right">
           <span className="block text-xs leading-4 text-text-muted">{t('Powierzchnia')}</span>
-          <b className="tabular text-lg leading-6">{points.length >= 3 ? `${formatNum(ha, ha < 10 ? 2 : 1)} ha` : '—'}</b>
+          <b className="tabular text-lg leading-6">{points.length >= 3 ? formatArea(ha) : '—'}</b>
         </p>
       </div>
       {problem && <p className="mt-2 rounded-lg bg-danger-soft px-3 py-2 text-sm leading-5 text-danger">{t(problem)}</p>}
@@ -75,7 +75,7 @@ export function DrawToolbar({
           <Check className="size-4" aria-hidden /> {t('Gotowe')}
         </button>
       </div>
-      <p className="mt-2 text-xs leading-4 text-text-muted">{t('Powierzchnia z rysunku jest przybliżona – dokładną policzymy z kształtu pola.')}</p>
+      <p className="mt-2 text-xs leading-4 text-text-muted">{t('Powierzchnia z rysunku jest przybliżona.')}</p>
     </section>
   )
 }

@@ -27,13 +27,13 @@ export function StatusCard({
       </span>
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
-          <p className="font-display text-xl leading-7 font-semibold">{t('Brak danych – analiza w budowie')}</p>
+          <p className="font-display text-xl leading-7 font-semibold">{t('Brak danych dla tej daty')}</p>
         </div>
         <p className="mt-0.5 text-sm leading-5 text-text-muted">
           {t(
             crop
-              ? 'Ocena sytuacji wodnej (pogoda z 10 lat, gleba, teren, zdjęcia satelitarne) nie jest jeszcze liczona.'
-              : 'Wybierz uprawę – od niej zależy ocena. Sama ocena sytuacji wodnej nie jest jeszcze liczona.',
+              ? 'Ocena sytuacji wodnej pojawi się po policzeniu analizy (pogoda z 10 lat, gleba, teren, zdjęcia satelitarne).'
+              : 'Wybierz uprawę – wynik będzie dokładniejszy.',
           )}
         </p>
         <StatusBadge status="no_data" size="sm" className="mt-2" />

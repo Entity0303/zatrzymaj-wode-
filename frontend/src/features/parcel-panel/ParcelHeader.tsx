@@ -1,7 +1,7 @@
 import { Info, Leaf, X } from 'lucide-react'
 import type { Parcel } from '@/api/types'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { formatHa, shortCounty } from '@/lib/format'
+import { shortCounty, formatArea } from '@/lib/format'
 import { ParcelActions } from './ParcelActions'
 import { useLang } from '@/lib/i18n'
 import { useParcelTitle } from './parcelTitle'
@@ -33,15 +33,17 @@ export function ParcelHeader({
         <Tooltip>
           <TooltipTrigger asChild>
             <span tabIndex={0} className="tabular flex shrink-0 items-center gap-1 text-base leading-6 font-medium text-text-muted">
-              {formatHa(parcel.powierzchnia_ha)} ha
+              {formatArea(parcel.powierzchnia_ha)}
               {approx && <Info className="size-4 text-amber" aria-label={t('Obszar przybliżony')} />}
             </span>
           </TooltipTrigger>
           <TooltipContent>
             {t(
-              approx
-                ? 'Obszar przybliżony – brak dokładnych granic działki. Liczymy kwadrat wokół wskazanego punktu.'
-                : 'Pomiar – policzone z granic działki w ewidencji (ULDK GUGiK)',
+              drawn
+                ? 'Z Twojego rysunku – powierzchnia przybliżona'
+                : approx
+                  ? 'Obszar przybliżony – brak dokładnych granic działki. Liczymy kwadrat wokół wskazanego punktu.'
+                  : 'Z granic działki w ewidencji gruntów (ULDK GUGiK)',
             )}
           </TooltipContent>
         </Tooltip>

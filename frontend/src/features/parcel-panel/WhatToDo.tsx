@@ -48,12 +48,12 @@ export function WhatToDo({
       <RecommendationCard
         noData
         category="retencja"
-        title="Brak danych – analiza w budowie"
+        title="Brak danych dla tej daty"
         text="Np. gdzie zatrzymać wodę spływającą z pola."
         why={
           <>
             {t(
-              'Te rekomendacje policzymy z ukształtowania terenu (NMT GUGiK), rowów i zbiorników w okolicy (BDOT10k) oraz bilansu wody. Dziś te dane nie są jeszcze analizowane, więc niczego nie zalecamy.',
+              'Te rekomendacje liczymy z ukształtowania terenu (NMT GUGiK), rowów i zbiorników w okolicy oraz bilansu wody. Bez wyniku analizy niczego nie zalecamy.',
             )}
           </>
         }
@@ -61,14 +61,14 @@ export function WhatToDo({
       <RecommendationCard
         noData
         category="agrotechnika"
-        title="Brak danych – analiza w budowie"
+        title="Brak danych dla tej daty"
         text="Np. zabiegi, które pomagają glebie trzymać wodę."
         why={t('Policzymy je z kategorii gleby (IUNG), wybranej uprawy i bilansu wody z ostatnich 10 lat.')}
       />
       <RecommendationCard
         noData
         category="nawadnianie"
-        title="Brak danych – analiza w budowie"
+        title="Brak danych dla tej daty"
         text="Czy i kiedy nawadniać – po analizie wody w glebie."
         why={t('Termin i dawkę policzymy z modelu wody w glebie i prognozy pogody na 16 dni.')}
       />

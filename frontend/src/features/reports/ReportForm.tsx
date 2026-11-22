@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils'
 export type ReportType = 'short' | 'full'
 
 const TYPES: { key: ReportType; icon: typeof FileText; title: string; text: string }[] = [
-  { key: 'short', icon: FileText, title: 'Raport skrócony (2 strony)', text: 'Werdykt, co siać, stan wody i najważniejsze działania – do wydruku i pokazania.' },
+  { key: 'short', icon: FileText, title: 'Raport skrócony', text: 'Werdykt, co siać, stan wody i najważniejsze działania – do wydruku i pokazania.' },
   { key: 'full', icon: Files, title: 'Raport szczegółowy', text: 'Wszystko z paszportu: wykresy z 10 lat, gleba, teren, źródła danych.' },
 ]
 

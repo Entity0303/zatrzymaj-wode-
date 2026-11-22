@@ -7,7 +7,7 @@ const PAD_TOP = 18
 const PAD_BOTTOM = 22
 
 /**
- * „Na tle 10 lat” (A5e): po jednym słupku na rok – ile wody zostało (spadło minus wyparowało) na ten sam dzień
+ * „Na tle 10 lat” (A5e): po jednym słupku na rok – bilans wody (opad minus parowanie) na ten sam dzień
  * sezonu. Ujemne w dół od zera. Bieżący rok wyróżniony: czerwony, gdy poniżej średniej, zielony – powyżej;
  * poprzednie lata szare; przerywana linia = średnia. Własny SVG (lekki, czytelny też w wydruku).
  */
@@ -24,7 +24,7 @@ export function SeasonBars({ years, mean, width = 640 }: { years: SeasonalBalanc
   const zero = y(0)
 
   return (
-    <svg viewBox={`0 0 ${width} ${H}`} className="h-auto w-full" role="img" aria-label={t('Ile wody zostało w każdym roku na ten sam dzień sezonu')}>
+    <svg viewBox={`0 0 ${width} ${H}`} className="h-auto w-full" role="img" aria-label={t('Bilans wody w każdym roku na ten sam dzień sezonu')}>
       <line x1="0" x2={width} y1={zero} y2={zero} stroke="var(--color-text-muted)" strokeOpacity=".4" />
       {years.map((yr, i) => {
         const cx = slot * i + slot / 2

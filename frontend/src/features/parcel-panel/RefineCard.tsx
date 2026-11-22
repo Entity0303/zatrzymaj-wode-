@@ -3,7 +3,7 @@ import { useState } from 'react'
 import type { CropId, CultivatedArea } from '@/api/types'
 import { Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { HISTORY_CROPS, HISTORY_UNKNOWN, cropLabel, historyLabel } from '@/lib/crops'
-import { formatHa } from '@/lib/format'
+import { formatHa, formatArea } from '@/lib/format'
 import { useLang } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
 import { CropField } from './CropField'
@@ -80,7 +80,7 @@ export function RefineCard({
     crop ? cropLabel(crop) : null,
     planned.length ? t('plan: {n}', { n: planned.map((id) => planOptions.find((o) => o.id === id)?.label ?? id).map((l) => t(l)).join(', ') }) : null,
     known.length ? t('historia: {n} z 3 lat', { n: known.length }) : null,
-    area ? `${formatHa(area.value_ha)} ha` : null,
+    area ? formatArea(area.value_ha) : null,
   ].filter(Boolean)
 
   const setYear = (i: number, v: string) => {

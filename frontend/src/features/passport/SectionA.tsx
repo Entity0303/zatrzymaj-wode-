@@ -38,15 +38,15 @@ export function SectionA({ analysis, chartWidth }: { analysis: AnalysisResponse;
           <StatusBadge status={status.level} now={status.level !== 'no_data'} />
           <p className="font-display text-xl leading-7 font-semibold">{t(status.headline)}</p>
           <p className="text-base leading-6">{t(status.summary)}</p>
-          <p className="text-xs leading-4 text-text-muted">{t('Ogólny stan wodny: 100 = dużo wody, 0 = susza.')}</p>
+          <p className="text-xs leading-4 text-text-muted">{t('Ogólny stan wodny: 100 = dużo wody, 0 = bardzo mało wody.')}</p>
         </div>
       </div>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <MetricCard
           icon={Droplets}
-          title="Woda w glebie"
+          title="Zapas wody w glebie"
           value={val(ind.soil_water_pct)}
-          unit="%"
+          unit="% pełnego"
           tone="water"
           source={ind.soil_water_pct.source_tag.kind}
           sourceDate={tagDate(ind.soil_water_pct)}

@@ -19,7 +19,7 @@ export function BottomTabs({ onHome }: { /** „Start” na ekranie Start – po
             aria-current={active ? 'page' : undefined}
             onClick={() => (s.key === 'start' && page === 'start' && onHome ? onHome() : goTo(s.key))}
             aria-disabled={!s.ready || undefined}
-            aria-label={s.ready ? t(s.short) : t('{label} – wkrótce', { label: t(s.label) })}
+            aria-label={s.ready ? t(s.short) : t('{label} – niedostępne', { label: t(s.label) })}
             className={cn(
               'flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 text-xs font-medium',
               active ? 'text-brand' : 'text-text-muted',

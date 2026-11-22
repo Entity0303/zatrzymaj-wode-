@@ -16,7 +16,7 @@ const DESCRIPTION: Record<LayerKey, string> = {
 
 /**
  * Warstwy mapy (przeprojektowanie): JEDEN przycisk „Warstwa: Teren ▾” zamiast rzędu pigułek. Menu: lista
- * warstw (ikona + nazwa + jedno zdanie), warstwy bez danych wyszarzone z „wkrótce”, na dole przełącznik 2D / 3D.
+ * warstw (ikona + nazwa + jedno zdanie), warstwy bez danych wyszarzone z „brak danych”, na dole przełącznik 2D / 3D.
  */
 export function LayerMenu({
   value,
@@ -37,7 +37,7 @@ export function LayerMenu({
   onChange: (k: LayerKey) => void
   view: '2d' | '3d'
   onViewChange: (v: '2d' | '3d') => void
-  /** warstwy bez danych z serwera (dziś 501) – wyszarzone, „wkrótce” */
+  /** warstwy bez danych z serwera – wyszarzone, „brak danych” */
   unavailable?: LayerKey[]
   /** F10: warstwy tylko z wybraną działką (gleba w obrysie) – bez działki nieaktywne, „wybierz działkę” */
   needsParcel?: LayerKey[]
@@ -91,7 +91,7 @@ export function LayerMenu({
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-2 text-sm leading-5 font-semibold">
                     {t(l.label)}
-                    {off && <span className="rounded-full bg-surface-2 px-2 text-xs font-medium text-text-muted">{t(noParcel ? 'wybierz działkę' : 'wkrótce')}</span>}
+                    {off && <span className="rounded-full bg-surface-2 px-2 text-xs font-medium text-text-muted">{t(noParcel ? 'wybierz działkę' : 'brak danych')}</span>}
                     {!off && notes?.[l.key] && <span className="rounded-full bg-surface-2 px-2 text-xs font-medium text-text-muted">{t(notes[l.key]!)}</span>}
                   </span>
                   <span className="block text-sm leading-5 text-text-muted">{t(DESCRIPTION[l.key])}</span>

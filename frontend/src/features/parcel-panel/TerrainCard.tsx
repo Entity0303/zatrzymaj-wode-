@@ -142,7 +142,7 @@ export function TerrainCard({ terrain: input, note }: { terrain: Terrain | Terra
           )}
           {d.twi_mean != null && (
             <>
-              <dt className="text-text-muted">{t('Wilgotność terenu (TWI)')}</dt>
+              <dt className="text-text-muted">{t('Gdzie zbiera się woda')}</dt>
               <dd className="tabular">{formatNum(d.twi_mean, 1)}</dd>
             </>
           )}

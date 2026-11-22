@@ -5,7 +5,8 @@ import type { AnalysisResponse } from '@/api/types'
 import { DashboardCard as Card } from '@/components/DashboardCard'
 import { NoDataNote as NoData } from '@/components/NoDataNote'
 import { SourceTag } from '@/components/SourceTag'
-import { formatDayLong, formatNum, formatSigned } from '@/lib/format'
+import { balanceText, formatDayLong, formatNum } from '@/lib/format'
+import { cn } from '@/lib/utils'
 import { useLang } from '@/lib/i18n'
 import { seasonBalance } from '@/lib/seasonBalance'
 
@@ -48,7 +49,7 @@ export function BalanceCard({ analysis }: { analysis: AnalysisResponse | null })
   if (!analysis || !h || !geom)
     return (
       <Card icon={ChartNoAxesCombined} title="Bilans wody">
-        <NoData text={analysis ? 'Brak danych o wodzie w sezonie dla tej działki' : 'Wybierz działkę – pokażemy, ile wody zostało w sezonie'} />
+        <NoData text={analysis ? 'Brak danych o wodzie w sezonie dla tej działki' : 'Wybierz działkę – pokażemy bilans wody w sezonie (opad minus parowanie)'} />
       </Card>
     )
   const dev = h.balance_deviation_mm
@@ -59,7 +60,7 @@ export function BalanceCard({ analysis }: { analysis: AnalysisResponse | null })
     <Card icon={ChartNoAxesCombined} title="Bilans wody" aside={<span className="text-xs text-text-muted">{whose}</span>}>
       {now != null && (
         <p className="text-sm leading-5">
-          {t('od {d}:', { d: formatDayLong(from) })} <b className="tabular">{formatSigned(now, 0)} mm</b>
+          {t('od {d}:', { d: formatDayLong(from) })} <b className={cn('tabular', now < 0 && 'text-danger')}>{t(...balanceText(now))}</b>
           {season && <span className="text-text-muted"> ({t(season)})</span>}
         </p>
       )}

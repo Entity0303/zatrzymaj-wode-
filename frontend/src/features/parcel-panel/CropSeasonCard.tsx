@@ -74,6 +74,7 @@ export function CropSeasonCard({ season, analysisDate }: { season: CropSeason; a
           </span>
           <span>{t('zbiór ok. {d}', { d: formatDayMonth(season.harvest) })}</span>
         </div>
+        <p className="mt-1 text-xs leading-4 text-text-muted">{t('według typowego kalendarza uprawy')}</p>
       </div>
 
       <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2">

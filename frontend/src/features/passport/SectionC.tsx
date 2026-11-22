@@ -21,7 +21,7 @@ export function SectionC({ analysis }: { analysis: AnalysisResponse }) {
   return (
     <PassportSection id="pass-c" letter="C" title={t('Dlaczego?')}>
       {causes.length === 0 ? (
-        <p className="text-sm text-text-muted">{t('Brak danych o przyczynach.')}</p>
+        <p className="text-sm text-text-muted">{t('Brakuje danych pogodowych albo o glebie')}</p>
       ) : (
         <ul className="space-y-3">
           {causes.map((c) => {
@@ -46,7 +46,7 @@ export function SectionC({ analysis }: { analysis: AnalysisResponse }) {
           })}
         </ul>
       )}
-      <p className="text-xs leading-4 text-text-muted">{t('Procent = jak bardzo dany czynnik wpływa na obecny stan wody.')}</p>
+      <p className="text-xs leading-4 text-text-muted">{t('Procent = waga przyczyny w opisie.')}</p>
     </PassportSection>
   )
 }

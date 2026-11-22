@@ -38,7 +38,7 @@ function Choice({ c, priceNow }: { c: ChoiceItem; priceNow?: PriceNow | null }) 
         {c.yield_weak_t_ha != null && c.weak_year != null && (
           <li className="text-text-muted">{t('w słabym roku ({rok}): {t} t/ha', { rok: c.weak_year, t: num(c.yield_weak_t_ha) ?? '' })}</li>
         )}
-        <li className="text-text-muted">{t('susza obniża plon o ponad 20% w {n} z {of} lat', { n: c.drought_risk_years, of: c.years_simulated })}</li>
+        <li className="text-text-muted">{t('w symulacji na pogodzie z {of} lat plon spadał o ponad 20% w {n} latach', { n: c.drought_risk_years, of: c.years_simulated })}</li>
       </ul>
       <RevenueLine revenue={c.revenue} priceNow={priceNow} details />
       <p className="text-sm leading-5">{t(c.why)}</p>

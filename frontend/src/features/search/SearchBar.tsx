@@ -3,7 +3,8 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { api } from '@/api/client'
 import type { Parcel, SearchResponse, SearchResult } from '@/api/types'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { formatHa, plForm } from '@/lib/format'
+import { plForm, formatArea } from '@/lib/format'
+import { normalizeParcelQuery } from '@/lib/parcelQuery'
 import { cn } from '@/lib/utils'
 import { useLang } from '@/lib/i18n'
 import { mockSearchAddress, mockVariant } from '@/mocks/useMockAnalysis'
@@ -65,7 +66,8 @@ export function SearchBar({
 
   // podpowiedzi: debounce 300 ms, tylko po wpisywaniu (nie po podstawieniu nazwy wybranej działki)
   useEffect(() => {
-    const query = q.trim()
+    // F12: wklejka / spacje / przecinek / myślnik / prefiks „dz.” – poprawione przed wysłaniem
+    const query = normalizeParcelQuery(q)
     if (!typed.current || query.length < 2) {
       setResp(null)
       setBusy(false)
@@ -131,7 +133,7 @@ export function SearchBar({
           )}
         </span>
         <span className="min-w-0 flex-1 truncate text-sm leading-5">{r.label}</span>
-        {r.kind === 'parcel' && r.area_ha != null && <span className="tabular shrink-0 text-sm text-text-muted">{formatHa(r.area_ha)} ha</span>}
+        {r.kind === 'parcel' && r.area_ha != null && <span className="tabular shrink-0 text-sm text-text-muted">{formatArea(r.area_ha)}</span>}
         {r.kind === 'place' && r.type_label && (
           <span className="shrink-0 rounded-full bg-surface-2 px-2 py-0.5 text-xs text-text-muted">{r.type_label}</span>
         )}
@@ -147,9 +149,10 @@ export function SearchBar({
           e.preventDefault()
           if (showList && active >= 0) return pick(flat[active])
           if (showList && flat.length === 1) return pick(flat[0])
-          if (!q.trim()) return
+          const query = normalizeParcelQuery(q)
+          if (!query) return
           setOpen(false)
-          onSearch(q.trim())
+          onSearch(query)
         }}
         className="relative"
       >
@@ -184,7 +187,7 @@ export function SearchBar({
           aria-invalid={!!error || undefined}
           enterKeyHint="search"
           autoComplete="off"
-          placeholder={placeholder ?? t('Numer działki albo miejscowość, np. Szczytno 112/11 lub Tczów')}
+          placeholder={placeholder ?? t('Wpisz numer działki lub adres')}
           className={cn(
             'h-12 w-full rounded-full border border-transparent bg-surface pl-12 text-base shadow-float outline-none placeholder:text-sm placeholder:text-text-muted/80',
             trailing ? 'pr-[5.5rem]' : 'pr-12',
@@ -218,7 +221,7 @@ export function SearchBar({
       )}
 
       {error && !showList && !showCandidates && !busy && (
-        <p className="absolute top-full left-4 z-10 mt-1.5 max-w-[calc(100vw-48px)] rounded-xl bg-surface px-3 py-1 text-sm text-danger shadow-card md:whitespace-nowrap" role="alert">
+        <p className="absolute top-full left-4 z-10 mt-1.5 max-w-[min(560px,calc(100vw-48px))] rounded-xl bg-surface px-3 py-1.5 text-sm leading-5 text-danger shadow-card" role="alert">
           {error}
         </p>
       )}
@@ -244,7 +247,7 @@ export function SearchBar({
                 <ul>{places.map((r, i) => row(r, parcels.length + addresses.length + i))}</ul>
               </>
             )}
-            {!results.length && <p className="px-4 py-3 text-sm text-text-muted">{resp?.hint ? t(resp.hint) : t('Nic nie znaleziono')}</p>}
+            {!results.length && <p className="px-4 py-3 text-sm text-text-muted">{resp?.hint ? t(resp.hint) : t('Nie znaleziono działki. Sprawdź numer – pełny identyfikator wygląda tak: 201305_2.0038.6/1. Możesz też wpisać nazwę wsi i numer działki.')}</p>}
           </div>
           {(resp?.truncated || resp?.notices?.length || resp?.attribution) && (
             <div className="flex items-start gap-2 border-t px-4 py-2 text-xs leading-4 text-text-muted">
@@ -278,7 +281,7 @@ export function SearchBar({
                   <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-brand text-sm font-semibold text-white">{i + 1}</span>
                   <span className="min-w-0 flex-1">
                     <span className="block text-base leading-6 font-medium">
-                      {t('Działka {numer}', { numer: c.numer })} <span className="font-normal text-text-muted">· {formatHa(c.powierzchnia_ha)} ha</span>
+                      {t('Działka {numer}', { numer: c.numer })} <span className="font-normal text-text-muted">· {formatArea(c.powierzchnia_ha)}</span>
                     </span>
                     <span className="block truncate text-sm leading-5 text-text-muted">
                       {t('obręb {obreb}, gm. {gmina}, woj. {woj}', { obreb: c.obreb, gmina: c.gmina, woj: c.wojewodztwo })}

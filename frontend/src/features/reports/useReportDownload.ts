@@ -5,7 +5,7 @@ import { ApiError, api, type AnalysisQuery, type ErrorInfo } from '@/api/client'
 function describeReportError(e: unknown): ErrorInfo {
   const stillWorks = 'Wynik analizy na ekranie jest kompletny – możesz go też skopiować linkiem.'
   if (e instanceof ApiError && (e.status === 404 || e.status === 501))
-    return { title: 'Raport PDF jest jeszcze w budowie', message: 'Serwer nie generuje jeszcze raportu.', stillWorks, retryable: false }
+    return { title: 'Nie udało się przygotować raportu PDF', message: 'Coś poszło nie tak. Spróbuj jeszcze raz.', stillWorks, retryable: true }
   if (e instanceof ApiError && e.status === 0)
     return { title: 'Brak połączenia', message: 'Nie można połączyć się z serwerem aplikacji. Sprawdź internet.', stillWorks, retryable: true }
   return { title: 'Nie udało się pobrać raportu', message: 'Spróbuj ponownie za chwilę.', stillWorks, retryable: true }

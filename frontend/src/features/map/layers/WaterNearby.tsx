@@ -30,8 +30,8 @@ const waterStyle: FeatureStyler = (p, kind) => {
 
 const WaterNearby: MapLayer = {
   key: 'woda',
-  label: 'Woda w okolicy',
-  short: 'Woda',
+  label: 'Rowy i zbiorniki',
+  short: 'Rowy i zbiorniki',
   icon: Droplets,
   legend: {
     kind: 'classes',

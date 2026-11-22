@@ -223,18 +223,18 @@ export function describeError(e: unknown, kind: 'number' | 'point'): ErrorInfo {
         }
       : {
           title: 'Nie znaleziono działki',
-          message: 'Sprawdź numer. Przykłady: „Szczytno 112/11” albo „143203_2.0027.112/11”.',
+          message: 'Sprawdź numer – pełny identyfikator wygląda tak: 201305_2.0038.6/1. Możesz też wpisać nazwę wsi i numer działki.',
           stillWorks,
           retryable: false,
         }
   }
   if (e.status === 502)
+    // F12: bez technicznego {detail} – rolnik dostaje, co zrobić
     return {
-      title: 'Usługa {source} nie odpowiada',
-      message: 'Nie udało się pobrać danych działki ({detail}).',
+      title: 'Nie udało się pobrać działki',
+      message: 'Ewidencja gruntów chwilowo nie odpowiada. Spróbuj za chwilę.',
       stillWorks,
       retryable: true,
-      vars: { source: detail?.source ?? 'zewnętrzna', detail: detail?.message ?? 'błąd usługi' },
     }
   // bez surowego kodu błędu – co się stało i co zrobić
   return {
@@ -249,7 +249,7 @@ export function describeError(e: unknown, kind: 'number' | 'point'): ErrorInfo {
 export function describeAnalysisError(e: unknown): ErrorInfo {
   const stillWorks = 'Mapa, granice działki i prognoza pogody działają dalej.'
   if (!(e instanceof ApiError))
-    return { title: 'Nie udało się policzyć oceny', message: 'Wystąpił nieoczekiwany błąd.', stillWorks, retryable: true }
+    return { title: 'Nie udało się policzyć oceny', message: 'Coś poszło nie tak. Spróbuj jeszcze raz.', stillWorks, retryable: true }
   const detail = e.detail as { source?: string; message?: string } | null
   if (e.status === 0)
     return { title: 'Brak połączenia', message: 'Nie można połączyć się z serwerem aplikacji. Sprawdź internet.', retryable: true }
@@ -269,15 +269,15 @@ export function describeAnalysisError(e: unknown): ErrorInfo {
     }
   if (e.status === 501)
     return {
-      title: 'Ocena sytuacji wodnej jest jeszcze w budowie',
-      message: 'Serwer nie liczy jeszcze analizy działki.',
+      title: 'Nie udało się policzyć oceny',
+      message: 'Coś poszło nie tak. Spróbuj jeszcze raz.',
       stillWorks,
       retryable: false,
     }
   if (e.status === 502 || e.status === 504)
     return {
       title: 'Usługa {source} nie odpowiada',
-      message: detail?.message ?? 'Nie udało się pobrać danych do analizy.',
+      message: 'Jedno ze źródeł danych chwilowo nie odpowiada. Spróbuj za chwilę.',
       stillWorks,
       retryable: true,
       vars: { source: detail?.source ?? 'zewnętrzna' },

@@ -3,7 +3,7 @@ import type { AnalysisResponse } from '@/api/types'
 export type SeasonKind = 'suchy sezon' | 'normalny sezon' | 'mokry sezon'
 
 /**
- * Jedna liczba „ile wody zostało od początku sezonu” – ta sama w dolnej karcie „Bilans wody”, w paszporcie
+ * Jedna liczba „bilans wody od początku sezonu” – ta sama w dolnej karcie „Bilans wody”, w paszporcie
  * i w raporcie: słupek bieżącego roku z `seasonal_balance_by_year` (A5e), a bez niego wskaźnik
  * `indicators.water_balance_season`, na końcu ostatni punkt serii narastającej.
  * Rodzaj sezonu z rankingu lat (`history.balance_rank`): suszej było w ≤ 30% lat = suchy, mokrzej w ≤ 30% = mokry.

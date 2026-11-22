@@ -9,7 +9,7 @@ import { OBJECT, PROBLEM, TONE_HEX } from './infra'
 /**
  * Zgłoszenia rolników na mapie (SPEC 11): pinezki w kolorze stanu, liczba potwierdzeń, data;
  * „Potwierdzam” (POST /confirm). Lista z GET /api/infra-reports w obszarze wokół działki;
- * backend w budowie (501) = brak pinezek, bez komunikatu błędu.
+ * brak usługi (501) = brak pinezek, bez komunikatu błędu.
  */
 export function InfraPins({ bbox, refresh }: { bbox: [number, number, number, number] | null; refresh: number }) {
   const { t } = useLang()
@@ -35,7 +35,7 @@ export function InfraPins({ bbox, refresh }: { bbox: [number, number, number, nu
       setReports((list) => list.map((x) => (x.id === r.id ? updated : x)))
       setNote((n) => ({ ...n, [r.id]: t('Dziękujemy – potwierdzono') }))
     } catch (e) {
-      const msg = e instanceof ApiError && (e.status === 404 || e.status === 501) ? t('Potwierdzanie jest jeszcze w budowie') : t('Nie udało się potwierdzić')
+      const msg = e instanceof ApiError && (e.status === 404 || e.status === 501) ? t('Potwierdzanie jest chwilowo niedostępne') : t('Nie udało się potwierdzić')
       setNote((n) => ({ ...n, [r.id]: msg }))
     }
   }

@@ -1,8 +1,17 @@
 import { locale } from './i18n'
 
-/** Powierzchnia w ha po polsku: 5,01 / 0,5822. */
-export const formatHa = (v: number) =>
-  v.toLocaleString(locale(), { minimumFractionDigits: 2, maximumFractionDigits: v < 1 ? 4 : 2 })
+/** Powierzchnia w ha po polsku, 2 miejsca po przecinku: 5,01 / 0,58 (pole do wpisania, liczba bez jednostki). */
+export const formatHa = (v: number) => v.toLocaleString(locale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+/**
+ * F12/F13: powierzchnia z jednostką – JEDNA funkcja dla całego UI: od 0,1 ha „0,58 ha” (2 miejsca po przecinku),
+ * poniżej 0,1 ha w m² zaokrąglonych do 10 („850 m²”).
+ */
+export function formatArea(ha: number): string {
+  if (!Number.isFinite(ha)) return ''
+  if (ha < 0.1) return `${(Math.round((ha * 10_000) / 10) * 10).toLocaleString(locale())} m²`
+  return `${formatHa(ha)} ha`
+}
 
 export const formatNum = (v: number, digits = 1) =>
   v.toLocaleString(locale(), { minimumFractionDigits: digits, maximumFractionDigits: digits })
@@ -19,6 +28,17 @@ export function plForm(n: number, one: string, few: string, many: string): strin
 
 export const formatSigned = (v: number, digits = 1) =>
   `${v > 0 ? '+' : v < 0 ? '−' : ''}${formatNum(Math.abs(v), digits)}`
+
+/**
+ * F12: bilans wody (opad minus parowanie) słowami – ujemny = „zabrakło 120 mm”, dodatni = „+35 mm”, nigdy
+ * „zostało −120 mm”. Zwraca klucz tłumaczenia i zmienne (`t(...balanceText(mm))`).
+ */
+export function balanceText(mm: number): [string, Record<string, string>] {
+  const n = formatNum(Math.abs(mm), 0)
+  if (Math.round(mm) < 0) return ['zabrakło {n} mm', { n }]
+  if (Math.round(mm) > 0) return ['+{n} mm', { n }]
+  return ['0 mm', {}]
+}
 
 /** „powiat warszawski zachodni” -> „pow. warszawski zachodni”. */
 export const shortCounty = (s: string) => s.replace(/^powiat\s+/i, 'pow. ')

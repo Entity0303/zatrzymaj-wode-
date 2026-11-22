@@ -1,6 +1,6 @@
 import { Coins } from 'lucide-react'
 import type { CropRevenue, PriceNow } from '@/api/types'
-import { formatHa, formatNum, formatZl } from '@/lib/format'
+import { formatArea, formatNum, formatZl } from '@/lib/format'
 import { useLang } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
 
@@ -31,12 +31,12 @@ export function RevenueLine({
       <span className="flex items-start gap-1.5">
         <Coins className="mt-0.5 size-4 shrink-0 text-amber" aria-hidden />
         <span>
-          {t('ok. {zl} z pola', { zl: formatZl(r.typical_zl) })}
+          {t('ok. {zl} z pola (bez kosztów)', { zl: formatZl(r.typical_zl) })}
           <span className="text-text-muted"> ({t('w słabym roku ok. {zl}', { zl: formatZl(r.weak_year_zl) })})</span>
         </span>
       </span>
       <span className="mt-0.5 block pl-[22px] text-xs leading-4 text-text-muted">
-        {details ? t('{p} zł/t × plon z {area} ha', { p: formatNum(r.price_zl_t, 0), area: formatHa(r.for_area_ha) }) + ' · ' : ''}
+        {details ? t('{p} zł/t × plon z {area}', { p: formatNum(r.price_zl_t, 0), area: formatArea(r.for_area_ha) }) + ' · ' : ''}
         {t(r.price_source)}
         {details && priceNow && (
           <span className="block">

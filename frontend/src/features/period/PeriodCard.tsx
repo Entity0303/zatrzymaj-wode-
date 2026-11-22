@@ -2,7 +2,7 @@ import { CalendarRange } from 'lucide-react'
 import { Bar, CartesianGrid, ComposedChart, Line, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import type { PeriodSummary } from '@/api/types'
 import { SourceTag } from '@/components/SourceTag'
-import { formatDatePl, formatNum, formatSigned } from '@/lib/format'
+import { balanceText, formatDatePl, formatNum } from '@/lib/format'
 import { useLang } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
 
@@ -13,9 +13,9 @@ import { cn } from '@/lib/utils'
 type PeriodDataExtras = { data_until?: string | null; requested_to?: string | null; filled_days?: number | null; note?: string | null; data_note?: string | null }
 
 /**
- * Karta „Okres” (F3): jedno zdanie dużą czcionką (z serwera), sumy – spadło / wyparowało / zostało vs zwykle –
- * i mały wykres dzień po dniu (słupki deszczu, linia „ile wody zostało” narastająco). `requested` bez `period`
- * w odpowiedzi (backend jeszcze bez okresów) – informacja „wkrótce”, nigdy błąd.
+ * Karta „Okres” (F3): jedno zdanie dużą czcionką (z serwera), sumy – opad / parowanie / bilans wody vs zwykle –
+ * i mały wykres dzień po dniu (słupki deszczu, linia „bilans wody” narastająco). `requested` bez `period`
+ * w odpowiedzi – informacja o braku podsumowania, nigdy błąd.
  */
 export function PeriodCard({ period: p, requested, passport, chartWidth }: { period?: PeriodSummary | null; requested?: boolean; passport?: boolean; chartWidth?: number }) {
   const { t } = useLang()
@@ -26,7 +26,7 @@ export function PeriodCard({ period: p, requested, passport, chartWidth }: { per
         <p className="flex items-center gap-2 text-sm font-medium">
           <CalendarRange className="size-4 text-brand" aria-hidden /> {t('Okres')}
         </p>
-        <p className="mt-1 text-sm leading-5 text-text-muted">{t('Podsumowanie wybranego okresu będzie dostępne wkrótce.')}</p>
+        <p className="mt-1 text-sm leading-5 text-text-muted">{t('Brak podsumowania okresu dla tej daty – reszta wyniku jest pełna.')}</p>
       </section>
     )
   }
@@ -46,7 +46,7 @@ export function PeriodCard({ period: p, requested, passport, chartWidth }: { per
         contentStyle={{ borderRadius: 12, border: '1px solid var(--color-line)', fontSize: 13 }}
       />
       <Bar dataKey="precip_mm" name={t('deszcz w dniu')} fill="var(--color-water)" opacity={0.55} radius={[3, 3, 0, 0]} isAnimationActive={false} />
-      <Line dataKey="balance_cum_mm" name={t('zostało od początku okresu')} stroke="var(--color-brand)" strokeWidth={2.5} dot={false} isAnimationActive={false} />
+      <Line dataKey="balance_cum_mm" name={t('bilans wody od początku okresu')} stroke="var(--color-brand)" strokeWidth={2.5} dot={false} isAnimationActive={false} />
     </ComposedChart>
   )
   const diff = p.balance_mm - p.normal_balance_mm
@@ -69,20 +69,20 @@ export function PeriodCard({ period: p, requested, passport, chartWidth }: { per
       <p className={cn('font-display font-semibold text-brand-dark', passport ? 'text-xl leading-7' : 'text-lg leading-6')}>{t(p.sentence)}</p>
       <dl className="grid grid-cols-3 gap-2 text-center">
         <div className="rounded-lg bg-water-soft/70 px-1 py-2">
-          <dt className="text-xs leading-4 text-text-muted">{t('Spadło')}</dt>
+          <dt className="text-xs leading-4 text-text-muted">{t('Opad')}</dt>
           <dd className="tabular text-lg leading-6 font-semibold">{formatNum(p.precip_mm, 0)} mm</dd>
         </div>
         <div className="rounded-lg bg-warn-soft/70 px-1 py-2">
-          <dt className="text-xs leading-4 text-text-muted">{t('Wyparowało')}</dt>
+          <dt className="text-xs leading-4 text-text-muted">{t('Parowanie')}</dt>
           <dd className="tabular text-lg leading-6 font-semibold">{formatNum(p.et0_mm, 0)} mm</dd>
         </div>
         <div className="rounded-lg bg-surface-2 px-1 py-2">
-          <dt className="text-xs leading-4 text-text-muted">{t('Zostało')}</dt>
-          <dd className={cn('tabular text-lg leading-6 font-semibold', p.balance_mm < 0 && 'text-danger')}>{formatSigned(p.balance_mm, 0)} mm</dd>
+          <dt className="text-xs leading-4 text-text-muted">{t('Bilans wody')}</dt>
+          <dd className={cn('tabular text-lg leading-6 font-semibold', p.balance_mm < 0 && 'text-danger')}>{t(...balanceText(p.balance_mm))}</dd>
         </div>
       </dl>
       <p className="text-sm leading-5">
-        {t('Zwykle w tym okresie zostaje {n} mm', { n: formatSigned(p.normal_balance_mm, 0) })}
+        {t('Zwykle w tym okresie bilans wody: {n}', { n: t(...balanceText(p.normal_balance_mm)) })}
         {Math.round(diff) !== 0 && (
           <span className={cn('font-semibold', diff < 0 ? 'text-danger' : 'text-water')}>
             {' '}
@@ -94,7 +94,7 @@ export function PeriodCard({ period: p, requested, passport, chartWidth }: { per
       {p.daily.length > 1 && (
         <figure className="space-y-1">
           {chartWidth ? chart : <ResponsiveContainer width="100%" height={passport ? 170 : 110}>{chart}</ResponsiveContainer>}
-          <figcaption className="text-xs leading-4 text-text-muted">{t('Słupki – deszcz w danym dniu; linia – ile wody zostało od początku okresu (spadło minus wyparowało).')}</figcaption>
+          <figcaption className="text-xs leading-4 text-text-muted">{t('Słupki – deszcz w danym dniu; linia – bilans wody od początku okresu (opad minus parowanie).')}</figcaption>
         </figure>
       )}
       <SourceTag kind="obliczenia" title={t('Opad (IMGW / NASA) minus parowanie (FAO-56) – dzień po dniu')} />

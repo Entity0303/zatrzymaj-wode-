@@ -14,7 +14,7 @@ const REAL_STEPS: Step[] = [
   'Pobieram pogodę z 10 lat',
   'Sprawdzam glebę',
   'Analizuję teren',
-  'Liczę, ile wody zostało (spadło minus wyparowało)',
+  'Liczę bilans wody (opad minus parowanie)',
 ].map((label) => ({ label, state: 'active' }))
 
 const IDLE: AnalysisRun = { phase: 'idle' }

@@ -36,7 +36,7 @@ export function FarmCard({ saved }: { saved: SavedParcel[] }) {
         <div className="mt-auto space-y-1.5">
           <div className="flex flex-wrap gap-1">
             {ORDER.filter((l) => counts.get(l)).map((l) => (
-              <StatusBadge key={l} status={l} size="sm" label={`${t(l === 'no_data' ? 'Brak danych' : { ok: 'Dobrze', warn: 'Uwaga', risk: 'Ryzyko', danger: 'Susza' }[l])} ${counts.get(l)}`} />
+              <StatusBadge key={l} status={l} size="sm" label={`${t(l === 'no_data' ? 'Brak danych' : { ok: 'Dobrze', warn: 'Uwaga', risk: 'Ryzyko', danger: 'Bardzo mało wody' }[l])} ${counts.get(l)}`} />
             ))}
           </div>
           <p className="text-sm leading-5 text-text-muted">

@@ -2,7 +2,7 @@ import { ChevronDown, CloudOff } from 'lucide-react'
 import { useState } from 'react'
 import type { AnalysisResponse } from '@/api/types'
 import { SourceTag } from '@/components/SourceTag'
-import { formatDatePl, formatDayLong, formatSigned } from '@/lib/format'
+import { balanceText, formatDatePl, formatDayLong, formatSigned } from '@/lib/format'
 import { seasonBalance } from '@/lib/seasonBalance'
 import { PrecipSourceNote } from '@/features/parcel-panel/PrecipSourceNote'
 import { PeriodCard } from '@/features/period/PeriodCard'
@@ -78,7 +78,7 @@ export function SectionB({ analysis, chartWidth }: { analysis: AnalysisResponse;
 
       <div className="space-y-3 rounded-xl bg-surface p-4 shadow-card">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h4 className="text-base leading-6 font-semibold">{t('Ile wody zostało: spadło minus wyparowało')}</h4>
+          <h4 className="text-base leading-6 font-semibold">{t('Bilans wody: opad minus parowanie')}</h4>
           <span className="text-sm text-text-muted">
             {t('od {a} · dane pogodowe do {b}', { a: formatDatePl(h.season_start), b: formatDatePl(until) })}
           </span>
@@ -95,7 +95,7 @@ export function SectionB({ analysis, chartWidth }: { analysis: AnalysisResponse;
         {season.mm != null && (
           <p className="text-base leading-6">
             {t('od {d}:', { d: formatDayLong(season.from) })}{' '}
-            <b className={cn('tabular text-xl', season.mm < 0 ? 'text-danger' : 'text-water')}>{formatSigned(season.mm, 0)} mm</b>
+            <b className={cn('tabular text-xl', season.mm < 0 ? 'text-danger' : 'text-water')}>{t(...balanceText(season.mm))}</b>
             {season.kind && <span className="text-text-muted"> ({t(season.kind)})</span>}
           </p>
         )}
@@ -108,7 +108,7 @@ export function SectionB({ analysis, chartWidth }: { analysis: AnalysisResponse;
           <>
             <SeasonBars years={yearsBars} mean={analysis.seasonal_balance_mean_mm} width={chartWidth} />
             <p className="text-xs leading-4 text-text-muted">
-              {t('Ile wody zostało {okres} w każdym roku (spadło minus wyparowało, mm). * – ten rok.', {
+              {t('Bilans wody {okres} w każdym roku (opad minus parowanie, mm). * – ten rok.', {
                 okres: analysis.seasonal_balance_label ? t(analysis.seasonal_balance_label) : t('od początku sezonu'),
               })}
             </p>
@@ -135,7 +135,7 @@ export function SectionB({ analysis, chartWidth }: { analysis: AnalysisResponse;
             )
           })}
         </ul>
-        <p className="text-xs leading-4 text-text-muted">{t('Na lewo od kreski – więcej wody wyparowało, niż spadło. 1 mm = 1 litr na m².')}</p>
+        <p className="text-xs leading-4 text-text-muted">{t('Na lewo od kreski – parowanie większe niż opad (zabrakło wody). 1 mm = 1 litr na m².')}</p>
         </>
         )}
         {analysis.precip_sources && <PrecipSourceNote sources={analysis.precip_sources} compact />}
@@ -162,7 +162,7 @@ export function SectionB({ analysis, chartWidth }: { analysis: AnalysisResponse;
             </p>
           )}
           <div className="space-y-2 rounded-xl bg-surface p-4 shadow-card">
-            <h4 className="text-base leading-6 font-semibold">{t('Woda od początku sezonu, dzień po dniu')}</h4>
+            <h4 className="text-base leading-6 font-semibold">{t('Bilans wody od początku sezonu, dzień po dniu')}</h4>
             <p className="text-sm leading-5 text-text-muted">{t('Okres: {a}–{b}', { a: formatDatePl(h.season_start), b: formatDatePl(until) })}</p>
             <BalanceChart history={h} width={chartWidth} />
           </div>

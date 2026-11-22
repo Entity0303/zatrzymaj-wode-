@@ -30,7 +30,7 @@ export function MetricCard({
   source,
   sourceDate,
   sourceTitle,
-  noDataText = 'Analiza w budowie',
+  noDataText = 'Brak danych dla tej daty',
   loading,
   children,
   className,

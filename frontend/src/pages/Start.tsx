@@ -49,7 +49,7 @@ import { Sidebar } from '@/layout/Sidebar'
 import { TopBar } from '@/layout/TopBar'
 import { todayIso } from '@/lib/dates'
 import { cn } from '@/lib/utils'
-import { formatDatePl, formatHa } from '@/lib/format'
+import { formatDatePl, formatArea } from '@/lib/format'
 import { BRAND_NAME, BRAND_TAGLINE } from '@/lib/brand'
 import { readLink, shareLink, writeLink } from '@/lib/deepLink'
 import { rememberAnalysis, useSettings, useUiPrefs } from '@/lib/storage'
@@ -628,7 +628,7 @@ export default function Start() {
   const reportIncluded = [
     planned.length ? t('plan: {n}', { n: planned.length }) : null,
     history.some((h) => h && h !== 'nie_wiem') ? t('historia pola') : null,
-    area ? `${formatHa(area)} ha` : null,
+    area ? formatArea(area) : null,
     periodUsed ? t('okres: {p}', { p: t(periodShortLabel(periodUsed)) }) : null,
   ].filter(Boolean) as string[]
   const clearReportError = report.clearError
@@ -767,7 +767,7 @@ export default function Start() {
     onClose: backToExplore,
   }
 
-  // warstwy bez danych z serwera (dziś 501) – wyszarzone w menu „wkrótce”
+  // warstwy bez danych z serwera – wyszarzone w menu („brak danych”)
   const layerMenu = (side: 'top' | 'bottom') => (
     <LayerMenu
       value={layer}
@@ -778,7 +778,7 @@ export default function Start() {
         // w 3D najciekawszy jest teren
         if (v === '3d' && (layer === 'kondycja' || layer === 'wilgotnosc')) setLayer('teren')
       }}
-      // woda w okolicy: backend bez sekcji `hydro` (stara wersja / awaria) – „wkrótce”
+      // woda w okolicy: backend bez sekcji `hydro` (stara wersja / awaria) – „brak danych”
       unavailable={analysis && analysis.hydro == null ? ['woda'] : []}
       // F10: gleba tylko w obrysie działki – bez działki nieaktywna
       needsParcel={parcel ? [] : ['gleba']}
@@ -818,14 +818,15 @@ export default function Start() {
   const searchBar = (
     <SearchBar
       loading={search.phase === 'loading'}
-      error={search.phase === 'error' && userActed.current ? t(search.error.title, search.error.vars) : null}
+      // F12: tytuł + podpowiedź (np. „Nie znaleziono działki. Sprawdź numer – pełny identyfikator wygląda tak: …”)
+      error={search.phase === 'error' && userActed.current ? `${t(search.error.title, search.error.vars)}. ${t(search.error.message, search.error.vars)}` : null}
       onPickResult={pickResult}
       candidates={candidates}
       total={search.phase === 'candidates' ? search.total : candidates.length}
       onSearch={onSearch}
       onPick={pickCandidate}
       selected={parcel ? (parcel.source === 'approximate' || parcel.source === 'drawn' ? parcelShortName(parcel) : `${parcel.obreb} ${parcel.numer}`) : null}
-      placeholder={isMobile ? t('Numer działki') : undefined}
+      placeholder={isMobile ? t('Numer działki lub adres') : undefined}
       onDismiss={() => {
         if (candidates.length) {
           setCandidates([])
@@ -905,6 +906,8 @@ export default function Start() {
                   leaving={!hero}
                   search={searchBar}
                   locate={<LocateButton locating={locating} onClick={locate} iconOnly />}
+                  // F12: data analizy na karcie powitalnej – ten sam stan co w górnym pasku
+                  date={<DateField value={asOf} onChange={setAsOf} />}
                   examples={demoExamples}
                   onExample={openExample}
                   onDraw={startDraw}

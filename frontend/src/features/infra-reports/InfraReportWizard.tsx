@@ -274,7 +274,7 @@ export function InfraReportWizard({
             </button>
             {save.phase === 'unavailable' && (
               <p role="status" className="rounded-md bg-amber-soft px-3 py-2 text-sm leading-5">
-                {t('Zapisywanie zgłoszeń na mapie jest jeszcze w budowie. Pismo możesz pobrać już teraz.')}
+                {t('Zapisywanie zgłoszeń na mapie jest chwilowo niedostępne. Pismo możesz pobrać już teraz.')}
               </p>
             )}
             {save.phase === 'error' && (

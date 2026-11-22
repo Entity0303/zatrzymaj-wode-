@@ -3,7 +3,7 @@ import type { Parcel, StatusLevel } from '@/api/types'
 import { LogoMark } from '@/components/LogoMark'
 import { StatusBadge } from '@/components/StatusBadge'
 import { BRAND_NAME, BRAND_TAGLINE } from '@/lib/brand'
-import { formatHa, plForm, shortCounty } from '@/lib/format'
+import { plForm, shortCounty, formatArea } from '@/lib/format'
 import { ParcelActions } from './ParcelActions'
 import type { SearchPhase } from './types'
 import { useLang } from '@/lib/i18n'
@@ -79,9 +79,9 @@ function ParcelHead({
           <h2 className="font-name min-w-0 flex-1 truncate text-2xl leading-8 font-bold">{title}</h2>
           <span
             className="tabular shrink-0 text-lg font-semibold"
-            title={t(approx ? 'Kwadrat wokół wskazanego punktu – brak granic działki' : 'Pomiar – z granic działki w ewidencji (ULDK GUGiK)')}
+            title={t(drawn ? 'Z Twojego rysunku – powierzchnia przybliżona' : approx ? 'Kwadrat wokół wskazanego punktu – brak granic działki' : 'Z granic działki w ewidencji gruntów (ULDK GUGiK)')}
           >
-            {formatHa(parcel.powierzchnia_ha)} ha
+            {formatArea(parcel.powierzchnia_ha)}
           </span>
           {onClose && (
             <button

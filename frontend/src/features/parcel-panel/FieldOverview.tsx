@@ -82,7 +82,7 @@ export function FieldOverview({
       {s && s.groups.some((g) => g.items.length) && <RankingCard suggestions={s} priceNow={analysis.price_now} />}
       {analysis.recommendations.length > 0 && (
         <section className="space-y-3 pt-1">
-          <SectionTitle>{t('Co zrobić?')}</SectionTitle>
+          <SectionTitle>{t('Co mogę zrobić?')}</SectionTitle>
           <WhatToDo analysis={analysis} onShowOnMap={onShowOnMap} />
         </section>
       )}

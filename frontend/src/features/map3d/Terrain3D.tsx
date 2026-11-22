@@ -161,7 +161,8 @@ export default function Terrain3D({
         </div>
         <p className="flex gap-2 rounded-xl bg-text/80 px-3 py-2 text-xs leading-4 text-white backdrop-blur">
           <Info className="mt-px size-3.5 shrink-0" aria-hidden />
-          {t('3D poglądowo: rzeźba z publicznego modelu terenu (~30 m), wysokości ×{x}. Prawy przycisk / Ctrl + przeciągnij = obrót. Analiza korzysta z dokładnego modelu terenu GUGiK.', { x: EXAGGERATION })}
+          {t('3D poglądowo, wysokości ×{x}. Prawy przycisk / Ctrl + przeciągnij = obrót.', { x: EXAGGERATION })}{' '}
+          {t('Teren opisujemy z modelu GUGiK; nie zmienia on obliczonej wody w glebie.')}
         </p>
       </div>
     </div>

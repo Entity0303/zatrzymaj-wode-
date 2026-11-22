@@ -11,7 +11,7 @@ import type { AnalysisRun } from './types'
 
 /**
  * Zwinięty panel działki (komputer) – domyślny widok po wybraniu działki. Mało naraz (tryb Rolnik):
- * werdykt, „Co tu posiać?”, 3 działania, „Doprecyzuj”; „Pełny raport” (paszport) i „Szczegóły” na życzenie.
+ * werdykt, „Co tu posiać?”, 3 działania, „Doprecyzuj”; „Paszport wodny” i „Szczegóły” na życzenie.
  */
 export function ParcelSummary({
   parcel,
@@ -107,7 +107,7 @@ export function ParcelSummary({
             onClick={onOpenPassport}
             className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-md bg-brand-dark text-sm font-semibold text-white hover:bg-brand"
           >
-            <BookOpenText className="size-4" aria-hidden /> {t('Pełny raport')}
+            <BookOpenText className="size-4" aria-hidden /> {t('Paszport wodny')}
           </button>
         )}
         <button

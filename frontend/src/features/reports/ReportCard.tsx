@@ -5,7 +5,7 @@ import { ScoreRing } from '@/components/ScoreRing'
 import { StatusBadge } from '@/components/StatusBadge'
 import { cropLabel } from '@/lib/crops'
 import { startLink } from '@/lib/deepLink'
-import { formatDatePl, formatHa } from '@/lib/format'
+import { formatDatePl, formatArea } from '@/lib/format'
 import { useLang } from '@/lib/i18n'
 import { goTo } from '@/lib/router'
 import type { AnalysisRecord } from '@/lib/storage'
@@ -44,7 +44,7 @@ export function ReportCard({ report, onRemove, onCopied }: { report: AnalysisRec
             {report.historical && <> · {t('analiza historyczna')}</>}
           </p>
           <p className="text-xs leading-4 text-text-muted">
-            {t('gm. {gmina}, obręb {obreb}', { gmina: report.gmina, obreb: report.obreb })} · {formatHa(report.powierzchnia_ha)} ha
+            {t('gm. {gmina}, obręb {obreb}', { gmina: report.gmina, obreb: report.obreb })} · {formatArea(report.powierzchnia_ha)}
           </p>
         </div>
       </div>

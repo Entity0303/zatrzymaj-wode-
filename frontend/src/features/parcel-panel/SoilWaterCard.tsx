@@ -13,7 +13,7 @@ export function SoilWaterCard({ state }: { state: SoilWaterState }) {
   const { t } = useLang()
   const { rank, last_season: last } = state
   return (
-    <section aria-label={t('Woda w glebie – szczegóły')} className="rounded-xl border bg-surface p-3.5">
+    <section aria-label={t('Zapas wody w glebie – szczegóły')} className="rounded-xl border bg-surface p-3.5">
       <div className="flex items-start gap-3">
         <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-water-soft text-water">
           <Droplets className="size-[18px]" aria-hidden />

@@ -13,7 +13,7 @@ export function ApproxAreaBanner({ className }: { className?: string }) {
       <MapPinned className="mt-0.5 size-5 shrink-0 text-[#875a12]" aria-hidden />
       <p className="text-sm leading-5 text-text">
         <b className="block text-base leading-6">{t('Obszar przybliżony – brak dokładnych granic działki.')}</b>
-        {t('Wynik dla kwadratu ok. 1 ha wokół wskazanego punktu.')}
+        {t('Wynik dla kwadratu ok. 1 ha wokół wskazanego punktu.')} {t('Wpisz numer działki albo narysuj pole.')}
       </p>
     </div>
   )

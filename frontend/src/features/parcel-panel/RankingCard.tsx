@@ -4,7 +4,7 @@ import type { CropSuggestion, CropSuggestions, PerennialSuggestion, PriceNow, Su
 import { RevenueCell, type RevenueExtras } from './RevenueCell'
 import { hasRevenue, priceNowSource } from '@/lib/revenue'
 import { SourceTag } from '@/components/SourceTag'
-import { formatDatePl, formatHa, formatNum } from '@/lib/format'
+import { formatArea, formatDatePl, formatNum } from '@/lib/format'
 import { useLang } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
 
@@ -44,7 +44,7 @@ function Details({ s, priceNow }: { s: CropSuggestion | PerennialSuggestion; pri
     <ul className="mt-1.5 space-y-1 text-sm leading-5 text-text-muted">
       {rev && Number.isFinite(rev.price_zl_t) && rev.price_zl_t > 0 && (
         <li>
-          {t('przychód: {p} zł/t × plon z {area} ha (bez kosztów i dopłat)', { p: formatNum(rev.price_zl_t, 0), area: formatHa(rev.for_area_ha) })}
+          {t('przychód: {p} zł/t × plon z {area} (bez kosztów i dopłat)', { p: formatNum(rev.price_zl_t, 0), area: formatArea(rev.for_area_ha) })}
           {priceNow && ` · ${t('cena teraz: {p} zł/t ({src}, {week})', { p: formatNum(priceNow.zl_t, 0), src: priceNow.source.split(' ')[0], week: shortWeek(priceNow.week) })}`}
         </li>
       )}
@@ -54,7 +54,7 @@ function Details({ s, priceNow }: { s: CropSuggestion | PerennialSuggestion; pri
           {s.total_weak_t != null && ` · ${t('≈ {t} t z pola', { t: num(s.total_weak_t) ?? '' })}`}
         </li>
       )}
-      <li>{t('susza obniża plon o ponad 20% w {n} z {of} lat', { n: s.drought_risk_years, of: s.years_simulated })}</li>
+      <li>{t('w symulacji na pogodzie z {of} lat plon spadał o ponad 20% w {n} latach', { n: s.drought_risk_years, of: s.years_simulated })}</li>
       {rot?.notes?.map((n) => (
         <li key={n} className={cn(rot.status === 'naruszenie' && 'text-danger', rot.status === 'ostrzezenie' && 'text-[#875a12]')}>
           {t(n)}

@@ -25,14 +25,14 @@ export function HydroCard({ hydro: h, passport }: { hydro?: Hydro | null; passpo
   const head = (
     <div className="flex items-center gap-2">
       <Droplets className="size-5 shrink-0 text-water" aria-hidden />
-      <h4 className={cn('min-w-0 flex-1 font-semibold', passport ? 'text-lg leading-7' : 'text-base leading-6')}>{t('Woda w okolicy')}</h4>
+      <h4 className={cn('min-w-0 flex-1 font-semibold', passport ? 'text-lg leading-7' : 'text-base leading-6')}>{t('Rowy i zbiorniki')}</h4>
     </div>
   )
   // F6: Overpass nie odpowiedział (502 / ponad 75 s) – komunikat i „Ponów”; reszta panelu działa dalej
   if (!h) {
     if (!failed) return null
     return (
-      <section aria-label={t('Woda w okolicy')} className={box}>
+      <section aria-label={t('Rowy i zbiorniki')} className={box}>
         {head}
         <p className="text-sm leading-5 text-text-muted">{t('Nie udało się sprawdzić wody w okolicy – spróbuj za chwilę.')}</p>
         {retry && !passport && (
@@ -49,7 +49,7 @@ export function HydroCard({ hydro: h, passport }: { hydro?: Hydro | null; passpo
   }
   if (h.status === 'pending')
     return (
-      <section aria-label={t('Woda w okolicy')} aria-busy className={box}>
+      <section aria-label={t('Rowy i zbiorniki')} aria-busy className={box}>
         {head}
         <p className="flex items-center gap-2 text-sm leading-5 text-text-muted" role="status">
           <Loader2 className="size-4 animate-spin text-brand" aria-hidden /> {t('Szukam wody w okolicy…')}
@@ -63,7 +63,7 @@ export function HydroCard({ hydro: h, passport }: { hydro?: Hydro | null; passpo
   const near = sorted.filter((f, i) => sorted.findIndex((g) => g.kind === f.kind) === i).slice(0, 3)
   const g = h.gauge
   return (
-    <section aria-label={t('Woda w okolicy')} className={box}>
+    <section aria-label={t('Rowy i zbiorniki')} className={box}>
       {head}
       {h.sentence && <p className={cn(passport ? 'text-base leading-6' : 'text-sm leading-5')}>{t(h.sentence)}</p>}
       {h.status === 'none' && !h.sentence && <p className="text-sm leading-5 text-text-muted">{t('W pobliżu działki nie ma rzek, rowów ani stawów.')}</p>}

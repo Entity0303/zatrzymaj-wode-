@@ -15,7 +15,7 @@ export function KeyMetrics({ loading, analysis }: { loading?: boolean; analysis?
   if (analysis && !loading) return <AnalysisMetrics analysis={analysis} />
   return (
     <div className="grid grid-cols-2 gap-3">
-      <MetricCard icon={Droplets} title="Woda w glebie" value={null} unit="%" tone="water" source="szacunek_modelu" loading={loading}>
+      <MetricCard icon={Droplets} title="Zapas wody w glebie" value={null} unit="% pełnego" tone="water" source="szacunek_modelu" loading={loading}>
         <div className="h-1.5 rounded-full bg-surface-2" aria-hidden />
       </MetricCard>
       <MetricCard icon={Gauge} title="Ryzyko na 7 dni" value={null} tone="warn" source="prognoza" loading={loading} />
@@ -24,7 +24,7 @@ export function KeyMetrics({ loading, analysis }: { loading?: boolean; analysis?
       </MetricCard>
       <MetricCard
         icon={ChartNoAxesCombined}
-        title="Ile wody zostało w sezonie"
+        title="Bilans wody w sezonie"
         value={null}
         unit="mm"
         tone="water"
@@ -43,9 +43,9 @@ function AnalysisMetrics({ analysis }: { analysis: AnalysisResponse }) {
       <div className="grid grid-cols-2 gap-3">
       <MetricCard
         icon={Droplets}
-        title="Woda w glebie"
+        title="Zapas wody w glebie"
         value={num(water)}
-        unit={water.unit ?? '%'}
+        unit={(water.unit ?? '%') === '%' ? '% pełnego' : water.unit!}
         tone="water"
         source={water.source_tag.kind}
         sourceDate={tagDate(water)}
@@ -55,7 +55,7 @@ function AnalysisMetrics({ analysis }: { analysis: AnalysisResponse }) {
             <div className="h-1.5 overflow-hidden rounded-full bg-surface-2" aria-hidden>
               <div className="h-full rounded-full bg-water" style={{ width: `${Math.max(0, Math.min(100, water.value))}%` }} />
             </div>
-            <p className="text-sm leading-5 text-text-muted">{t('jak bak: tyle zapasu wody mają rośliny')}</p>
+            <p className="text-sm leading-5 text-text-muted">{t('tyle wody dostępnej dla roślin jest teraz w glebie')}</p>
           </>
         )}
       </MetricCard>
@@ -81,13 +81,17 @@ function AnalysisMetrics({ analysis }: { analysis: AnalysisResponse }) {
       </MetricCard>
       <MetricCard
         icon={ChartNoAxesCombined}
-        title="Ile wody zostało w sezonie"
-        value={num(balance, 0, true)}
+        title="Bilans wody w sezonie"
+        value={balance.value === null ? null : formatNum(Math.abs(balance.value), 0)}
         unit={balance.unit ?? 'mm'}
         tone={balance.value !== null && balance.value < 0 ? 'danger' : 'water'}
         valuePrefix={
           balance.value === null || balance.value === 0 ? undefined : balance.value < 0 ? (
-            <ArrowDown className="size-6 self-center text-danger" strokeWidth={2.25} aria-hidden />
+            // F12: ujemny bilans = „zabrakło X mm”, nie „−X mm”
+            <span className="flex items-center gap-1 self-center text-base font-semibold text-danger">
+              <ArrowDown className="size-5" strokeWidth={2.25} aria-hidden />
+              {t('zabrakło')}
+            </span>
           ) : (
             <ArrowUp className="size-6 self-center text-water" strokeWidth={2.25} aria-hidden />
           )

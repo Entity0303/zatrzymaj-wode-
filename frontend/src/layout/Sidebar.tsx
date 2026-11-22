@@ -34,7 +34,7 @@ export function Sidebar({ onHome }: { /** logo / „Start” na ekranie Start �
               type="button"
               aria-current={active ? 'page' : undefined}
               aria-disabled={!s.ready || undefined}
-              aria-label={s.ready ? t(s.label) : t('{label} – wkrótce', { label: t(s.label) })}
+              aria-label={s.ready ? t(s.label) : t('{label} – niedostępne', { label: t(s.label) })}
               onClick={() => (s.key === 'start' && page === 'start' && onHome ? onHome() : goTo(s.key))}
               className={cn(
                 'relative flex min-h-14 w-full flex-col items-center justify-center gap-1 rounded-xl px-1 py-2 text-sm leading-4 font-medium transition-colors',
@@ -52,7 +52,7 @@ export function Sidebar({ onHome }: { /** logo / „Start” na ekranie Start �
               <Tooltip>
                 <TooltipTrigger asChild>{btn}</TooltipTrigger>
                 <TooltipContent side="right">
-                  {s.ready ? t(s.label) : t('{label} – wkrótce', { label: t(s.label) })}
+                  {s.ready ? t(s.label) : t('{label} – niedostępne', { label: t(s.label) })}
                 </TooltipContent>
               </Tooltip>
             </li>

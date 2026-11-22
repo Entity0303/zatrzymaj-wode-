@@ -10,7 +10,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { BRAND_NAME } from '@/lib/brand'
 import { cropLabel } from '@/lib/crops'
-import { formatDatePl, formatHa } from '@/lib/format'
+import { formatDatePl, formatArea } from '@/lib/format'
 import { useLang } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
 import { NonAgriculturalCard } from '@/features/parcel-panel/NonAgriculturalCard'
@@ -23,13 +23,13 @@ import { SectionC } from './SectionC'
 import { SectionD } from './SectionD'
 import { SectionE } from './SectionE'
 
-/** Zakładki bez liter (uwagi z testów main). */
+/** Zakładki bez liter = nagłówki sekcji A–E (F12: jedna wersja nazw). */
 const NAV = [
-  ['pass-a', 'Stan'],
+  ['pass-a', 'Stan obecny'],
   ['pass-b', 'Na tle 10 lat'],
-  ['pass-c', 'Dlaczego'],
-  ['pass-d', 'Co zrobić'],
-  ['pass-e', 'Dane'],
+  ['pass-c', 'Dlaczego?'],
+  ['pass-d', 'Co mogę zrobić?'],
+  ['pass-e', 'Skąd dane'],
 ] as const
 
 /** Treść paszportu – wspólna dla ekranu i wydruku. */
@@ -103,8 +103,8 @@ export function Passport({
   const approx = p.source === 'approximate' || p.source === 'drawn'
   const title = (
     approx
-      ? [parcelShortName(p), `${formatHa(p.powierzchnia_ha)} ha`, crop?.toLowerCase()]
-      : [t('Działka {numer}', { numer: p.numer }), p.obreb, `${formatHa(p.powierzchnia_ha)} ha`, crop?.toLowerCase()]
+      ? [parcelShortName(p), formatArea(p.powierzchnia_ha), crop?.toLowerCase()]
+      : [t('Działka {numer}', { numer: p.numer }), p.obreb, formatArea(p.powierzchnia_ha), crop?.toLowerCase()]
   )
     .filter(Boolean)
     .join(' · ')
