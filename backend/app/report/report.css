@@ -116,3 +116,10 @@ table.src td { padding: 2pt 4pt; border-bottom: 1pt solid #EFECE4; vertical-alig
 .map img.sat-overlay { width: auto; height: auto; }
 .nomap { padding: 60pt 10pt; text-align: center; color: #555F58; }
 .warning { border-left: 4pt solid #E8B931; padding: 3pt 6pt; margin: 3pt 0; }
+
+/* F20: dwa wykresy pod werdyktem na stronie 1 */
+.charts2 { display: flex; gap: 10pt; margin-top: 8pt; }
+.charts2 > div { flex: 1; min-width: 0; border: 1pt solid #E4E0D6; border-radius: 6pt; padding: 5pt 7pt; }
+.csent { margin: 0 0 2pt; }
+.legend i.dash { background: none; border-top: 1.6pt dashed #5F6B64; height: 0; }
+.legend i.hatch { background: #F6D2B8; border: 1pt solid #E07B39; }

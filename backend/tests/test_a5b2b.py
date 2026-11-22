@@ -300,7 +300,7 @@ def _pdf_text(client, params):
 
 
 @respx.mock
-def test_pdf_brand_no_qr_by_default_and_qr_with_public_url(client, long_weather, monkeypatch):
+def test_pdf_brand_and_qr_to_farmer_app(client, long_weather, monkeypatch):
     settings.terrain_saved_results = True
     mock_all()
     respx.get(settings.ortho_wms_url).mock(return_value=httpx.Response(503))
@@ -308,13 +308,15 @@ def test_pdf_brand_no_qr_by_default_and_qr_with_public_url(client, long_weather,
     monkeypatch.setattr(settings, "public_url", "")
     reader, text, _ = _pdf_text(client, q)
     assert "WODOSKOP" in text.upper() and "prześwietl swoją działkę pod kątem suszy" in text
-    assert "ZATRZYMAJ WODĘ" not in text and "Zeskanuj" not in text  # nazwa produktu (nie zdanie „zatrzymaj wodę z opadów”)
+    assert "ZATRZYMAJ WODĘ" not in text  # nazwa produktu (nie zdanie „zatrzymaj wodę z opadów”)
+    # F20: QR i stopka zawsze z adresem aplikacji dla rolnika (domyślnie wodoskop.vercel.app), nie backendu
+    assert "Zeskanuj – analiza online" in " ".join(text.split()) and "wodoskop.vercel.app" in text
     assert "Wodoskop · Raport ma charakter pomocniczy" in " ".join(text.split())
     meta = reader.metadata
     assert "Wodoskop" in (meta.title or "") and meta.author == "Wodoskop"
-    monkeypatch.setattr(settings, "public_url", "https://wodoskop.example")
+    monkeypatch.setenv("FRONTEND_URL", "https://wodoskop.example")
     _, text2, _ = _pdf_text(client, q)
-    assert "Zeskanuj – analiza online" in " ".join(text2.split())
+    assert "wodoskop.example" in text2 and "vercel" not in text2
 
 
 @respx.mock

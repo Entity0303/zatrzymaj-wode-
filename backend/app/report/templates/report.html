@@ -62,19 +62,35 @@
     {% if points %}
       {% for st in points %}
       <div class="point"><span class="ico" style="background: {{ LV[st.level][1] }}">{{ LV[st.level][0] }}</span>
-        <div><span class="k">{{ KIND[st.kind] }}:</span> {{ st.text }}</div></div>
+        <div><span class="k">{{ KIND[st.kind] }}:</span> {{ st.text if full else (st.text|sentences(1)|clip(150)) }}</div></div>
       {% endfor %}
     {% else %}<p>{{ a.status.summary }}</p>{% endif %}
     {% if v %}
     <div class="crops">
       {% if v.crops_good %}<div class="crow"><span class="lab">Siej:</span>{% for c in v.crops_good %}<span class="chip good">✓ {{ c.label }}</span>{% endfor %}</div>{% endif %}
       {% if avoid %}
-        {% for reason, crops in avoid %}<p class="avoid"><b>Unikaj:</b> {{ crops|join(', ') }} – {{ reason }}.</p>{% endfor %}
+        {% for reason, crops in avoid %}<p class="avoid"><b>Unikaj:</b> {% if full or crops|length <= 4 %}{{ crops|join(', ') }}{% else %}{{ crops[:3]|join(', ') }} i {{ crops|length - 3 }} innych{% endif %} – {{ reason }}.</p>{% endfor %}
       {% else %}<p class="avoid muted">Żadna z popularnych upraw polowych nie jest tu odradzana.</p>{% endif %}
     </div>
     {% endif %}
   </div>
   {% if sug and sug.choice and sug.choice_summary %}<p style="margin-top:5pt"><b>Twój wybór:</b> {{ sug.choice_summary }}</p>{% endif %}
+  {% if chart_soil_season or chart_precip_norm %}
+  <div class="charts2 nobreak">
+    {% if chart_soil_season %}<div>
+      <h3>Zapas wody w glebie w tym sezonie</h3>
+      <p class="csent">{{ soil_sentence }}</p>
+      <div class="chart">{{ chart_soil_season }}</div>
+      <div class="legend"><i style="background:#1E2A23;height:2.5pt"></i>ten sezon<i class="dash"></i>średnia 10 lat<i style="background:#E2E4E1"></i>zakres 10 lat</div>
+    </div>{% endif %}
+    {% if chart_precip_norm %}<div>
+      <h3>Opady w miesiącach vs norma</h3>
+      <p class="csent">{{ precip_sentence }}</p>
+      <div class="chart">{{ chart_precip_norm }}</div>
+      <div class="legend"><i style="background:#2F80C9"></i>opad, mm<i class="hatch"></i>&lt; 70% normy<i style="background:#1E2A23;height:2pt"></i>norma 10 lat</div>
+    </div>{% endif %}
+  </div>
+  {% endif %}
 </section>
 
 {# ═══ STRONA 2: bilans 10 lat, ranking, teren, co mogę zrobić, skąd dane i pewność ═══ #}
@@ -99,7 +115,7 @@
       <td class="n">{{ i.yield_weak_t_ha|num(1, 't/ha') }}{% if i.weak_year %} <span class="muted">({{ i.weak_year }})</span>{% endif %}</td>
       <td class="n">{{ risk_text(i) }}</td>
       <td>{% if i.revenue and zl(i.revenue.typical_zl) %}<b>{{ zl(i.revenue.typical_zl) }}</b>{% if zl(i.revenue.weak_year_zl) %}<div class="muted">słaby rok {{ zl(i.revenue.weak_year_zl) }}</div>{% endif %}
-        {% else %}<span class="muted">{{ (i.revenue_note or 'brak ceny skupu')|clip(200 if full else 34) }}</span>{% endif %}</td>
+        {% else %}<span class="muted">{{ i.revenue_note or 'brak ceny skupu' }}</span>{% endif %}</td>
     </tr>
     {% endfor %}
   </table>

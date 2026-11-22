@@ -166,9 +166,6 @@ def zone_bar(zones, width: int = 520, height: int = 16) -> str | None:
     for z in zs:
         w = width * z.share_pct / total
         parts.append(f'<rect x="{x:.1f}" y="0" width="{w:.1f}" height="{height}" fill="{z.color}"/>')
-        if w > 34:
-            parts.append(f'<text x="{x + w / 2:.1f}" y="{height - 4}" text-anchor="middle" fill="#FFFFFF" '
-                         f'font-weight="600">{round(z.share_pct)}%</text>')
         x += w
     parts.append("</svg>")
     return "".join(parts)
@@ -213,7 +210,7 @@ def season_bars(years, mean_mm: float | None, width: int = 680, height: int = 19
     lo, hi = min(vals), max(vals)
     pad = max(10.0, 0.08 * (hi - lo))
     lo, hi = lo - pad, hi + pad
-    pad_l, pad_r, pad_t, pad_b = 40, 8, 16, 22
+    pad_l, pad_r, pad_t, pad_b = 40, 8, 16, 34  # F20: miejsce na wartość pod najniższym słupkiem i rok
     hh = height - pad_t - pad_b
 
     def y_of(v: float) -> float:
@@ -237,7 +234,8 @@ def season_bars(years, mean_mm: float | None, width: int = 680, height: int = 19
         color = ("#E07B39" if below_mean else C["water"]) if y.current else "#C9CCC6"
         parts.append(f'<rect x="{x:.1f}" y="{top:.1f}" width="{bw * 0.64:.1f}" height="{max(bot - top, 0.8):.1f}" '
                      f'fill="{color}" rx="1.5"/>')
-        lab_y = top - 3 if y.balance_mm >= 0 else bot + 10
+        # F20: dodatnie – nad słupkiem; ujemne – pod słupkiem, ale zawsze nad osią lat (z odstępem)
+        lab_y = top - 3 if y.balance_mm >= 0 else min(bot + 10, height - 19)
         weight = ' font-weight="700"' if y.current else ""
         parts.append(f'<text x="{x + bw * 0.32:.1f}" y="{lab_y:.1f}" text-anchor="middle" font-size="8.5" '
                      f'fill="{C["text"] if y.current else C["muted"]}"{weight}>{_num(y.balance_mm)}</text>')
@@ -292,5 +290,102 @@ def satellite_series(points, width: int = 680, height: int = 150) -> str | None:
         seen.add(key)
         x = xy(p.date, lo)[0]
         parts.append(f'<text x="{x:.1f}" y="{height - 6}" text-anchor="middle" fill="{C["muted"]}">{MONTHS[p.date.month - 1]}</text>')
+    parts.append("</svg>")
+    return "".join(parts)
+
+
+# ── F20: wykresy na stronę 1 raportu skróconego (czytelne czarno-biało: wzory i rodzaje linii, nie tylko kolor) ──
+
+_HATCH = ('<defs><pattern id="{id}" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">'
+          '<rect width="5" height="5" fill="{bg}"/><line x1="0" y1="0" x2="0" y2="5" stroke="{fg}" stroke-width="1.6"/>'
+          '</pattern></defs>')
+
+
+def soil_season_chart(f: FieldState, low_pct: float = 50.0, width: int = 340, height: int = 165) -> str | None:
+    """„Zapas wody w glebie w tym sezonie”: bieżący rok (gruba ciągła linia, %) na tle pasma 10 lat (min–max, jasnoszare)
+    i średniej z 10 lat (przerywana); strefa „mało wody” (< low_pct – próg statusu „mało wody”, 40%, jasnoczerwona, kreskowana). Oś Y 0–100%."""
+    band = [b for b in f.series_band if b.min is not None and b.max is not None]
+    cur = [p for p in f.series if p.value is not None]
+    if len(cur) < 2 and len(band) < 2:
+        return None
+    dates = [b.date for b in band] + [p.date for p in cur]
+    d0, d1 = min(dates), max(dates)
+    pad_l, pad_r, pad_t, pad_b = 38, 8, 10, 22
+    w, hh = width - pad_l - pad_r, height - pad_t - pad_b
+    days = max((d1 - d0).days, 1)
+
+    def x(d: dt.date) -> float:
+        return pad_l + w * (d - d0).days / days
+
+    def y(v: float) -> float:
+        return pad_t + hh * (100 - max(0.0, min(100.0, v))) / 100
+
+    parts = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}" '
+             f'{FONT} font-size="12.5">', _HATCH.format(id="lowz", bg="#FBE7E5", fg="#F2C4BE")]
+    parts.append(f'<rect x="{pad_l}" y="{y(low_pct):.1f}" width="{w}" height="{y(0) - y(low_pct):.1f}" fill="url(#lowz)"/>')
+    parts.append(f'<text x="{width - pad_r - 3}" y="{y(0) - 4:.1f}" text-anchor="end" fill="#8F2A21">mało wody</text>')
+    for t in (0, 50, 100):
+        parts.append(f'<line x1="{pad_l}" x2="{width - pad_r}" y1="{y(t):.1f}" y2="{y(t):.1f}" stroke="{C["border"]}" stroke-width="0.8"/>')
+        parts.append(f'<text x="{pad_l - 5}" y="{y(t) + 4:.1f}" text-anchor="end" fill="{C["muted"]}">{t}%</text>')
+    m = dt.date(d0.year, d0.month, 1)
+    step = 2 if (d1 - d0).days > 200 else 1
+    k = 0
+    while m <= d1:
+        if m >= d0:
+            if k % step == 0:
+                parts.append(f'<text x="{x(m) + 2:.1f}" y="{height - 6}" fill="{C["muted"]}">{MONTHS[m.month - 1]}</text>')
+            parts.append(f'<line x1="{x(m):.1f}" x2="{x(m):.1f}" y1="{pad_t}" y2="{pad_t + hh}" stroke="{C["border"]}" stroke-width="0.5"/>')
+            k += 1
+        m = dt.date(m.year + (m.month == 12), m.month % 12 + 1, 1)
+    if band:
+        upper = " ".join(f"{x(b.date):.1f},{y(b.max):.1f}" for b in band)
+        lower = " ".join(f"{x(b.date):.1f},{y(b.min):.1f}" for b in reversed(band))
+        parts.append(f'<polygon points="{upper} {lower}" fill="#E2E4E1" stroke="none"/>')
+        mean = [b for b in band if b.mean is not None]
+        if mean:
+            pts = " ".join(f"{x(b.date):.1f},{y(b.mean):.1f}" for b in mean)
+            parts.append(f'<polyline points="{pts}" fill="none" stroke="#5F6B64" stroke-width="1.4" stroke-dasharray="5 3"/>')
+    if cur:
+        pts = " ".join(f"{x(p.date):.1f},{y(p.value):.1f}" for p in cur)
+        last = cur[-1]
+        parts.append(f'<polyline points="{pts}" fill="none" stroke="#1E2A23" stroke-width="2.6"/>')
+        parts.append(f'<circle cx="{x(last.date):.1f}" cy="{y(last.value):.1f}" r="3.6" fill="#1E2A23"/>')
+        tx = min(x(last.date) + 6, width - pad_r - 36)
+        parts.append(f'<text x="{tx:.1f}" y="{max(y(last.value) - 7, pad_t + 11):.1f}" font-weight="700" fill="#1E2A23" '
+                     f'stroke="#FFFFFF" stroke-width="3" paint-order="stroke">{_num(last.value)}%</text>')
+    parts.append("</svg>")
+    return "".join(parts)
+
+
+def precip_norm_chart(months: list[MonthlyPrecip], width: int = 340, height: int = 165, low: float = 0.7) -> str | None:
+    """„Opady w miesiącach vs norma”: słupek opadu bieżącego roku (mm), pozioma kreska normy z 10 lat; miesiące
+    poniżej `low` × normy – kolor ryzyka i kreskowanie (czytelne w druku cz-b)."""
+    ms = [m for m in months if m.current_mm is not None]
+    if len(ms) < 2:
+        return None
+    pad_l, pad_r, pad_t, pad_b = 34, 6, 12, 22
+    top = max([m.current_mm or 0 for m in ms] + [m.mean_mm or 0 for m in ms] + [10]) * 1.08
+    bw = (width - pad_l - pad_r) / len(ms)
+    hh = height - pad_t - pad_b
+    parts = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}" '
+             f'{FONT} font-size="12.5">', _HATCH.format(id="lowp", bg="#F6D2B8", fg="#E07B39")]
+    for t in _ticks(0, top, 3):
+        yy = pad_t + hh * (1 - t / top)
+        parts.append(f'<line x1="{pad_l}" x2="{width - pad_r}" y1="{yy:.1f}" y2="{yy:.1f}" stroke="{C["border"]}" stroke-width="0.7"/>')
+        parts.append(f'<text x="{pad_l - 4}" y="{yy + 4:.1f}" text-anchor="end" fill="{C["muted"]}">{_num(t)}</text>')
+    for i, m in enumerate(ms):
+        x0 = pad_l + i * bw + bw * 0.18
+        bwi = bw * 0.64
+        dry = m.mean_mm is not None and m.mean_mm > 0 and m.current_mm < low * m.mean_mm
+        bh = hh * m.current_mm / top
+        fill = "url(#lowp)" if dry else C["water"]
+        stroke = "#E07B39" if dry else C["water"]
+        parts.append(f'<rect x="{x0:.1f}" y="{pad_t + hh - bh:.1f}" width="{bwi:.1f}" height="{max(bh, 0.8):.1f}" fill="{fill}" '
+                     f'stroke="{stroke}" stroke-width="0.8"/>')
+        if m.mean_mm is not None:
+            ym = pad_t + hh * (1 - m.mean_mm / top)
+            parts.append(f'<line x1="{x0 - bw * 0.08:.1f}" x2="{x0 + bwi + bw * 0.08:.1f}" y1="{ym:.1f}" y2="{ym:.1f}" '
+                         f'stroke="#1E2A23" stroke-width="2"/>')
+        parts.append(f'<text x="{x0 + bwi / 2:.1f}" y="{height - 6}" text-anchor="middle" fill="{C["muted"]}">{MONTHS[m.month - 1]}</text>')
     parts.append("</svg>")
     return "".join(parts)

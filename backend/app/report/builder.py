@@ -8,6 +8,7 @@ niczego sam – tylko przedstawia wynik analizy.
 
 import asyncio
 import base64
+import os
 import datetime as dt
 import re
 from pathlib import Path
@@ -212,17 +213,18 @@ def history_labels(a: AnalysisResponse) -> str:
 
 def analysis_url(a: AnalysisResponse) -> str:
     if a.parcel.source == "drawn":  # obrysu nie da się zapisać w adresie – link do aplikacji
-        return settings.public_url.rstrip("/") + "/"
+        return app_url() + "/"
     if a.approximate_area:
         lon, lat = a.approximate_area.center
-        return f"{settings.public_url.rstrip('/')}/?{urlencode({'lon': lon, 'lat': lat, 'data': a.analysis_date.isoformat()})}"
+        # frontend (lib/deepLink.ts) nie obsługuje lon/lat – link z samą datą
+        return f"{app_url()}/?{urlencode({'data': a.analysis_date.isoformat()})}"
     q = {"dzialka": a.parcel.id}
     if a.crop:
         q["uprawa"] = a.crop
     q["data"] = a.analysis_date.isoformat()
     if a.previous_crop:
         q["przedplon"] = a.previous_crop
-    return f"{settings.public_url.rstrip('/')}/?{urlencode(q)}"
+    return f"{app_url()}/?{urlencode(q)}"
 
 
 def qr_svg(url: str) -> str:
@@ -360,15 +362,56 @@ def chosen_item(a: AnalysisResponse):
     return top[0] if top else items[0]
 
 
+def water_rank_text(rank) -> str | None:
+    """F20: porównanie z tą samą porą w 10 latach z poprawnym kierunkiem (`lower_years` = lata z MNIEJSZĄ ilością wody)."""
+    if not rank or not rank.of_years:
+        return None
+    n, of = rank.lower_years, rank.of_years
+    if n == 0:
+        return f"tak mało wody o tej porze nie było w żadnym z {of} lat"
+    if n == of:
+        return f"więcej wody niż w każdym z {of} lat o tej porze"
+    if n >= of / 2:
+        return f"więcej wody niż w {n} z {of} lat o tej porze"
+    return f"mniej wody było tylko w {n} z {of} lat o tej porze"
+
+
+def soil_chart_sentence(a: AnalysisResponse) -> str:
+    """Zdanie-wniosek nad wykresem zapasu wody (z liczb analizy)."""
+    f = a.field_state
+    v = f.soil_water_pct.value if f else None
+    if v is None:
+        return "Brak danych o zapasie wody w glebie."
+    txt = water_rank_text(f.soil_water.rank) if f.soil_water else None
+    return f"Teraz {num(v)}% pełnego zapasu{' – ' + txt if txt else ''}." if not a.historical else \
+        f"W dniu analizy {num(v)}% pełnego zapasu{' – ' + txt if txt else ''}."
+
+
+def precip_chart_sentence(a: AnalysisResponse) -> str:
+    """Zdanie-wniosek nad wykresem opadów: miesiące poniżej 70% normy."""
+    names = ["styczeń", "luty", "marzec", "kwiecień", "maj", "czerwiec", "lipiec", "sierpień", "wrzesień",
+             "październik", "listopad", "grudzień"]
+    ms = [m for m in a.history.monthly_precip if m.current_mm is not None]
+    if not ms:
+        return "Brak danych o opadach w miesiącach."
+    dry = [names[m.month - 1] for m in ms if m.mean_mm and m.current_mm < 0.7 * m.mean_mm]
+    if not dry:
+        return "W każdym miesiącu opady co najmniej 70% normy z 10 lat."
+    return f"Poniżej 70% normy: {', '.join(dry)}."
+
+
+def app_url() -> str:
+    """F20: adres aplikacji dla rolnika (frontend), nie backendu: FRONTEND_URL → PUBLIC_URL → https://wodoskop.vercel.app."""
+    return (os.environ.get("FRONTEND_URL") or settings.public_url or "https://wodoskop.vercel.app").rstrip("/")
+
+
 def tiles(a: AnalysisResponse) -> list[dict]:
     """4 kafle strony 1: zapas wody w glebie, bilans okresu, ryzyko suszy, przychód."""
     ind = a.indicators
     out = []
     w = ind.soil_water_pct.value
     rank = a.soil_water.rank if a.soil_water else None
-    sub = (("o tej porze roku mniej wody nie było w żadnym z {of} lat" if rank.lower_years == 0 else
-            "o tej porze roku mniej wody było w {n} z {of} lat").format(n=rank.lower_years, of=rank.of_years)
-           if rank and rank.of_years else "zapas wody dostępnej dla roślin")
+    sub = water_rank_text(rank) or "zapas wody dostępnej dla roślin"
     out.append({"title": "Zapas wody w glebie", "value": "brak danych" if w is None else f"{num(w)}%",
                 "unit": "pełnego" if w is not None else "", "sub": sub, "color": "#2F80C9", "bar": w})
     if a.period:
@@ -470,12 +513,15 @@ def period_text(a: AnalysisResponse) -> str:
     return f"od {date_pl(a.history.season_start)} (sezon uprawy)"
 
 
-def area_text(a: AnalysisResponse) -> str:
-    """Powierzchnia działki + powierzchnia uprawy z notą, gdy są dwie różne."""
+def area_text(a: AnalysisResponse, short: bool = False) -> str:
+    """Powierzchnia działki + powierzchnia uprawy z notą, gdy są dwie różne (skrócony – nota do pierwszego zdania)."""
     ha = num(a.parcel.powierzchnia_ha, 2, "ha")
     s = a.suggestions
     if s and s.area and abs(s.area.value_ha - a.parcel.powierzchnia_ha) >= 0.01:
-        return f"{ha} · uprawa {num(s.area.value_ha, 2, 'ha')} ({s.area.note.rstrip('.')})"
+        note = s.area.note.rstrip('.')
+        if short:
+            note = note.split(':', 1)[0].split('. ')[0]
+        return f"{ha} · uprawa {num(s.area.value_ha, 2, 'ha')} ({note.lower() if short else note})"
     return ha
 
 
@@ -501,7 +547,7 @@ def render_html(a: AnalysisResponse, ortho: str | None, generated: dt.datetime |
         "STATUS": STATUS, "CATEGORY": CATEGORY, "PERMIT_ICON": PERMIT_ICON, "SOURCE_ICON": SOURCE_ICON,
         "CONFIDENCE": CONFIDENCE, "RAIN": RAIN,
         "ortho": ortho, "outline": Markup(outline), "map_side_m": round(bbox[2] - bbox[0]),
-        "qr": Markup(qr_svg(url)) if settings.public_url else "", "url": url, "url_host": url.split("//", 1)[-1].split("/?")[0],
+        "qr": Markup(qr_svg(url)), "url": url, "url_host": url.split("//", 1)[-1].split("/?")[0],
         "chart_balance": Markup(charts.balance_chart(h) or ""),
         "chart_stress": Markup(charts.stress_chart(h.stress_days_by_year) or ""),
         "chart_precip": Markup(charts.precip_chart(h.monthly_precip) or ""),
@@ -549,11 +595,16 @@ def render_html(a: AnalysisResponse, ortho: str | None, generated: dt.datetime |
         "source_date": source_date,
         "std_limits": STANDARD_LIMITS, "std_limits_short": STANDARD_LIMITS_SHORT,
         "period_text": period_text(a),
-        "area_text": area_text(a),
+        "area_text": area_text(a, short=report_type != "full"),
         "tonnes": tonnes, "zl": zl, "risk_text": risk_text, "balance_words": balance_words,
         "price_sources": sorted({i.revenue.price_source for i in field_items(a) if i.revenue and i.revenue.price_source}),
         "generated_txt": (generated or dt.datetime.now(dt.timezone.utc)).astimezone().strftime("%d.%m.%Y %H:%M"),
-        "app_host": (settings.public_url.split("//", 1)[-1].rstrip("/") if settings.public_url else "Wodoskop"),
+        "app_host": app_url().split("//", 1)[-1],
+        # F20: wykresy strony 1 (z danych analizy – stan działki i opady miesięczne)
+        "chart_soil_season": Markup(charts.soil_season_chart(a.field_state, low_pct=40.0, height=140) or "") if a.field_state else "",
+        "chart_precip_norm": Markup(charts.precip_norm_chart(a.history.monthly_precip, height=140) or ""),
+        "soil_sentence": soil_chart_sentence(a),
+        "precip_sentence": precip_chart_sentence(a),
     }
     return _env.get_template("report.html").render(**ctx)
 
