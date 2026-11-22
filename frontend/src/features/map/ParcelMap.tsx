@@ -217,7 +217,8 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
       {parcel && (
         <>
           {/* aktywna warstwa danych przycięta do obrysu (features/map/layers/*) – pod białym obrysem */}
-          {ActiveOverlay && layerData && layerData.parcel_id === parcel.id && (
+          {/* pole narysowane: serwer nadaje własny identyfikator (narysowane_…) – dane i tak są z tego obrysu */}
+          {ActiveOverlay && layerData && (layerData.parcel_id === parcel.id || parcel.source === 'drawn') && (
             <ActiveOverlay parcel={parcel} analysisDate={analysisDate} data={layerData} />
           )}
           {/* delikatna poświata pod białym obrysem 3 px (SPEC 5.1) */}

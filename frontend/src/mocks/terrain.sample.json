@@ -1,0 +1,95 @@
+{
+  "zones": [
+    {
+      "key": "sucha_gorka",
+      "label": "górka – sucho",
+      "share_pct": 0.0,
+      "color": "#8B6B4A",
+      "rating": null,
+      "sentence": null
+    },
+    {
+      "key": "stok",
+      "label": "stok – woda ucieka",
+      "share_pct": 56.4,
+      "color": "#E8B931",
+      "rating": "uwaga",
+      "sentence": "56% działki to stok – po ulewie część wody spływa w dół i zabiera glebę."
+    },
+    {
+      "key": "plasko",
+      "label": "płasko – dobre warunki",
+      "share_pct": 11.5,
+      "color": "#5BB37F",
+      "rating": "dobrze",
+      "sentence": "12% działki jest płaska – tu są najlepsze warunki wodne."
+    },
+    {
+      "key": "mokry_dolek",
+      "label": "obniżenie – zbiera się woda",
+      "share_pct": 32.1,
+      "color": "#2F80C9",
+      "rating": "uwaga",
+      "sentence": "32% działki to obniżenie, gdzie spływa i zbiera się woda – wilgotniej, po ulewach może być podmokło."
+    }
+  ],
+  "zone_share_pct": {
+    "sucha_gorka": 0.0,
+    "stok": 56.4,
+    "plasko": 11.5,
+    "mokry_dolek": 32.1
+  },
+  "soil_group": "srednia",
+  "soil_group_label": "gleba średnia: glina lekka pylasta 78%, piasek gliniasty lekki 22%",
+  "summary": "Działka jest lekko nachylona – różnica wysokości 2,0 m, średni spadek 3,1%. Woda spływa na południowy zachód i opuszcza działkę w jednym miejscu – tędy odpływa woda z całej działki; spływa tu też woda z ok. 3,6 ha pól i terenów powyżej. W obniżeniach (32% działki) zbiera się woda spływająca z wyższych miejsc.",
+  "relief_m": 2.0,
+  "elev_min_m": 140.0,
+  "elev_max_m": 142.0,
+  "slope_mean_pct": 3.1,
+  "slope_max_pct": 6.1,
+  "main_flow_direction": "południowy zachód",
+  "main_flow_direction_short": "SW",
+  "main_flow_azimuth_deg": 211.0,
+  "outlets": [
+    {
+      "direction": "południowy zachód",
+      "direction_short": "SW",
+      "azimuth_deg": 210.0,
+      "share_of_parcel_pct": 100.0,
+      "location": [
+        22.6007243,
+        53.0498069
+      ]
+    }
+  ],
+  "inflow_from_outside_m2": 36328.0,
+  "inflow_from_outside_ratio": 6.25,
+  "depressions_count": 0,
+  "depressions_volume_m3": 0.0,
+  "largest_depression": null,
+  "details": {
+    "grid_step_m": 4.5,
+    "smoothing_sigma_m": 6.0,
+    "nmt_points": 4662,
+    "nmt_missing_pct": 0.0,
+    "twi_mean": 8.54,
+    "twi_p90": 10.69,
+    "steep_share_pct": 5.2,
+    "flow_consistency": 0.53,
+    "method": "flow: D8 (kierunki, wyjścia) + D-infinity (TWI), fill: priority-flood (Barnes 2014), slope: Horn 3×3"
+  },
+  "confidence": "wysoka",
+  "limitations": [
+    "Teren z zapisanego wyniku analizy NMT z 21.11.2026 (NMT GUGiK nie odpowiadał – ukształtowanie terenu się nie zmienia).",
+    "Siatka 4.5 m – formy mniejsze niż ~9 m (bruzdy, koleiny, rowki) są niewidoczne.",
+    "Wysokości podawane co 0,1 m – przy małych spadkach kierunek spływu jest niepewny; stosujemy wygładzenie σ = 6 m.",
+    "Bufor 100 m: zlewnia sięgająca dalej (długie stoki) jest niedoszacowana.",
+    "Model nie zna drenażu, rowów, przepustów, dróg ani orki wzdłuż/w poprzek stoku – rzeczywisty odpływ może iść inaczej.",
+    "Objętości zagłębień i dopływu to szacunek rzędu wielkości, nie projekt."
+  ],
+  "source_tag": {
+    "kind": "pomiar",
+    "date": null,
+    "source": "NMT GUGiK (wysokości ±0,1 m) + obliczenia"
+  }
+}

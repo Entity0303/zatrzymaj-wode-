@@ -1,5 +1,6 @@
 import { CircleAlert, CircleCheck, CircleX, TreeDeciduous, type LucideIcon } from 'lucide-react'
-import type { ChoiceItem, CropSuggestions, SuggestionCategory } from '@/api/types'
+import type { ChoiceItem, CropSuggestions, PriceNow, SuggestionCategory } from '@/api/types'
+import { RevenueLine } from './RevenueLine'
 import { useLang } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
 
@@ -11,7 +12,7 @@ const CAT: Record<SuggestionCategory, { icon: LucideIcon; cls: string }> = {
 
 const num = (v: number | null | undefined) => (v == null ? null : v.toLocaleString('pl-PL', { minimumFractionDigits: 1, maximumFractionDigits: 1 }))
 
-function Choice({ c }: { c: ChoiceItem }) {
+function Choice({ c, priceNow }: { c: ChoiceItem; priceNow?: PriceNow | null }) {
   const { t } = useLang()
   const cat = c.category ? CAT[c.category] : null
   const Icon = cat?.icon ?? TreeDeciduous
@@ -39,6 +40,7 @@ function Choice({ c }: { c: ChoiceItem }) {
         )}
         <li className="text-text-muted">{t('susza obniża plon o ponad 20% w {n} z {of} lat', { n: c.drought_risk_years, of: c.years_simulated })}</li>
       </ul>
+      <RevenueLine revenue={c.revenue} priceNow={priceNow} details />
       <p className="text-sm leading-5">{t(c.why)}</p>
       {rotation.map((n) => (
         <p key={n} className={cn('text-sm leading-5', c.rotation.status === 'naruszenie' ? 'text-danger' : 'text-text-muted')}>
@@ -54,7 +56,7 @@ function Choice({ c }: { c: ChoiceItem }) {
  * karta na każdą uprawę (kategoria, plon, słaby rok, ryzyko, jedno zdanie „dlaczego”, płodozmian),
  * a pod spodem „Lepsze możliwości” (tylko gdy są). Bez wyboru – nic (wtedy ranking „Co tu posiać?”).
  */
-export function ChoiceCard({ suggestions }: { suggestions: CropSuggestions }) {
+export function ChoiceCard({ suggestions, priceNow }: { suggestions: CropSuggestions; /** F3: ceny bieżące */ priceNow?: PriceNow[] | null }) {
   const { t } = useLang()
   const choice = suggestions.choice ?? []
   const alt = suggestions.alternatives ?? []
@@ -67,7 +69,7 @@ export function ChoiceCard({ suggestions }: { suggestions: CropSuggestions }) {
       </header>
       <ul className="space-y-2">
         {choice.map((c) => (
-          <Choice key={`${c.requested_id ?? ''}-${c.crop_id}`} c={c} />
+          <Choice key={`${c.requested_id ?? ''}-${c.crop_id}`} c={c} priceNow={priceNow?.find((p) => p.crop_id === c.crop_id)} />
         ))}
       </ul>
       {suggestions.choice_notes?.map((n) => (
@@ -89,6 +91,7 @@ export function ChoiceCard({ suggestions }: { suggestions: CropSuggestions }) {
                   {a.yield_typical_t_ha != null && <span className="text-text-muted">{t('typowo')} {num(a.yield_typical_t_ha)} t/ha</span>}
                   <span className="text-text-muted">· {t('strata w {n} z {of} lat', { n: a.drought_risk_years, of: a.years_simulated })}</span>
                 </span>
+                <RevenueLine revenue={a.revenue} className="mt-0.5" />
                 <span className="block text-text-muted">{t(a.why)}</span>
               </li>
             ))}

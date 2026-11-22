@@ -10,6 +10,7 @@ const DESCRIPTION: Record<LayerKey, string> = {
   wilgotnosc: 'Ile wody mają rośliny – ze zdjęć satelitarnych',
   teren: 'Górki, stoki i dołki na działce',
   splyw: 'Którędy spływa woda po deszczu',
+  woda: 'Rzeki, rowy i stawy wokół działki',
   gleba: 'Jak gleba trzyma wodę – mapa IUNG',
 }
 

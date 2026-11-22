@@ -1,0 +1,109 @@
+{
+  "parcel_id": "201305_2.0038.6/1",
+  "layer": "woda",
+  "analysis_date": "2026-11-21",
+  "raster": null,
+  "features": {
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              22.595914863840054,
+              53.04927367531287
+            ],
+            [
+              22.605865633605077,
+              53.04920181041887
+            ]
+          ]
+        },
+        "properties": {
+          "kind": "row",
+          "color": "#4FA3EC",
+          "label": "Rów melioracyjny · 40 m od działki"
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              22.588890248722564,
+              53.05602057796922
+            ],
+            [
+              22.596890248722563,
+              53.05582057796922
+            ],
+            [
+              22.606890248722564,
+              53.05622057796922
+            ],
+            [
+              22.614890248722563,
+              53.05552057796922
+            ]
+          ]
+        },
+        "properties": {
+          "kind": "ciek",
+          "color": "#2F80C9",
+          "label": "Struga Wnorka · 620 m"
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                22.609890248722564,
+                53.04402057796922
+              ],
+              [
+                22.612390248722566,
+                53.04402057796922
+              ],
+              [
+                22.612390248722566,
+                53.04552057796922
+              ],
+              [
+                22.609890248722564,
+                53.04552057796922
+              ],
+              [
+                22.609890248722564,
+                53.04402057796922
+              ]
+            ]
+          ]
+        },
+        "properties": {
+          "kind": "zbiornik",
+          "color": "#2F80C9",
+          "label": "Staw · 850 m"
+        }
+      }
+    ]
+  },
+  "value_range": null,
+  "legend": null,
+  "legend_title": null,
+  "legend_left": null,
+  "legend_right": null,
+  "value": null,
+  "scene_date": null,
+  "note": "BDOT10k GUGiK – cieki, rowy i zbiorniki do 1 km od działki",
+  "source_tag": {
+    "kind": "pomiar",
+    "date": "2025-06-30",
+    "source": "BDOT10k GUGiK"
+  }
+}

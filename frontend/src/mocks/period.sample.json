@@ -1,0 +1,194 @@
+{
+  "from": "2026-10-23",
+  "to": "2026-11-21",
+  "label": "Ostatnie 30 dni (23.10–21.11.2026)",
+  "precip_mm": 19,
+  "et0_mm": 21,
+  "balance_mm": -2,
+  "normal_balance_mm": 14,
+  "percentile": 20,
+  "sentence": "W ostatnich 30 dniach spadło 19 mm, a wyparowało 21 mm – zostało -2 mm. Zwykle o tej porze zostaje ok. 14 mm, więc było suszej niż w 8 z 10 lat.",
+  "stress_days": null,
+  "daily": [
+    {
+      "date": "2026-10-23",
+      "precip_mm": 3.3,
+      "et0_mm": 0.8,
+      "balance_cum_mm": 2.5
+    },
+    {
+      "date": "2026-10-24",
+      "precip_mm": 0.0,
+      "et0_mm": 0.8,
+      "balance_cum_mm": 1.7
+    },
+    {
+      "date": "2026-10-25",
+      "precip_mm": 4.1,
+      "et0_mm": 0.9,
+      "balance_cum_mm": 4.9
+    },
+    {
+      "date": "2026-10-26",
+      "precip_mm": 0.3,
+      "et0_mm": 0.7,
+      "balance_cum_mm": 4.5
+    },
+    {
+      "date": "2026-10-27",
+      "precip_mm": 1.6,
+      "et0_mm": 1.0,
+      "balance_cum_mm": 5.1
+    },
+    {
+      "date": "2026-10-28",
+      "precip_mm": 1.8,
+      "et0_mm": 1.0,
+      "balance_cum_mm": 5.9
+    },
+    {
+      "date": "2026-10-29",
+      "precip_mm": 0.0,
+      "et0_mm": 0.8,
+      "balance_cum_mm": 5.1
+    },
+    {
+      "date": "2026-10-30",
+      "precip_mm": 0.0,
+      "et0_mm": 0.7,
+      "balance_cum_mm": 4.4
+    },
+    {
+      "date": "2026-10-31",
+      "precip_mm": 0.0,
+      "et0_mm": 0.7,
+      "balance_cum_mm": 3.7
+    },
+    {
+      "date": "2026-11-01",
+      "precip_mm": 4.7,
+      "et0_mm": 0.7,
+      "balance_cum_mm": 7.7
+    },
+    {
+      "date": "2026-11-02",
+      "precip_mm": 1.8,
+      "et0_mm": 0.8,
+      "balance_cum_mm": 8.7
+    },
+    {
+      "date": "2026-11-03",
+      "precip_mm": 0.0,
+      "et0_mm": 0.7,
+      "balance_cum_mm": 8.0
+    },
+    {
+      "date": "2026-11-04",
+      "precip_mm": 0.0,
+      "et0_mm": 0.6,
+      "balance_cum_mm": 7.4
+    },
+    {
+      "date": "2026-11-05",
+      "precip_mm": 0,
+      "et0_mm": 0.7,
+      "balance_cum_mm": 6.7
+    },
+    {
+      "date": "2026-11-06",
+      "precip_mm": 0.0,
+      "et0_mm": 0.7,
+      "balance_cum_mm": 6.0
+    },
+    {
+      "date": "2026-11-07",
+      "precip_mm": 0,
+      "et0_mm": 0.7,
+      "balance_cum_mm": 5.3
+    },
+    {
+      "date": "2026-11-08",
+      "precip_mm": 0.0,
+      "et0_mm": 0.8,
+      "balance_cum_mm": 4.5
+    },
+    {
+      "date": "2026-11-09",
+      "precip_mm": 0,
+      "et0_mm": 0.7,
+      "balance_cum_mm": 3.8
+    },
+    {
+      "date": "2026-11-10",
+      "precip_mm": 0.0,
+      "et0_mm": 0.8,
+      "balance_cum_mm": 3.0
+    },
+    {
+      "date": "2026-11-11",
+      "precip_mm": 0.0,
+      "et0_mm": 0.6,
+      "balance_cum_mm": 2.4
+    },
+    {
+      "date": "2026-11-12",
+      "precip_mm": 0.0,
+      "et0_mm": 0.5,
+      "balance_cum_mm": 1.9
+    },
+    {
+      "date": "2026-11-13",
+      "precip_mm": 1.3,
+      "et0_mm": 0.6,
+      "balance_cum_mm": 2.6
+    },
+    {
+      "date": "2026-11-14",
+      "precip_mm": 0,
+      "et0_mm": 0.7,
+      "balance_cum_mm": 1.9
+    },
+    {
+      "date": "2026-11-15",
+      "precip_mm": 0.0,
+      "et0_mm": 0.6,
+      "balance_cum_mm": 1.3
+    },
+    {
+      "date": "2026-11-16",
+      "precip_mm": 0.0,
+      "et0_mm": 0.6,
+      "balance_cum_mm": 0.7
+    },
+    {
+      "date": "2026-11-17",
+      "precip_mm": 0.0,
+      "et0_mm": 0.6,
+      "balance_cum_mm": 0.1
+    },
+    {
+      "date": "2026-11-18",
+      "precip_mm": 0.0,
+      "et0_mm": 0.6,
+      "balance_cum_mm": -0.5
+    },
+    {
+      "date": "2026-11-19",
+      "precip_mm": 0.0,
+      "et0_mm": 0.7,
+      "balance_cum_mm": -1.2
+    },
+    {
+      "date": "2026-11-20",
+      "precip_mm": 0.0,
+      "et0_mm": 0.6,
+      "balance_cum_mm": -1.8
+    },
+    {
+      "date": "2026-11-21",
+      "precip_mm": 0.1,
+      "et0_mm": 0.7,
+      "balance_cum_mm": -2.4
+    }
+  ]
+}

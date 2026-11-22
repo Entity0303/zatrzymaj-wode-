@@ -3,6 +3,7 @@
 _Stan na: 2026-11-22 (F1 – A za B)_
 
 ## Zrobione
+- **F3 (A za B)** na mockach: adresy w wyszukiwarce, teren i woda w okolicy liczone w tle, warstwa i karta „Woda w okolicy”, przychód z pola i ceny, „Okres” (zakres dat) z kartą i wykresem, satelita POST dla pola narysowanego. Czeka na backend F3.
 - **F2 (A za B)**: przykłady tylko z `/api/demo/examples`, „Narysuj swoje pole” (POST z `geometry`), stany ładowania/błędów przed wyborem działki, poprawki 390 px (tabele w paszporcie).
 - **F1 (A za B)**: baner obszaru przybliżonego, źródła opadów IMGW (A7) w werdykcie i paszporcie, satelita (A11): karta „Z satelity”, dociąganie `/api/satellite`, warstwy Kondycja / Wilgotność z legendą z serwera, „Rośliny” w werdykcie; jedna liczba sezonu w „Bilans wody” i paszporcie; „Teraz: …” przy statusie.
 - Układ wg `design/SPEC_UI.md` – kroki 1–2 z sekcji 17: tokeny (paleta, Inter, cienie, zaokrąglenia, lucide), ekran Start (lewy pasek, górny pasek z wyszukiwarką / lokalizacją / pogodą / datą, pigułki warstw + 2D|3D, mapa, prawy panel, dolny pasek 5 kart), tablet, telefon (szuflada z 3 położeniami, dolne zakładki).
@@ -23,6 +24,7 @@ _Stan na: 2026-11-22 (F1 – A za B)_
 - `b/frontend` (jedna długa gałąź; B1 z `b/wyglad-grafiki` już scalone) – merge do `main` tylko przy kamieniach milowych, bez PR na zadanie
 
 ## Następne
+- F3: po wdrożeniu backendu – sprawdzić na żywo; przenieść `revenue`/`price_now` z `mocks/prices.sample.json` do `analysis.choice.sample.json`, gdy `schemas/` je przyjmie.
 - F2: wizualna kontrola przez A na http://localhost:5173 (lista kroków w raporcie F2); ewentualne poprawki z jego zrzutów.
 - F1: zrobione (teksty, przycięcie warstw do obrysu, „Spróbuj ponownie” w legendzie). Do sprawdzenia na żywo: „Spróbuj ponownie” przy prawdziwym błędzie warstwy.
 0. **Uwagi mentora (jury ma 3 min):** karty „Zobacz przykład” są (B10, lista lokalna) – podmienić na `GET /api/demo/examples`; po merge `origin/a/backend` z nowym kontraktem – pole „Co rosło w zeszłym roku?” (+ `przedplon` w linku i raporcie), odznaki formalności / ostrzeżenie / ekoschemat w rekomendacjach (3 w panelu, 5 w paszporcie), gleba: piasek/pył/ił %, uziarnienie, przepuszczalność, ulewa, typ gleby.

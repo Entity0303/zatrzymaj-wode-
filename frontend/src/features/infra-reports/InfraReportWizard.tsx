@@ -1,7 +1,8 @@
-import { ArrowLeft, Camera, Check, FileDown, Loader2, MapPin, MousePointerClick, Save, X } from 'lucide-react'
+import { ArrowLeft, Camera, Check, Droplets, FileDown, Loader2, MapPin, MousePointerClick, Save, X } from 'lucide-react'
 import { useState } from 'react'
 import { ApiError, api } from '@/api/client'
-import type { InfraProblem, InfraReportIn, Parcel, WaterLevel, WaterObjectType } from '@/api/types'
+import type { Hydro, HydroFeature, InfraProblem, InfraReportIn, Parcel, WaterLevel, WaterObjectType } from '@/api/types'
+import { formatDistance, HYDRO_KIND } from '@/lib/hydro'
 import { cn } from '@/lib/utils'
 import { useLang } from '@/lib/i18n'
 import { LEVEL, OBJECT, PROBLEM, TONE_HEX } from './infra'
@@ -10,6 +11,9 @@ import { buildLetter } from './letter'
 const STEPS = ['Obiekt', 'Problem', 'Zdjęcie', 'Podsumowanie'] as const
 
 type SaveState = { phase: 'idle' | 'saving' | 'saved' | 'unavailable' | 'error' }
+
+/** rodzaj wody z hydro → rodzaj obiektu zgłoszenia */
+const TO_OBJECT: Record<HydroFeature['kind'], WaterObjectType> = { row: 'row', ciek: 'ciek', rzeka: 'ciek', kanal: 'ciek', zbiornik: 'zbiornik' }
 
 /**
  * Zgłoszenie stanu rowu / cieku / zbiornika (SPEC 11): 1. obiekt i miejsce na mapie · 2. problem i poziom wody ·
@@ -22,7 +26,10 @@ export function InfraReportWizard({
   onPickPoint,
   onClose,
   onSaved,
+  hydro,
 }: {
+  /** F3: woda w okolicy – podpowiedź najbliższego rowu */
+  hydro?: Hydro | null
   parcel: Parcel | null
   /** wskazane miejsce [lon, lat] (domyślnie środek działki) */
   point: [number, number] | null
@@ -33,6 +40,10 @@ export function InfraReportWizard({
 }) {
   const { t } = useLang()
   const [step, setStep] = useState(0)
+  // F3: najbliższy rów z wody w okolicy (a bez rowów – najbliższy obiekt); obiekty nie mają położenia – tylko podpowiedź
+  const feats = hydro?.status === 'ok' ? (hydro.features ?? []) : []
+  const byDist = [...feats].sort((a, b) => a.distance_m - b.distance_m)
+  const nearest = byDist.find((f) => f.kind === 'row') ?? byDist[0] ?? null
   const [type, setType] = useState<WaterObjectType | null>(null)
   const [problem, setProblem] = useState<InfraProblem | null>(null)
   const [level, setLevel] = useState<WaterLevel | null>(null)
@@ -101,6 +112,23 @@ export function InfraReportWizard({
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-4">
         {step === 0 && (
           <>
+            {nearest && (
+              <div className="flex items-start gap-2.5 rounded-xl bg-water-soft/70 p-3 text-sm leading-5">
+                <Droplets className="mt-0.5 size-4 shrink-0 text-water" aria-hidden />
+                <span className="min-w-0 flex-1">
+                  {t('Najbliżej działki:')} <b>{t(HYDRO_KIND[nearest.kind])}</b>
+                  {nearest.name && ` ${nearest.name}`} · {formatDistance(nearest.distance_m)}
+                  {nearest.toward_outflow && <span className="block text-xs leading-4 text-text-muted">{t('w stronę, w którą woda spływa z działki')}</span>}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setType(TO_OBJECT[nearest.kind])}
+                  className="h-9 shrink-0 rounded-md border bg-surface px-3 text-sm font-medium hover:bg-surface-2"
+                >
+                  {t('Zgłoś ten')}
+                </button>
+              </div>
+            )}
             <p className="text-sm leading-5 text-text-muted">{t('Czego dotyczy zgłoszenie?')}</p>
             <div role="radiogroup" aria-label={t('Rodzaj obiektu')} className="grid gap-2">
               {(Object.keys(OBJECT) as WaterObjectType[]).map((k) => (

@@ -1,10 +1,11 @@
 import type { CropId } from '@/api/types'
 import { CROPS, HISTORY_UNKNOWN, isHistoryCrop } from './crops'
 import { minAnalysisIso, todayIso } from './dates'
+import { parsePeriod } from './period'
 
 /**
  * Stan aplikacji w adresie (link do udostępnienia, jury: wszystko 1 klik od wejścia):
- * ?dzialka=<id lub „obręb numer”>&uprawa=<CropId>&data=RRRR-MM-DD&historia=<1–3 uprawy po przecinku, pierwsza = rok temu>&widok=paszport
+ * ?dzialka=<id lub „obręb numer”>&uprawa=<CropId>&data=RRRR-MM-DD&historia=<1–3 uprawy po przecinku, pierwsza = rok temu>&widok=paszport&okres=30d
  * (stary ?przedplon= czytany jako „rok temu”)
  * Otwarcie takiego linku od razu wyszukuje działkę i liczy analizę. Inne parametry (np. ?dane=przykladowe)
  * zostają nietknięte.
@@ -19,9 +20,11 @@ export type LinkState = {
   plan: string[]
   /** 'paszport' = po analizie od razu otwórz paszport wodny */
   widok: 'paszport' | null
+  /** F3: okres analizy – `30d` · `od_siewu` · `sezon` · `RRRR-MM-DD_RRRR-MM-DD` */
+  okres: string | null
 }
 
-const P = { dzialka: 'dzialka', uprawa: 'uprawa', data: 'data', historia: 'historia', plan: 'plan', widok: 'widok' } as const
+const P = { dzialka: 'dzialka', uprawa: 'uprawa', data: 'data', historia: 'historia', plan: 'plan', widok: 'widok', okres: 'okres' } as const
 
 const isCrop = (v: string | null): v is CropId => !!v && CROPS.some((c) => c.id === v)
 
@@ -54,6 +57,7 @@ export function readLink(search = window.location.search): LinkState {
       .filter((x) => /^[a-z_]{2,40}$/.test(x))
       .slice(0, 3),
     widok: q.get(P.widok) === 'paszport' ? 'paszport' : null,
+    okres: parsePeriod(q.get(P.okres)),
   }
 }
 

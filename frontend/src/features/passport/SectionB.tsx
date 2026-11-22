@@ -5,6 +5,7 @@ import { SourceTag } from '@/components/SourceTag'
 import { formatDatePl, formatDayLong, formatSigned } from '@/lib/format'
 import { seasonBalance } from '@/lib/seasonBalance'
 import { PrecipSourceNote } from '@/features/parcel-panel/PrecipSourceNote'
+import { PeriodCard } from '@/features/period/PeriodCard'
 import { cn } from '@/lib/utils'
 import { useLang } from '@/lib/i18n'
 import { BalanceChart } from './charts/BalanceChart'
@@ -72,6 +73,8 @@ export function SectionB({ analysis, chartWidth }: { analysis: AnalysisResponse;
   return (
     <PassportSection id="pass-b" letter="B" title={t('Na tle 10 lat')}>
       <p className="font-display text-2xl leading-8 font-semibold text-brand-dark">{sentence}</p>
+      {/* F3: wybrany okres – ta sama karta co w panelu */}
+      <PeriodCard period={analysis.period} passport chartWidth={chartWidth} />
 
       <div className="space-y-3 rounded-xl bg-surface p-4 shadow-card">
         <div className="flex flex-wrap items-baseline justify-between gap-2">

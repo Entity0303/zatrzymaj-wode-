@@ -1,6 +1,7 @@
 import { ChevronDown, CircleAlert, CircleCheck, CircleX, TreeDeciduous, type LucideIcon } from 'lucide-react'
 import { useState } from 'react'
-import type { CropSuggestion, CropSuggestions, PerennialSuggestion, SuggestionCategory } from '@/api/types'
+import type { CropSuggestion, CropSuggestions, PerennialSuggestion, PriceNow, SuggestionCategory } from '@/api/types'
+import { RevenueLine } from './RevenueLine'
 import { SourceTag } from '@/components/SourceTag'
 import { formatDatePl } from '@/lib/format'
 import { useLang } from '@/lib/i18n'
@@ -55,7 +56,7 @@ function Details({ s }: { s: CropSuggestion | PerennialSuggestion }) {
   )
 }
 
-function Row({ s, area }: { s: CropSuggestion; area: number | null }) {
+function Row({ s, area, priceNow }: { s: CropSuggestion; area: number | null; priceNow?: PriceNow | null }) {
   const { t } = useLang()
   const [open, setOpen] = useState(false)
   const c = CAT[s.category]
@@ -72,6 +73,7 @@ function Row({ s, area }: { s: CropSuggestion; area: number | null }) {
           <span className="block text-sm leading-5">
             <YieldLine s={s} area={area} />
           </span>
+          <RevenueLine revenue={s.revenue} priceNow={priceNow} details={open} className="mt-0.5" />
           {open && <span className="mt-1 block text-sm leading-5 text-text-muted">{t(s.reason)}</span>}
           {open && <Details s={s} />}
         </span>
@@ -87,7 +89,7 @@ function Row({ s, area }: { s: CropSuggestion; area: number | null }) {
  * powodu; po kliknięciu słaby rok, „X na 10 lat”, płodozmian. Wieloletnie – osobno, zwinięte, bez ✅/❌.
  * Plony zawsze bez nawadniania – to orientacja, nie prognoza.
  */
-export function RankingCard({ suggestions, top = 3 }: { suggestions: CropSuggestions; top?: number }) {
+export function RankingCard({ suggestions, top = 3, priceNow }: { suggestions: CropSuggestions; top?: number; /** F3: ceny bieżące */ priceNow?: PriceNow[] | null }) {
   const { t } = useLang()
   const [all, setAll] = useState(false)
   const [perennialsOpen, setPerennialsOpen] = useState(false)
@@ -106,7 +108,7 @@ export function RankingCard({ suggestions, top = 3 }: { suggestions: CropSuggest
 
       <ul className="divide-y px-4">
         {shown.map((s) => (
-          <Row key={s.crop_id} s={s} area={area} />
+          <Row key={s.crop_id} s={s} area={area} priceNow={priceNow?.find((p) => p.crop_id === s.crop_id)} />
         ))}
       </ul>
 

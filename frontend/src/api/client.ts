@@ -5,6 +5,8 @@ import type {
   CropId,
   DemoExample,
   Forecast,
+  Hydro,
+  Terrain,
   InfraReport,
   InfraReportIn,
   LayerKey,
@@ -14,6 +16,7 @@ import type {
   Satellite,
   SearchResponse,
 } from './types'
+import { periodParams } from '@/lib/period'
 
 export class ApiError extends Error {
   status: number
@@ -67,11 +70,19 @@ export type AnalysisQuery = {
   plannedCrops?: string[]
   /** A5e: raport PDF – skrócony (2 strony) / szczegółowy */
   reportType?: 'short' | 'full'
+  /** F3: okres (znacznik z lib/period.ts) → period= albo date_from/date_to */
+  period?: string | null
+}
+
+/** Samo miejsce: działka albo punkt (teren, woda w okolicy). */
+function placeParams(q: AnalysisQuery): Record<string, string | number> {
+  if (q.point) return { lon: q.point[0].toFixed(7), lat: q.point[1].toFixed(7) }
+  return q.parcelId ? { parcel_id: q.parcelId } : {}
 }
 
 /** Treść POST (pole narysowane): te same pola co w GET, `geometry` zamiast działki / punktu. */
 function analysisBody(q: AnalysisQuery): AnalysisRequest {
-  const p = analysisParams({ ...q, parcelId: null, point: null })
+  const p = analysisParams({ ...q, parcelId: null, point: null, period: null })
   return {
     geometry: q.geometry,
     date: q.date,
@@ -95,6 +106,7 @@ function analysisParams(q: AnalysisQuery): Record<string, string | number> {
   if (q.area && q.area > 0) params.cultivated_area_ha = q.area
   if (q.plannedCrops?.length) params.planned_crops = q.plannedCrops.slice(0, 3).join(',')
   if (q.reportType) params.report_type = q.reportType
+  Object.assign(params, periodParams(q.period))
   return params
 }
 
@@ -121,11 +133,22 @@ export const api = {
     const p = analysisParams({ parcelId: q.parcelId, point: q.point, date: q.date })
     return get<Satellite>('/api/satellite', p, signal)
   },
+  /**
+   * F3: teren liczony w tle – GET /api/terrain?parcel_id= (lon/lat) albo POST { geometry } dla pola narysowanego.
+   */
+  terrain: (q: AnalysisQuery, signal?: AbortSignal) =>
+    q.geometry ? post<Terrain>('/api/terrain', { geometry: q.geometry }, signal) : get<Terrain>('/api/terrain', placeParams(q), signal),
+  /** F3: woda w okolicy – GET /api/hydro?parcel_id= (lon/lat) albo POST { geometry } */
+  hydro: (q: AnalysisQuery, signal?: AbortSignal) =>
+    q.geometry ? post<Hydro>('/api/hydro', { geometry: q.geometry }, signal) : get<Hydro>('/api/hydro', placeParams(q), signal),
   /** GET /api/search?q= – jedno pole wyszukiwania: identyfikator, „obręb numer” albo nazwa miejscowości (A5c) */
   search: (q: string, signal?: AbortSignal) => get<SearchResponse>('/api/search', { q }, signal),
   /** GET /api/layers/{layer} – warstwa przycięta do obrysu działki (raster PNG + bbox, GeoJSON) */
-  layer: (layer: LayerKey, parcelId: string, date: string, signal?: AbortSignal) =>
-    get<LayerResponse>(`/api/layers/${layer}`, { parcel_id: parcelId, date }, signal),
+  layer: (layer: LayerKey, parcelId: string, date: string, signal?: AbortSignal, geometry?: GeoJSON.Polygon | null) =>
+    // F3: pole narysowane – warstwy satelity POST-em z obrysem
+    geometry && (layer === 'kondycja' || layer === 'wilgotnosc')
+      ? post<LayerResponse>(`/api/layers/${layer}`, { geometry, date }, signal)
+      : get<LayerResponse>(`/api/layers/${layer}`, { parcel_id: parcelId, date }, signal),
   /** GET /api/layers/{layer}/point – wartość warstwy w klikniętym punkcie (SPEC 5.4) */
   layerPoint: (layer: LayerKey, lon: number, lat: number, date: string) =>
     get<PointValue>(`/api/layers/${layer}/point`, { lon: lon.toFixed(7), lat: lat.toFixed(7), date }),

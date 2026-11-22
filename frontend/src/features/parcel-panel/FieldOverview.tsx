@@ -6,6 +6,8 @@ import { ChoiceCard } from './ChoiceCard'
 import { RankingCard } from './RankingCard'
 import { RefineCard } from './RefineCard'
 import { SatelliteCard } from './SatelliteCard'
+import { HydroCard } from './HydroCard'
+import { PeriodCard } from '@/features/period/PeriodCard'
 import { VerdictCard } from './VerdictCard'
 
 export type RefineProps = {
@@ -17,6 +19,8 @@ export type RefineProps = {
   /** A5e: plan upraw (do 3) */
   planned: string[]
   onPlannedChange: (p: string[]) => void
+  /** F3: wybrany okres (znacznik) – karta „Okres” na górze */
+  period?: string | null
 }
 
 /** Grupy upraw, które backend przyjmuje w planie (wybierze najlepszy gatunek z grupy). */
@@ -42,7 +46,8 @@ export function NowLine({ analysis }: { analysis: AnalysisResponse }) {
 
 /**
  * Zakładka „Przegląd” (B3, „mniej na ekranie”): zdania werdyktu (3 + „Pokaż wszystko”; nagłówek jest wyżej
- * w RiskSummary), stan wody teraz, „Z satelity” (A11), „Co tu posiać?” (3 najlepsze), „Doprecyzuj” (zwinięte).
+ * w RiskSummary), stan wody teraz, „Z satelity” (A11), „Woda w okolicy” (F3), „Co tu posiać?” (3 najlepsze,
+ * z przychodem F3), „Doprecyzuj” (zwinięte). Na samej górze karta „Okres”, gdy rolnik wybrał okres (F3).
  */
 export function FieldOverview({ analysis, refine, showNow = true }: { analysis: AnalysisResponse; refine: RefineProps; showNow?: boolean }) {
   const s = analysis.suggestions
@@ -52,11 +57,13 @@ export function FieldOverview({ analysis, refine, showNow = true }: { analysis: 
   const area = s?.area ?? (analysis.cultivated_area_ha ? { value_ha: analysis.cultivated_area_ha, estimated: false, note: '' } : null)
   return (
     <div className="space-y-3">
+      <PeriodCard period={analysis.period} requested={!!refine.period} />
       {analysis.verdict && <VerdictCard verdict={analysis.verdict} bare limit={3} hideCrops={!!s} precip={analysis.precip_sources} />}
       {showNow && <NowLine analysis={analysis} />}
       {analysis.satellite && <SatelliteCard satellite={analysis.satellite} />}
-      {s && <ChoiceCard suggestions={s} />}
-      {s && s.groups.some((g) => g.items.length) && <RankingCard suggestions={s} />}
+      <HydroCard hydro={analysis.hydro} />
+      {s && <ChoiceCard suggestions={s} priceNow={analysis.price_now} />}
+      {s && s.groups.some((g) => g.items.length) && <RankingCard suggestions={s} priceNow={analysis.price_now} />}
       <RefineCard {...refine} area={area} rotationHint={s?.rotation_hint} planOptions={planOptions} />
     </div>
   )

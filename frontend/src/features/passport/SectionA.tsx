@@ -9,6 +9,7 @@ import { useLang } from '@/lib/i18n'
 import { PassportSection } from './PassportSection'
 import { TerrainCard } from '@/features/parcel-panel/TerrainCard'
 import { SatelliteCard } from '@/features/parcel-panel/SatelliteCard'
+import { HydroCard } from '@/features/parcel-panel/HydroCard'
 
 const val = (i: Indicator, digits = 0) => (i.value === null ? null : formatNum(i.value, digits))
 const tagDate = (i: Indicator) => (i.source_tag.date ? formatDatePl(i.source_tag.date) : undefined)
@@ -97,6 +98,7 @@ export function SectionA({ analysis, chartWidth }: { analysis: AnalysisResponse;
         </MetricCard>
       </div>
       {analysis.satellite && <SatelliteCard satellite={analysis.satellite} passport chartWidth={chartWidth} />}
+      <HydroCard hydro={analysis.hydro} passport />
       <TerrainCard terrain={analysis.terrain} note={analysis.terrain_note} />
     </PassportSection>
   )

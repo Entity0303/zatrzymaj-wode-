@@ -1,6 +1,6 @@
-import { ChevronDown, Mountain } from 'lucide-react'
+import { ChevronDown, Loader2, Mountain } from 'lucide-react'
 import { useState } from 'react'
-import type { Terrain, TerrainRating } from '@/api/types'
+import type { Terrain, TerrainPending, TerrainRating } from '@/api/types'
 import { SourceTag } from '@/components/SourceTag'
 import { formatDatePl, formatNum } from '@/lib/format'
 import { cn } from '@/lib/utils'
@@ -17,9 +17,23 @@ const RATING: Record<TerrainRating, { label: string; dot: string }> = {
  * kolor z odpowiedzi – ten sam co na mapie), podsumowanie, zdania o strefach z oceną,
  * „Dla dociekliwych” – szczegóły metody. Brak terenu → `terrain_note` szarym tekstem.
  */
-export function TerrainCard({ terrain, note }: { terrain: Terrain | null | undefined; note?: string | null }) {
+export function TerrainCard({ terrain: input, note }: { terrain: Terrain | TerrainPending | null | undefined; note?: string | null }) {
   const { t } = useLang()
   const [open, setOpen] = useState(false)
+
+  // F3: teren liczony w tle (analysis.terrain = { status: 'pending' }) – dociąga go useAnalysis
+  if (input && 'status' in input && input.status === 'pending')
+    return (
+      <section aria-label={t('Teren działki')} aria-busy className="rounded-xl border bg-surface p-3.5">
+        <p className="flex items-center gap-2 text-sm font-medium">
+          <Mountain className="size-4 text-earth" aria-hidden /> {t('Teren działki')}
+        </p>
+        <p className="mt-1 flex items-center gap-2 text-sm leading-5 text-text-muted" role="status">
+          <Loader2 className="size-4 animate-spin text-brand" aria-hidden /> {t('Liczę ukształtowanie terenu…')}
+        </p>
+      </section>
+    )
+  const terrain = input && 'zones' in input ? input : null
 
   if (!terrain)
     return (

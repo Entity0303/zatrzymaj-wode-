@@ -1,4 +1,4 @@
-import { Loader2, MapPin, Search, SquareDashed, TriangleAlert, X } from 'lucide-react'
+import { House, Loader2, MapPin, Search, SquareDashed, TriangleAlert, X } from 'lucide-react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { api } from '@/api/client'
 import type { Parcel, SearchResponse, SearchResult } from '@/api/types'
@@ -6,11 +6,12 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { formatHa, plForm } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { useLang } from '@/lib/i18n'
+import { mockSearchAddress, mockVariant } from '@/mocks/useMockAnalysis'
 
 /**
  * Wyszukiwarka (SPEC 4.2, 14; A5c): jedno pole – identyfikator, „obręb numer” albo nazwa miejscowości.
  * Podpowiedzi z GET /api/search po ~300 ms przerwy (min. 2 znaki, poprzednie zapytanie anulowane), w grupach
- * „Działki” i „Miejscowości”; „Szukam…”, podpowiedź przy braku wyników, ostrzeżenia źródeł w dymku, atrybucja.
+ * „Działki”, „Adresy” (F3: adres → działka spod punktu) i „Miejscowości”; „Szukam…”, podpowiedź przy braku wyników, ostrzeżenia źródeł w dymku, atrybucja.
  * Lista kandydatów z mapy (kilka działek o tym numerze) – jak dotąd.
  */
 export function SearchBar({
@@ -73,7 +74,9 @@ export function SearchBar({
     const ctrl = new AbortController()
     setBusy(true)
     const id = window.setTimeout(() => {
-      api.search(query, ctrl.signal).then(
+      // mock F3 (?dane=przykladowe&wariant=adres): działka + adresy z search.address.sample.json
+      const request = import.meta.env.DEV && mockVariant('adres') ? mockSearchAddress() : api.search(query, ctrl.signal)
+      request.then(
         (r) => {
           setResp(r)
           setActive(-1)
@@ -98,8 +101,9 @@ export function SearchBar({
 
   const results = resp?.results ?? []
   const parcels = results.filter((r) => r.kind === 'parcel')
+  const addresses = results.filter((r) => r.kind === 'address')
   const places = results.filter((r) => r.kind === 'place')
-  const flat = [...parcels, ...places]
+  const flat = [...parcels, ...addresses, ...places]
   const showCandidates = candidates.length > 0 && !open
   const showList = open && !!resp && q.trim().length >= 2
 
@@ -118,7 +122,13 @@ export function SearchBar({
         className={cn('flex min-h-11 w-full items-center gap-3 px-4 py-2 text-left', i === active && 'bg-ok-soft')}
       >
         <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-sage-soft text-brand">
-          {r.kind === 'parcel' ? <SquareDashed className="size-4" aria-hidden /> : <MapPin className="size-4" aria-hidden />}
+          {r.kind === 'parcel' ? (
+            <SquareDashed className="size-4" aria-hidden />
+          ) : r.kind === 'address' ? (
+            <House className="size-4" aria-hidden />
+          ) : (
+            <MapPin className="size-4" aria-hidden />
+          )}
         </span>
         <span className="min-w-0 flex-1 truncate text-sm leading-5">{r.label}</span>
         {r.kind === 'parcel' && r.area_ha != null && <span className="tabular shrink-0 text-sm text-text-muted">{formatHa(r.area_ha)} ha</span>}
@@ -222,10 +232,16 @@ export function SearchBar({
                 <ul>{parcels.map((r, i) => row(r, i))}</ul>
               </>
             )}
+            {addresses.length > 0 && (
+              <>
+                <p className="px-4 pt-2 pb-1 text-xs font-semibold tracking-wider text-text-muted uppercase">{t('Adresy')}</p>
+                <ul>{addresses.map((r, i) => row(r, parcels.length + i))}</ul>
+              </>
+            )}
             {places.length > 0 && (
               <>
                 <p className="px-4 pt-2 pb-1 text-xs font-semibold tracking-wider text-text-muted uppercase">{t('Miejscowości')}</p>
-                <ul>{places.map((r, i) => row(r, parcels.length + i))}</ul>
+                <ul>{places.map((r, i) => row(r, parcels.length + addresses.length + i))}</ul>
               </>
             )}
             {!results.length && <p className="px-4 py-3 text-sm text-text-muted">{resp?.hint ? t(resp.hint) : t('Nic nie znaleziono')}</p>}

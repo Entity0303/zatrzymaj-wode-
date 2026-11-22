@@ -42,17 +42,19 @@ export function layerStatusText(layer: LayerKey, state: LayerState, satellite: S
     case 'idle':
       return 'Wybierz działkę, aby zobaczyć warstwę'
     case 'waiting':
-      return 'Pobieram zdjęcie satelitarne…'
+      return state.reason
     case 'loading':
       return 'Wczytuję warstwę…'
     case 'unavailable':
       if (sat) return 'Brak zdjęcia satelitarnego dla tej działki'
-      return layer === 'gleba' ? 'Ta warstwa będzie wkrótce' : 'Brak danych dla tej działki'
+      return layer === 'gleba' || layer === 'woda' ? 'Ta warstwa będzie wkrótce' : 'Brak danych dla tej działki'
     case 'error':
       return 'Nie udało się pobrać warstwy – mapa działa dalej'
     case 'ok': {
       const d = state.data
       if (d.layer === 'teren' && d.value_range) return 'Wysokość od {a} do {b} m n.p.m.'
+      if (d.layer === 'woda' && !d.features?.features?.length) return 'W pobliżu działki nie ma rzek, rowów ani stawów'
+      if (d.layer === 'woda' && d.note) return d.note
       if (sat && (d.scene_date || d.source_tag.date)) return 'Zdjęcie satelitarne z {date}'
       if (d.source_tag.date) return 'Dane z {date}'
       return d.source_tag.source ?? ''

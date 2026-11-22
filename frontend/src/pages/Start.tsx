@@ -37,6 +37,7 @@ import { SearchBar } from '@/features/search/SearchBar'
 import { useForecast } from '@/features/weather/useForecast'
 import { WeatherWidget } from '@/features/weather/WeatherWidget'
 import { DateField } from '@/components/DateField'
+import { PeriodPicker } from '@/features/period/PeriodPicker'
 import { LayerMenu } from '@/features/map/LayerMenu'
 import { FarmDrawer } from '@/layout/FarmDrawer'
 import { BottomTabs } from '@/layout/BottomTabs'
@@ -102,6 +103,8 @@ export default function Start() {
   // link z adresu (?dzialka=&uprawa=&data=) – czytany raz przy wejściu
   const [link] = useState(readLink)
   const [asOf, setAsOf] = useState(link.data ?? todayIso())
+  // F3: okres analizy (znacznik z lib/period.ts, w adresie ?okres=)
+  const [period, setPeriod] = useState<string | null>(link.okres)
   const [layer, setLayer] = useState<LayerKey>('teren')
   const [view, setView] = useState<'2d' | '3d'>('2d')
   const [settings] = useSettings()
@@ -149,16 +152,38 @@ export default function Start() {
   const planned = parcel ? (plans[parcel.id] ?? NO_HISTORY) : NO_HISTORY
   const approxPoint = parcel ? (approxPoints[parcel.id] ?? null) : null
   const drawnGeom = parcel ? (drawnGeoms[parcel.id] ?? null) : null
-  const { run, retry: retryAnalysis } = useAnalysis(parcel?.id ?? null, crop, asOf, { point: approxPoint, geometry: drawnGeom, cropHistory: history, area, plannedCrops: planned })
+  // F3: „od siewu” ma sens tylko z uprawą
+  const periodUsed = period === 'od_siewu' && !crop ? null : period
+  const { run, retry: retryAnalysis } = useAnalysis(parcel?.id ?? null, crop, asOf, {
+    point: approxPoint,
+    geometry: drawnGeom,
+    cropHistory: history,
+    area,
+    plannedCrops: planned,
+    period: periodUsed,
+  })
   const analysis = run.phase === 'done' ? run.analysis : null
   const runKey = run.phase === 'done' ? run.key : null
   // A11: zdjęcie satelitarne liczone osobno – warstwy Kondycja / Wilgotność odświeżamy, gdy przyjdzie
   const satellite = analysis?.satellite ?? null
   const satStatus = satellite?.status ?? null
   const satLayer = layer === 'kondycja' || layer === 'wilgotnosc'
+  // F3: teren i woda w okolicy liczone w tle – warstwy Teren / Spływ / Woda czekają, potem przeładowanie
+  const terrainPending = !!analysis?.terrain && 'status' in analysis.terrain
+  const hydroStatus = analysis?.hydro?.status ?? null
+  const terrainLayer = layer === 'teren' || layer === 'splyw'
+  const layerWaiting =
+    satLayer && satStatus === 'pending'
+      ? 'Pobieram zdjęcie satelitarne…'
+      : terrainLayer && terrainPending
+        ? 'Liczę ukształtowanie terenu…'
+        : layer === 'woda' && hydroStatus === 'pending'
+          ? 'Sprawdzam wodę w okolicy…'
+          : null
   // „Spróbuj ponownie” w legendzie: nowy numer próby = to samo zapytanie warstwy jeszcze raz
   const [layerAttempt, setLayerAttempt] = useState(0)
-  const layerState = useLayerData(layer, parcel?.id ?? null, asOf, `${satLayer ? (satStatus ?? '') : ''}|${layerAttempt}`, satLayer && satStatus === 'pending')
+  const layerRefresh = `${satLayer ? (satStatus ?? '') : ''}|${terrainLayer ? String(terrainPending) : ''}|${layer === 'woda' ? (hydroStatus ?? '') : ''}|${layerAttempt}`
+  const layerState = useLayerData(layer, parcel?.id ?? null, asOf, layerRefresh, layerWaiting, drawnGeom)
   const retryLayer = layerState.phase === 'error' ? () => setLayerAttempt((n) => n + 1) : undefined
   const passportOpen = !!analysis && passportFor === runKey
 
@@ -236,6 +261,11 @@ export default function Start() {
       return find(() => api.parcelById(id), 'number')
     }
     const map = mapRef.current
+    // F3: adres → mapa na punkt (zoom ~17) i od razu działka spod punktu (jak klik w mapę)
+    if (r.kind === 'address') {
+      map?.setView([r.lat, r.lon], 17, { animate: !reducedMotion })
+      return searchByPoint(r.lon, r.lat)
+    }
     if (!map) return
     const opts = {
       paddingTopLeft: [insets.left + 24, insets.top + 24] as [number, number],
@@ -449,12 +479,12 @@ export default function Start() {
   // adres w pasku = bieżąca działka, uprawa i data (można go skopiować wprost z przeglądarki)
   useEffect(() => {
     // obszar przybliżony nie ma identyfikatora działki – link bez niego
-    if (parcel && !approxPoint && !drawnGeom) writeLink({ dzialka: parcel.id, uprawa: crop, data: asOf, historia: history, plan: planned })
-  }, [parcel, crop, asOf, history, planned, approxPoint, drawnGeom])
+    if (parcel && !approxPoint && !drawnGeom) writeLink({ dzialka: parcel.id, uprawa: crop, data: asOf, historia: history, plan: planned, okres: period })
+  }, [parcel, crop, asOf, history, planned, approxPoint, drawnGeom, period])
 
   function copyLink() {
     if (!parcel) return
-    const href = shareLink({ dzialka: parcel.id, uprawa: crop, data: asOf, historia: history, plan: planned, widok: passportOpen ? 'paszport' : null })
+    const href = shareLink({ dzialka: parcel.id, uprawa: crop, data: asOf, historia: history, plan: planned, okres: period, widok: passportOpen ? 'paszport' : null })
     if (!navigator.clipboard) return showToast(t('Skopiuj adres z paska przeglądarki – to link do tej analizy'))
     navigator.clipboard.writeText(href).then(
       () => showToast(t('Skopiowano link do tej analizy')),
@@ -609,6 +639,7 @@ export default function Start() {
     onPlannedChange: (pl: string[]) => {
       if (parcel) setPlans((m) => ({ ...m, [parcel.id]: pl.slice(0, 3) }))
     },
+    period: periodUsed,
   }
   const panelProps = {
     state: search,
@@ -645,14 +676,17 @@ export default function Start() {
         // w 3D najciekawszy jest teren
         if (v === '3d' && (layer === 'kondycja' || layer === 'wilgotnosc')) setLayer('teren')
       }}
-      unavailable={['gleba']}
-      notes={
-        satStatus === 'pending'
+      // woda w okolicy: backend bez sekcji `hydro` (stara wersja / awaria) – „wkrótce”
+      unavailable={analysis && analysis.hydro == null ? ['gleba', 'woda'] : ['gleba']}
+      notes={{
+        ...(satStatus === 'pending'
           ? { kondycja: 'pobieram…', wilgotnosc: 'pobieram…' }
           : satStatus === 'brak_danych'
             ? { kondycja: 'brak zdjęcia', wilgotnosc: 'brak zdjęcia' }
-            : undefined
-      }
+            : {}),
+        ...(terrainPending ? { teren: 'liczę…', splyw: 'liczę…' } : {}),
+        ...(hydroStatus === 'pending' ? { woda: 'sprawdzam…' } : hydroStatus === 'none' ? { woda: 'brak w pobliżu' } : {}),
+      }}
       canUse3d={!!parcel}
       side={side}
       onDraw={startDraw}
@@ -673,7 +707,7 @@ export default function Start() {
     setInsidePopup(null)
     setPendingPoint(null)
     setView('2d')
-    writeLink({ dzialka: null, uprawa: null, data: null, historia: [], plan: [], widok: null })
+    writeLink({ dzialka: null, uprawa: null, data: null, historia: [], plan: [], okres: null, widok: null })
     if (isMobile) setSnap('collapsed')
   }
 
@@ -835,6 +869,7 @@ export default function Start() {
             asOf={asOf}
             onAsOfChange={setAsOf}
             layerButton={isMobile ? layerMenu('bottom') : undefined}
+            period={!isMobile && parcel ? <PeriodPicker value={period} onChange={setPeriod} hasCrop={!!crop} asOf={asOf} bare /> : undefined}
           />
 
           {/* telefon: przy pełnej szufladzie napis zasłaniałby nagłówek działki */}
@@ -938,6 +973,7 @@ export default function Start() {
                       onPickPoint={() => setInfra({ point: infra.point, picking: true })}
                       onClose={closeInfra}
                       onSaved={() => setInfraRefresh((n) => n + 1)}
+                      hydro={analysis?.hydro}
                     />
                   </div>
                 ) : summaryOnly && parcel ? (
@@ -1005,6 +1041,7 @@ export default function Start() {
                     }}
                     onClose={closeInfra}
                     onSaved={() => setInfraRefresh((n) => n + 1)}
+                      hydro={analysis?.hydro}
                   />
                 </div>
               ) : (
@@ -1013,6 +1050,7 @@ export default function Start() {
                   <DateField value={asOf} onChange={setAsOf} compact />
                   {weather(true)}
                 </div>
+                {parcel && <PeriodPicker value={period} onChange={setPeriod} hasCrop={!!crop} asOf={asOf} align="left" />}
                 <ParcelPanel {...panelProps} hideHeader />
                 <FarmDrawer
                   inline

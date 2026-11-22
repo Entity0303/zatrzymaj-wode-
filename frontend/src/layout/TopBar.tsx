@@ -15,7 +15,10 @@ export function TopBar({
   asOf,
   onAsOfChange,
   layerButton,
+  period,
 }: {
+  /** F3: przycisk „Okres” (PeriodPicker) obok daty */
+  period?: ReactNode
   isMobile: boolean
   /** <SearchBar trailing={<LocateButton inField />} /> */
   search: ReactNode
@@ -42,6 +45,7 @@ export function TopBar({
       {/* data · pogoda · język – jedna pigułka; elementy bez danych znikają */}
       <div className="glass ml-auto flex h-12 shrink-0 items-center divide-x divide-line rounded-full pr-1 shadow-float">
         <DateField value={asOf} onChange={onAsOfChange} bare />
+        {period && <div className="px-1">{period}</div>}
         {weather}
         <LanguageToggle compact className="ml-1 size-10 bg-transparent shadow-none" />
       </div>

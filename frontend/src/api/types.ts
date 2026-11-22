@@ -37,7 +37,8 @@ export type Parcel = {
 
 // ── Wyszukiwanie: GET /api/search?q= (A5c) ──────────────────────────────────────────────────
 
-export type SearchKind = 'parcel' | 'place'
+/** F3: 'address' – adres punktowy (PRG / OSM) */
+export type SearchKind = 'parcel' | 'place' | 'address'
 export type PlaceType = 'miejscowosc' | 'gmina' | 'obreb'
 /** jak backend rozpoznał zapytanie */
 export type QueryInterpretation = 'parcel_id' | 'obreb_numer' | 'name' | 'empty' | 'unrecognized'
@@ -68,7 +69,11 @@ export type SearchResult = {
   bbox_approx?: boolean
   /** tylko parcel – z geometrii */
   area_ha?: number | null
-  /** „ULDK GUGiK” | „PRNG GUGiK” | „OpenStreetMap Nominatim” | „słownik demo” */
+  /** F3 – tylko address: miejscowość, ulica (null na wsi bez ulic), numer domu */
+  locality?: string | null
+  street?: string | null
+  house_number?: string | null
+  /** „ULDK GUGiK” | „PRNG GUGiK” | „OpenStreetMap Nominatim” | „słownik demo”; address: 'prg' | 'osm' */
   source: string
 }
 
@@ -618,6 +623,8 @@ export type CultivatedArea = {
 export type CropSuggestion = {
   crop_id: RankingCropId
   label: string
+  /** F3: przychód z pola wg cen skupu GUS (null = brak ceny) */
+  revenue?: CropRevenue | null
   group_id: string
   category: SuggestionCategory
   category_label: string
@@ -819,6 +826,8 @@ export type SeasonalBalanceYear = {
 export type ChoiceItem = {
   crop_id: RankingCropId
   label: string
+  /** F3: przychód z pola wg cen skupu GUS (null = brak ceny) */
+  revenue?: CropRevenue | null
   /** null = uprawa wieloletnia (bez oceny) */
   category?: SuggestionCategory | null
   category_label?: string | null
@@ -849,6 +858,8 @@ export type AlternativeRelation = 'lepsza' | 'podobna'
 export type AlternativeItem = {
   crop_id: RankingCropId
   label: string
+  /** F3: przychód z pola wg cen skupu GUS (null = brak ceny) */
+  revenue?: CropRevenue | null
   category: SuggestionCategory
   category_label: string
   relation: AlternativeRelation
@@ -893,6 +904,86 @@ export type CropSuggestions = {
   limitations?: string[]
   compute_ms?: number | null
   source_tag: SourceTag
+}
+
+// ── F3: ceny i przychód ─────────────────────────────────────────────────────────────────
+
+export type CropRevenue = {
+  /** średnia cena skupu, zł/t */
+  price_zl_t: number
+  /** np. „GUS – ceny skupu, woj. mazowieckie, 2023–2025” */
+  price_source: string
+  /** przychód z pola w typowym roku, zł */
+  typical_zl: number
+  /** przychód w słabym roku, zł */
+  weak_year_zl: number
+  /** powierzchnia, dla której liczono, ha */
+  for_area_ha: number
+}
+
+/** bieżąca cena (ZSRIR MRiRW, tydzień) */
+export type PriceNow = {
+  crop_id: string
+  zl_t: number
+  /** np. „10–16.11.2026” */
+  week: string
+  source: string
+  url?: string | null
+}
+
+// ── F3: teren w tle, woda w okolicy, okres ────────────────────────────────────────────────
+
+/** analysis.terrain w trakcie liczenia → GET /api/terrain (albo POST z geometry) */
+export type TerrainPending = { status: 'pending' }
+
+export type HydroStatus = 'pending' | 'ok' | 'none'
+export type HydroKind = 'rzeka' | 'ciek' | 'row' | 'kanal' | 'zbiornik'
+
+export type HydroFeature = {
+  kind: HydroKind
+  name?: string | null
+  distance_m: number
+  /** czy obiekt leży w stronę, w którą woda odpływa z działki */
+  toward_outflow: boolean
+}
+
+export type HydroGauge = {
+  name: string
+  river: string
+  distance_km: number
+  level_cm: number
+  state: 'niski' | 'sredni' | 'wysoki'
+  date: string
+}
+
+export type Hydro = {
+  status: HydroStatus
+  sentence?: string | null
+  features?: HydroFeature[]
+  gauge?: HydroGauge | null
+  sources?: { name: string; url: string }[]
+}
+
+/** okres analizy: period=30d|since_sowing|season albo date_from/date_to */
+export type PeriodPreset = '30d' | 'since_sowing' | 'season'
+
+export type PeriodDay = { date: ISODate; precip_mm: number; et0_mm: number; balance_cum_mm: number }
+
+export type PeriodSummary = {
+  from: ISODate
+  to: ISODate
+  /** np. „Ostatnie 30 dni (24.10–22.11.2026)” */
+  label: string
+  precip_mm: number
+  et0_mm: number
+  balance_mm: number
+  /** zwykle w tym okresie (średnia z 10 lat), mm */
+  normal_balance_mm: number
+  /** w ilu % lat było suszej (0–100) */
+  percentile: number
+  sentence: string
+  stress_days?: number | null
+  daily: PeriodDay[]
 }
 
 // ── Werdykt działki (A5b-2b) ──────────────────────────────────────────────────────────────
@@ -1066,8 +1157,14 @@ export type AnalysisResponse = {
   precip_sources?: PrecipSources | null
   /** A11: Sentinel-2 – z cache albo { status: 'pending' } → dociągnij GET /api/satellite */
   satellite?: Satellite | null
-  /** A6: teren i spływ wody z NMT (null = brak danych, powód w terrain_note) */
-  terrain?: Terrain | null
+  /** A6: teren i spływ wody z NMT (null = brak danych, powód w terrain_note); F3: { status: 'pending' } – liczone w tle */
+  terrain?: Terrain | TerrainPending | null
+  /** F3: woda w okolicy (cieki, rowy, zbiorniki, wodowskaz); pending → GET /api/hydro */
+  hydro?: Hydro | null
+  /** F3: ceny bieżące (ZSRIR) dla upraw z rankingu */
+  price_now?: PriceNow[] | null
+  /** F3: podsumowanie okresu (gdy w zapytaniu period / date_from+date_to) */
+  period?: PeriodSummary | null
   /** A6: dlaczego brak analizy terenu */
   terrain_note?: string | null
   /** A5b-2b: werdykt działki (null: grunt nierolny / brak danych) */
@@ -1083,7 +1180,8 @@ export type AnalysisResponse = {
 
 // ── schemas/layers.py – GET /api/layers/{layer} (szkielet) ─────────────────────────────────
 
-export type LayerKey = 'kondycja' | 'wilgotnosc' | 'teren' | 'splyw' | 'gleba'
+/** F3: 'woda' – woda w okolicy (BDOT10k / MPHP) */
+export type LayerKey = 'kondycja' | 'wilgotnosc' | 'teren' | 'splyw' | 'gleba' | 'woda'
 
 export type RasterOverlay = {
   image_url: string

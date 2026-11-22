@@ -1,0 +1,48 @@
+{
+  "status": "ok",
+  "sentence": "Najbliżej jest rów melioracyjny 40 m na południe – w stronę, w którą woda spływa z działki. Rzeka Narew płynie 2,3 km dalej.",
+  "features": [
+    {
+      "kind": "row",
+      "name": null,
+      "distance_m": 40,
+      "toward_outflow": true
+    },
+    {
+      "kind": "ciek",
+      "name": "Struga Wnorka",
+      "distance_m": 620,
+      "toward_outflow": false
+    },
+    {
+      "kind": "zbiornik",
+      "name": "staw",
+      "distance_m": 850,
+      "toward_outflow": false
+    },
+    {
+      "kind": "rzeka",
+      "name": "Narew",
+      "distance_m": 2300,
+      "toward_outflow": true
+    }
+  ],
+  "gauge": {
+    "name": "Wizna",
+    "river": "Narew",
+    "distance_km": 18.4,
+    "level_cm": 212,
+    "state": "niski",
+    "date": "2026-11-21"
+  },
+  "sources": [
+    {
+      "name": "BDOT10k GUGiK",
+      "url": "https://www.geoportal.gov.pl"
+    },
+    {
+      "name": "IMGW-PIB – stany wód",
+      "url": "https://hydro.imgw.pl"
+    }
+  ]
+}

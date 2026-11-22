@@ -38,3 +38,13 @@ export const formatDayLong = (iso: string) => new Date(`${iso}T12:00:00`).toLoca
 
 /** Udział 0–1 jako procent: 0,4 -> „40%”. */
 export const formatShare = (v: number) => `${Math.round(v * 100)}%`
+
+/**
+ * Kwota po polsku, zaokrąglona do 100 zł: „7 900 zł”, „12 400 zł” – spacja (twarda) także w liczbach 4-cyfrowych
+ * (Intl dla pl-PL grupuje dopiero od 10 000).
+ */
+export function formatZl(v: number, step = 100): string {
+  const r = Math.round(v / step) * step
+  const sign = r < 0 ? '−' : ''
+  return `${sign}${String(Math.abs(r)).replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0')}\u00a0zł`
+}
