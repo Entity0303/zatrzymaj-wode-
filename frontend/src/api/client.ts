@@ -63,17 +63,9 @@ async function post<T>(path: string, body: unknown, signal?: AbortSignal): Promi
   return data as T
 }
 
-/** F32: odpowiedź GET /api/price-weather (A28 – typ lokalny, poza kontraktem analizy). */
-export type PriceWeather = {
-  region_label: string
-  crop_label: string
-  unavailable: boolean
-  years: { year: number; precip_mm: number | null; price_pln_t: number | null; yield_t_ha: number | null; yield_dev_pct?: number | null; price_dev_pct?: number | null }[]
-  dry_years: number[]
-  summary_pl: string | null
-  note_pl?: string | null
-  sources: string[]
-}
+import type { PriceWeather } from './types'
+
+export type { PriceWeather }
 
 /** F30: odpowiedź POST /api/parcels-in-area (typ lokalny – poza kontraktem analizy). */
 export type ParcelsInArea = { parcels: { id: string; obreb: string; gmina: string; numer: string; share: number }[]; note: string | null }

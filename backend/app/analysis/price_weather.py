@@ -23,6 +23,10 @@ from app.sources import imgw
 
 DATA = Path(__file__).parents[1] / "data"
 PRICES_CSV = DATA / "prices" / "gus_prices.csv"
+# A28c: cena skupu rzepaku (GUS BDL, zmienna 4868, temat P1458 „Przeciętne ceny skupu produktów rolnych”, średnia roczna
+# zł/dt, województwa i Polska, 2013–2025). Osobny plik – tylko do tego porównania; ranking upraw (analysis/prices.py)
+# dalej liczy przychód rzepaku z notowania ZSRIR, bez zmian.
+EXTRA_PRICES_CSV = (DATA / "prices" / "gus_prices_rzepak.csv",)
 PRICE_VARS_CSV = DATA / "prices" / "gus_price_variables.csv"
 YIELDS_CSV = DATA / "crops" / "gus_yields_woj.csv"
 
@@ -33,6 +37,13 @@ MIN_COVERAGE = 0.90      # stacja liczy się w roku, gdy ma ≥ 90% dni sezonu
 SEASON = ((4, 1), (9, 30))
 PL = "PL"
 NOTE = "To porównanie lat w regionie, nie przyczyna – cenę kształtuje rynek krajowy i światowy."
+# A28c: lata z wyjątkowym szokiem rynkowym – pomijane TYLKO we wniosku o cenie (2022: wojna w Ukrainie, cena pszenicy
+# ok. 85–90% powyżej trendu; rok nie był suchy, więc zawyżał „pozostałe lata” i dawał mylące „w suchych latach taniej”).
+# Plon liczymy ze wszystkich lat, wykres pokazuje te lata normalnie.
+EXCLUDED_PRICE_YEARS = {2022}
+PRICE_MIN_DIFF_PCT = 3.0  # mniejsza różnica odchyleń ceny = „nie różniła się wyraźnie”
+PRICE_FLAT_SENTENCE = ("W najsuchszych latach cena skupu nie różniła się wyraźnie od typowej – cenę kształtuje głównie "
+                       "rynek krajowy i światowy.")
 NOTE_2022 = " Skok cen w 2022 r. wynikał z sytuacji na rynkach światowych (wojna w Ukrainie), nie z pogody."
 NO_PRICE_NOTE = "brak cen skupu GUS dla tej uprawy"
 
@@ -86,7 +97,7 @@ def products() -> dict[str, dict]:
 def product_for(crop: str | None) -> str | None:
     """Kod uprawy („pszenica_ozima”, „zboza_ozime”) albo nazwa produktu („pszenica”) → produkt z cenami GUS."""
     c = (crop or "").strip()
-    priced = {k[0] for k in load_prices()}  # tylko produkty, które MAJĄ ceny w pliku (rzepak i buraki – nie)
+    priced = {k[0] for k in load_prices()}  # tylko produkty, które MAJĄ ceny w pliku (buraki – nie)
     for p, info in products().items():
         if p in priced and (c in info["crops"] or _plain(c) == _plain(p)):
             return p
@@ -97,13 +108,16 @@ def product_for(crop: str | None) -> str | None:
 def load_prices() -> dict[tuple[str, str], dict[int, float]]:
     """(produkt, region) → {rok: zł/t}; region = PL albo nazwa województwa. W pliku zł/dt."""
     out: dict[tuple[str, str], dict[int, float]] = {}
-    with open(PRICES_CSV, encoding="utf-8", newline="") as f:
-        for row in csv.DictReader(f):
-            region = PL if row["poziom"] == "polska" else row["nazwa"]
-            try:
-                out.setdefault((row["produkt"], region), {})[int(row["rok"])] = round(float(row["zl_dt"]) * 10, 1)
-            except ValueError:
-                continue
+    for path in (PRICES_CSV, *EXTRA_PRICES_CSV):
+        if not path.exists():
+            continue
+        with open(path, encoding="utf-8", newline="") as f:
+            for row in csv.DictReader(f):
+                region = PL if row["poziom"] == "polska" else row["nazwa"]
+                try:
+                    out.setdefault((row["produkt"], region), {})[int(row["rok"])] = round(float(row["zl_dt"]) * 10, 1)
+                except ValueError:
+                    continue
     return out
 
 
@@ -198,27 +212,37 @@ def add_deviations(rows: list[dict]) -> None:
             r[out] = round((r[key] / base - 1) * 100, 1) if r[key] is not None and base and base > 0 else None
 
 
-def summarize(rows: list[dict], crop_gen: str, where: str) -> tuple[list[int], str | None]:
-    """Lata najsuchsze (dolne 25% opadów) na tle pozostałych → (lata, zdanie): średnie ODCHYLENIE od trendu plonu i ceny
-    w latach najsuchszych minus w pozostałych. Mniej niż MIN_YEARS pełnych lat – bez zdania."""
+def summarize(rows: list[dict], crop_gen: str, where: str) -> tuple[list[int], str | None, list[int]]:
+    """Lata najsuchsze (dolne 25% opadów) na tle pozostałych → (lata, zdanie, lata pominięte we wniosku o cenie).
+    Plon: średnie ODCHYLENIE od trendu w latach najsuchszych minus w pozostałych – ze wszystkich lat. Cena: to samo, ale
+    BEZ lat z wyjątkowym szokiem rynkowym (EXCLUDED_PRICE_YEARS); gdy różnica jest mała (< PRICE_MIN_DIFF_PCT pkt %) albo
+    suchych lat z ceną jest mniej niż 2 – zdanie, że cena nie różniła się wyraźnie. Mniej niż MIN_YEARS pełnych lat –
+    bez zdania."""
     full = [r for r in rows if r["precip_mm"] is not None and r.get("price_dev_pct") is not None
             and r.get("yield_dev_pct") is not None]
     if len(full) < MIN_YEARS:
-        return [], None
+        return [], None, []
     k = max(1, math.ceil(len(full) * DRY_SHARE))
     dry = sorted(full, key=lambda r: r["precip_mm"])[:k]
     dry_years = sorted(r["year"] for r in dry)
     rest = [r for r in full if r["year"] not in dry_years]
     mean = lambda rs, key: sum(r[key] for r in rs) / len(rs)  # noqa: E731
     dy = mean(dry, "yield_dev_pct") - mean(rest, "yield_dev_pct")
-    dp = mean(dry, "price_dev_pct") - mean(rest, "price_dev_pct")
     yield_txt = _diff_words(dy, "niższy", "wyższy", "podobny")
-    price_txt = _diff_words(dp, "niższa", "wyższa", "podobna").replace("średnio ", "")
     typical = " od typowego dla tamtych lat" if round(abs(dy)) >= 1 else " do typowego dla tamtych lat"
-    joiner = ", a" if (dy < 0) != (dp < 0) or round(abs(dy)) < 1 or round(abs(dp)) < 1 else " i"
     years_txt = ", ".join(str(y) for y in dry_years)
-    return dry_years, (f"W najsuchszych latach ({years_txt}) plon {crop_gen} {where} był {yield_txt}{typical}"
-                       f"{joiner} cena skupu {price_txt}.")
+    head = f"W najsuchszych latach ({years_txt}) plon {crop_gen} {where} był {yield_txt}{typical}"
+    # cena – bez lat szoku rynkowego (na wykresie te lata zostają)
+    excluded = sorted(r["year"] for r in full if r["year"] in EXCLUDED_PRICE_YEARS)
+    dry_p = [r for r in dry if r["year"] not in EXCLUDED_PRICE_YEARS]
+    rest_p = [r for r in rest if r["year"] not in EXCLUDED_PRICE_YEARS]
+    dp = mean(dry_p, "price_dev_pct") - mean(rest_p, "price_dev_pct") if dry_p and rest_p else 0.0
+    if len(dry_p) < 2 or not rest_p or abs(dp) < PRICE_MIN_DIFF_PCT:
+        return dry_years, head + ". " + PRICE_FLAT_SENTENCE, excluded
+    price_txt = _diff_words(dp, "niższa", "wyższa", "podobna").replace("średnio ", "")
+    joiner = ", a" if (dy < 0) != (dp < 0) or round(abs(dy)) < 1 else " i"
+    without = f" (bez roku {', '.join(str(y) for y in excluded)})" if excluded else ""
+    return dry_years, f"{head}{joiner} cena skupu {price_txt}{without}.", excluded
 
 
 def region_phrase(region: str) -> tuple[str, str]:
@@ -238,7 +262,7 @@ def build(region: str, crop: str, to_year: int, *, prices=None, yields=None, pre
 
         c = ALL_CROPS.get(crop)
         return {"region_label": label, "crop_label": c.label if c else crop, "unavailable": True, "note_pl": NO_PRICE_NOTE,
-                "years": [], "dry_years": [], "summary_pl": None, "sources": []}
+                "years": [], "dry_years": [], "summary_pl": None, "sources": [], "price_excluded_years": []}
     info = products()[product]
     years = range(FIRST_YEAR, to_year)
     prices = load_prices() if prices is None else prices
@@ -253,8 +277,10 @@ def build(region: str, crop: str, to_year: int, *, prices=None, yields=None, pre
              "price_pln_t": price_by_year.get(y),
              "yield_t_ha": yield_by_year.get(y)} for y in years]
     add_deviations(rows)
-    dry_years, summary = summarize(rows, info["genitive"], where)
+    dry_years, summary, excluded = summarize(rows, info["genitive"], where)
     note = NOTE + (NOTE_2022 if any(r["year"] == 2022 and r["price_pln_t"] is not None for r in rows) else "")
+    if excluded:
+        note += f" Rok {', '.join(str(y) for y in excluded)} pominięto we wniosku o cenie."
     stations = sorted({n for _mm, n in precip.values()})
     sources = [
         f"GUS BDL – ceny skupu ({product}), średnie roczne, {label}",
@@ -264,7 +290,7 @@ def build(region: str, crop: str, to_year: int, *, prices=None, yields=None, pre
         + ("" if region == PL else "; stacje przypisane do województwa po najbliższym środku województwa (przybliżenie)"),
     ]
     return {"region_label": label, "crop_label": info["label"], "unavailable": False, "years": rows, "dry_years": dry_years,
-            "summary_pl": summary, "note_pl": note, "sources": sources}
+            "summary_pl": summary, "note_pl": note, "sources": sources, "price_excluded_years": excluded}
 
 
 @lru_cache(maxsize=512)

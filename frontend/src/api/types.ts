@@ -1413,3 +1413,35 @@ export interface DroughtContext {
   fetched_at?: string | null
   analysis_date?: string | null
 }
+
+// ── schemas/price_weather.py – GET /api/price-weather?region=&crop=&to_year= (A28) ──────────
+
+/** Jeden rok porównania regionalnego (województwo albo Polska). */
+export type PriceWeatherYear = {
+  year: number
+  /** średnia suma opadów IV–IX ze stacji IMGW regionu, mm */
+  precip_mm: number | null
+  /** cena skupu GUS, zł/t */
+  price_pln_t: number | null
+  /** średni plon GUS w regionie, t/ha */
+  yield_t_ha: number | null
+  /** A28b: odchylenie plonu od trendu, % */
+  yield_dev_pct?: number | null
+  /** A28b: odchylenie ceny od trendu, % */
+  price_dev_pct?: number | null
+}
+
+/** „Ceny i pogoda na tle lat” – porównanie regionalne, nie dla działki. */
+export type PriceWeather = {
+  region_label: string
+  crop_label: string
+  /** uprawa bez cen skupu GUS – powód w note_pl, puste years */
+  unavailable: boolean
+  years: PriceWeatherYear[]
+  dry_years: number[]
+  summary_pl: string | null
+  note_pl?: string | null
+  sources: string[]
+  /** A28c: lata pominięte we wniosku o CENIE (szok rynkowy, np. 2022); plon i wykres obejmują je normalnie */
+  price_excluded_years?: number[]
+}

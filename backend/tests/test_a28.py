@@ -28,8 +28,10 @@ def test_summary_compares_deviations_from_trend_not_raw_values():
     assert abs(r["years"][0]["yield_dev_pct"]) < 0.5 and abs(r["years"][-1]["price_dev_pct"]) < 0.5  # zwykłe lata na trendzie
     assert r["dry_years"] == [2015, 2018, 2019]  # dolne 25% z 12 lat = 3 lata
     assert r["summary_pl"] == ("W najsuchszych latach (2015, 2018, 2019) plon pszenicy w województwie podlaskim był średnio "
-                               "o 20% niższy od typowego dla tamtych lat, a cena skupu o 10% wyższa.")
-    assert r["note_pl"].startswith(PW.NOTE) and "2022" in r["note_pl"] and len(r["sources"]) == 3
+                               "o 20% niższy od typowego dla tamtych lat, a cena skupu o 10% wyższa (bez roku 2022).")
+    assert r["price_excluded_years"] == [2022]
+    assert r["note_pl"].startswith(PW.NOTE) and r["note_pl"].endswith("Rok 2022 pominięto we wniosku o cenie.")
+    assert "wojna w Ukrainie" in r["note_pl"] and len(r["sources"]) == 3
 
 
 def test_rising_yields_do_not_hide_drought_loss():
@@ -44,8 +46,42 @@ def test_rising_yields_do_not_hide_drought_loss():
     raw_dry = sum(yields[("pszenica_ozima", "podlaskie")][y] for y in dry) / 3
     raw_rest = sum(v for y, v in yields[("pszenica_ozima", "podlaskie")].items() if y not in dry) / 9
     assert raw_dry > raw_rest and r["dry_years"] == [2023, 2024, 2025]
-    assert "niższy od typowego dla tamtych lat" in r["summary_pl"] and "cena skupu podobna" in r["summary_pl"]
+    assert "niższy od typowego dla tamtych lat. " in r["summary_pl"] and r["summary_pl"].endswith(PW.PRICE_FLAT_SENTENCE)
     assert PW.theil_sen([(1, 1.0), (2, 2.0), (3, 3.0), (4, 40.0), (5, 5.0)])[0] == 1.0 and PW.theil_sen([(1, 1.0)]) is None
+
+
+def test_price_conclusion_ignores_2022_market_shock():
+    """A28c: płaska cena, tylko rok 2022 jest +90% od trendu (i nie jest suchy) – bez wyłączenia wychodziło mylące „w suchych
+    latach cena niższa”; po wyłączeniu: cena nie różniła się wyraźnie. Plon liczymy ze wszystkich lat, 2022 zostaje w danych."""
+    years = range(2014, 2026)
+    dry = (2015, 2018, 2019)
+    prices = {("pszenica", "podlaskie"): {y: 1900.0 if y == 2022 else 1000.0 for y in years}}
+    yields = {("pszenica_ozima", "podlaskie"): {y: 3.6 if y in dry else 4.5 for y in years}}
+    precip = {y: (250.0 if y in dry else 400.0, 12) for y in years}
+    r = PW.build("podlaskie", "pszenica", 2026, prices=prices, yields=yields, precip=precip)
+    y2022 = next(y for y in r["years"] if y["year"] == 2022)
+    assert y2022["price_pln_t"] == 1900.0 and 85 < y2022["price_dev_pct"] < 95  # na wykresie 2022 zostaje
+    assert r["dry_years"] == [2015, 2018, 2019] and r["price_excluded_years"] == [2022]
+    assert r["summary_pl"] == ("W najsuchszych latach (2015, 2018, 2019) plon pszenicy w województwie podlaskim był średnio "
+                               "o 20% niższy od typowego dla tamtych lat. " + PW.PRICE_FLAT_SENTENCE)
+    assert "(bez roku 2022)" not in r["summary_pl"] and r["note_pl"].endswith("Rok 2022 pominięto we wniosku o cenie.")
+    # bez roku 2022 w danych – nic nie pomijamy i nie ma dopisku w nocie
+    r2 = PW.build("podlaskie", "pszenica", 2022, prices=prices, yields=yields, precip=precip)
+    assert r2["price_excluded_years"] == [] and "pominięto" not in r2["note_pl"]
+
+
+def test_response_matches_contract_model_and_types_ts():
+    from pathlib import Path
+
+    from app.schemas.price_weather import PriceWeather, PriceWeatherYear
+
+    prices, yields, precip = synth()
+    PriceWeather.model_validate(PW.build("podlaskie", "pszenica", 2025, prices=prices, yields=yields, precip=precip))
+    PriceWeather.model_validate(PW.build("podlaskie", "truskawki", 2025, prices={}, yields={}, precip={}))
+    ts = (Path(__file__).resolve().parents[2] / "frontend" / "src" / "api" / "types.ts").read_text(encoding="utf-8")
+    for model in (PriceWeather, PriceWeatherYear):
+        for name in model.model_fields:
+            assert f"{name}:" in ts or f"{name}?:" in ts, f"pole '{name}' z {model.__name__} brak w types.ts"
 
 
 def test_only_years_before_to_year_and_no_summary_below_six_full_years():
@@ -67,7 +103,8 @@ def test_crop_without_gus_price_is_unavailable_and_region_names():
     assert PW.region_key("mars") is None
     assert PW.region_phrase("kujawsko-pomorskie")[1] == "w województwie kujawsko-pomorskim" and PW.region_phrase("PL")[1] == "w Polsce"
     assert PW.product_for("zboza_ozime") == "pszenica" and PW.product_for("ziemniak") == "ziemniaki" and PW.product_for("chmiel") is None
-    assert PW.product_for("rzepak") is None and PW.product_for("burak_cukrowy") is None  # w pliku cen GUS nie ma tych produktów
+    assert PW.product_for("rzepak") == "rzepak"  # A28c: cena skupu rzepaku z GUS BDL (zmienna 4868, temat P1458)
+    assert PW.product_for("burak_cukrowy") is None  # w pliku cen GUS nie ma buraków
 
 
 def test_season_precip_needs_90_pct_of_season_days():

@@ -14,6 +14,7 @@ const PRODUCTS: { value: string; label: string; crops: string[] }[] = [
   { value: 'owies', label: 'Owies', crops: ['owies'] },
   { value: 'pszenżyto', label: 'Pszenżyto', crops: ['pszenzyto_ozime'] },
   { value: 'kukurydza', label: 'Kukurydza na ziarno', crops: ['kukurydza_ziarno'] },
+  { value: 'rzepak', label: 'Rzepak', crops: ['rzepak', 'rzepak_jesien'] },
   { value: 'ziemniaki', label: 'Ziemniaki', crops: ['ziemniak'] },
 ]
 
