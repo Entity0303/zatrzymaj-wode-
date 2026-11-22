@@ -107,11 +107,14 @@ async def warm_satellite_series() -> None:
     from app.analysis import satellite as sat_mod
 
     settings.sentinel_timeout_s = 20.0
-    for d in uldk.demo_parcels():
-        if not d.get("id") or d.get("needs_fetch"):
-            continue
-        p = uldk.known_by_id(d["id"])
+    for pid in dict.fromkeys(e.parcel_id for e in EXAMPLES):  # A13: szereg tylko dla przykładów ze startu
+        d = {"id": pid}
+        p = uldk.known_by_id(pid)
         if p is None:
+            continue
+        today = dt.date.today().isoformat()
+        if sat_mod._lookup(("series", sat_mod.geom_key(p.geom_4326), today)) is not None:
+            print(f"Sentinel-2 szereg {pid}: już w cache (dziś) – pomijam")
             continue
         t0 = time.perf_counter()
         try:
@@ -129,25 +132,49 @@ def main() -> int:
     ap.add_argument("--no-satellite-series", action="store_true", help="bez szeregu Sentinel-2 z 12 miesięcy")
     ap.add_argument("--no-satellite", action="store_true",
                     help="bez Sentinel-2 w ogóle (np. przez VPN z limitem danych) – analiza i PDF bez zdjęcia")
+    ap.add_argument("--no-hydro", action="store_true", help="bez wody w okolicy (Overpass, IMGW)")
     a = ap.parse_args()
     # GUGiK spokojnie: NMT po kolei z przerwą ≥ 1 s, więcej czasu na całą siatkę (A8)
     settings.nmt_parallel, settings.nmt_chunk_pause_s, settings.nmt_total_timeout_s = 1, 1.0, 120.0
     if a.no_satellite:
         settings.sentinel_enabled = False
         a.no_satellite_series = True
+    else:  # przygotowanie cache: więcej czasu na scenę i rok temu niż na żywo
+        settings.sentinel_budget_s, settings.sentinel_budget_mb, settings.sentinel_timeout_s = 60.0, 30.0, 20.0
+    # Overpass bywa przeciążony: krótki bezpiecznik (jedna porażka nie blokuje reszty działek), przerwa między działkami
+    settings.overpass_breaker_s = 20.0
     out = Path(a.out) if a.out else None
     print(f"Cache: {settings.cache_db or '(tylko pamięć – ustaw CACHE_DB, inaczej nic nie zostanie!)'}")
     for line in fill_missing_parcels(a.pause):
         print("ULDK:", line)
     rows = []
+    done: dict[str, str] = {}  # działka → opis teren / satelita / woda (każda działka liczona raz)
     with TestClient(app) as c:
         for name, q, slug in cases():
-            sat_txt = "satelita: pominięty"
-            if not a.no_satellite:
+            pid = q["parcel_id"]
+            if pid not in done:  # A13: po kolei, jedno zapytanie naraz – teren, satelita, woda; potem analiza z cache
+                parts, slow = [], False
                 ts = time.perf_counter()
-                s = c.get("/api/satellite", params={"parcel_id": q["parcel_id"], "date": q["date"]})
-                sat_txt = (f"satelita: {s.json()['status']} {s.json().get('date') or ''} ({time.perf_counter() - ts:.1f} s)"
-                           if s.status_code == 200 else f"satelita: błąd {s.status_code}")
+                t = c.get("/api/terrain", params={"parcel_id": pid})
+                parts.append(f"teren {t.status_code} {time.perf_counter() - ts:.0f}s")
+                slow |= time.perf_counter() - ts > 0.5
+                if not a.no_satellite:
+                    ts = time.perf_counter()
+                    s = c.get("/api/satellite", params={"parcel_id": pid, "date": q["date"]})
+                    parts.append(f"satelita {s.json()['status']} {s.json().get('date') or ''} {time.perf_counter() - ts:.0f}s"
+                                 if s.status_code == 200 else f"satelita błąd {s.status_code}")
+                    slow |= time.perf_counter() - ts > 0.5
+                if not a.no_hydro:
+                    ts = time.perf_counter()
+                    h = c.get("/api/hydro", params={"parcel_id": pid})
+                    parts.append(f"woda {h.json()['status']} ({len(h.json().get('features') or [])} ob., wodowskaz "
+                                 f"{'tak' if h.json().get('gauge') else 'nie'}) {time.perf_counter() - ts:.0f}s"
+                                 if h.status_code == 200 else f"woda błąd {h.status_code}")
+                    slow |= time.perf_counter() - ts > 0.5
+                done[pid] = "; ".join(parts)
+                if slow:
+                    time.sleep(a.pause + (5 if not a.no_hydro else 0))
+            sat_txt = done[pid]
             t0 = time.perf_counter()
             r = c.get("/api/analysis", params=q)
             t_a = time.perf_counter() - t0
@@ -167,7 +194,7 @@ def main() -> int:
                     (out / f"{slug}.pdf").write_bytes(p.content)
             t = b.get("terrain")
             terr = ("teren: " + ", ".join(f"{z['label'].split(' –')[0]} {round(z['share_pct'])}%" for z in t["zones"]
-                                          if z["share_pct"] >= 1)) if t else "teren: brak"
+                                          if z["share_pct"] >= 1)) if t and "zones" in t else "teren: brak"
             rows.append(row + [f"{b['status']['level']} ({b['status']['score']}); {terr}; {sat_txt}", f"{t_a:.2f} s", pdf])
             if t_a > 0.5:  # były zapytania do źródeł – spokojnie
                 time.sleep(a.pause)

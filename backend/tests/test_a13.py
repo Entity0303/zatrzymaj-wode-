@@ -26,7 +26,8 @@ def make_seed(tmp_path, rows):
     return gz
 
 
-def test_seed_loaded_only_into_empty_cache(tmp_path):
+def test_seed_loaded_only_into_empty_cache(tmp_path, monkeypatch):
+    monkeypatch.setattr(settings, "cache_seed", True)
     gz = make_seed(tmp_path, [("ULDK GUGiK", "k1", 1.0, None, pickle.dumps(["działka"])),
                               ("NASA POWER", "k2", 2.0, None, pickle.dumps({"a": 1}))])
     settings.cache_db = str(tmp_path / "c.sqlite")
