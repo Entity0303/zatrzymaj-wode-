@@ -155,6 +155,8 @@ def _bad_reason(item, light: bool) -> str:
     if item.rotation.status == "naruszenie":
         return "plodozmian"
     if item.soil_suitability == "nieodpowiednia":
+        if not light and (item.reason or "").startswith("Mapa glebowo-rolnicza"):
+            return "gleba_kompleks"  # A15: o „nie siej” decyduje kompleks z mapy, nie opis gleby wyżej
         return "gleba_lekka" if light else "gleba"
     return "woda"
 

@@ -373,7 +373,7 @@ def to_contract(res: LiveResult) -> Satellite:
                     source=S.SOURCE)
     if res.now is None:
         return Satellite(status="brak_danych", sentence=cfg()["sentences"]["none"].format(days=cfg()["live"]["days_back"]),
-                         warning="Brak sceny z widoczną działką w ostatnich 60 dniach.", note=NOTE,
+                         warning=f"Brak bezchmurnego zdjęcia z ostatnich {cfg()['live']['days_back']} dni.", note=NOTE,
                          downloaded_mb=round(res.stats.mb, 2), compute_s=round(res.stats.seconds, 1), source_tag=tag)
     n, ly = res.now, res.last_year
     d = describe(n.ndvi, n.ndmi, ly.ndvi if ly else None, n.scene.date, n.valid_pct, partial=res.warning is not None)
@@ -386,7 +386,8 @@ def to_contract(res: LiveResult) -> Satellite:
         note=NOTE, source_tag=tag)
 
 
-FAIL_TTL_S = 1800.0  # wynik „brak sceny” – 30 min (A8)
+FAIL_TTL_S = 1800.0      # A8: awaria źródła – 30 min (dziś awarie nie trafiają do cache)
+NO_IMAGE_TTL_S = 43_200.0  # A15: „brak bezchmurnego zdjęcia” to nie awaria – 12 h, potem ponowna próba
 
 
 def _ttl(on: date) -> float:
@@ -396,7 +397,7 @@ def _ttl(on: date) -> float:
 def _store(geom: BaseGeometry, on: date, sat: Satellite, layers: dict | None) -> None:
     k = geom_key(geom)
     # brak sceny (często: budżet czasu przy wolnym S3 / duża działka) – krótko, potem ponowna próba (A8)
-    ttl = _ttl(on) if sat.status == "ok" else FAIL_TTL_S
+    ttl = _ttl(on) if sat.status == "ok" else NO_IMAGE_TTL_S
     _cache.set(("live", k, on.isoformat()), {"satellite": sat.model_dump(mode="json"), "layers": layers}, ttl)
     prev = _lookup(("latest", k))
     if prev is None or prev["on"] <= on.isoformat():  # „latest” nie cofa się do starszej daty (przykład historyczny)
@@ -543,3 +544,24 @@ async def warm_series(geom: BaseGeometry, on: date) -> tuple[int, S.Stats]:
 def clear_cache() -> None:
     _cache.clear()
     _tasks.clear()
+
+
+# ── A15: słowa dla rolnika zamiast NDVI / NDMI (progi – rules/satellite.yaml, jedno miejsce) ─────────
+
+NDVI_WORD = {"gleba": "goła ziemia", "slaba": "słaba", "umiarkowana": "średnia", "gesta": "gęsta zieleń"}
+NDMI_WORD = {"sucho": "niska", "srednio": "umiarkowana", "dobrze": "dobra"}
+
+
+def plant_words(ndvi: float | None, ndmi: float | None, scene_date: date | None) -> tuple[str | None, str | None]:
+    """(kondycja roślin, wilgotność roślin) słowami – te same progi co zdanie z satelity (describe)."""
+    if ndvi is None or scene_date is None:
+        return None, None
+    c = cfg()
+    kond = NDVI_WORD[classify(ndvi, c["ndvi"])[0]]
+    if scene_date.month not in c["season_months"]:
+        wilg = "poza sezonem"
+    elif ndmi is None or ndvi < c["ndmi_min_ndvi"]:
+        wilg = "nie oceniamy przy rzadkich roślinach"
+    else:
+        wilg = NDMI_WORD[classify(ndmi, c["ndmi"])[0]]
+    return kond, wilg

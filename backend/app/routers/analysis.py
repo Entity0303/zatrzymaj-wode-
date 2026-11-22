@@ -532,6 +532,14 @@ def parse_history(crop_history: str | None) -> list[str]:
 SAT_LEVEL_STATUS = {"ok": "ok", "info": "ok", "warn": "warn", "bad": "risk"}
 
 
+def _sat_note(sat, which: str) -> str:
+    """A15: słowami dla rolnika – „Kondycja roślin: gęsta zieleń · zdjęcie z 16.11.2026” (wartość w `index_value`)."""
+    kond, wilg = satellite_mod.plant_words(sat.ndvi, sat.ndmi, sat.date)
+    word = kond if which == "ndvi" else wilg
+    head = "Kondycja roślin" if which == "ndvi" else "Wilgotność roślin"
+    return f"{head}: {word} · zdjęcie z {date_pl(sat.date)}" if word else f"{head} · zdjęcie z {date_pl(sat.date)}"
+
+
 def _sat_indicator(sat, which: str, no_sat: SourceTag) -> SatelliteIndicator:
     """Wskaźniki kondycji (NDVI → 0–100) i wilgotności roślin (NDMI −0,4…0,4 → 0–100) z wyniku Sentinel-2 (A11)."""
     if sat is None or sat.status != "ok":
@@ -545,7 +553,7 @@ def _sat_indicator(sat, which: str, no_sat: SourceTag) -> SatelliteIndicator:
     label = sat.ndvi_label if which == "ndvi" else (sat.ndmi_label or "ocena tylko w sezonie przy gęstym łanie")
     return SatelliteIndicator(
         value=round(pts), unit="pkt", label=label, status=SAT_LEVEL_STATUS.get(sat.level or "info", "ok"),
-        note=f"{'NDVI' if which == 'ndvi' else 'NDMI'} {num(raw, 2)} · zdjęcie z {date_pl(sat.date)}", index_value=raw,
+        note=_sat_note(sat, which), index_value=raw,
         source_tag=SourceTag(kind="pomiar", date=sat.date, source="Sentinel-2 L2A"))
 
 

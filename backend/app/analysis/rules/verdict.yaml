@@ -57,6 +57,7 @@ verdict:
     reasons:
       gleba_lekka: "za mało wody na tej glebie"
       gleba: "ta gleba im nie pasuje"
+      gleba_kompleks: "mapa glebowo-rolnicza podaje tu kompleks, na którym plonują słabo"  # A15
       woda: "susza zbyt często zabiera ponad 20% plonu"
       plodozmian: "za krótka przerwa w płodozmianie"
 
@@ -77,7 +78,10 @@ verdict:
     - {if: {gleba: bad, opady: bad, uprawy_not: ok}, text: "Słaba, sucha działka – siej rośliny odporne na suszę"}
     - {if: {gleba: bad, uprawy_not: ok}, text: "Słaba, piaszczysta działka – siej rośliny odporne na suszę"}
     - {if: {bad_count_gte: 2}, text: "Trudna działka – mało wody dla wymagających upraw"}
-    - {if: {opady: bad, uprawy: [warn, bad]}, text: "Trudna działka – mało wody dla wymagających upraw"}  # A14
+    # A14/A15: „Trudna” tylko przy złych opadach ORAZ (ranking „źle” ALBO gleba gorsza niż ok) – same „uwaga” przy dobrej
+    # glebie (np. kilka odradzanych upraw) nie dają tego nagłówka (Stryjno, Szczytno 126/3 – „Ziemia dobra”)
+    - {if: {opady: bad, uprawy: bad}, text: "Trudna działka – mało wody dla wymagających upraw"}
+    - {if: {opady: bad, gleba: [warn, bad]}, text: "Trudna działka – mało wody dla wymagających upraw"}
     - {if: {gleba: ok, opady: [ok, warn], dry_pct_gte: 30}, text: "Dobra działka z suchą górką"}
     - {if: {gleba: ok, opady: [ok, warn], wet_pct_gte: 15}, text: "Dobra działka z wilgotnym obniżeniem"}
     - {if: {gleba: ok, opady: ok}, text: "Dobra działka – trzyma wodę"}

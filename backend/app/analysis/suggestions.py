@@ -60,6 +60,21 @@ PERENNIAL_LABEL = "Uprawy wieloletnie – inwestycja na lata"
 PERENNIAL_SECTION_NOTE = ("Sady, krzewy i truskawki wymagają osobnej analizy opłacalności (nakłady, rynek, nawadnianie) – "
                           "nie oceniamy ich jak upraw polowych; liczby to tylko orientacja.")
 CATEGORY_LABEL = {"polecane": "polecane", "mozliwe": "możliwe", "odradzane": "odradzane"}
+# A15: zboża na glebie kat. I–IV z wodą ≥ 150 mm nigdy nie dostają „nie siej – gleba nie pasuje” (najwyżej „możliwe”
+# z powodem ekonomicznym); kompleks z mapy glebowo-rolniczej może być słabszy niż ocena IUNG – zdanie mówi to wprost
+CEREALS = frozenset({"pszenica_ozima", "zyto", "pszenzyto_ozime", "owies", "jeczmien_ozimy", "jeczmien_jary"})
+CEREAL_GOOD_SOIL_WOD_MM = 150.0
+COMPLEX_NAME = {
+    "1": "pszenny bardzo dobry", "2": "pszenny dobry", "3": "pszenny wadliwy", "4": "żytni bardzo dobry",
+    "5": "żytni dobry", "6": "żytni słaby", "7": "żytni bardzo słaby", "8": "zbożowo-pastewny mocny",
+    "9": "zbożowo-pastewny słaby", "10": "pszenny górski", "11": "zbożowy górski", "12": "owsiano-ziemniaczany górski",
+    "13": "owsiano-pastewny górski", "14": "gleby orne przeznaczone pod użytki zielone",
+}
+# która uprawa lepiej się opłaca na kompleksie „złym” dla zboża (powód ekonomiczny w zdaniu)
+COMPLEX_BETTER = {"5": "żyto lub pszenżyto", "6": "żyto", "7": "żyto", "8": "pszenica lub rzepak",
+                  "9": "owies lub pszenżyto"}
+ROMAN = {1: "I", 2: "II", 3: "III", 4: "IV"}
+
 SUIT_LABEL = {"odpowiednia": "gleba odpowiednia", "neutralna": "gleba przeciętna dla tej uprawy",
               "nieodpowiednia": "gleba nieodpowiednia"}
 # powód przerwy w uprawie po sobie (zalecenia agrotechniczne; README danych osoby C + decyzja D63)
@@ -305,12 +320,24 @@ def category(suit: str, risk: int, median_rel: float, rot: RotationCheck) -> str
 
 
 def reason(crop: Crop, cat: str, suit: str, risk: int, n: int, typ: float | None, weak: float | None, weak_year: int,
-           worst_loss_pct: int, rot: RotationCheck, light_soil: bool, soil_txt: str) -> str:
-    """JEDNO zdanie prostym językiem – wyłącznie z policzonych liczb."""
+           worst_loss_pct: int, rot: RotationCheck, light_soil: bool, soil_txt: str,
+           complex_code: str | None = None, category_iung: int | None = None, cereal_override: bool = False) -> str:
+    """JEDNO zdanie prostym językiem – wyłącznie z policzonych liczb; powód zgodny z opisem gleby (A15)."""
     name = crop.label.lower()
     yld = f"typowo {_n(typ)} t/ha" if typ is not None else "plon bez danych GUS"
+    k = (complex_code or "").strip()
+    kname = COMPLEX_NAME.get(k)
     if rot.status == "naruszenie":
         return rot.notes[0]
+    if cereal_override and cat == "mozliwe":  # A15: zboże na dobrej glebie, kompleks z mapy słabszy dla tej uprawy
+        better = COMPLEX_BETTER.get(k, "pszenica lub rzepak")
+        return (f"Da się uprawiać – {yld}; mapa glebowo-rolnicza podaje tu kompleks „{kname}”, słabszy dla tej uprawy niż "
+                f"wskazuje gleba ({soil_txt}), więc lepiej opłaca się {better}.")
+    if suit == "nieodpowiednia" and kname and k in crop.soils_bad_complex and not light_soil:
+        iung = (f" (mapa IUNG ocenia glebę lepiej – kat. {ROMAN[category_iung]})"
+                if category_iung is not None and category_iung >= 3 else "")
+        return (f"Mapa glebowo-rolnicza podaje tu kompleks „{kname}” – {name} plonuje na nim wyraźnie słabiej niż zwykle w "
+                f"okolicy{iung}.")
     if suit == "nieodpowiednia":
         if light_soil and risk > 0:
             return (f"Słaba, lekka ziemia trzyma mało wody – {name}: w {risk} z {n} lat strata ponad 20% plonu "
@@ -371,12 +398,18 @@ def build(w: DailyWeather, analysis_date: date, ctx: Context, years: int = 10) -
         weak_year, weak_rel = sim[k_min][0], float(rels[k_min])
         risk = int((rels < 1.0 - cfg["loss_threshold"]).sum())
         suit = soil_suitability(crop, ctx.category, ctx.complex_code)
+        cereal_override = (suit == "nieodpowiednia" and crop.id in CEREALS and ctx.category in (1, 2, 3, 4)
+                           and ctx.wod_mm >= CEREAL_GOOD_SOIL_WOD_MM)
+        if cereal_override:  # A15: nie „nie siej – gleba nie pasuje”, najwyżej „możliwe” (powód ekonomiczny)
+            suit = "neutralna"
         pot = potential(crop.id, ctx.voivodeship)
         ym = None if pot.ym_t_ha is None else pot.ym_t_ha * cfg["soil_factor"][suit]
         typ = None if ym is None else ym * median_rel
         weak = None if ym is None else ym * weak_rel
         rot = rotation(crop, ctx.history)
         cat = category(suit, risk, median_rel, rot)
+        if cereal_override and cat == "polecane":
+            cat = "mozliwe"
         sc = cfg["score"]
         score = (100 * median_rel - sc["risk_year_penalty"] * risk * 10 / n + sc["soil_bonus"][suit]
                  + (sc["rotation_plus"] if rot.status == "plus" else sc["rotation_warning"] if rot.status == "ostrzezenie" else 0))
@@ -395,7 +428,7 @@ def build(w: DailyWeather, analysis_date: date, ctx: Context, years: int = 10) -
             crop_id=crop.id, label=crop.label, group_id=crop.group_id, category=cat, category_label=CATEGORY_LABEL[cat],
             rank=0, score=round(score, 1),
             reason=reason(crop, cat, suit, risk, n, typ, weak, weak_year, round(100 * (1 - weak_rel)), rot, light_soil,
-                          ctx.soil_txt),
+                          ctx.soil_txt, ctx.complex_code, ctx.category, cereal_override),
             yield_typical_t_ha=None if typ is None else round(typ, 1),
             yield_weak_t_ha=None if weak is None else round(weak, 1), weak_year=weak_year,
             yield_potential_t_ha=None if ym is None else round(ym, 1),
@@ -449,7 +482,8 @@ def build(w: DailyWeather, analysis_date: date, ctx: Context, years: int = 10) -
         limitations=[
             "Plon potencjalny z plonów GUS w województwie (90. percentyl z 10 lat) i szacunkowego współczynnika "
             "przydatności gleby – to rząd wielkości, nie prognoza.",
-            "Reakcja plonu na brak wody wg FAO-33 (Ky); dla części upraw Ky to szacunek (oznaczone niższą pewnością).",
+            "Spadek plonu przy suszy liczymy metodą FAO, inną dla każdej uprawy (FAO-33, współczynnik Ky); dla części upraw "
+            "to szacunek – oznaczone niższą pewnością.",
             "Wymagania glebowe i płodozmian – ogólne zalecenia agrotechniczne (szacunek, do weryfikacji z doradcą).",
         ],
         compute_ms=int((perf_counter() - t0) * 1000),
