@@ -8,6 +8,8 @@ import { STATUS } from '@/theme/status'
 import { useLang } from '@/lib/i18n'
 import { PassportSection } from './PassportSection'
 import { TerrainCard } from '@/features/parcel-panel/TerrainCard'
+import { SatelliteCard } from '@/features/parcel-panel/SatelliteCard'
+import { HydroCard } from '@/features/parcel-panel/HydroCard'
 
 const val = (i: Indicator, digits = 0) => (i.value === null ? null : formatNum(i.value, digits))
 const tagDate = (i: Indicator) => (i.source_tag.date ? formatDatePl(i.source_tag.date) : undefined)
@@ -16,10 +18,11 @@ const tagDate = (i: Indicator) => (i.source_tag.date ? formatDatePl(i.source_tag
  * A. Stan obecny (SPEC 7.A): ogólny stan wodny 0–100 w okręgu, karty: woda w glebie (% i mm),
  * kondycja upraw, wilgotność roślin, ryzyko 7 dni, ile wody zmieści gleba; zdanie podsumowania.
  */
-export function SectionA({ analysis }: { analysis: AnalysisResponse }) {
+export function SectionA({ analysis, chartWidth }: { analysis: AnalysisResponse; chartWidth?: number }) {
   const { t } = useLang()
   const { status, indicators: ind } = analysis
   const s = STATUS[status.level]
+  const moistureOffSeason = !!ind.plant_moisture.label && (analysis.satellite?.in_season === false || (analysis.satellite?.status === 'ok' && !analysis.satellite.ndmi_class))
   return (
     <PassportSection id="pass-a" letter="A" title={t('Stan obecny')}>
       <div className="flex flex-wrap items-center gap-5 rounded-xl bg-surface p-4 shadow-card">
@@ -32,7 +35,7 @@ export function SectionA({ analysis }: { analysis: AnalysisResponse }) {
           caption={status.score == null ? undefined : 'na 100'}
         />
         <div className="min-w-0 flex-1 basis-56 space-y-1.5">
-          <StatusBadge status={status.level} />
+          <StatusBadge status={status.level} now={status.level !== 'no_data'} />
           <p className="font-display text-xl leading-7 font-semibold">{t(status.headline)}</p>
           <p className="text-base leading-6">{t(status.summary)}</p>
           <p className="text-xs leading-4 text-text-muted">{t('Ogólny stan wodny: 100 = dużo wody, 0 = susza.')}</p>
@@ -76,8 +79,9 @@ export function SectionA({ analysis }: { analysis: AnalysisResponse }) {
         <MetricCard
           icon={Droplet}
           title="Wilgotność roślin"
+          // A11: poza sezonem (IV–IX) lub przy rzadkim łanie backend daje etykietę zamiast oceny – pokazujemy ją, nie liczbę
           value={ind.plant_moisture.label ? t(ind.plant_moisture.label) : val(ind.plant_moisture)}
-          tone="water"
+          tone={moistureOffSeason ? 'muted' : 'water'}
           source={ind.plant_moisture.source_tag.kind}
           sourceDate={tagDate(ind.plant_moisture)}
           noDataText={ind.plant_moisture.note ?? 'Brak danych'}
@@ -95,6 +99,8 @@ export function SectionA({ analysis }: { analysis: AnalysisResponse }) {
           {ind.soil_capacity.label && <p className="text-sm leading-5 text-text-muted">{t(ind.soil_capacity.label)}</p>}
         </MetricCard>
       </div>
+      {analysis.satellite && <SatelliteCard satellite={analysis.satellite} passport chartWidth={chartWidth} />}
+      <HydroCard hydro={analysis.hydro} passport />
       <TerrainCard terrain={analysis.terrain} note={analysis.terrain_note} />
     </PassportSection>
   )

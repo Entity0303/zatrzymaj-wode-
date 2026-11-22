@@ -1,0 +1,3601 @@
+{
+"_opis": "Indeks magazynu opadów IMGW (scripts/build_imgw.py): stacje ze współrzędnymi i danymi dobowymi.",
+"_built": "2026-11-21",
+"_start": "2016-01-01",
+"_end": "2026-10-31",
+"_stations": 449,
+"index": {
+"249180010": {
+"name": "PSZCZYNA",
+"kind": "klimat",
+"months": 112,
+"first": "2016-01",
+"last": "2025-04",
+"valid_days": 3408
+},
+"249180020": {
+"name": "WARSZOWICE",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"249180070": {
+"name": "MAZAŃCOWICE",
+"kind": "opad",
+"months": 82,
+"first": "2016-01",
+"last": "2022-12",
+"valid_days": 2498
+},
+"249180090": {
+"name": "RUDZICA",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"249180130": {
+"name": "CIESZYN",
+"kind": "opad",
+"months": 42,
+"first": "2016-01",
+"last": "2019-06",
+"valid_days": 1277
+},
+"249180160": {
+"name": "BRENNA",
+"kind": "klimat",
+"months": 108,
+"first": "2016-01",
+"last": "2024-12",
+"valid_days": 3288
+},
+"249180180": {
+"name": "USTROŃ-RÓWNICA-WIEŚ",
+"kind": "opad",
+"months": 1,
+"first": "2017-01",
+"last": "2017-01",
+"valid_days": 31
+},
+"249180210": {
+"name": "SZCZYRK",
+"kind": "opad",
+"months": 108,
+"first": "2016-01",
+"last": "2024-12",
+"valid_days": 3288
+},
+"249180230": {
+"name": "WISŁA",
+"kind": "opad",
+"months": 36,
+"first": "2016-01",
+"last": "2018-12",
+"valid_days": 1096
+},
+"249180240": {
+"name": "WISŁA-MALINKA",
+"kind": "opad",
+"months": 128,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3895
+},
+"249180270": {
+"name": "ISTEBNA-MŁODA GÓRA",
+"kind": "opad",
+"months": 98,
+"first": "2016-01",
+"last": "2024-02",
+"valid_days": 2982
+},
+"249180280": {
+"name": "ISTEBNA-STECÓWKA",
+"kind": "opad",
+"months": 127,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3865
+},
+"249180550": {
+"name": "CIESZYN",
+"kind": "opad",
+"months": 87,
+"first": "2019-07",
+"last": "2026-09",
+"valid_days": 2649
+},
+"249180630": {
+"name": "KICZYCE",
+"kind": "opad",
+"months": 24,
+"first": "2023-06",
+"last": "2025-05",
+"valid_days": 731
+},
+"249180640": {
+"name": "BRENNA-BRENNICA",
+"kind": "opad",
+"months": 18,
+"first": "2025-04",
+"last": "2026-09",
+"valid_days": 548
+},
+"249190010": {
+"name": "JAWISZOWICE",
+"kind": "opad",
+"months": 127,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3865
+},
+"249190080": {
+"name": "WADOWICE",
+"kind": "opad",
+"months": 35,
+"first": "2016-01",
+"last": "2019-02",
+"valid_days": 1065
+},
+"249190150": {
+"name": "STRÓŻA",
+"kind": "opad",
+"months": 125,
+"first": "2016-01",
+"last": "2026-05",
+"valid_days": 3804
+},
+"249190170": {
+"name": "BOGDANÓWKA",
+"kind": "opad",
+"months": 81,
+"first": "2016-01",
+"last": "2022-09",
+"valid_days": 2465
+},
+"249190220": {
+"name": "ŚLEMIEŃ",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"249190230": {
+"name": "LUBIEŃ",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"249190270": {
+"name": "OSIELEC",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"249190280": {
+"name": "KRZECZÓW",
+"kind": "opad",
+"months": 84,
+"first": "2016-01",
+"last": "2022-12",
+"valid_days": 2557
+},
+"249190290": {
+"name": "LIPOWA",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"249190310": {
+"name": "PEWEL MAŁA",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"249190340": {
+"name": "KOSZARAWA",
+"kind": "opad",
+"months": 41,
+"first": "2016-01",
+"last": "2019-05",
+"valid_days": 1247
+},
+"249190350": {
+"name": "ZAWOJA",
+"kind": "klimat",
+"months": 44,
+"first": "2016-01",
+"last": "2019-10",
+"valid_days": 1338
+},
+"249190380": {
+"name": "KAMESZNICA",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"249190420": {
+"name": "ŻABNICA",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"249190440": {
+"name": "KORBIELÓW",
+"kind": "opad",
+"months": 123,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3722
+},
+"249190470": {
+"name": "RABA WYŻNA",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"249190480": {
+"name": "LALIKI",
+"kind": "klimat",
+"months": 72,
+"first": "2016-01",
+"last": "2021-12",
+"valid_days": 2192
+},
+"249190520": {
+"name": "OBIDOWA",
+"kind": "klimat",
+"months": 40,
+"first": "2016-01",
+"last": "2019-05",
+"valid_days": 1216
+},
+"249190540": {
+"name": "RAJCZA",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"249190560": {
+"name": "JABŁONKA",
+"kind": "klimat",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"249190580": {
+"name": "RYCERKA GÓRNA",
+"kind": "opad",
+"months": 120,
+"first": "2016-01",
+"last": "2025-12",
+"valid_days": 3653
+},
+"249190610": {
+"name": "RATUŁÓW",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"249190620": {
+"name": "BAŃSKA WYŻNA",
+"kind": "opad",
+"months": 39,
+"first": "2016-01",
+"last": "2019-03",
+"valid_days": 1186
+},
+"249190630": {
+"name": "WITÓW",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"249190660": {
+"name": "KOŚCIELISKO-KIRY",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"249190670": {
+"name": "POLANA CHOCHOŁOWSKA",
+"kind": "klimat",
+"months": 126,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3834
+},
+"249190750": {
+"name": "SOBLÓWKA",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"249190890": {
+"name": "RADZIECHOWY",
+"kind": "klimat",
+"months": 120,
+"first": "2016-01",
+"last": "2025-12",
+"valid_days": 3653
+},
+"249190920": {
+"name": "LIPNICA WIELKA",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"249191040": {
+"name": "RYCERKA GÓRNA II",
+"kind": "opad",
+"months": 9,
+"first": "2026-01",
+"last": "2026-09",
+"valid_days": 273
+},
+"249200020": {
+"name": "ŁAZY",
+"kind": "klimat",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"249200080": {
+"name": "ŁAPANÓW",
+"kind": "opad",
+"months": 124,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3773
+},
+"249200120": {
+"name": "ROZDZIELE",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"249200130": {
+"name": "JASTRZĘBIA",
+"kind": "klimat",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"249200140": {
+"name": "WĘGLÓWKA",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"249200180": {
+"name": "LIMANOWA",
+"kind": "klimat",
+"months": 128,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3896
+},
+"249200210": {
+"name": "PÓŁRZECZKI",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"249200240": {
+"name": "PTASZKOWA",
+"kind": "klimat",
+"months": 82,
+"first": "2016-01",
+"last": "2022-10",
+"valid_days": 2496
+},
+"249200250": {
+"name": "JASIONÓW",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"249200260": {
+"name": "ŁĄCKO",
+"kind": "klimat",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"249200280": {
+"name": "ŁABOWA",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"249200290": {
+"name": "OCHOTNICA GÓRNA",
+"kind": "opad",
+"months": 87,
+"first": "2016-01",
+"last": "2023-03",
+"valid_days": 2647
+},
+"249200310": {
+"name": "KOWANIEC",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"249200320": {
+"name": "ŁOPUSZNA",
+"kind": "klimat",
+"months": 24,
+"first": "2016-01",
+"last": "2017-12",
+"valid_days": 731
+},
+"249200360": {
+"name": "MIZERNA",
+"kind": "klimat",
+"months": 56,
+"first": "2016-01",
+"last": "2020-08",
+"valid_days": 1705
+},
+"249200370": {
+"name": "KROŚCIENKO",
+"kind": "klimat",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"249200380": {
+"name": "SZAFLARY",
+"kind": "opad",
+"months": 122,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3712
+},
+"249200420": {
+"name": "NIEDZICA",
+"kind": "klimat",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"249200450": {
+"name": "BIAŁKA TATRZAŃSKA",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"249200470": {
+"name": "KRYNICA",
+"kind": "klimat",
+"months": 82,
+"first": "2016-01",
+"last": "2022-10",
+"valid_days": 2496
+},
+"249200480": {
+"name": "BUKOWINA TATRZAŃSKA",
+"kind": "klimat",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"249200490": {
+"name": "MUSZYNA",
+"kind": "klimat",
+"months": 60,
+"first": "2016-01",
+"last": "2020-12",
+"valid_days": 1827
+},
+"249200540": {
+"name": "HALA GĄSIENICOWA",
+"kind": "klimat",
+"months": 37,
+"first": "2016-01",
+"last": "2019-01",
+"valid_days": 1127
+},
+"249200550": {
+"name": "DOLINA PIĘCIU STAWÓW",
+"kind": "klimat",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3922
+},
+"249200570": {
+"name": "TRZEMEŚNIA",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3911
+},
+"249200910": {
+"name": "MORSKIE OKO",
+"kind": "opad",
+"months": 58,
+"first": "2016-01",
+"last": "2020-10",
+"valid_days": 1763
+},
+"249200920": {
+"name": "PIWNICZNA",
+"kind": "klimat",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"249200930": {
+"name": "PORONIN",
+"kind": "klimat",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"249200980": {
+"name": "MSZANA DOLNA",
+"kind": "klimat",
+"months": 120,
+"first": "2016-01",
+"last": "2025-12",
+"valid_days": 3653
+},
+"249210010": {
+"name": "PILZNO",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"249210040": {
+"name": "ŻARNOWA",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"249210080": {
+"name": "JASŁO",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"249210090": {
+"name": "GORLICE",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"249210130": {
+"name": "ZBOISKA",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"249210180": {
+"name": "KREMPNA",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"249210190": {
+"name": "WISŁOCZEK",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"249210210": {
+"name": "PUŁAWY DOLNE",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"249210230": {
+"name": "WYSOWA",
+"kind": "opad",
+"months": 85,
+"first": "2016-01",
+"last": "2023-01",
+"valid_days": 2588
+},
+"249210250": {
+"name": "JAŚLISKA",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"249210260": {
+"name": "TYLICZ",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"249210270": {
+"name": "WISŁOK WIELKI",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"249220040": {
+"name": "DYNÓW",
+"kind": "klimat",
+"months": 106,
+"first": "2016-01",
+"last": "2024-10",
+"valid_days": 3227
+},
+"249220110": {
+"name": "NOWOTANIEC",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"249220130": {
+"name": "BRZEGI DOLNE",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"249220140": {
+"name": "SZCZAWNE",
+"kind": "opad",
+"months": 72,
+"first": "2016-01",
+"last": "2021-12",
+"valid_days": 2192
+},
+"249220150": {
+"name": "SOLINA-JAWOR",
+"kind": "klimat",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"249220160": {
+"name": "TELEŚNICA OSZWAROWA",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"249220180": {
+"name": "KOMAŃCZA",
+"kind": "klimat",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"249220210": {
+"name": "TERKA",
+"kind": "klimat",
+"months": 39,
+"first": "2016-01",
+"last": "2019-03",
+"valid_days": 1186
+},
+"249220220": {
+"name": "POLANA",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"249220240": {
+"name": "ŻUBRACZE",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"249220250": {
+"name": "CISNA",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"249220260": {
+"name": "DWERNIK",
+"kind": "opad",
+"months": 60,
+"first": "2016-01",
+"last": "2020-12",
+"valid_days": 1827
+},
+"249220270": {
+"name": "KALNICA",
+"kind": "opad",
+"months": 94,
+"first": "2016-01",
+"last": "2023-10",
+"valid_days": 2861
+},
+"249220280": {
+"name": "STUPOSIANY",
+"kind": "klimat",
+"months": 36,
+"first": "2016-01",
+"last": "2018-12",
+"valid_days": 1096
+},
+"249220360": {
+"name": "BUKOWIEC",
+"kind": "opad",
+"months": 90,
+"first": "2019-04",
+"last": "2026-09",
+"valid_days": 2740
+},
+"250140010": {
+"name": "WYSZKÓW",
+"kind": "opad",
+"months": 88,
+"first": "2019-06",
+"last": "2026-09",
+"valid_days": 2668
+},
+"250140020": {
+"name": "SIENIAWKA",
+"kind": "opad",
+"months": 86,
+"first": "2019-06",
+"last": "2026-09",
+"valid_days": 2602
+},
+"250140030": {
+"name": "BOGATYNIA",
+"kind": "opad",
+"months": 123,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3742
+},
+"250150030": {
+"name": "POBIEDNA",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"250150050": {
+"name": "PILCHOWICE",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"250150060": {
+"name": "RĘBISZÓW",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"250150080": {
+"name": "STARA KAMIENICA",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3924
+},
+"250150090": {
+"name": "ŚWIERADÓW-ZDRÓJ",
+"kind": "opad",
+"months": 61,
+"first": "2016-01",
+"last": "2021-01",
+"valid_days": 1858
+},
+"250150110": {
+"name": "KACZORÓW",
+"kind": "opad",
+"months": 100,
+"first": "2016-01",
+"last": "2025-04",
+"valid_days": 3034
+},
+"250150130": {
+"name": "CIECHANOWICE",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"250150150": {
+"name": "SZKLARSKA PORĘBA",
+"kind": "opad",
+"months": 120,
+"first": "2016-01",
+"last": "2025-12",
+"valid_days": 3640
+},
+"250150170": {
+"name": "JAKUSZYCE",
+"kind": "opad",
+"months": 117,
+"first": "2016-01",
+"last": "2025-09",
+"valid_days": 3561
+},
+"250150190": {
+"name": "KOWARY",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"250150210": {
+"name": "PRZESIEKA",
+"kind": "opad",
+"months": 24,
+"first": "2016-01",
+"last": "2017-12",
+"valid_days": 731
+},
+"250150220": {
+"name": "KARPACZ",
+"kind": "opad",
+"months": 86,
+"first": "2016-01",
+"last": "2023-02",
+"valid_days": 2616
+},
+"250150240": {
+"name": "PACZYN",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"250150250": {
+"name": "PAPROTKI",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"250150260": {
+"name": "BUKÓWKA",
+"kind": "opad",
+"months": 87,
+"first": "2016-01",
+"last": "2023-03",
+"valid_days": 2647
+},
+"250150510": {
+"name": "MIRSK",
+"kind": "opad",
+"months": 117,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3561
+},
+"250150530": {
+"name": "ŚWIERADÓW ZDRÓJ",
+"kind": "opad",
+"months": 69,
+"first": "2021-01",
+"last": "2026-09",
+"valid_days": 2099
+},
+"250160030": {
+"name": "BOLKÓW",
+"kind": "opad",
+"months": 121,
+"first": "2016-01",
+"last": "2026-01",
+"valid_days": 3657
+},
+"250160070": {
+"name": "BORÓW",
+"kind": "opad",
+"months": 115,
+"first": "2016-01",
+"last": "2025-07",
+"valid_days": 3500
+},
+"250160090": {
+"name": "PSZENNO",
+"kind": "opad",
+"months": 84,
+"first": "2016-01",
+"last": "2022-12",
+"valid_days": 2557
+},
+"250160120": {
+"name": "LUBOMIN",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3914
+},
+"250160130": {
+"name": "SZCZAWNO-ZDRÓJ",
+"kind": "opad",
+"months": 116,
+"first": "2016-01",
+"last": "2025-08",
+"valid_days": 3531
+},
+"250160150": {
+"name": "KAMIENNA GÓRA",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"250160170": {
+"name": "LUBACHÓW",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"250160190": {
+"name": "BOGUSZÓW-GORCE",
+"kind": "opad",
+"months": 108,
+"first": "2016-01",
+"last": "2024-12",
+"valid_days": 3288
+},
+"250160220": {
+"name": "JEDLINA-ZDRÓJ",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"250160260": {
+"name": "DZIERŻONIÓW",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"250160270": {
+"name": "WALIM",
+"kind": "opad",
+"months": 92,
+"first": "2016-01",
+"last": "2023-08",
+"valid_days": 2784
+},
+"250160290": {
+"name": "CHEŁMSKO ŚLĄSKIE",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"250160310": {
+"name": "MIEROSZÓW",
+"kind": "opad",
+"months": 112,
+"first": "2016-01",
+"last": "2025-04",
+"valid_days": 3400
+},
+"250160320": {
+"name": "OSTROSZOWICE",
+"kind": "opad",
+"months": 24,
+"first": "2016-01",
+"last": "2017-12",
+"valid_days": 731
+},
+"250160350": {
+"name": "SREBRNA GÓRA",
+"kind": "opad",
+"months": 75,
+"first": "2016-01",
+"last": "2022-03",
+"valid_days": 2282
+},
+"250160360": {
+"name": "TARNÓW",
+"kind": "klimat",
+"months": 84,
+"first": "2016-01",
+"last": "2022-12",
+"valid_days": 2557
+},
+"250160410": {
+"name": "BARDO ŚLĄSKIE",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"250160450": {
+"name": "KUDOWA-ZDRÓJ",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"250160480": {
+"name": "SŁOSZÓW",
+"kind": "opad",
+"months": 114,
+"first": "2016-01",
+"last": "2026-04",
+"valid_days": 3467
+},
+"250160490": {
+"name": "POLANICA-ZDRÓJ",
+"kind": "opad",
+"months": 12,
+"first": "2016-01",
+"last": "2016-12",
+"valid_days": 366
+},
+"250160510": {
+"name": "OŁDRZYCHOWICE KŁODZKIE",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"250160520": {
+"name": "LĄDEK-ZDRÓJ",
+"kind": "opad",
+"months": 118,
+"first": "2016-01",
+"last": "2025-10",
+"valid_days": 3592
+},
+"250160530": {
+"name": "ZIELENIEC",
+"kind": "opad",
+"months": 83,
+"first": "2016-01",
+"last": "2022-11",
+"valid_days": 2526
+},
+"250160560": {
+"name": "STRONIE ŚLĄSKIE",
+"kind": "opad",
+"months": 98,
+"first": "2018-08",
+"last": "2026-09",
+"valid_days": 2983
+},
+"250160590": {
+"name": "DŁUGOPOLE-ZDRÓJ",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"250160610": {
+"name": "BOLESŁAWÓW",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"250160620": {
+"name": "KAMIENICA",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"250160630": {
+"name": "MIĘDZYGÓRZE",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"250160650": {
+"name": "MIĘDZYLESIE",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"250160840": {
+"name": "SZALEJÓW GÓRNY",
+"kind": "opad",
+"months": 106,
+"first": "2016-01",
+"last": "2026-04",
+"valid_days": 3221
+},
+"250160910": {
+"name": "SREBRNA GÓRA II",
+"kind": "opad",
+"months": 34,
+"first": "2022-01",
+"last": "2026-04",
+"valid_days": 1028
+},
+"250160970": {
+"name": "ŚNIEŻNIK",
+"kind": "opad",
+"months": 36,
+"first": "2023-10",
+"last": "2026-09",
+"valid_days": 1096
+},
+"250161020": {
+"name": "ZIELENIEC II",
+"kind": "opad",
+"months": 16,
+"first": "2022-12",
+"last": "2024-03",
+"valid_days": 481
+},
+"250161030": {
+"name": "RZECZKA",
+"kind": "opad",
+"months": 37,
+"first": "2023-09",
+"last": "2026-09",
+"valid_days": 1126
+},
+"250170110": {
+"name": "DOBROGOSZCZ",
+"kind": "opad",
+"months": 12,
+"first": "2016-01",
+"last": "2016-12",
+"valid_days": 365
+},
+"250170250": {
+"name": "OTMUCHÓW",
+"kind": "opad",
+"months": 89,
+"first": "2016-01",
+"last": "2023-05",
+"valid_days": 2708
+},
+"250170290": {
+"name": "DZIEWIĘTLICE",
+"kind": "opad",
+"months": 112,
+"first": "2016-01",
+"last": "2026-04",
+"valid_days": 3405
+},
+"250170330": {
+"name": "GŁUCHOŁAZY",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3917
+},
+"250170340": {
+"name": "JARNOŁTÓWEK",
+"kind": "opad",
+"months": 116,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3506
+},
+"250170390": {
+"name": "GŁUBCZYCE",
+"kind": "opad",
+"months": 93,
+"first": "2016-01",
+"last": "2023-09",
+"valid_days": 2830
+},
+"250170880": {
+"name": "BOREK STRZELIŃSKI",
+"kind": "opad",
+"months": 14,
+"first": "2025-08",
+"last": "2026-09",
+"valid_days": 426
+},
+"250180030": {
+"name": "STARE OLESNO",
+"kind": "opad",
+"months": 95,
+"first": "2016-01",
+"last": "2023-11",
+"valid_days": 2891
+},
+"250180190": {
+"name": "KRUPSKI MŁYN",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"250180210": {
+"name": "ZIELONA",
+"kind": "opad",
+"months": 108,
+"first": "2016-01",
+"last": "2024-12",
+"valid_days": 3288
+},
+"250180250": {
+"name": "BRYNICA",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"250180270": {
+"name": "ŚWIERKLANIEC",
+"kind": "opad",
+"months": 38,
+"first": "2016-01",
+"last": "2019-02",
+"valid_days": 1155
+},
+"250180330": {
+"name": "ŁABĘDY",
+"kind": "opad",
+"months": 1,
+"first": "2017-01",
+"last": "2017-01",
+"valid_days": 31
+},
+"250180380": {
+"name": "SUKOWICE",
+"kind": "opad",
+"months": 34,
+"first": "2016-01",
+"last": "2018-10",
+"valid_days": 1035
+},
+"250180450": {
+"name": "ZWONOWICE",
+"kind": "opad",
+"months": 108,
+"first": "2016-01",
+"last": "2024-12",
+"valid_days": 3288
+},
+"250180530": {
+"name": "KIETRZ",
+"kind": "opad",
+"months": 96,
+"first": "2016-01",
+"last": "2023-12",
+"valid_days": 2922
+},
+"250180560": {
+"name": "ŻORY",
+"kind": "opad",
+"months": 98,
+"first": "2016-01",
+"last": "2024-02",
+"valid_days": 2982
+},
+"250180580": {
+"name": "DRONIOWICE",
+"kind": "klimat",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"250190010": {
+"name": "JANUSZEWICE",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"250190030": {
+"name": "SILNICZKA",
+"kind": "klimat",
+"months": 48,
+"first": "2016-01",
+"last": "2019-12",
+"valid_days": 1461
+},
+"250190080": {
+"name": "WĄSOSZ",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"250190140": {
+"name": "ŻARKI",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"250190150": {
+"name": "BONOWICE",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"250190160": {
+"name": "LGOTA GÓRNA",
+"kind": "klimat",
+"months": 108,
+"first": "2016-01",
+"last": "2024-12",
+"valid_days": 3288
+},
+"250190180": {
+"name": "PIWOŃ",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"250190220": {
+"name": "ŁAZY",
+"kind": "opad",
+"months": 127,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3867
+},
+"250190260": {
+"name": "GOLCZOWICE",
+"kind": "opad",
+"months": 98,
+"first": "2016-01",
+"last": "2024-02",
+"valid_days": 2982
+},
+"250190290": {
+"name": "OLEWIN",
+"kind": "opad",
+"months": 84,
+"first": "2016-01",
+"last": "2022-12",
+"valid_days": 2557
+},
+"250190310": {
+"name": "MACZKI",
+"kind": "opad",
+"months": 1,
+"first": "2017-01",
+"last": "2017-01",
+"valid_days": 31
+},
+"250190380": {
+"name": "BIERUŃ STARY",
+"kind": "opad",
+"months": 108,
+"first": "2016-01",
+"last": "2024-12",
+"valid_days": 3288
+},
+"250190390": {
+"name": "KRAKÓW-OBSERWATORIUM",
+"kind": "klimat",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"250190850": {
+"name": "TROKS",
+"kind": "opad",
+"months": 45,
+"first": "2023-01",
+"last": "2026-09",
+"valid_days": 1369
+},
+"250200130": {
+"name": "KLISZÓW",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"250200230": {
+"name": "BORUSOWA",
+"kind": "klimat",
+"months": 88,
+"first": "2016-01",
+"last": "2023-10",
+"valid_days": 2678
+},
+"250210020": {
+"name": "NOSÓW",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"250210030": {
+"name": "ANNOPOL",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"250210050": {
+"name": "ŚWIĘTY KRZYŻ",
+"kind": "klimat",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"250210080": {
+"name": "SADKÓW",
+"kind": "opad",
+"months": 61,
+"first": "2016-01",
+"last": "2021-01",
+"valid_days": 1858
+},
+"250210090": {
+"name": "JASTRZĘBSKA WOLA",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"250210110": {
+"name": "RAKÓW",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"250210130": {
+"name": "STASZÓW",
+"kind": "klimat",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"250210180": {
+"name": "CHORZELÓW",
+"kind": "klimat",
+"months": 80,
+"first": "2016-01",
+"last": "2022-08",
+"valid_days": 2435
+},
+"250210240": {
+"name": "ZAWADA",
+"kind": "klimat",
+"months": 80,
+"first": "2016-01",
+"last": "2022-08",
+"valid_days": 2435
+},
+"250220120": {
+"name": "JAROCIN",
+"kind": "klimat",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"250220210": {
+"name": "JAROSŁAW",
+"kind": "opad",
+"months": 48,
+"first": "2016-01",
+"last": "2019-12",
+"valid_days": 1461
+},
+"250230070": {
+"name": "TOMASZÓW LUBELSKI",
+"kind": "klimat",
+"months": 24,
+"first": "2016-01",
+"last": "2017-12",
+"valid_days": 731
+},
+"250230130": {
+"name": "FUTORY",
+"kind": "opad",
+"months": 9,
+"first": "2026-01",
+"last": "2026-09",
+"valid_days": 273
+},
+"250230160": {
+"name": "CIESZANÓW",
+"kind": "klimat",
+"months": 96,
+"first": "2016-01",
+"last": "2023-12",
+"valid_days": 2922
+},
+"250240010": {
+"name": "STRZYŻÓW",
+"kind": "klimat",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3925
+},
+"251140060": {
+"name": "SOBOLICE",
+"kind": "opad",
+"months": 29,
+"first": "2016-01",
+"last": "2018-05",
+"valid_days": 882
+},
+"251140110": {
+"name": "SANICE",
+"kind": "opad",
+"months": 100,
+"first": "2018-06",
+"last": "2026-09",
+"valid_days": 3044
+},
+"251150030": {
+"name": "NOWOGRÓD BOBRZAŃSKI",
+"kind": "opad",
+"months": 88,
+"first": "2019-06",
+"last": "2026-09",
+"valid_days": 2679
+},
+"251150080": {
+"name": "GRABIK",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3914
+},
+"251150110": {
+"name": "ŻAGAŃ",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"251150180": {
+"name": "TOMASZÓW BOLESŁAWIECKI",
+"kind": "opad",
+"months": 98,
+"first": "2016-01",
+"last": "2024-02",
+"valid_days": 2982
+},
+"251150220": {
+"name": "NOWOGRODZIEC",
+"kind": "opad",
+"months": 88,
+"first": "2019-06",
+"last": "2026-09",
+"valid_days": 2665
+},
+"251150280": {
+"name": "TWARDOCICE",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3924
+},
+"251150290": {
+"name": "SULIKÓW",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"251150320": {
+"name": "BIERNA",
+"kind": "opad",
+"months": 84,
+"first": "2016-01",
+"last": "2022-12",
+"valid_days": 2557
+},
+"251150340": {
+"name": "GRYFÓW ŚLĄSKI",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"251150350": {
+"name": "LUBOMIERZ",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"251150360": {
+"name": "ŚWIERZAWA",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"251150390": {
+"name": "ZŁOTNIKI LUBAŃSKIE",
+"kind": "opad",
+"months": 44,
+"first": "2016-01",
+"last": "2019-08",
+"valid_days": 1339
+},
+"251150420": {
+"name": "STANKOWICE",
+"kind": "opad",
+"months": 85,
+"first": "2019-09",
+"last": "2026-09",
+"valid_days": 2587
+},
+"251150470": {
+"name": "MIEDZIANA",
+"kind": "opad",
+"months": 44,
+"first": "2023-02",
+"last": "2026-09",
+"valid_days": 1336
+},
+"251160110": {
+"name": "OSETNO",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"251160150": {
+"name": "POLKOWICE DOLNE",
+"kind": "opad",
+"months": 128,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3896
+},
+"251160170": {
+"name": "CHWAŁKOWICE",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"251160190": {
+"name": "LUBIN",
+"kind": "opad",
+"months": 88,
+"first": "2019-06",
+"last": "2026-09",
+"valid_days": 2679
+},
+"251160220": {
+"name": "OBORNIKI ŚLĄSKIE",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"251160290": {
+"name": "JAWOR",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"251160320": {
+"name": "RADZYŃ",
+"kind": "klimat",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"251160420": {
+"name": "PYSZĄCA",
+"kind": "opad",
+"months": 26,
+"first": "2023-10",
+"last": "2025-11",
+"valid_days": 792
+},
+"251170030": {
+"name": "WITASZYCE",
+"kind": "opad",
+"months": 33,
+"first": "2016-01",
+"last": "2018-09",
+"valid_days": 1004
+},
+"251170090": {
+"name": "SMOLICE",
+"kind": "klimat",
+"months": 63,
+"first": "2016-01",
+"last": "2021-03",
+"valid_days": 1917
+},
+"251170140": {
+"name": "MILICZ",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"251170210": {
+"name": "TRZEBNICA",
+"kind": "opad",
+"months": 36,
+"first": "2016-01",
+"last": "2018-12",
+"valid_days": 1096
+},
+"251170270": {
+"name": "BIERUTÓW",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"251170290": {
+"name": "NAMYSŁÓW",
+"kind": "opad",
+"months": 92,
+"first": "2016-01",
+"last": "2023-08",
+"valid_days": 2800
+},
+"251170380": {
+"name": "WOLA KSIĄŻĘCA",
+"kind": "opad",
+"months": 95,
+"first": "2018-11",
+"last": "2026-09",
+"valid_days": 2891
+},
+"251170430": {
+"name": "OSTRZESZÓW II",
+"kind": "opad",
+"months": 71,
+"first": "2020-11",
+"last": "2026-09",
+"valid_days": 2160
+},
+"251180020": {
+"name": "ZBIERSK",
+"kind": "opad",
+"months": 84,
+"first": "2016-01",
+"last": "2022-12",
+"valid_days": 2557
+},
+"251180040": {
+"name": "PODDĘBICE",
+"kind": "opad",
+"months": 12,
+"first": "2016-01",
+"last": "2016-12",
+"valid_days": 366
+},
+"251180050": {
+"name": "LISKÓW",
+"kind": "opad",
+"months": 12,
+"first": "2016-01",
+"last": "2016-12",
+"valid_days": 366
+},
+"251180090": {
+"name": "SIERADZ",
+"kind": "opad",
+"months": 23,
+"first": "2016-01",
+"last": "2017-11",
+"valid_days": 700
+},
+"251180140": {
+"name": "ZŁOCZEW",
+"kind": "opad",
+"months": 12,
+"first": "2016-01",
+"last": "2016-12",
+"valid_days": 366
+},
+"251180150": {
+"name": "MIRKÓW",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"251180160": {
+"name": "OSJAKÓW",
+"kind": "opad",
+"months": 96,
+"first": "2016-01",
+"last": "2023-12",
+"valid_days": 2922
+},
+"251180190": {
+"name": "SIEMIANICE",
+"kind": "opad",
+"months": 12,
+"first": "2016-01",
+"last": "2016-12",
+"valid_days": 366
+},
+"251180240": {
+"name": "JASTRZYGOWICE",
+"kind": "opad",
+"months": 12,
+"first": "2016-01",
+"last": "2016-12",
+"valid_days": 366
+},
+"251180350": {
+"name": "SIERADZ-DZIGORZEW",
+"kind": "opad",
+"months": 106,
+"first": "2017-12",
+"last": "2026-09",
+"valid_days": 3226
+},
+"251190140": {
+"name": "PLUCICE",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"251190150": {
+"name": "DOBRYSZYCE",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"251190160": {
+"name": "PRZEDBÓRZ",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"251190230": {
+"name": "JAROSTY",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"251200030": {
+"name": "SKIERNIEWICE",
+"kind": "klimat",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"251200050": {
+"name": "SADKOWICE",
+"kind": "opad",
+"months": 128,
+"first": "2016-01",
+"last": "2026-08",
+"valid_days": 3896
+},
+"251200080": {
+"name": "BIAŁOBRZEGI",
+"kind": "opad",
+"months": 97,
+"first": "2016-01",
+"last": "2024-01",
+"valid_days": 2953
+},
+"251200170": {
+"name": "CHEŁSTY",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"251200220": {
+"name": "WŁOCHÓW",
+"kind": "opad",
+"months": 64,
+"first": "2016-01",
+"last": "2021-04",
+"valid_days": 1947
+},
+"251200240": {
+"name": "STANOWISKA",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"251200270": {
+"name": "DĄBRÓWKA STARA",
+"kind": "opad",
+"months": 127,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3864
+},
+"251200290": {
+"name": "TEOFILÓW",
+"kind": "opad",
+"months": 84,
+"first": "2016-01",
+"last": "2022-12",
+"valid_days": 2557
+},
+"251210040": {
+"name": "JARCZEW",
+"kind": "klimat",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"251210120": {
+"name": "PUŁAWY",
+"kind": "klimat",
+"months": 96,
+"first": "2016-01",
+"last": "2023-12",
+"valid_days": 2922
+},
+"251210230": {
+"name": "STARACHOWICE",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"251210240": {
+"name": "BRODY IŁŻECKIE",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"251220040": {
+"name": "RADZYŃ PODLASKI",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"252140070": {
+"name": "BOLESZKOWICE",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"252140090": {
+"name": "KOSTRZYN NAD ODRĄ",
+"kind": "opad",
+"months": 127,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3864
+},
+"252140150": {
+"name": "MASZEWO",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"252150050": {
+"name": "KRZYŻ",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"252150070": {
+"name": "DREZDENKO",
+"kind": "opad",
+"months": 124,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3776
+},
+"252150180": {
+"name": "LUBINICKO-ŚWIEBODZIN",
+"kind": "opad",
+"months": 90,
+"first": "2016-01",
+"last": "2023-06",
+"valid_days": 2738
+},
+"252150270": {
+"name": "BABIMOST",
+"kind": "klimat",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"252160050": {
+"name": "RYCZYWÓŁ",
+"kind": "opad",
+"months": 12,
+"first": "2016-01",
+"last": "2016-12",
+"valid_days": 366
+},
+"252160110": {
+"name": "SZAMOTUŁY-BABORÓWKO",
+"kind": "opad",
+"months": 121,
+"first": "2016-01",
+"last": "2026-01",
+"valid_days": 3684
+},
+"252160160": {
+"name": "PAPROĆ",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"252160230": {
+"name": "WIELICHOWO",
+"kind": "klimat",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"252170060": {
+"name": "JANOWIEC WIELKOPOLSKI",
+"kind": "opad",
+"months": 12,
+"first": "2016-01",
+"last": "2016-12",
+"valid_days": 366
+},
+"252170110": {
+"name": "GNIEZNO",
+"kind": "opad",
+"months": 45,
+"first": "2016-01",
+"last": "2020-09",
+"valid_days": 1365
+},
+"252170180": {
+"name": "WRZEŚNIA",
+"kind": "opad",
+"months": 12,
+"first": "2016-01",
+"last": "2016-12",
+"valid_days": 366
+},
+"252170190": {
+"name": "SŁUPCA",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"252170210": {
+"name": "KÓRNIK",
+"kind": "klimat",
+"months": 52,
+"first": "2016-01",
+"last": "2020-04",
+"valid_days": 1582
+},
+"252180060": {
+"name": "PAKOŚĆ",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"252180080": {
+"name": "KOŁUDA WIELKA",
+"kind": "klimat",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"252180210": {
+"name": "KŁODAWA",
+"kind": "opad",
+"months": 12,
+"first": "2016-01",
+"last": "2016-12",
+"valid_days": 366
+},
+"252180260": {
+"name": "TUREK",
+"kind": "opad",
+"months": 12,
+"first": "2016-01",
+"last": "2016-12",
+"valid_days": 366
+},
+"252190030": {
+"name": "GŁODOWO",
+"kind": "klimat",
+"months": 5,
+"first": "2016-01",
+"last": "2016-05",
+"valid_days": 152
+},
+"252190120": {
+"name": "ŻYCHLIN",
+"kind": "opad",
+"months": 53,
+"first": "2016-01",
+"last": "2020-05",
+"valid_days": 1613
+},
+"252190160": {
+"name": "WALEWICE",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"252200080": {
+"name": "BORKOWO",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"252200120": {
+"name": "LEGIONOWO",
+"kind": "klimat",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"252200150": {
+"name": "WARSZAWA-BIELANY",
+"kind": "klimat",
+"months": 91,
+"first": "2016-01",
+"last": "2023-07",
+"valid_days": 2767
+},
+"252210020": {
+"name": "CZARNOWO",
+"kind": "opad",
+"months": 8,
+"first": "2016-01",
+"last": "2016-08",
+"valid_days": 244
+},
+"252210050": {
+"name": "PUŁTUSK",
+"kind": "klimat",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"252210240": {
+"name": "WIELGOLAS",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"252220050": {
+"name": "BRAŃSK",
+"kind": "opad",
+"months": 84,
+"first": "2016-01",
+"last": "2022-12",
+"valid_days": 2557
+},
+"252220120": {
+"name": "TONKIELE",
+"kind": "opad",
+"months": 107,
+"first": "2016-01",
+"last": "2026-04",
+"valid_days": 3252
+},
+"252230010": {
+"name": "NOWOSADY",
+"kind": "opad",
+"months": 8,
+"first": "2016-01",
+"last": "2016-08",
+"valid_days": 244
+},
+"252230040": {
+"name": "NAREW",
+"kind": "opad",
+"months": 110,
+"first": "2016-01",
+"last": "2025-02",
+"valid_days": 3347
+},
+"252230080": {
+"name": "NOWE MASIEWO",
+"kind": "opad",
+"months": 25,
+"first": "2016-01",
+"last": "2018-01",
+"valid_days": 762
+},
+"252230090": {
+"name": "CHRABOŁY",
+"kind": "opad",
+"months": 8,
+"first": "2016-01",
+"last": "2016-08",
+"valid_days": 235
+},
+"252230110": {
+"name": "HAJNÓWKA",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"252230120": {
+"name": "BIAŁOWIEŻA",
+"kind": "klimat",
+"months": 103,
+"first": "2016-01",
+"last": "2024-07",
+"valid_days": 3135
+},
+"252230150": {
+"name": "KLESZCZELE",
+"kind": "opad",
+"months": 57,
+"first": "2016-01",
+"last": "2020-09",
+"valid_days": 1735
+},
+"252230240": {
+"name": "NAREWKA",
+"kind": "opad",
+"months": 8,
+"first": "2016-01",
+"last": "2016-08",
+"valid_days": 244
+},
+"252230250": {
+"name": "ZAMOSZE",
+"kind": "opad",
+"months": 99,
+"first": "2018-02",
+"last": "2026-04",
+"valid_days": 3011
+},
+"253140010": {
+"name": "WOLIN",
+"kind": "opad",
+"months": 128,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3832
+},
+"253140060": {
+"name": "GOLENIÓW",
+"kind": "klimat",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"253140110": {
+"name": "GRYFINO",
+"kind": "opad",
+"months": 12,
+"first": "2016-01",
+"last": "2016-12",
+"valid_days": 366
+},
+"253150010": {
+"name": "STARNIN",
+"kind": "opad",
+"months": 128,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3895
+},
+"253150020": {
+"name": "WITNO",
+"kind": "opad",
+"months": 114,
+"first": "2016-01",
+"last": "2025-06",
+"valid_days": 3469
+},
+"253150070": {
+"name": "ŁABĘDZIE",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"253150130": {
+"name": "LISOWO",
+"kind": "opad",
+"months": 12,
+"first": "2016-01",
+"last": "2016-12",
+"valid_days": 366
+},
+"253150190": {
+"name": "PRZELEWICE",
+"kind": "opad",
+"months": 125,
+"first": "2016-01",
+"last": "2026-07",
+"valid_days": 3803
+},
+"253150310": {
+"name": "NIEDŹWIEDZISKA",
+"kind": "opad",
+"months": 14,
+"first": "2025-08",
+"last": "2026-09",
+"valid_days": 426
+},
+"253160010": {
+"name": "SĘPOLNO WIELKIE",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"253160020": {
+"name": "OSÓWKO",
+"kind": "opad",
+"months": 86,
+"first": "2016-01",
+"last": "2023-02",
+"valid_days": 2616
+},
+"253160040": {
+"name": "GRZMIĄCA",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"253160090": {
+"name": "WIERZCHOWO",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"253160110": {
+"name": "JASTROWIE",
+"kind": "opad",
+"months": 12,
+"first": "2016-01",
+"last": "2016-12",
+"valid_days": 366
+},
+"253160260": {
+"name": "WICEWO",
+"kind": "opad",
+"months": 40,
+"first": "2023-06",
+"last": "2026-09",
+"valid_days": 1218
+},
+"253170030": {
+"name": "RÓŻKI-DĘBIE",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"253170060": {
+"name": "ZAPĘDOWO",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"253170160": {
+"name": "SYPNIEWO",
+"kind": "opad",
+"months": 12,
+"first": "2016-01",
+"last": "2016-12",
+"valid_days": 366
+},
+"253170210": {
+"name": "CHRZĄSTOWO",
+"kind": "klimat",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"253180020": {
+"name": "RADOSTOWO",
+"kind": "klimat",
+"months": 9,
+"first": "2016-01",
+"last": "2016-09",
+"valid_days": 274
+},
+"253180060": {
+"name": "CZARNA WODA",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"253180090": {
+"name": "ŚLIWICE",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"253180150": {
+"name": "GRUDZIĄDZ",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"253180160": {
+"name": "RADZYŃ-FIJEWO",
+"kind": "opad",
+"months": 68,
+"first": "2016-01",
+"last": "2021-08",
+"valid_days": 2070
+},
+"253180170": {
+"name": "NOWY JASINIEC",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"253180220": {
+"name": "BYDGOSZCZ",
+"kind": "opad",
+"months": 60,
+"first": "2016-01",
+"last": "2020-12",
+"valid_days": 1827
+},
+"253190030": {
+"name": "DOBROCIN",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"253190070": {
+"name": "PRABUTY",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"253190220": {
+"name": "LIDZBARK",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"253190260": {
+"name": "OSTROWITE",
+"kind": "opad",
+"months": 36,
+"first": "2016-01",
+"last": "2018-12",
+"valid_days": 1096
+},
+"253190310": {
+"name": "KULIGI",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"253200080": {
+"name": "JEMIOŁOWO",
+"kind": "opad",
+"months": 127,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3864
+},
+"253210130": {
+"name": "SZCZYTNO",
+"kind": "klimat",
+"months": 33,
+"first": "2016-01",
+"last": "2018-09",
+"valid_days": 1004
+},
+"253210170": {
+"name": "ROZOGI",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"253210180": {
+"name": "PTAKI",
+"kind": "opad",
+"months": 70,
+"first": "2016-01",
+"last": "2021-10",
+"valid_days": 2115
+},
+"253210220": {
+"name": "DOBRYLAS",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"253210260": {
+"name": "ZARUZIE",
+"kind": "opad",
+"months": 8,
+"first": "2016-01",
+"last": "2016-08",
+"valid_days": 239
+},
+"253210350": {
+"name": "TYSZKI-WĄDOŁOWO",
+"kind": "opad",
+"months": 1,
+"first": "2016-08",
+"last": "2016-08",
+"valid_days": 31
+},
+"253210370": {
+"name": "ŚWIĘTAJNO",
+"kind": "klimat",
+"months": 2,
+"first": "2018-10",
+"last": "2018-11",
+"valid_days": 61
+},
+"253220070": {
+"name": "BIEBRZA-PIEŃCZYKÓWEK",
+"kind": "klimat",
+"months": 100,
+"first": "2016-01",
+"last": "2024-04",
+"valid_days": 3043
+},
+"253220080": {
+"name": "DĘBOWO",
+"kind": "opad",
+"months": 81,
+"first": "2016-01",
+"last": "2022-09",
+"valid_days": 2465
+},
+"253220120": {
+"name": "OSOWIEC",
+"kind": "opad",
+"months": 128,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3823
+},
+"253220130": {
+"name": "RADZIŁÓW",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"253220160": {
+"name": "BURZYN",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"253220210": {
+"name": "TYKOCIN",
+"kind": "opad",
+"months": 8,
+"first": "2016-01",
+"last": "2016-08",
+"valid_days": 244
+},
+"253220220": {
+"name": "ZAWADY",
+"kind": "opad",
+"months": 5,
+"first": "2016-04",
+"last": "2016-08",
+"valid_days": 153
+},
+"253220310": {
+"name": "MOŃKI",
+"kind": "opad",
+"months": 84,
+"first": "2016-01",
+"last": "2022-12",
+"valid_days": 2557
+},
+"253220330": {
+"name": "MARIANOWO II",
+"kind": "klimat",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"253230020": {
+"name": "RÓŻANYSTOK",
+"kind": "klimat",
+"months": 108,
+"first": "2016-01",
+"last": "2024-12",
+"valid_days": 3278
+},
+"253230030": {
+"name": "JANÓW",
+"kind": "opad",
+"months": 81,
+"first": "2016-01",
+"last": "2022-09",
+"valid_days": 2442
+},
+"253230060": {
+"name": "JAŁÓWKA",
+"kind": "opad",
+"months": 108,
+"first": "2016-01",
+"last": "2024-12",
+"valid_days": 3288
+},
+"253230110": {
+"name": "FASTY",
+"kind": "opad",
+"months": 8,
+"first": "2016-01",
+"last": "2016-08",
+"valid_days": 244
+},
+"253230170": {
+"name": "NOWOSIÓŁKI",
+"kind": "opad",
+"months": 8,
+"first": "2016-01",
+"last": "2016-08",
+"valid_days": 238
+},
+"253230180": {
+"name": "DRAHLE",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"254160030": {
+"name": "SŁAWNO",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"254160040": {
+"name": "JEŻYCZKI",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"254160060": {
+"name": "SIERAKOWO",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"254160080": {
+"name": "POLANÓW",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"254160110": {
+"name": "MIASTKO",
+"kind": "opad",
+"months": 103,
+"first": "2016-01",
+"last": "2024-08",
+"valid_days": 3135
+},
+"254170020": {
+"name": "SMOŁDZINO",
+"kind": "opad",
+"months": 72,
+"first": "2016-01",
+"last": "2021-12",
+"valid_days": 2192
+},
+"254170040": {
+"name": "KARŻNICZKA",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"254170060": {
+"name": "MIKOROWO",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"254170070": {
+"name": "BUKOWINA",
+"kind": "opad",
+"months": 108,
+"first": "2016-01",
+"last": "2024-12",
+"valid_days": 3288
+},
+"254170130": {
+"name": "NIEZABYSZEWO",
+"kind": "opad",
+"months": 102,
+"first": "2016-01",
+"last": "2024-06",
+"valid_days": 3104
+},
+"254170140": {
+"name": "KOŚCIERZYNA",
+"kind": "opad",
+"months": 89,
+"first": "2016-01",
+"last": "2023-05",
+"valid_days": 2692
+},
+"254170190": {
+"name": "SŁUPSK",
+"kind": "opad",
+"months": 39,
+"first": "2016-01",
+"last": "2019-03",
+"valid_days": 1186
+},
+"254170210": {
+"name": "BORUCINO",
+"kind": "klimat",
+"months": 72,
+"first": "2016-01",
+"last": "2021-12",
+"valid_days": 2192
+},
+"254170330": {
+"name": "TUCHOMKO",
+"kind": "opad",
+"months": 27,
+"first": "2024-07",
+"last": "2026-09",
+"valid_days": 822
+},
+"254180050": {
+"name": "WEJHEROWO",
+"kind": "opad",
+"months": 81,
+"first": "2016-01",
+"last": "2022-09",
+"valid_days": 2465
+},
+"254180060": {
+"name": "GDYNIA",
+"kind": "opad",
+"months": 50,
+"first": "2016-01",
+"last": "2020-02",
+"valid_days": 1521
+},
+"254180070": {
+"name": "TĘPCZ",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"254180090": {
+"name": "GDAŃSK-RĘBIECHOWO",
+"kind": "klimat",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"254180130": {
+"name": "GORĘCZYNO",
+"kind": "opad",
+"months": 118,
+"first": "2016-01",
+"last": "2025-10",
+"valid_days": 3592
+},
+"254190070": {
+"name": "TOLKMICKO",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"254190120": {
+"name": "KMIECIN",
+"kind": "opad",
+"months": 80,
+"first": "2016-01",
+"last": "2022-08",
+"valid_days": 2435
+},
+"254190150": {
+"name": "SŁOBITY",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"254190160": {
+"name": "PASŁĘK",
+"kind": "opad",
+"months": 84,
+"first": "2016-01",
+"last": "2022-12",
+"valid_days": 2557
+},
+"254190230": {
+"name": "ROGITY",
+"kind": "opad",
+"months": 111,
+"first": "2017-07",
+"last": "2026-09",
+"valid_days": 3379
+},
+"254200040": {
+"name": "BARTOSZYCE",
+"kind": "opad",
+"months": 71,
+"first": "2016-01",
+"last": "2021-11",
+"valid_days": 2156
+},
+"254200050": {
+"name": "BORNITY",
+"kind": "opad",
+"months": 8,
+"first": "2016-01",
+"last": "2016-08",
+"valid_days": 244
+},
+"254200070": {
+"name": "KASZUNY",
+"kind": "opad",
+"months": 108,
+"first": "2016-01",
+"last": "2024-12",
+"valid_days": 3288
+},
+"254200080": {
+"name": "LIDZBARK WARMIŃSKI",
+"kind": "klimat",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"254210020": {
+"name": "WĘGORZEWO",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"254220020": {
+"name": "ŻABIN",
+"kind": "opad",
+"months": 84,
+"first": "2016-01",
+"last": "2022-12",
+"valid_days": 2557
+},
+"254220060": {
+"name": "BANIE MAZURSKIE",
+"kind": "opad",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"254220090": {
+"name": "OLECKO",
+"kind": "klimat",
+"months": 129,
+"first": "2016-01",
+"last": "2026-09",
+"valid_days": 3926
+},
+"349190600": {
+"name": "BIELSKO-BIAŁA",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+},
+"349190625": {
+"name": "ZAKOPANE",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+},
+"349190650": {
+"name": "KASPROWY WIERCH",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+},
+"349200628": {
+"name": "HALA GĄSIENICOWA",
+"kind": "synop",
+"months": 94,
+"first": "2019-01",
+"last": "2026-10",
+"valid_days": 2861
+},
+"349200660": {
+"name": "NOWY SĄCZ",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+},
+"349210670": {
+"name": "KROSNO",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+},
+"349220690": {
+"name": "LESKO",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+},
+"350150500": {
+"name": "JELENIA GÓRA",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+},
+"350150510": {
+"name": "ŚNIEŻKA",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+},
+"350160520": {
+"name": "KŁODZKO",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+},
+"350170530": {
+"name": "OPOLE",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+},
+"350180540": {
+"name": "RACIBÓRZ",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+},
+"350190550": {
+"name": "CZĘSTOCHOWA",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+},
+"350190560": {
+"name": "KATOWICE",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+},
+"350190566": {
+"name": "KRAKÓW-BALICE",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+},
+"350200570": {
+"name": "KIELCE-SUKÓW",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+},
+"350200575": {
+"name": "TARNÓW",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3944
+},
+"350210585": {
+"name": "SANDOMIERZ",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+},
+"350220580": {
+"name": "RZESZÓW-JASIONKA",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+},
+"350230595": {
+"name": "ZAMOŚĆ",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+},
+"351150400": {
+"name": "ZIELONA GÓRA",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+},
+"351160415": {
+"name": "LEGNICA",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+},
+"351160418": {
+"name": "LESZNO",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+},
+"351160424": {
+"name": "WROCŁAW",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+},
+"351180435": {
+"name": "KALISZ",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+},
+"351180455": {
+"name": "WIELUŃ",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+},
+"351190465": {
+"name": "ŁÓDŹ",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+},
+"351190469": {
+"name": "SULEJÓW",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+},
+"351210488": {
+"name": "KOZIENICE",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+},
+"351220495": {
+"name": "LUBLIN-RADAWIEC",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+},
+"351230497": {
+"name": "WŁODAWA",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+},
+"352140310": {
+"name": "SŁUBICE",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+},
+"352150300": {
+"name": "GORZÓW WIELKOPOLSKI",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+},
+"352160330": {
+"name": "POZNAŃ",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+},
+"352180345": {
+"name": "KOŁO",
+"kind": "synop",
+"months": 88,
+"first": "2016-01",
+"last": "2025-04",
+"valid_days": 2660
+},
+"352190360": {
+"name": "PŁOCK",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3951
+},
+"352200375": {
+"name": "WARSZAWA",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+},
+"352220385": {
+"name": "SIEDLCE",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+},
+"352230399": {
+"name": "TERESPOL",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+},
+"353140200": {
+"name": "ŚWINOUJŚCIE",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+},
+"353140205": {
+"name": "SZCZECIN",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+},
+"353150210": {
+"name": "RESKO-SMÓLSKO",
+"kind": "synop",
+"months": 87,
+"first": "2018-10",
+"last": "2026-10",
+"valid_days": 2651
+},
+"353160213": {
+"name": "BARWICE",
+"kind": "synop",
+"months": 2,
+"first": "2026-09",
+"last": "2026-10",
+"valid_days": 60
+},
+"353160230": {
+"name": "PIŁA",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+},
+"353170235": {
+"name": "CHOJNICE",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+},
+"353180250": {
+"name": "TORUŃ",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+},
+"353200270": {
+"name": "MŁAWA",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+},
+"353200272": {
+"name": "OLSZTYN",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+},
+"353210280": {
+"name": "MIKOŁAJKI",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+},
+"353230295": {
+"name": "BIAŁYSTOK",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+},
+"354150100": {
+"name": "KOŁOBRZEG",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+},
+"354160105": {
+"name": "KOSZALIN",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+},
+"354160115": {
+"name": "USTKA",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+},
+"354170120": {
+"name": "ŁEBA",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+},
+"354170125": {
+"name": "LĘBORK",
+"kind": "synop",
+"months": 129,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3924
+},
+"354180135": {
+"name": "HEL",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+},
+"354180155": {
+"name": "GDAŃSK-ŚWIBNO",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+},
+"354190160": {
+"name": "ELBLĄG-MILEJEWO",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+},
+"354210185": {
+"name": "KĘTRZYN",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+},
+"354220195": {
+"name": "SUWAŁKI",
+"kind": "synop",
+"months": 130,
+"first": "2016-01",
+"last": "2026-10",
+"valid_days": 3957
+}
+}
+}

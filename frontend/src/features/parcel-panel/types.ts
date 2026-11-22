@@ -16,4 +16,4 @@ export type AnalysisRun =
   | { phase: 'idle' }
   | { phase: 'loading'; steps: Step[]; /** zmienia się przy każdym nowym przeliczeniu */ key: string }
   | { phase: 'error'; error: ErrorInfo }
-  | { phase: 'done'; analysis: AnalysisResponse }
+  | { phase: 'done'; analysis: AnalysisResponse; /** klucz przeliczenia – ten sam po dociągnięciu zdjęcia satelitarnego */ key: string }

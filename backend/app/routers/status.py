@@ -15,7 +15,7 @@ from fastapi import APIRouter
 from app import demo
 from app.core.cache import breaker, cache_stats, trip
 from app.core.config import settings
-from app.core.http import RedirectBlocked, SourceError, get_with_retry
+from app.core.http import RedirectBlocked, SourceError, get_with_retry, source_offline
 from app.schemas.status import ServiceStatus, StatusResponse
 
 router = APIRouter(prefix="/api", tags=["infrastruktura"])
@@ -65,10 +65,13 @@ async def _check(name: str, used_for: str, url: str, params, cache_name: str) ->
     t0 = perf_counter()
     ok, err = True, None
     n, age = cache_stats(cache_name)
+    src_off = source_offline(name) or source_offline(cache_name)
     skip = ("tryb demo offline – bez zapytania testowego; dane tylko z cache" if settings.demo_offline
+            else "wyłączone na czas demo (OFFLINE_SOURCES) – dane tylko z cache" if src_off
             else _limited(cache_name))
     if skip:
-        return ServiceStatus(name=name, used_for=used_for, ok=bool(settings.demo_offline and n), response_ms=None,
+        return ServiceStatus(name=name, used_for=used_for, ok=bool((settings.demo_offline or src_off) and n),
+                             response_ms=None,
                              error=skip, cache_entries=n, cache_newest_age_s=None if age is None else int(age))
     try:
         resp = await asyncio.wait_for(

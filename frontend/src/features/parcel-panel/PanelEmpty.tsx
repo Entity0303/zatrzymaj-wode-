@@ -1,5 +1,7 @@
-import { ChevronRight, LocateFixed, MousePointerClick, Search } from 'lucide-react'
-import { EXAMPLES, type Example } from './examples'
+import { LocateFixed, MousePointerClick, Search } from 'lucide-react'
+import type { Example } from './examples'
+import { ExampleCards } from '@/features/intro/ExampleCards'
+import type { DemoExamples } from '@/features/intro/useDemoExamples'
 import { EmptyState } from '@/components/EmptyState'
 import { FieldIllustration } from '@/components/FieldIllustration'
 import { useLang } from '@/lib/i18n'
@@ -9,9 +11,12 @@ export function PanelEmpty({
   onFocusSearch,
   onLocate,
   onExample,
+  examples,
 }: {
   onFocusSearch: () => void
   onLocate: () => void
+  /** lista z /api/demo/examples */
+  examples?: DemoExamples
   /** „Zobacz przykład” – jeden klik = pełna analiza */
   onExample?: (e: Example) => void
 }) {
@@ -29,26 +34,7 @@ export function PanelEmpty({
             {t('Zobacz przykład')}
           </h2>
           <p className="-mt-2 text-sm leading-5 text-text-muted">{t('Jeden klik – pełna analiza prawdziwej działki.')}</p>
-          <ul className="grid grid-cols-2 gap-2.5">
-            {EXAMPLES.map((e) => (
-              <li key={e.id}>
-                <button
-                  type="button"
-                  onClick={() => onExample(e)}
-                  className="group flex h-full min-h-28 w-full flex-col gap-2 rounded-xl border bg-surface p-3 text-left transition-colors hover:border-brand/50 hover:bg-sage-soft"
-                >
-                  <span className={`flex size-9 items-center justify-center rounded-full ${e.tone}`}>
-                    <e.icon className="size-5" aria-hidden />
-                  </span>
-                  <span className="flex items-center gap-1 text-base leading-5 font-semibold">
-                    {t(e.title)}
-                    <ChevronRight className="size-4 text-text-muted transition-transform group-hover:translate-x-0.5" aria-hidden />
-                  </span>
-                  <span className="text-sm leading-5 text-text-muted">{t(e.text)}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
+          {examples ? <ExampleCards demo={examples} onExample={onExample} columns={1} /> : null}
         </section>
       )}
     <EmptyState

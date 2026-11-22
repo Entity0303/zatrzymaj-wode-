@@ -24,7 +24,6 @@ SOURCE = "NMT GUGiK"
 SOURCE_URL = "https://services.gugik.gov.pl/nmt/"
 RESOLUTION = "NMT 1 m (wysokości ±0,1 m)"
 CHUNK_POINTS = 1000
-PARALLEL = 6
 RETRIES = 2
 
 _cache: TTLCache[tuple[np.ndarray, dict]] = TTLCache(ttl_s=None, max_items=128, name=SOURCE)
@@ -47,7 +46,43 @@ def parse_heights(text: str) -> dict[tuple[float, float], float]:
     return out
 
 
-async def _chunk(e: np.ndarray, n: np.ndarray) -> dict[tuple[float, float], float]:
+def match_heights(e: np.ndarray, n: np.ndarray, text: str) -> np.ndarray:
+    """Wysokości dopasowane do wysłanych punktów (E, N). NMT odsyła współrzędne zaokrąglone po swojemu (wysłane
+    448300.25 → zwrócone 448300.2), więc dopasowanie po kluczu z 0,1 m gubiło ok. połowę punktów (A8: „brak 51%
+    wysokości”). Najpierw po kolejności (odpowiedź w tej samej kolejności, tolerancja 0,15 m), potem po sąsiednich
+    kluczach 0,1 m."""
+    trips = []
+    for trip in text.strip().split(","):
+        parts = trip.split()
+        if len(parts) < 3:
+            continue
+        try:
+            x, y, h = float(parts[0]), float(parts[1]), float(parts[2])
+        except ValueError:
+            continue
+        ok = math.isfinite(h) and -100 <= h <= 3000
+        trips.append((y, x, h if ok else math.nan))  # x = północ, y = wschód → (E, N, h)
+    out = np.full(e.size, np.nan)
+    if len(trips) == e.size:
+        arr = np.array(trips, dtype=float)
+        if np.all(np.abs(arr[:, 0] - e) <= 0.15) and np.all(np.abs(arr[:, 1] - n) <= 0.15):
+            return arr[:, 2]
+    by_key = {(round(E * 10), round(N * 10)): h for E, N, h in trips}
+    for k, (ee, nn) in enumerate(zip(e, n)):
+        ke, kn = round(float(ee) * 10), round(float(nn) * 10)
+        for de in (0, -1, 1):
+            for dn in (0, -1, 1):
+                h = by_key.get((ke + de, kn + dn))
+                if h is not None:
+                    out[k] = h
+                    break
+            else:
+                continue
+            break
+    return out
+
+
+async def _chunk(e: np.ndarray, n: np.ndarray) -> np.ndarray:
     lst = ",".join(f"{nn:.2f} {ee:.2f}" for ee, nn in zip(e, n))  # NMT: x = PÓŁNOC, y = WSCHÓD
     last = "brak odpowiedzi"
     for attempt in range(RETRIES + 1):
@@ -72,23 +107,24 @@ async def _chunk(e: np.ndarray, n: np.ndarray) -> dict[tuple[float, float], floa
         if resp.status_code >= 400:
             last = f"usługa zwróciła błąd HTTP {resp.status_code}"
             continue
-        return parse_heights(resp.text)
+        return match_heights(e, n, resp.text)
     raise SourceError(SOURCE, last)
 
 
 async def _download(e: np.ndarray, n: np.ndarray) -> tuple[np.ndarray, dict]:
     idx = [np.arange(k, min(k + CHUNK_POINTS, e.size)) for k in range(0, e.size, CHUNK_POINTS)]
-    sem = asyncio.Semaphore(PARALLEL)
+    sem = asyncio.Semaphore(max(1, settings.nmt_parallel))
 
-    async def job(ix):
+    async def job(i, ix):
         async with sem:
+            if i and settings.nmt_parallel <= 1:
+                await asyncio.sleep(settings.nmt_chunk_pause_s)  # spokojnie – paczki po kolei z przerwą (A8)
             return ix, await _chunk(e[ix], n[ix])
 
-    results = await asyncio.gather(*(job(ix) for ix in idx))
+    results = await asyncio.gather(*(job(i, ix) for i, ix in enumerate(idx)))
     h = np.full(e.size, np.nan)
     for ix, res in results:
-        for k in ix:
-            h[k] = res.get((round(float(e[k]), 1), round(float(n[k]), 1)), np.nan)
+        h[ix] = res
     zeros = 0
     if np.isfinite(h).any() and np.nanmedian(h) > 5.0:  # 0,0 = brak danych (Żuławy < 0 m zostają)
         zmask = h == 0.0

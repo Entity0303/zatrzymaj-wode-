@@ -6,20 +6,29 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* ── Tokeny Wodoskop – design/SPEC_UI.md, sekcja 2 ───────────────────────────────── */
+/* ── Tokeny Wodoskop (design tokens) ─────────────────────────────────────────────────
+ * Jedno źródło prawdy dla kolorów, typografii, odstępów, zaokrągleń i cieni.
+ * Zasady (przeprojektowanie ekranu mapy, 2026-11-21):
+ *  - powierzchnie: złamana biel #FAFAF7, karty białe 95% z lekkim rozmyciem nad mapą (`glass`)
+ *  - kolor główny: głęboka leśna zieleń #1F4D3A; tekst – neutralne szarości
+ *  - kolory stanu (ok / warn / danger) TYLKO do stanu; czerwony – tylko prawdziwe alarmy (susza)
+ *  - typografia: jeden krój (Inter) 12 / 14 / 16 / 20 / 28; szeryf tylko w nazwie działki (`font-name`)
+ *  - siatka 8 px (Tailwind: 1 = 4 px → używamy 2, 4, 6, 8…), cele dotyku min. 44 px, kontrast WCAG AA
+ *  - bez kreskowania – „brak danych” to płaska jasnoszara powierzchnia
+ */
 @theme {
-  /* 2.2 Paleta – wersja „otwarte pole”: szałwia, leśna zieleń, kremowe tło, bursztyn słońca, grafit */
-  --color-brand: #2e5b3f; /* leśna zieleń */
-  --color-brand-dark: #1f4230;
-  --color-sage: #9db896; /* szałwia */
-  --color-sage-soft: #e8efe2;
-  --color-ok: #5f9f63;
-  --color-ok-soft: #e6efdf;
-  --color-amber: #e2a23b; /* bursztyn słońca – akcenty */
-  --color-amber-soft: #fcf0d8;
-  --color-bg: #faf6ec; /* krem */
-  --color-surface: #fffdf8; /* ciepła biel */
-  --color-surface-2: #f1ebdd;
+  /* Paleta */
+  --color-brand: #1f4d3a; /* głęboka leśna zieleń – kolor główny */
+  --color-brand-dark: #163a2c;
+  --color-sage: #a9bfae;
+  --color-sage-soft: #ebf1ec;
+  --color-ok: #3f8f5c;
+  --color-ok-soft: #e7f2ea;
+  --color-amber: #d99a26;
+  --color-amber-soft: #fbf1dc;
+  --color-bg: #fafaf7; /* złamana biel */
+  --color-surface: #ffffff;
+  --color-surface-2: #f2f2ee;
   --color-earth: #8b6b4a;
   --color-water: #2f7fc1;
   --color-water-soft: #e3effa;
@@ -28,28 +37,34 @@
   --color-risk: #d9773a;
   --color-danger: #c0473c;
   --color-danger-soft: #f9e6e2;
-  --color-text: #2b302c; /* grafit, bez czystej czerni */
-  --color-text-muted: #5e655f;
-  --color-line: #e6dfcf;
-  --color-nodata: #b8bdb5;
-  --color-nodata-soft: #f2f1ec;
-  --color-legend: #26302a;
+  --color-text: #1f2421; /* neutralny grafit */
+  --color-text-muted: #5b625e; /* 6,2:1 na bieli – AA */
+  --color-line: #e4e4de;
+  --color-nodata: #b5b9b4;
+  --color-nodata-soft: #f2f2ee;
+  --color-legend: #1f2a24;
 
-  /* 2.3 Typografia */
+  /* Typografia: 12 / 14 / 16 / 20 / 28 */
   --font-sans: 'Inter Variable', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  /* nagłówki: ciepły szeryf (liczby i dane zostają w Inter) */
-  --font-display: 'Fraunces Variable', 'Fraunces', Georgia, 'Times New Roman', serif;
+  /* `font-display` = Inter (nagłówki bez drugiego kroju); szeryf tylko w nazwie działki – `font-name` */
+  --font-display: 'Inter Variable', 'Inter', system-ui, sans-serif;
+  --font-serif: 'Fraunces Variable', 'Fraunces', Georgia, 'Times New Roman', serif;
+  --text-display: 28px;
+  --text-display--line-height: 36px;
 
-  /* 2.4 Kształty: karty 16 px, przyciski i pola 12 px, pigułki 9999 px */
+  /* Odstępy: siatka 8 px; marginesy elementów nad mapą */
+  --spacing-chrome: 16px;
+
+  /* Kształty: karty i pola 12 px, małe elementy 8 px, pigułki 9999 px */
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 12px;
-  --radius-xl: 16px;
-  --radius-2xl: 16px;
+  --radius-xl: 12px;
+  --radius-2xl: 12px;
 
-  /* 2.4 Cienie */
-  --shadow-card: 0 1px 2px rgba(43, 48, 44, 0.05), 0 6px 20px rgba(46, 91, 63, 0.07);
-  --shadow-float: 0 2px 6px rgba(43, 48, 44, 0.07), 0 10px 28px rgba(46, 91, 63, 0.13);
+  /* Cienie: jeden delikatny cień kart */
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-float: 0 2px 8px rgba(0, 0, 0, 0.08);
 
   /* 2.4 Animacje 150–250 ms */
   --default-transition-duration: 200ms;
@@ -58,24 +73,24 @@
 /* Tokeny shadcn/ui zmapowane na paletę projektu */
 :root {
   --radius: 12px;
-  --background: #faf6ec;
-  --foreground: #2b302c;
-  --card: #fffdf8;
-  --card-foreground: #2b302c;
-  --popover: #fffdf8;
-  --popover-foreground: #2b302c;
-  --primary: #2e5b3f;
+  --background: #fafaf7;
+  --foreground: #1f2421;
+  --card: #ffffff;
+  --card-foreground: #1f2421;
+  --popover: #ffffff;
+  --popover-foreground: #1f2421;
+  --primary: #1f4d3a;
   --primary-foreground: #ffffff;
-  --secondary: #f1ebdd;
-  --secondary-foreground: #2b302c;
-  --muted: #f1ebdd;
-  --muted-foreground: #5e655f;
-  --accent: #e6efdf;
-  --accent-foreground: #1f4230;
+  --secondary: #f2f2ee;
+  --secondary-foreground: #1f2421;
+  --muted: #f2f2ee;
+  --muted-foreground: #5b625e;
+  --accent: #e7f2ea;
+  --accent-foreground: #163a2c;
   --destructive: #c0473c;
-  --border: #e6dfcf;
-  --input: #e6dfcf;
-  --ring: #2e5b3f;
+  --border: #e4e4de;
+  --input: #e4e4de;
+  --ring: #1f4d3a;
 }
 
 @theme inline {
@@ -123,25 +138,33 @@
   }
 }
 
-/* nagłówki – ciepły szeryf Fraunces (prośba o „przyjazny, ugruntowany” krój nagłówków) */
+/* nagłówki – Inter, lekko ściśnięty */
 @utility font-display {
   font-family: var(--font-display);
+  letter-spacing: -0.015em;
+}
+
+/* nazwa działki – jedyne miejsce z szeryfem */
+@utility font-name {
+  font-family: var(--font-serif);
   font-optical-sizing: auto;
   letter-spacing: -0.01em;
+}
+
+/* karta nad mapą: biel 95% + lekkie rozmycie tła */
+@utility glass {
+  background-color: rgb(255 255 255 / 0.95);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 @utility tabular {
   font-variant-numeric: tabular-nums;
 }
 
-/* „Brak danych” – szare kreskowanie (SPEC 2.2, 15.1) */
+/* „Brak danych” – płaska jasnoszara powierzchnia (bez kreskowania – mniej szumu) */
 @utility hatch-nodata {
   background-color: var(--color-nodata-soft);
-  background-image: repeating-linear-gradient(
-    -45deg,
-    rgb(184 189 185 / 0.28) 0 6px,
-    transparent 6px 12px
-  );
 }
 
 @utility scrollbar-none {
@@ -157,12 +180,21 @@
   background: #e4eadb;
   cursor: crosshair;
 }
+/* atrybucja: mała, jedna linia, niski kontrast */
 .leaflet-control-attribution {
-  font-size: 12px;
-  line-height: 16px;
-  padding: 2px 6px !important;
-  border-radius: 8px 0 0 0;
-  background: rgb(255 255 255 / 0.85) !important;
+  font-size: 11px;
+  line-height: 14px;
+  padding: 1px 6px !important;
+  border-radius: 6px 0 0 0;
+  background: rgb(255 255 255 / 0.6) !important;
+  color: #5b625e;
+  white-space: nowrap;
+  max-width: 60vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.leaflet-control-attribution a {
+  color: inherit;
 }
 .leaflet-control-scale-line {
   border-color: var(--color-text);
@@ -190,6 +222,17 @@
   }
 }
 /* ParcelLabel – pigułka bez domyślnego dymka Leaflet */
+/* rysowanie pola: celownik zamiast łapki */
+.drawing .leaflet-container,
+.drawing .leaflet-grab {
+  cursor: crosshair !important;
+}
+
+/* warstwy z satelity: piksele 10 m bez rozmycia */
+.layer-pixelated {
+  image-rendering: pixelated;
+}
+
 .leaflet-tooltip.parcel-label {
   background: transparent;
   border: 0;

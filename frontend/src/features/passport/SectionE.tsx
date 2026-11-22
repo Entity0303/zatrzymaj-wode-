@@ -4,6 +4,7 @@ import { formatDatePl } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { useLang } from '@/lib/i18n'
 import { PassportSection } from './PassportSection'
+import { PrecipSourceNote } from '@/features/parcel-panel/PrecipSourceNote'
 
 const CONFIDENCE: Record<Confidence, { label: string; cls: string }> = {
   wysoka: { label: 'Wysoka', cls: 'bg-ok-soft text-brand' },
@@ -44,7 +45,30 @@ export function SectionE({ analysis }: { analysis: AnalysisResponse }) {
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-xl bg-surface shadow-card">
+      {/* telefon: źródła jako lista (bez przewijania tabeli w poziomie) */}
+      <ul className="space-y-2 sm:hidden">
+        {r.sources.map((s) => {
+          const a = AVAIL[s.status]
+          const Icon = a.icon
+          return (
+            <li key={s.name} className="rounded-xl bg-surface p-3.5 text-sm leading-5 shadow-card">
+              <div className="flex items-start gap-2">
+                <span className="min-w-0 flex-1 font-semibold">{s.name}</span>
+                <span className={cn('inline-flex shrink-0 items-center gap-1 font-medium', a.cls)}>
+                  <Icon className="size-4" aria-hidden /> {t(a.label)}
+                </span>
+              </div>
+              <p className="mt-1">{t(s.used_for)}</p>
+              {s.resolution && <p className="text-xs leading-4 text-text-muted">{t(s.resolution)}</p>}
+              {s.note && <p className="text-xs leading-4 text-text-muted">{t(s.note)}</p>}
+              <p className="mt-1 text-xs leading-4 text-text-muted">
+                {t('Data danych')}: <span className="tabular">{s.data_date ? formatDatePl(s.data_date) : '—'}</span>
+              </p>
+            </li>
+          )
+        })}
+      </ul>
+      <div className="overflow-x-auto rounded-xl bg-surface shadow-card max-sm:hidden">
         <table className="w-full min-w-[520px] text-left text-sm">
           <thead className="text-text-muted">
             <tr className="border-b">
@@ -78,6 +102,8 @@ export function SectionE({ analysis }: { analysis: AnalysisResponse }) {
           </tbody>
         </table>
       </div>
+
+      {analysis.precip_sources && <PrecipSourceNote sources={analysis.precip_sources} />}
 
       {r.limitations.length > 0 && (
         <div className="space-y-2">

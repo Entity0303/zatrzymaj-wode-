@@ -274,6 +274,7 @@ rules:
     category: retencja
     priority: 50
     confidence: ograniczona
+    confidence_fact: hydro_zastawka_conf   # A9: rów w kierunku odpływu – wysoka; rów w 500 m – średnia; nie sprawdzono – ograniczona
     timing: teraz
     permit: maybe
     permit_note: "Zastawka na rowie wymaga zgody właściciela rowu lub spółki wodnej i może wymagać zgłoszenia wodnoprawnego – sprawdź w Wodach Polskich."
@@ -281,10 +282,11 @@ rules:
     when:
       all:
         - {fact: culvert_candidate, eq: true}
+        - {fact: hydro_ditch_state, ne: brak}   # A9: brak rowu w 500 m (OSM) – zastawki nie proponujemy
     title: "Sprawdź rów przy miejscu odpływu – zastawka zatrzyma wodę"
     description: "Woda z {outlet_share_pct}% działki ucieka w jednym miejscu (kierunek: {outlet_direction}), a na działkę spływa woda z ok. {inflow_ha} ha powyżej. Jeśli tam biegnie rów melioracyjny, zastawka (w porozumieniu ze spółką wodną) przytrzyma wodę w okolicy."
     why:
-      - "Rowów jeszcze nie sprawdzamy na mapie (BDOT10k w przygotowaniu) – zobacz na miejscu, czy rów jest."
+      - "{hydro_ditch_txt}"
 
   - id: retencja.pas_buforowy_na_stoku
     category: retencja

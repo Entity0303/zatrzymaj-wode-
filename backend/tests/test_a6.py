@@ -179,6 +179,17 @@ def test_nmt_chunks_parallel_and_cached(tmp_path):
     assert route.call_count == n_calls and np.allclose(h, h2)
 
 
+def test_match_heights_tolerates_service_rounding():
+    """A8: NMT odsyła współrzędne zaokrąglone po swojemu (448300.25 → 448300.2) – dopasowanie nie może ich gubić."""
+    e = np.array([448300.25, 448311.75, 448323.25])
+    n = np.array([541062.55, 541062.55, 541062.55])
+    txt = "541062.6 448300.2 85.7,541062.6 448311.8 85.8,541062.6 448323.2 85.9"
+    assert nmt.match_heights(e, n, txt).tolist() == [85.7, 85.8, 85.9]  # po kolejności
+    shuffled = "541062.6 448323.2 85.9,541062.6 448300.2 85.7"  # inna kolejność, jeden brak
+    h = nmt.match_heights(e, n, shuffled)
+    assert h[0] == 85.7 and np.isnan(h[1]) and h[2] == 85.9
+
+
 @respx.mock
 def test_nmt_mostly_missing_is_error():
     respx.post(settings.nmt_url).mock(return_value=httpx.Response(200, text=""))
@@ -263,6 +274,9 @@ def test_pond_thresholds():
 def _with_terrain(f_terrain: dict, **kw):
     v = dict(facts(**kw).values)
     v.update(TI.rule_facts(f_terrain, 3))
+    from app.analysis.hydro import rule_facts as hydro_facts
+
+    v.update(hydro_facts(None))  # A9: woda w okolicy jeszcze nie sprawdzona – jak w analizie przed /api/hydro
     return type(facts())(v)
 
 
@@ -396,7 +410,7 @@ def test_layers_from_saved_result_and_errors(client):
     b = client.get("/api/layers/teren", params={"parcel_id": PID}).json()
     shares = {f["properties"]["zone"]: f["properties"]["share_pct"] for f in b["features"]["features"]}
     assert shares == {"plasko": 11.5, "stok": 56.4, "mokry_dolek": 32.1} and "21.11.2026" in b["source_tag"]["source"]
-    assert client.get("/api/layers/kondycja", params={"parcel_id": PID}).status_code == 501
+    assert client.get("/api/layers/gleba", params={"parcel_id": PID}).status_code == 501  # A11: kondycja działa
 
 
 # ── demo offline, wydajność, raport ─────────────────────────────────────────────────────────
@@ -436,5 +450,9 @@ def test_report_pdf_terrain_section(client):
     r = client.get("/api/report.pdf", params=Q)
     assert r.status_code == 200
     text = "\n".join(p.extract_text() for p in PdfReader(io.BytesIO(r.content)).pages)
-    for phrase in ("Gleba i teren", "obniżenie – zbiera się woda", "32% działki to obniżenie", "Teren (NMT GUGiK)", "Dla dociekliwych"):
+    for phrase in ("obniżenie – zbiera się woda", "32% działki to obniżenie"):  # strona 1 (werdykt)
         assert phrase in text, phrase
+    full = client.get("/api/report.pdf", params={**Q, "report_type": "full"})  # A5e-2: teren w raporcie szczegółowym
+    text_full = "\n".join(p.extract_text() for p in PdfReader(io.BytesIO(full.content)).pages)
+    for phrase in ("Gleba, teren i skąd dane", "NMT GUGiK", "Woda spływa", "Teren – szczegóły", "Siatka"):
+        assert phrase in text_full, phrase

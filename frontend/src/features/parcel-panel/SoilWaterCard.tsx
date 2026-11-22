@@ -46,7 +46,7 @@ export function SoilWaterCard({ state }: { state: SoilWaterState }) {
         <p className="mt-2 text-sm leading-5 text-text-muted">
           {t('Sezon {year}: {days}', {
             year: last.year,
-            days: last.stress_days == null ? t('dni stresu – brak danych') : t('{n} dni stresu wodnego', { n: last.stress_days }),
+            days: last.stress_days == null ? t('dni stresu – brak danych') : t(last.stress_days === 1 ? '{n} dzień stresu wodnego' : '{n} dni stresu wodnego', { n: last.stress_days }),
           })}
           {last.mean_prev_stress_days != null &&
             ` (${t('średnio {n}', { n: formatNum(last.mean_prev_stress_days, 0) })})`}

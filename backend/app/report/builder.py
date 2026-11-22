@@ -69,7 +69,27 @@ def date_pl(d) -> str:
 
 
 _env = Environment(loader=FileSystemLoader(HERE / "templates"), autoescape=select_autoescape(["html"]))
-_env.filters.update(num=num, pct=pct, date_pl=date_pl)
+def first_sentence(text: str | None) -> str:
+    """Pierwsze zdanie (karta działania: „dlaczego” w jednej linijce)."""
+    if not text:
+        return ""
+    m = re.search(r"(?<=[.!?])\s+(?=[A-ZĄĆĘŁŃÓŚŹŻ])", text)
+    return text[: m.start()] if m else text
+
+
+def sentences(text: str | None, n: int = 2) -> str:
+    """Pierwsze `n` zdań (karta działania w raporcie skróconym: 1–2 zdania)."""
+    if not text:
+        return ""
+    parts = re.split(r"(?<=[.!?])\s+(?=[A-ZĄĆĘŁŃÓŚŹŻ])", text.strip())
+    return " ".join(parts[:n])
+
+
+_env.filters.update(num=num, pct=pct, date_pl=date_pl, first_sentence=first_sentence, sentences=sentences)
+REPORT_LABEL = {"short": "Raport skrócony", "full": "Raport szczegółowy"}
+REPORT_SLUG = {"short": "skrocony", "full": "szczegolowy"}
+SHORT_RECS = 4
+SHORT_LIMITATIONS = 5
 
 
 # ── mapa i kod QR ───────────────────────────────────────────────────────────────────────────
@@ -144,9 +164,10 @@ def zones_overlay(a: AnalysisResponse, bbox: tuple[float, float, float, float], 
     return charts.zones_svg(shapes, px, px)
 
 
-LEVEL = {"ok": ("✓", "#5BB37F"), "warn": ("!", "#E8B931"), "bad": ("✕", "#C8453B"), "info": ("", "#2F80C9")}
+LEVEL = {"ok": ("✓", "#5BB37F"), "warn": ("!", "#E8B931"), "bad": ("✕", "#C8453B"), "info": ("i", "#2F80C9")}
 CAT_ICON = {"polecane": ("✓", "#5BB37F"), "mozliwe": ("~", "#E8B931"), "odradzane": ("✕", "#C8453B")}
-KIND_LABEL = {"gleba": "Gleba", "opady": "Opady", "teren": "Teren", "uprawy": "Co siać", "woda": "Woda",
+KIND_LABEL = {"gleba": "Gleba", "opady": "Opady", "teren": "Teren", "rosliny": "Rośliny (z satelity)", "uprawy": "Co siać",
+              "woda": "Woda",
               "uprawa_wybrana": "Wybrana uprawa"}
 
 
@@ -156,6 +177,12 @@ def parcel_name(a: AnalysisResponse) -> tuple[str, str]:
         lon, lat = a.approximate_area.center
         return (f"Obszar przybliżony ({lat:.4f} N, {lon:.4f} E)",
                 f"ok. {a.approximate_area.area_ha:g} ha · woj. {p.wojewodztwo} (przybliżone)")
+    if p.source == "drawn":
+        where = ", ".join(x for x in (f"gm. {p.gmina}" if p.gmina not in ("", "nieznana") else "",
+                                       p.powiat if p.powiat not in ("", "nieznany") else "") if x)
+        return (p.name or "Pole narysowane przez rolnika",
+                f"{num(p.powierzchnia_ha, 2, 'ha')} (z kształtu) · {where + ' · ' if where else ''}woj. {p.wojewodztwo} · "
+                "nie jest działką ewidencyjną")
     return (f"Działka {p.numer}, obręb {p.obreb}",
             f"gm. {p.gmina}, {p.powiat}, woj. {p.wojewodztwo} · {p.id} · {num(p.powierzchnia_ha, 2, 'ha')}")
 
@@ -176,6 +203,8 @@ def history_labels(a: AnalysisResponse) -> str:
 
 
 def analysis_url(a: AnalysisResponse) -> str:
+    if a.parcel.source == "drawn":  # obrysu nie da się zapisać w adresie – link do aplikacji
+        return settings.public_url.rstrip("/") + "/"
     if a.approximate_area:
         lon, lat = a.approximate_area.center
         return f"{settings.public_url.rstrip('/')}/?{urlencode({'lon': lon, 'lat': lat, 'data': a.analysis_date.isoformat()})}"
@@ -196,14 +225,61 @@ def qr_svg(url: str) -> str:
 # ── składanie ───────────────────────────────────────────────────────────────────────────────
 
 
-def filename(a: AnalysisResponse) -> str:
+def filename(a: AnalysisResponse, report_type: str = "short") -> str:
     safe = re.sub(r"[^0-9A-Za-z_.-]+", "-", a.parcel.id).strip("-")
     kind = "paszport-wodny" if a.crop else "stan-wodny-dzialki"
-    return f"{kind}-{safe}-{a.analysis_date.isoformat()}.pdf"
+    return f"{kind}-{safe}-{a.analysis_date.isoformat()}-{REPORT_SLUG.get(report_type, 'skrocony')}.pdf"
 
 
-def render_html(a: AnalysisResponse, ortho: str | None, generated: dt.datetime | None = None) -> str:
+def top_limitations(a: AnalysisResponse, n: int = SHORT_LIMITATIONS) -> list[str]:
+    """5 najważniejszych ograniczeń: obszar przybliżony / pole narysowane, pogoda, braki danych, potem reszta
+    (kolejność z `reliability.limitations` – tam najważniejsze są na początku)."""
+    return list(a.reliability.limitations[:n])
+
+
+def soil_short(a: AnalysisResponse) -> str:
+    if a.terrain and a.terrain.soil_group_label:
+        return a.terrain.soil_group_label.split(":")[0]
+    v = a.verdict
+    if v:
+        g = next((s for s in v.statements if s.kind == "gleba"), None)
+        if g and g.numbers.get("grupa"):
+            return {"lekka": "gleba lekka", "srednia": "gleba średnia", "ciezka": "gleba ciężka",
+                    "organiczna": "gleba organiczna"}.get(str(g.numbers["grupa"]), a.soil.dominant_label or "brak danych")
+    return a.soil.dominant_label or "brak danych"
+
+
+def top_items(a: AnalysisResponse) -> list:
+    s = a.suggestions
+    if not s:
+        return []
+    field = [i for g in s.groups if g.key == "polowe" for i in g.items]
+    ids = s.top_ids or [i.crop_id for i in field if i.category != "odradzane"][:5]
+    return [i for i in field if i.crop_id in ids]
+
+
+def satellite_overlay(a: AnalysisResponse, bbox: tuple[float, float, float, float]) -> tuple[str | None, str]:
+    """PNG NDVI z cache satelity + pozycja na mapce raportu (CSS w % wycinka EPSG:2180)."""
+    if a.satellite is None or a.satellite.status != "ok":
+        return None, ""
+    from app.analysis import satellite as satellite_mod
+
+    lay = satellite_mod.cached_layers(shape(a.parcel.geometria), a.analysis_date)
+    if not lay or not lay.get("kondycja"):
+        return None, ""
+    lo0, la0, lo1, la1 = lay["bbox"]
+    g = to_2180(shape({"type": "Polygon", "coordinates": [[[lo0, la0], [lo1, la0], [lo1, la1], [lo0, la1], [lo0, la0]]]}))
+    minx, miny, maxx, maxy = g.bounds
+    side = bbox[2] - bbox[0]
+    style = (f"left:{(minx - bbox[0]) / side * 100:.2f}%;top:{(bbox[3] - maxy) / side * 100:.2f}%;"
+             f"width:{(maxx - minx) / side * 100:.2f}%;height:{(maxy - miny) / side * 100:.2f}%")
+    return "data:image/png;base64," + lay["kondycja"], style
+
+
+def render_html(a: AnalysisResponse, ortho: str | None, generated: dt.datetime | None = None,
+                report_type: str = "short") -> str:
     bbox, outline = map_frame(a.parcel.geometria)
+    sat_png, sat_style = satellite_overlay(a, bbox) if report_type == "full" else (None, "")
     url = analysis_url(a)
     h = a.history
     ctx = {
@@ -234,6 +310,26 @@ def render_html(a: AnalysisResponse, ortho: str | None, generated: dt.datetime |
         "zones_map": Markup(zones_overlay(a, bbox)),
         "RATING": {"dobrze": ("dobrze", "#5BB37F"), "uwaga": ("uwaga", "#E8B931"), "zle": ("źle", "#C8453B")},
         "css": Markup((HERE / "report.css").read_text(encoding="utf-8")),
+        # A5e: raport krótki (4–5 stron) / pełny
+        "full": report_type == "full",
+        "sat": a.satellite, "sat_png": sat_png, "sat_style": sat_style,
+        "hydro": a.hydro if a.hydro is not None and a.hydro.status in ("ok", "none") else None,
+        "hydro_label": {"rzeka": "Rzeka", "ciek": "Ciek", "row": "Rów melioracyjny", "kanal": "Kanał",
+                        "zbiornik": "Zbiornik wodny"},
+        "chart_sat": Markup(charts.satellite_series(a.satellite.series) or "") if a.satellite and a.satellite.series else "",
+        "report_label": REPORT_LABEL.get(report_type, REPORT_LABEL["short"]),
+        "chart_years_small": Markup(charts.season_bars(a.seasonal_balance_by_year, a.seasonal_balance_mean_mm,
+                                                       width=620, height=128) or ""),
+        "top_items": top_items(a),
+        "recs": a.recommendations if report_type == "full" else a.recommendations[:SHORT_RECS],
+        "more_recs": 0 if report_type == "full" else max(0, len(a.recommendations) - SHORT_RECS),
+        "limitations": a.reliability.limitations if report_type == "full" else top_limitations(a),
+        "more_limits": max(0, len(a.reliability.limitations) - SHORT_LIMITATIONS),
+        "weather_until": a.weather_data_until.strftime("%d.%m.%Y") if a.weather_data_until else "brak danych",
+        "soil_short": soil_short(a),
+        "chart_years": Markup(charts.season_bars(a.seasonal_balance_by_year, a.seasonal_balance_mean_mm) or ""),
+        "year_below": bool(a.seasonal_balance_by_year and a.seasonal_balance_mean_mm is not None
+                           and a.seasonal_balance_by_year[-1].balance_mm < a.seasonal_balance_mean_mm),
     }
     return _env.get_template("report.html").render(**ctx)
 
@@ -244,8 +340,8 @@ def html_to_pdf(html: str) -> bytes:
     return HTML(string=html, base_url=str(HERE)).write_pdf()
 
 
-async def build_pdf(a: AnalysisResponse) -> bytes:
+async def build_pdf(a: AnalysisResponse, report_type: str = "short") -> bytes:
     bbox, _ = map_frame(a.parcel.geometria)
     ortho = await ortho_image(bbox)
-    html = render_html(a, ortho)
+    html = render_html(a, ortho, report_type=report_type)
     return await asyncio.to_thread(html_to_pdf, html)

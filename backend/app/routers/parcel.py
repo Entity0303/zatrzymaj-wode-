@@ -13,6 +13,20 @@ MAX_CANDIDATES = 30
 
 
 def parcel_out(p: uldk.Parcel) -> Parcel:
+    if p.source == "drawn":
+        zrodlo = DataSource(
+            nazwa="Pole narysowane przez rolnika", url=p.admin_url or uldk.SOURCE_URL,
+            pobrano=p.fetched_at.isoformat(timespec="seconds"),
+            uwagi="Obrys narysowany na mapie – to nie jest działka ewidencyjna; powierzchnia z kształtu (EPSG:2180). "
+                  + (p.admin_note or ""))
+    else:
+        zrodlo = DataSource(
+            nazwa=uldk.SOURCE,
+            url=uldk.SOURCE_URL,
+            pobrano=p.fetched_at.isoformat(timespec="seconds"),
+            uwagi="Powierzchnia policzona z geometrii (EPSG:2180), "
+            "może nieznacznie różnić się od powierzchni ewidencyjnej.",
+        )
     return Parcel(
         id=p.id,
         wojewodztwo=p.voivodeship,
@@ -23,19 +37,26 @@ def parcel_out(p: uldk.Parcel) -> Parcel:
         teryt_gminy=p.teryt_commune,
         powierzchnia_ha=p.area_ha,
         geometria=geojson(p.geom_4326),
-        zrodlo=DataSource(
-            nazwa=uldk.SOURCE,
-            url=uldk.SOURCE_URL,
-            pobrano=p.fetched_at.isoformat(timespec="seconds"),
-            uwagi="Powierzchnia policzona z geometrii (EPSG:2180), "
-            "może nieznacznie różnić się od powierzchni ewidencyjnej.",
-        ),
+        zrodlo=zrodlo,
+        source=p.source if p.source in ("drawn", "approximate") else "uldk",
+        name=p.name,
     )
 
 
 async def resolve_parcel(parcel_id: str | None, lon: float | None, lat: float | None) -> uldk.Parcel:
     """Wspólne dla endpointów, które przyjmują działkę (analiza, warstwy, raport)."""
     if parcel_id and parcel_id.strip():
+        # A8: obszar przybliżony i pole narysowane nie są działkami ULDK – warstwy i raport dostają je po id
+        from app.analysis import approx_area, drawn_field
+
+        pid = parcel_id.strip()
+        if approx_area.is_approximate(pid) and (ap := approx_area.from_id(pid)) is not None:
+            return ap
+        if pid.startswith(drawn_field.ID_PREFIX + "_"):
+            if (dp := drawn_field.registered(pid)) is not None:
+                return dp
+            raise HTTPException(status_code=404, detail=ErrorDetail(
+                source="Pole narysowane", message="Pole narysowane – wyślij obrys jeszcze raz (POST z geometry).").model_dump())
         parcels = await uldk.by_id(parcel_id)
         if len(parcels) > 1:
             raise HTTPException(

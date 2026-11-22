@@ -1,3 +1,4 @@
+import asyncio
 import time
 
 import httpx
@@ -49,7 +50,56 @@ class RedirectBlocked(SourceError):
         self.location = location
 
 
-async def request(
+# D89: klucz OFFLINE_SOURCES → fragment nazwy źródła (SourceError.source / nazwa cache)
+OFFLINE_KEYS = {"uldk": "ULDK", "nmt": "NMT", "kieg": "KIEG", "uug": "UUG", "bdot": "BDOT", "prng": "PRNG",
+                "soil_map": "Mapa glebowo-rolnicza", "ortho": "Ortofotomapa"}
+SOURCE_OFF_MESSAGE = "usługa wyłączona na czas demo (OFFLINE_SOURCES) – tylko dane z pamięci podręcznej"
+
+
+def offline_keys() -> set[str]:
+    return {k.strip().lower() for k in (settings.offline_sources or "").split(",") if k.strip()}
+
+
+def source_offline(source: str | None) -> bool:
+    """Czy źródło jest wyłączone pojedynczo (OFFLINE_SOURCES)? Dopasowanie po fragmencie nazwy źródła."""
+    if not source:
+        return False
+    low = source.lower()
+    return any(OFFLINE_KEYS.get(k, k).lower() in low for k in offline_keys())
+
+
+_gugik_state: dict[int, dict] = {}  # stan limitu GUGiK na pętlę zdarzeń (semafor nie przechodzi między pętlami)
+
+
+def is_gugik(source: str | None) -> bool:
+    return bool(source) and "gugik" in source.lower()
+
+
+async def _gugik_wait(st: dict) -> None:
+    """Odstęp ≥ `gugik_min_interval_s` między startami zapytań do GUGiK (A8, D89)."""
+    async with st["lock"]:
+        wait = st["last"] + settings.gugik_min_interval_s - time.monotonic()
+        if wait > 0:
+            await asyncio.sleep(wait)
+        st["last"] = time.monotonic()
+
+
+async def request(method: str, url: str, *, source: str, **kw) -> httpx.Response:
+    """Wspólne wejście: dla usług GUGiK – limit zapytań naraz (`gugik_parallel`) i odstęp między nimi (D89);
+    reszta bez zmian (`_request`)."""
+    if not is_gugik(source) or settings.demo_offline or source_offline(source):
+        return await _request(method, url, source=source, **kw)
+    loop = asyncio.get_running_loop()
+    st = _gugik_state.get(id(loop))
+    if st is None or st["loop"] is not loop:
+        st = _gugik_state[id(loop)] = {"loop": loop, "sem": asyncio.Semaphore(max(1, settings.gugik_parallel)),
+                                       "lock": asyncio.Lock(), "last": 0.0}
+    async with st["sem"]:
+        await _gugik_wait(st)
+        return await _request(method, url, source=source, **kw)
+
+
+async def _request(
     method: str,
     url: str,
     *,
@@ -59,6 +109,7 @@ async def request(
     data: dict | None = None,
     headers: dict | None = None,
     max_bytes: int = DEFAULT_MAX_BYTES,
+    content: bytes | None = None,
 ) -> httpx.Response:
     """Jedno zapytanie (bez ponowień) z odczytem strumieniowym:
     - przekierowanie 3xx → `RedirectBlocked` BEZ czytania treści (połączenie zamykane od razu),
@@ -68,8 +119,10 @@ async def request(
     Wyjątki httpx (timeout, brak połączenia) przechodzą dalej – obsługują je wołający."""
     if settings.demo_offline:  # D55: w trybie demo offline nie wysyłamy żadnych zapytań zewnętrznych
         raise SourceError(source, "tryb demo offline – bez połączenia z usługą")
+    if source_offline(source):  # D89: pojedyncze źródło wyłączone (OFFLINE_SOURCES) – tylko cache
+        raise SourceError(source, SOURCE_OFF_MESSAGE)
     client = get_client()
-    req = client.build_request(method, url, params=params, data=data, headers=headers,
+    req = client.build_request(method, url, params=params, data=data, headers=headers, content=content,
                                timeout=httpx.Timeout(timeout_s))
     t0 = time.monotonic()
     try:

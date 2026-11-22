@@ -189,9 +189,10 @@ def test_warmup_does_not_query_uldk_for_known_parcels():
     settings.demo_parcels_preload = True
     routes = mock_all()
     routes["uldk"].mock(return_value=httpx.Response(302, headers={"location": "https://x/resp/uldk.php"}))
+    respx.get(settings.open_meteo_forecast_url).mock(return_value=httpx.Response(503))  # A8: przykłady „na dziś”
     asyncio.run(demo.warmup_once())
     states = {k: w.state for k, w in demo._state.items()}
-    assert states["susza-2018"] == "gotowe" and states["mokry-rok-2021"] == "gotowe"
+    assert states["dobra-dzialka"] == "gotowe" and states["slaba-ziemia"] == "gotowe"
     # ULDK pytane tylko o działki spoza cache (061704, 143203) – i to najwyżej raz z ponowieniami, potem bezpiecznik
     asked = {c.request.url.params.get("id") for c in routes["uldk"].calls}
     assert PID not in asked and routes["uldk"].call_count <= 3
@@ -258,14 +259,15 @@ def test_demo_path_from_cache_only(db, client):
 def test_demo_examples_hide_unavailable_when_offline_or_uldk_blocked(db, client):
     settings.demo_parcels_preload = True
     uldk.load_known(force=True)
-    assert len(client.get("/api/demo/examples").json()) == 4  # normalnie – wszystkie
+    assert len(client.get("/api/demo/examples").json()) == 6  # normalnie – wszystkie
     trip(uldk.SOURCE, 60, "usługa chwilowo ogranicza ruch")
     ids = [e["id"] for e in client.get("/api/demo/examples").json()]
-    assert ids == ["susza-2018", "mokry-rok-2021"]  # tylko działka znana z repo (201305)
+    # A8: wszystkie działki przykładów są już w repo (demo_parcels.json) – przy blokadzie ULDK widać wszystkie
+    assert ids == [e.id for e in demo.EXAMPLES]
     BREAKERS.clear()
     mock_all()
-    client.get("/api/analysis", params={"parcel_id": PID, "crop": "zboza_ozime", "date": "2018-06-10",
-                                        "previous_crop": "zboza_ozime"})
+    respx.get(settings.open_meteo_forecast_url).mock(return_value=httpx.Response(503))  # A8: przykłady „na dziś”
+    client.get("/api/analysis", params={"parcel_id": PID, "crop": "zboza_ozime", "date": dt.date.today().isoformat()})
     settings.demo_offline = True
     ids = [e["id"] for e in client.get("/api/demo/examples").json()]
-    assert ids == ["susza-2018"]  # offline: tylko to, co liczy się z samego cache
+    assert ids == ["dobra-dzialka"]  # offline: tylko to, co liczy się z samego cache

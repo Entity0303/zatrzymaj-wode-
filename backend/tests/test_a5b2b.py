@@ -271,14 +271,14 @@ def test_report_pdf_verdict_page_both_variants(client, long_weather, crop):
     r = client.get("/api/report.pdf", params=q)
     assert r.status_code == 200 and r.headers["content-type"] == "application/pdf"
     pages = PdfReader(io.BytesIO(r.content)).pages
-    assert len(pages) <= 6
+    assert len(pages) == 2  # A5e-2: raport skrócony
     p1 = pages[0].extract_text()
     up = p1.upper()  # etykiety pozycji – wersaliki przez CSS
     assert "Werdykt działki" in p1 and "GLEBA" in up and "OPADY" in up and "CO SIAĆ" in up
     if crop:
         assert "WYBRANA UPRAWA" in up
     text = "\n".join(p.extract_text() for p in pages)
-    assert "Co tu posiać?" in text and "Uprawy wieloletnie – inwestycja na lata" in text
+    assert "Co tu posiać?" in text and "Co zrobić z wodą" in text and "Na tle 10 lat" in text
 
 
 # ── A5b-2c: drobne poprawki PDF ─────────────────────────────────────────────────────────────

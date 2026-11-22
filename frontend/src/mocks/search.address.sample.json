@@ -1,0 +1,63 @@
+{
+  "query": "Drwinia 1",
+  "interpreted_as": "obreb_numer",
+  "results": [
+    {
+      "kind": "parcel",
+      "id": "120103_2.0002.1",
+      "label": "Drwinia 1, gm. Drwinia, pow. bocheĹ„ski, maĹ‚opolskie",
+      "name": "Drwinia 1",
+      "lon": 20.408115,
+      "lat": 50.104525,
+      "parcel_id": "120103_2.0002.1",
+      "type": null,
+      "type_label": null,
+      "gmina": "Drwinia",
+      "powiat": "bocheĹ„ski",
+      "wojewodztwo": "maĹ‚opolskie",
+      "bbox": [
+        20.407861,
+        50.102661,
+        20.409565,
+        50.106405
+      ],
+      "bbox_approx": false,
+      "area_ha": 0.1505,
+      "locality": null,
+      "street": null,
+      "house_number": null,
+      "source": "ULDK GUGiK"
+    },
+    {
+      "kind": "address",
+      "id": "prg:0317145--1",
+      "label": "Drwinia 1, gm. Drwinia, pow. bocheĹ„ski, maĹ‚opolskie",
+      "name": "Drwinia 1",
+      "lon": 20.445975,
+      "lat": 50.094235,
+      "parcel_id": null,
+      "type": null,
+      "type_label": null,
+      "gmina": "Drwinia",
+      "powiat": "bocheĹ„ski",
+      "wojewodztwo": "maĹ‚opolskie",
+      "bbox": [
+        20.43098,
+        50.08423,
+        20.46098,
+        50.10423
+      ],
+      "bbox_approx": true,
+      "area_ha": null,
+      "locality": "Drwinia",
+      "street": null,
+      "house_number": "1",
+      "source": "prg"
+    }
+  ],
+  "total": 2,
+  "truncated": false,
+  "hint": null,
+  "notices": [],
+  "attribution": "Adresy: PRG GUGiK"
+}

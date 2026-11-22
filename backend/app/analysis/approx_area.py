@@ -38,9 +38,20 @@ def is_approximate(parcel_id: str) -> bool:
     return parcel_id.startswith(APPROX_PREFIX)
 
 
+def from_id(parcel_id: str) -> Parcel | None:
+    """„obszar_przyblizony_<lat>_<lon>” → ten sam kwadrat 1 ha (bez ULDK). Zły format → None."""
+    try:
+        lat_s, lon_s = parcel_id[len(APPROX_PREFIX) + 1:].split("_")
+        return approximate_parcel(float(lon_s), float(lat_s))
+    except ValueError:
+        return None
+
+
 def approximate_parcel(lon: float, lat: float, side_m: float = SIDE_M) -> Parcel:
+    # punkt zaokrąglony jak w identyfikatorze – ten sam kwadrat z punktu i z id (warstwy, raport; A8)
+    lon, lat = round(lon, 5), round(lat, 5)
     e, n = lonlat_to_2180(lon, lat)
     h = side_m / 2
     woj = nearest_voivodeship(lon, lat)
     return Parcel(id=f"{APPROX_PREFIX}_{lat:.5f}_{lon:.5f}", voivodeship=woj, county="nieznany", commune="nieznana",
-                  region="nieznany", number="—", geom_2180=box(e - h, n - h, e + h, n + h))
+                  region="nieznany", number="—", geom_2180=box(e - h, n - h, e + h, n + h), source="approximate")

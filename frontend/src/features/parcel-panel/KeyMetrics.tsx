@@ -24,7 +24,7 @@ export function KeyMetrics({ loading, analysis }: { loading?: boolean; analysis?
       </MetricCard>
       <MetricCard
         icon={ChartNoAxesCombined}
-        title="Bilans wody (sezon)"
+        title="Ile wody zostało w sezonie"
         value={null}
         unit="mm"
         tone="water"
@@ -81,7 +81,7 @@ function AnalysisMetrics({ analysis }: { analysis: AnalysisResponse }) {
       </MetricCard>
       <MetricCard
         icon={ChartNoAxesCombined}
-        title="Bilans wody (sezon)"
+        title="Ile wody zostało w sezonie"
         value={num(balance, 0, true)}
         unit={balance.unit ?? 'mm'}
         tone={balance.value !== null && balance.value < 0 ? 'danger' : 'water'}

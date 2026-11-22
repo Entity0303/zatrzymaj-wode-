@@ -38,8 +38,16 @@ class Settings(BaseSettings):
     # pogoda z ostatnich 7 dni (NASA uzupełnia je z opóźnieniem) – 6 h; dni zakończone wcześniej – bez wygasania
     cache_ttl_current_s: float = 6 * 3600
     cache_ttl_forecast_s: float = 3600
-    # tryb demo offline (D55): żadnych zapytań zewnętrznych, tylko cache
+    # tryb demo offline (D55): żadnych zapytań zewnętrznych, tylko cache – na prezentację
     demo_offline: bool = False
+    # A8 (D89): źródła wyłączone pojedynczo – tylko cache (GUGiK blokuje sieć); reszta (IMGW, Earth Search, NASA, IUNG,
+    # SoilGrids, prognoza Open-Meteo) działa normalnie. Klucze: uldk, nmt, kieg, uug, bdot, prng, soil_map, ortho.
+    # Pusty napis = wszystkie źródła włączone. Env: OFFLINE_SOURCES="uldk,nmt,kieg,uug,bdot".
+    offline_sources: str = "uldk,nmt,kieg,uug,bdot"
+    # A8 (D89): usługi GUGiK (nazwa źródła zawiera „GUGiK”) – wspólny limit: najwyżej tyle zapytań naraz i odstęp
+    # między startami kolejnych zapytań; bezpiecznik (cached_fetch) jak dotąd
+    gugik_parallel: int = 2
+    gugik_min_interval_s: float = 0.5
     # działki demo z app/data/demo_parcels.json ładowane do indeksu działek przy starcie (D54)
     demo_parcels_preload: bool = True
     # ULDK: blokada (302 / 429 / HTML) – ponowienia po 1 s i 3 s, potem bezpiecznik na 60 s (D54)
@@ -54,10 +62,57 @@ class Settings(BaseSettings):
     # NMT GUGiK (A6): POST GetHByPointList, paczki po 1000 punktów; łączny limit całej siatki
     nmt_url: str = "https://services.gugik.gov.pl/nmt/"
     nmt_timeout_s: float = 12.0
-    nmt_total_timeout_s: float = 15.0
+    nmt_total_timeout_s: float = 25.0     # A9: teren liczony w tle / GET /api/terrain – nie w budżecie analizy
+    terrain_background: bool = True       # A9: analiza bez terenu w cache → {status: pending} + liczenie w tle
     nmt_retry_delay_s: float = 0.3
+    # A8: najwyżej 2 paczki naraz (GUGiK spokojnie); 1 = po kolei z przerwą nmt_chunk_pause_s (warm_demo: 1 / 1,0 s).
+    # „Brak 51% wysokości” nie był winą równoległości, tylko dopasowania współrzędnych (nmt.match_heights).
+    nmt_parallel: int = 2
+    nmt_chunk_pause_s: float = 0.5
     # zapasowe wyniki terenu z app/data/terrain (prawdziwe NMT z 21.11, osoba C) – gdy NMT nie odpowiada (D57)
     terrain_saved_results: bool = True
+
+    # Sentinel-2 L2A (A11, D86): Earth Search STAC + COG (AWS) – to nie GUGiK
+    sentinel_stac_url: str = "https://earth-search.aws.element84.com/v1/search"
+    sentinel_budget_s: float = 15.0      # tryb na żywo: ok. 15 s …
+    sentinel_budget_mb: float = 10.0     # … i ok. 10 MB na działkę
+    sentinel_timeout_s: float = 6.0      # pojedyncze zapytanie (STAC / kafel COG); przerwany odczyt – 1 ponowienie
+    sentinel_breaker_s: float = 120.0
+    sentinel_cache_ttl_today_s: float = 43_200  # wynik dla „dziś” – 12 h (nowe przeloty co 2–5 dni)
+    sentinel_background: bool = True     # analiza bez wyniku w cache uruchamia liczenie w tle
+    sentinel_enabled: bool = True        # False = bez zapytań do Earth Search (testy) – tylko cache
+
+    # opad ze stacji IMGW (A7, D82): magazyn app/data/imgw/opady.npz; wyłączony = opad z NASA POWER jak przed A7
+    imgw_enabled: bool = True
+    imgw_store: str = ""                 # ścieżka magazynu (puste = app/data/imgw/opady.npz)
+    imgw_max_km: float = 30.0            # stacje w promieniu 30 km …
+    imgw_fallback_km: float = 50.0       # … a gdy brak – do 50 km (pewność o poziom niżej)
+    imgw_max_stations: int = 3
+
+    # wyszukiwanie miejsc po nazwie (A5c, D73): PRNG GUGiK (WFS) → rezerwa Nominatim OSM → słownik demo
+    prng_url: str = "https://mapy.geoportal.gov.pl/wss/service/PZGIK/PRNG/WFS/GeographicalNames"
+    prng_timeout_s: float = 8.0
+    prng_min_interval_s: float = 1.2     # odstęp między zapytaniami do PRNG (po serii szybkich zapytań serwer odrzuca połączenia)
+    prng_retry_delay_s: float = 3.0
+    prng_breaker_s: float = 60.0
+    nominatim_url: str = "https://nominatim.openstreetmap.org"
+    nominatim_timeout_s: float = 6.0
+    nominatim_min_interval_s: float = 1.1  # polityka OSM: najwyżej 1 zapytanie na sekundę
+    nominatim_breaker_s: float = 60.0
+    # A9: adresy PRG – UUG GUGiK (klucz `uug` w OFFLINE_SOURCES), rezerwa Nominatim
+    uug_url: str = "https://services.gugik.gov.pl/uug/"
+    uug_timeout_s: float = 6.0
+    uug_breaker_s: float = 120.0
+    search_addresses: bool = True
+    # A9: woda w okolicy – Overpass (OSM) i stany wód IMGW, liczone w tle
+    overpass_url: str = "https://overpass-api.de/api/interpreter"
+    # rezerwowe instancje (po kolei przy 5xx / 429 / przekroczonym czasie) – publiczny Overpass bywa przeciążony
+    overpass_fallback_urls: str = "https://overpass.private.coffee/api/interpreter,https://maps.mail.ru/osm/tools/overpass/api/interpreter"
+    overpass_timeout_s: float = 55.0      # publiczny Overpass bywa przeciążony (22.11: 32 s dla 1 km²)
+    overpass_breaker_s: float = 300.0
+    imgw_hydro_url: str = "https://danepubliczne.imgw.pl/api/data/hydro"
+    hydro_background: bool = True        # A9: adresy w wyszukiwarce (testy A5c – bez, jawnie włączane w test_a9)
+    search_timeout_s: float = 14.0        # łączny limit jednego wyszukiwania
 
     # przykłady demo: rozgrzewka cache przy starcie (w tle) i co tyle godzin
     demo_warmup: bool = True

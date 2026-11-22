@@ -65,7 +65,7 @@ export function CropSeasonCard({ season, analysisDate }: { season: CropSeason; a
         <div className="mt-1.5 flex justify-between gap-2 text-xs leading-4 text-text-muted">
           <span className="flex items-center gap-1">
             <CalendarRange className="size-3.5" aria-hidden />
-            {t('start {d}', { d: formatDayMonth(season.season_start) })}
+            {t('początek {d}', { d: formatDayMonth(season.season_start) })}
           </span>
           <span className="tabular">
             {season.day_of_season != null && totalDays

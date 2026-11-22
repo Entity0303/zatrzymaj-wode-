@@ -53,6 +53,8 @@ export function MetricCard({
 }) {
   const { t } = useLang()
   const noData = value === null && !loading
+  // tekst zamiast liczby (np. „ocena tylko w sezonie przy gęstym łanie”) – zwykła wielkość, nie jak duża liczba
+  const textual = value != null && value.length > 12 && !/^[\s\d,.%+−-]+$/.test(value)
   return (
     <div
       className={cn(
@@ -77,6 +79,8 @@ export function MetricCard({
           <p className="text-2xl leading-8 font-semibold text-text-muted" aria-hidden>—</p>
           <p className="text-sm leading-5 text-text-muted">{t(noDataText)}</p>
         </div>
+      ) : textual ? (
+        <p className="text-base leading-6 font-medium text-text-muted">{value}</p>
       ) : (
         <p className="tabular flex items-baseline gap-1 text-[32px] leading-10 font-semibold">
           {valuePrefix}

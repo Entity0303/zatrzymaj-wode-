@@ -48,7 +48,7 @@ export function ForecastCard({
           ))}
         </div>
       ) : error || !forecast ? (
-        <NoData text="Prognoza niedostępna (Open-Meteo nie odpowiada)" />
+        <NoData text="Prognoza chwilowo niedostępna – spróbujemy ponownie po wybraniu działki" />
       ) : (
         <>
           <ol className="grid flex-1 grid-cols-7 gap-0.5 text-center">
@@ -74,7 +74,7 @@ export function ForecastCard({
           </ol>
           <div className="mt-1 flex items-center justify-between gap-2 text-xs leading-4">
             <span className="text-sm leading-5 text-text-muted">
-              {t('Bilans tygodnia:')}{' '}
+              {t('Woda w tym tygodniu (spadnie minus wyparuje):')}{' '}
               <b className="tabular text-text">
                 {forecast.bilans_okresu_mm === null ? t('brak danych') : `${formatSigned(forecast.bilans_okresu_mm)} mm`}
               </b>

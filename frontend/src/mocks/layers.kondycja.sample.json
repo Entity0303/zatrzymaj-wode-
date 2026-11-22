@@ -1,0 +1,52 @@
+{
+  "parcel_id": "201305_2.0038.6/1",
+  "layer": "kondycja",
+  "analysis_date": "2026-11-21",
+  "raster": {
+    "image_url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJAAAABwCAYAAADxAvk6AAACrUlEQVR42u3dy05TQQDH4fMmghdiMBAbblYqCLaWi4CCoCaQeCFGE1yYuDAaY2Ji3Lv3XVz6Ln0I7MbtfxbHBkq/xW85nZOZ72wm05zqd7dV1enS6s1a1Z1fZ1sFkAASQAIIIIAAEkACSCMDqC4wm3C26183gAACSAAJIIAAAggggASQhgfQoCcA6HwDKo2f3GvGAAIIIAEkgAACCCCAABJAGilAvdTEg7nYWLsROz09/ZOCJHdtYzZW2t/WSTcGEEAACSCAAAIIIIAAAkgAAXRxAJUesLTBJWDTT1uxuZcrsamDxVjjaClWer5hPyicf7UaK41f//ooBhBAAAEEEEAAAQQQQAABBBBAAA0PoMbhUqw0QQlQ3UobfONxM7ZwfC92591a7PrOQqz0fIM+CC3tT/8li00/a8UOfh7GAAIIIIAAAggggAACCCCAAAIIoOEBdPttJ7b8fiM2udvspUoXxkobMN5pxErjiwD3mrG6v1/q6sZsrDR+6slibPvHfpVqvunE7n/eiQEEEEAAAQQQQAABBBBAAAEEEEDDA2jgF5qOV3up1kk3tvV9P7b25WGsvwixK2szsUEflNbt1ut2L3X060WV6iOLTWzNxwACCCCAAAIIIIAAAggggAACCCCA/jXeacQaR8ux0oWn/iLF2h+3e6kS4LoXxgZd6cLb5re9KlX3j6UAAQQQQAABBBBAAAEEEEAAAQTQ6AAa9IfvBz3/1fXZ2Fi7ERtvN3qpugBL41c+bMYmd5tVqu76AgQQQAABBBBAAAEEEEAAAQQQQAD9rw/fj3ozz+/2Up1P27HL3ZkqBRBAAAkggAACCCCAAAJIAAEEkC5Gg36BLTJAAAkgASSABBBAAkgAaTSyCAJIAAkgASQBJIAEkACSABJAAkgASQAJIJ2r/gK/9IPL34CCGgAAAABJRU5ErkJggg==",
+    "bbox": [
+      22.59955,
+      53.049345,
+      22.60228,
+      53.050639
+    ]
+  },
+  "features": null,
+  "value_range": [
+    0.0,
+    0.9
+  ],
+  "legend": [
+    {
+      "value": 0.0,
+      "color": "#C0473C",
+      "label": null
+    },
+    {
+      "value": 0.3,
+      "color": "#E2A23B",
+      "label": null
+    },
+    {
+      "value": 0.6,
+      "color": "#5F9F63",
+      "label": null
+    },
+    {
+      "value": 0.9,
+      "color": "#1F4230",
+      "label": null
+    }
+  ],
+  "legend_title": "NDVI – kondycja roślin",
+  "legend_left": "Słaba roślinność",
+  "legend_right": "Bujna",
+  "value": 0.857,
+  "scene_date": "2026-11-16",
+  "note": "NDVI – kondycja roślin: mediana 0.86 · zdjęcie z 16.11.2026",
+  "source_tag": {
+    "kind": "pomiar",
+    "date": "2026-11-16",
+    "source": "Sentinel-2 L2A (Earth Search)"
+  }
+}

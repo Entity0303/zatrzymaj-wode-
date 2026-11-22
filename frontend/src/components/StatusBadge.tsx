@@ -1,4 +1,4 @@
-import { STATUS, type Status } from '@/theme/status'
+import { NOW_LABEL, STATUS, type Status } from '@/theme/status'
 import { cn } from '@/lib/utils'
 import { useLang } from '@/lib/i18n'
 
@@ -7,10 +7,13 @@ export function StatusBadge({
   status,
   label,
   size = 'md',
+  now,
   className,
 }: {
   status: Status
   label?: string
+  /** stan wody dziś – „Teraz: dobrze” (werdykt działki mówi o latach, ten status o dzisiejszym dniu) */
+  now?: boolean
   size?: 'sm' | 'md'
   className?: string
 }) {
@@ -28,7 +31,7 @@ export function StatusBadge({
       )}
     >
       <Icon className={size === 'sm' ? 'size-3.5' : 'size-4'} aria-hidden />
-      {t(label ?? s.label)}
+      {now ? `${t('Teraz:')} ${t(label ?? NOW_LABEL[status])}` : t(label ?? s.label)}
     </span>
   )
 }

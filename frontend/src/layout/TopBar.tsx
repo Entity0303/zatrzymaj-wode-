@@ -1,97 +1,53 @@
-import { ArrowLeft } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { useLang } from '@/lib/i18n'
 import { DateField } from '@/components/DateField'
 import { LanguageToggle } from '@/components/LanguageToggle'
-import { LayerPills } from '@/features/map/LayerPills'
-import { ViewToggle } from '@/features/map/ViewToggle'
-import type { LayerKey } from '@/features/map/layers'
-import { LocateButton } from '@/features/search/LocateButton'
 
 /**
- * Górny pływający pasek (SPEC 4.2, 12): wyszukiwarka, „Moja lokalizacja”, pogoda, data analizy,
- * druga linia – pigułki warstw i 2D|3D. Na telefonie: wyszukiwarka + lokalizacja, pod nimi pigułki.
+ * Górny pasek nad mapą – JEDEN wiersz (przeprojektowanie ekranu mapy): po lewej wyszukiwarka
+ * (z „Moja lokalizacja” w środku pola), po prawej data analizy (pełna, nigdy ucięta), pogoda (znika,
+ * gdy niedostępna) i język. Bez „Wróć do mapy” – działkę zamyka ✕ w jej panelu.
+ * Warstwy mapy są w osobnym przycisku „Warstwa: …” (LayerMenu), nie w pasku.
  */
 export function TopBar({
-  onBack,
   isMobile,
   search,
   weather,
-  locating,
-  onLocate,
   asOf,
   onAsOfChange,
-  layer,
-  onLayerChange,
-  view,
-  onViewChange,
+  layerButton,
+  period,
 }: {
-  /** wraca do przeglądania mapy (zamyka działkę) */
-  onBack?: () => void
+  /** F3: przycisk „Okres” (PeriodPicker) obok daty */
+  period?: ReactNode
   isMobile: boolean
-  /** <SearchBar /> – stan wyszukiwania trzyma strona */
+  /** <SearchBar trailing={<LocateButton inField />} /> */
   search: ReactNode
-  /** <WeatherWidget /> */
+  /** <WeatherWidget bare /> – null, gdy pogody brak */
   weather: ReactNode
-  locating: boolean
-  onLocate: () => void
   asOf: string
   onAsOfChange: (v: string) => void
-  layer: LayerKey
-  onLayerChange: (k: LayerKey) => void
-  /** 2D / 3D (SPEC 8) */
-  view: '2d' | '3d'
-  onViewChange: (v: '2d' | '3d') => void
+  /** telefon: przycisk warstw pod wyszukiwarką */
+  layerButton?: ReactNode
 }) {
-  const { t } = useLang()
   if (isMobile)
     return (
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-[1200] space-y-2 pt-3">
-        <div className="pointer-events-auto flex items-start gap-2 px-3">
-          {onBack && (
-            <button
-              type="button"
-              onClick={onBack}
-              aria-label={t('Wróć do mapy')}
-              className="flex size-12 shrink-0 items-center justify-center rounded-full bg-surface shadow-float hover:bg-sage-soft"
-            >
-              <ArrowLeft className="size-5" />
-            </button>
-          )}
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-[1200] space-y-2 px-3 pt-3">
+        <div className="pointer-events-auto flex items-start gap-2">
           {search}
-          <LocateButton locating={locating} onClick={onLocate} iconOnly />
           <LanguageToggle compact />
         </div>
-        <div className="pointer-events-auto flex items-center gap-2 px-3 pb-2">
-          <LayerPills value={layer} onChange={onLayerChange} className="min-w-0 flex-1" />
-          <ViewToggle value={view} onChange={onViewChange} />
-        </div>
+        {layerButton && <div className="pointer-events-auto w-fit">{layerButton}</div>}
       </div>
     )
   return (
-    <div className="pointer-events-none absolute inset-x-4 top-4 z-[1200] space-y-3">
-      <div className="flex items-start gap-3 [&>*]:pointer-events-auto">
-        {onBack && (
-          <button
-            type="button"
-            onClick={onBack}
-            className="flex h-12 shrink-0 items-center gap-2 rounded-full bg-surface pr-4 pl-3 text-sm font-semibold shadow-float hover:bg-sage-soft"
-          >
-            <ArrowLeft className="size-5 text-brand" /> {t('Wróć do mapy')}
-          </button>
-        )}
-        {search}
-        <LocateButton locating={locating} onClick={onLocate} />
-        {/* pogoda · data · język – jedna biała pigułka z liniami podziału (ref-desktop) */}
-        <div className="ml-auto flex h-12 shrink-0 items-center divide-x divide-line rounded-full bg-surface pr-1 shadow-float">
-          {weather}
-          <DateField value={asOf} onChange={onAsOfChange} bare />
-          <LanguageToggle compact className="ml-1 size-10 bg-transparent shadow-none" />
-        </div>
-      </div>
-      <div className="flex max-w-full items-center gap-3 [&>*]:pointer-events-auto">
-        <LayerPills value={layer} onChange={onLayerChange} className="min-w-0 py-1" />
-        <ViewToggle value={view} onChange={onViewChange} />
+    <div className="pointer-events-none absolute inset-x-4 top-4 z-[1200] flex items-start gap-3 [&>*]:pointer-events-auto">
+      {search}
+      {/* data · pogoda · język – jedna pigułka; elementy bez danych znikają */}
+      <div className="glass ml-auto flex h-12 shrink-0 items-center divide-x divide-line rounded-full pr-1 shadow-float">
+        <DateField value={asOf} onChange={onAsOfChange} bare />
+        {period && <div className="px-1">{period}</div>}
+        {weather}
+        <LanguageToggle compact className="ml-1 size-10 bg-transparent shadow-none" />
       </div>
     </div>
   )

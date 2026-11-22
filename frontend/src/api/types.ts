@@ -29,6 +29,86 @@ export type Parcel = {
   powierzchnia_ha: number
   geometria: GeoJSON.Polygon | GeoJSON.MultiPolygon
   zrodlo: DataSource
+  /** A5c: uldk – działka z ewidencji; drawn – pole narysowane przez rolnika; approximate – 1 ha wokół punktu (brak granic) */
+  source?: 'uldk' | 'drawn' | 'approximate'
+  /** np. „Pole narysowane przez rolnika” (null dla działki z ULDK) */
+  name?: string | null
+}
+
+// ── Wyszukiwanie: GET /api/search?q= (A5c) ──────────────────────────────────────────────────
+
+/** F3: 'address' – adres punktowy (PRG / OSM) */
+export type SearchKind = 'parcel' | 'place' | 'address'
+export type PlaceType = 'miejscowosc' | 'gmina' | 'obreb'
+/** jak backend rozpoznał zapytanie */
+export type QueryInterpretation = 'parcel_id' | 'obreb_numer' | 'name' | 'empty' | 'unrecognized'
+
+export type SearchResult = {
+  kind: SearchKind
+  /** parcel: identyfikator ULDK; place: id źródła, np. „prng:139268” */
+  id: string
+  /** gotowy tekst do listy, np. „Tczów, gm. Tczów, pow. zwoleński, mazowieckie” */
+  label: string
+  /** parcel: „obręb numer”; place: nazwa miejscowości */
+  name: string
+  /** środek (WGS84) – do przybliżenia mapy; parcel: punkt wewnątrz działki */
+  lon: number
+  lat: number
+  /** tylko parcel – do GET /api/analysis?parcel_id= */
+  parcel_id?: string | null
+  /** tylko place */
+  type?: PlaceType | null
+  /** np. „wieś”, „miasto”, „osada”, „gmina” */
+  type_label?: string | null
+  gmina?: string | null
+  powiat?: string | null
+  wojewodztwo?: string | null
+  /** lon_min, lat_min, lon_max, lat_max (EPSG:4326) – do fitBounds; parcel: obrys działki */
+  bbox?: [number, number, number, number] | null
+  /** true = bbox wyznaczony wokół punktu (źródło podało tylko punkt) */
+  bbox_approx?: boolean
+  /** tylko parcel – z geometrii */
+  area_ha?: number | null
+  /** F3 – tylko address: miejscowość, ulica (null na wsi bez ulic), numer domu */
+  locality?: string | null
+  street?: string | null
+  house_number?: string | null
+  /** „ULDK GUGiK” | „PRNG GUGiK” | „OpenStreetMap Nominatim” | „słownik demo”; address: 'prg' | 'osm' */
+  source: string
+}
+
+export type SearchResponse = {
+  query: string
+  interpreted_as: QueryInterpretation
+  /** maks. 10 */
+  results: SearchResult[]
+  /** ile wyników pasuje (lista jest przycięta do 10) */
+  total: number
+  truncated: boolean
+  /** podpowiedź dla rolnika (brak wyników, za dużo wyników) */
+  hint?: string | null
+  /** czego nie udało się sprawdzić (źródło niedostępne) */
+  notices?: string[]
+  /** atrybucja źródła, gdy wymagana (OSM) */
+  attribution?: string | null
+}
+
+/** Treść POST /api/analysis i POST /api/report.pdf – dokładnie jedno z: parcel_id, lon+lat, geometry (A5c) */
+export type AnalysisRequest = {
+  parcel_id?: string | null
+  lon?: number | null
+  lat?: number | null
+  /** własny obrys pola: GeoJSON Polygon w WGS84 ([lon, lat]); 0,05–200 ha, w Polsce, bez samoprzecięć */
+  geometry?: GeoJSON.Polygon | null
+  crop?: string | null
+  date?: string | null
+  previous_crop?: string | null
+  crop_history?: string | null
+  cultivated_area_ha?: number | null
+  /** A5e: co planujesz posiać – 1–3 uprawy z rankingu albo grupy (zboza_ozime, zboza_jare, straczkowe…) */
+  planned_crops?: string[] | null
+  /** A5e: tylko POST /api/report.pdf – 'short' = raport skrócony (2 strony, domyślnie) | 'full' = raport szczegółowy */
+  report_type?: 'short' | 'full' | null
 }
 
 /** `detail` przy HTTP 409 */
@@ -375,7 +455,10 @@ export type History = {
   balance_band: BandPoint[]
   stress_days_by_year: YearStress[]
   monthly_precip: MonthlyPrecip[]
+  /** A5e: proste zdanie, np. „Ten rok jest suchszy niż zwykle – suszej było tylko w 2 z ostatnich 10 lat.” */
   summary?: string | null
+  /** A5e: szczegóły liczbowe („Od 1 marca do …: spadło minus wyparowało = −228 mm; …”) */
+  details?: string | null
   /** bieżący bilans − średnia z lat porównawczych, mm */
   balance_deviation_mm?: number | null
   balance_rank?: BalanceRank | null
@@ -540,6 +623,8 @@ export type CultivatedArea = {
 export type CropSuggestion = {
   crop_id: RankingCropId
   label: string
+  /** F3: przychód z pola wg cen skupu GUS (null = brak ceny) */
+  revenue?: CropRevenue | null
   group_id: string
   category: SuggestionCategory
   category_label: string
@@ -611,6 +696,188 @@ export type PerennialSection = {
   items: PerennialSuggestion[]
 }
 
+// ── Satelita Sentinel-2 (A11): GET/POST /api/satellite, AnalysisResponse.satellite ─────────────
+
+export type SatelliteStatus = 'ok' | 'pending' | 'brak_danych'
+export type NdviClass = 'gleba' | 'slaba' | 'umiarkowana' | 'gesta'
+export type NdmiClass = 'sucho' | 'srednio' | 'dobrze'
+export type SatelliteTrend = 'lepiej' | 'podobnie' | 'gorzej'
+
+export type SatelliteScene = {
+  date: ISODate
+  scene_id: string
+  ndvi?: number | null
+  ndmi?: number | null
+  /** udział ważnych pikseli (roślinność / gleba wg maski SCL) w obrysie, % */
+  valid_pct: number
+  cloud_pct: number
+}
+
+export type SatelliteSeriesPoint = { date: ISODate; ndvi?: number | null; ndmi?: number | null; valid_pct: number }
+
+export type Satellite = {
+  status: SatelliteStatus
+  /** data sceny – „zdjęcie satelitarne z 16.11.2026” */
+  date?: ISODate | null
+  scene_id?: string | null
+  /** NDVI – kondycja roślin (mediana w obrysie) */
+  ndvi?: number | null
+  /** NDMI – wilgotność roślin (mediana w obrysie) */
+  ndmi?: number | null
+  ndvi_class?: NdviClass | null
+  /** np. „gęsta zieleń” */
+  ndvi_label?: string | null
+  /** tylko w sezonie (IV–IX) i przy NDVI ≥ 0,5 */
+  ndmi_class?: NdmiClass | null
+  ndmi_label?: string | null
+  valid_pct?: number | null
+  cloud_pct?: number | null
+  /** ta sama pora rok wcześniej (±20 dni) */
+  last_year?: SatelliteScene | null
+  ndvi_change?: number | null
+  trend?: SatelliteTrend | null
+  /** ok / warn / bad; info – poza sezonem bez anomalii */
+  level?: VerdictStatementLevel | null
+  in_season?: boolean | null
+  /** zdanie dla rolnika z datą sceny */
+  sentence?: string | null
+  warning?: string | null
+  /** szereg 12 mies. (1 punkt / 15 dni) – tylko z cache */
+  series?: SatelliteSeriesPoint[]
+  series_note?: string | null
+  /** dostępne warstwy mapy */
+  layers?: ('kondycja' | 'wilgotnosc')[]
+  downloaded_mb?: number | null
+  compute_s?: number | null
+  cached?: boolean
+  note?: string | null
+  source_tag: SourceTag
+}
+
+// ── Źródła opadu (A7) ─────────────────────────────────────────────────────────────────────
+
+/** imgw – stacje ≤ 30 km; imgw_daleko – stacje 30–50 km (pewność niżej); nasa – brak stacji z danymi */
+export type PrecipMain = 'imgw' | 'imgw_daleko' | 'nasa'
+export type PrecipAgreement = 'zgodne' | 'roznia_sie' | 'mocno_sie_roznia' | 'brak_danych'
+
+export type PrecipStation = {
+  /** kod stacji IMGW (9 cyfr) */
+  code: string
+  /** np. „Burzyn” */
+  name: string
+  kind: 'synop' | 'klimat' | 'opad'
+  /** stacja synoptyczna / klimatologiczna / posterunek opadowy */
+  kind_label: string
+  distance_km: number
+  /** waga IDW (1/d², suma = 1) */
+  weight: number
+  coverage_pct: number
+  lon: number
+  lat: number
+}
+
+/** porównanie sum opadu w oknie (doba IMGW 6:00–6:00 – sumy, nie dni) */
+export type PrecipWindow = {
+  key: 'sezon' | 'ostatnie_30_dni' | 'wielolecie'
+  label: string
+  start: string
+  end: string
+  imgw_mm?: number | null
+  nasa_mm?: number | null
+  /** NASA względem stacji IMGW, % (dodatnie = NASA pokazuje więcej) */
+  difference_pct?: number | null
+  rating: PrecipAgreement
+}
+
+export type PrecipSources = {
+  main: PrecipMain
+  main_label: string
+  /** do 3 najbliższych stacji z danymi */
+  stations?: PrecipStation[]
+  /** suma IMGW / suma NASA ze wspólnego okresu – korekta dni bez pomiaru */
+  nasa_factor?: number | null
+  /** o ile % NASA pokazuje więcej (+) / mniej (−) niż stacje */
+  nasa_vs_imgw_pct?: number | null
+  common_days?: number
+  /** ostatnie dni bez pomiaru ze stacji – NASA przeliczona współczynnikiem */
+  filled_days?: number
+  filled_from?: string | null
+  filled_earlier_days?: number
+  agreement: PrecipAgreement
+  agreement_label: string
+  windows?: PrecipWindow[]
+  /** jedno zdanie dla rolnika: „Opady liczymy ze stacji IMGW Burzyn (27 km). …” */
+  sentence: string
+  /** true: stacje daleko albo źródła mocno się różnią – pewność o poziom niżej */
+  confidence_lowered?: boolean
+  source_tag: SourceTag
+}
+
+/** A5e: słupek wykresu „Na tle 10 lat” */
+export type SeasonalBalanceYear = {
+  year: number
+  /** mm, zaokrąglone do całości – ta sama liczba w tekstach i w raporcie */
+  balance_mm: number
+  /** true = bieżący rok (wyróżniony) */
+  current?: boolean
+}
+
+/** A5e: uprawa wybrana przez rolnika – ocena na tej działce */
+export type ChoiceItem = {
+  crop_id: RankingCropId
+  label: string
+  /** F3: przychód z pola wg cen skupu GUS (null = brak ceny) */
+  revenue?: CropRevenue | null
+  /** null = uprawa wieloletnia (bez oceny) */
+  category?: SuggestionCategory | null
+  category_label?: string | null
+  perennial?: boolean
+  /** A5e-2: co rolnik podał – uprawa albo grupa (np. 'zboza_ozime') */
+  requested_id?: string | null
+  /** A5e-2: dla grupy – „Z grupy zboża ozime najlepiej wypada: żyto.” */
+  group_note?: string | null
+  yield_typical_t_ha?: number | null
+  /** typowo z całej powierzchni, t */
+  total_typical_t?: number | null
+  yield_weak_t_ha?: number | null
+  total_weak_t?: number | null
+  weak_year?: number | null
+  /** „X na 10 lat” – strata plonu > 20% */
+  drought_risk_years: number
+  years_simulated: number
+  /** uwagi płodozmianu z historii pola */
+  rotation: RotationCheck
+  /** JEDNO zdanie: gleba / susza / przedplon (bez powtarzania liczb) */
+  why: string
+  confidence: Confidence
+}
+
+export type AlternativeRelation = 'lepsza' | 'podobna'
+
+/** A5e: uprawa lepsza lub podobna od wyboru rolnika */
+export type AlternativeItem = {
+  crop_id: RankingCropId
+  label: string
+  /** F3: przychód z pola wg cen skupu GUS (null = brak ceny) */
+  revenue?: CropRevenue | null
+  category: SuggestionCategory
+  category_label: string
+  relation: AlternativeRelation
+  yield_typical_t_ha?: number | null
+  total_typical_t?: number | null
+  drought_risk_years: number
+  years_simulated: number
+  /** np. „Po pszenicy ozimej rzepak – dobry przedplon.” */
+  why: string
+}
+
+/** A5e: „nie siej: …” – jeden powód */
+export type NotRecommendedItem = {
+  crop_id: RankingCropId
+  label: string
+  reason: string
+}
+
 export type CropSuggestions = {
   seasons: number[]
   /** od A5b-2b tylko „uprawy polowe” */
@@ -618,6 +885,18 @@ export type CropSuggestions = {
   /** A5b-2b: uprawy wieloletnie osobno, bez ✅/🟡/❌ */
   perennials?: PerennialSection | null
   area: CultivatedArea
+  /** A5e: wybór rolnika (planned_crops) – pusta lista bez wyboru */
+  choice?: ChoiceItem[]
+  /** A5e: jedno zdanie oceny wyboru, np. „Twój wybór pasuje do tej działki.” */
+  choice_summary?: string | null
+  /** A5e-2: uprawy z planu, których nie ma w rankingu (chmiel, tytoń) */
+  choice_notes?: string[]
+  /** A5e: 2–3 uprawy lepsze lub podobne od wyboru (puste bez wyboru albo gdy wybór jest najlepszy) */
+  alternatives?: AlternativeItem[]
+  /** A5e: uprawy odradzane (bez wybranych) – każda z jednym powodem („nie siej: …”) */
+  not_recommended?: NotRecommendedItem[]
+  /** A5e: top 5 nieodradzanych (do widoku bez wyboru) */
+  top_ids?: RankingCropId[]
   crop_history?: string[]
   /** bez historii: 'Podaj, co rosło w ostatnich latach – uwzględnimy płodozmian.' */
   rotation_hint?: string | null
@@ -627,9 +906,90 @@ export type CropSuggestions = {
   source_tag: SourceTag
 }
 
+// ── F3: ceny i przychód ─────────────────────────────────────────────────────────────────
+
+export type CropRevenue = {
+  /** średnia cena skupu, zł/t */
+  price_zl_t: number
+  /** np. „GUS – ceny skupu, woj. mazowieckie, 2023–2025” */
+  price_source: string
+  /** przychód z pola w typowym roku, zł */
+  typical_zl: number
+  /** przychód w słabym roku, zł */
+  weak_year_zl: number
+  /** powierzchnia, dla której liczono, ha */
+  for_area_ha: number
+}
+
+/** bieżąca cena (ZSRIR MRiRW, tydzień) */
+export type PriceNow = {
+  crop_id: string
+  zl_t: number
+  /** np. „10–16.11.2026” */
+  week: string
+  source: string
+  url?: string | null
+}
+
+// ── F3: teren w tle, woda w okolicy, okres ────────────────────────────────────────────────
+
+/** analysis.terrain w trakcie liczenia → GET /api/terrain (albo POST z geometry) */
+export type TerrainPending = { status: 'pending' }
+
+export type HydroStatus = 'pending' | 'ok' | 'none'
+export type HydroKind = 'rzeka' | 'ciek' | 'row' | 'kanal' | 'zbiornik'
+
+export type HydroFeature = {
+  kind: HydroKind
+  name?: string | null
+  distance_m: number
+  /** czy obiekt leży w stronę, w którą woda odpływa z działki */
+  toward_outflow: boolean
+}
+
+export type HydroGauge = {
+  name: string
+  river: string
+  distance_km: number
+  level_cm: number
+  state: 'niski' | 'sredni' | 'wysoki'
+  date: string
+}
+
+export type Hydro = {
+  status: HydroStatus
+  sentence?: string | null
+  features?: HydroFeature[]
+  gauge?: HydroGauge | null
+  sources?: { name: string; url: string }[]
+}
+
+/** okres analizy: period=30d|since_sowing|season albo date_from/date_to */
+export type PeriodPreset = '30d' | 'since_sowing' | 'season'
+
+export type PeriodDay = { date: ISODate; precip_mm: number; et0_mm: number; balance_cum_mm: number }
+
+export type PeriodSummary = {
+  from: ISODate
+  to: ISODate
+  /** np. „Ostatnie 30 dni (24.10–22.11.2026)” */
+  label: string
+  precip_mm: number
+  et0_mm: number
+  balance_mm: number
+  /** zwykle w tym okresie (średnia z 10 lat), mm */
+  normal_balance_mm: number
+  /** w ilu % lat było suszej (0–100) */
+  percentile: number
+  sentence: string
+  stress_days?: number | null
+  daily: PeriodDay[]
+}
+
 // ── Werdykt działki (A5b-2b) ──────────────────────────────────────────────────────────────
 
-export type VerdictKind = 'gleba' | 'opady' | 'teren' | 'uprawy' | 'woda' | 'uprawa_wybrana'
+/** A11: 'rosliny' – zdanie z satelity (tylko gdy jest zdjęcie) */
+export type VerdictKind = 'gleba' | 'opady' | 'teren' | 'rosliny' | 'uprawy' | 'woda' | 'uprawa_wybrana'
 /** ok #5BB37F / warn #E8B931 / bad #C8453B */
 export type VerdictLevel = 'ok' | 'warn' | 'bad'
 /** pozycja „woda” ma level 'info' (lista działań, bez oceny; kolor #2F80C9, ikona kropli) */
@@ -783,8 +1143,28 @@ export type AnalysisResponse = {
   crop_history?: string[]
   /** powierzchnia uprawy użyta w rankingu, ha */
   cultivated_area_ha?: number | null
-  /** A6: teren i spływ wody z NMT (null = brak danych, powód w terrain_note) */
-  terrain?: Terrain | null
+  /** A5e: co rolnik planuje posiać (z zapytania) – uprawy z rankingu albo grupy (A5e-2) */
+  planned_crops?: string[]
+  /** A5e: słupki „Na tle 10 lat” – bilans od początku sezonu do tego samego dnia: 10 lat + bieżący (current = true) */
+  seasonal_balance_by_year?: SeasonalBalanceYear[]
+  /** A5e: średnia z lat porównawczych, mm – linia na wykresie */
+  seasonal_balance_mean_mm?: number | null
+  /** A5e: okres bilansu, np. „od 1 marca do 18 listopada” */
+  seasonal_balance_label?: string | null
+  /** A5e: ostatni dzień z danymi pogodowymi („dane pogodowe do 18.11”) */
+  weather_data_until?: string | null
+  /** A7: skąd opad – stacje IMGW (źródło główne), zgodność z NASA, zdanie dla rolnika */
+  precip_sources?: PrecipSources | null
+  /** A11: Sentinel-2 – z cache albo { status: 'pending' } → dociągnij GET /api/satellite */
+  satellite?: Satellite | null
+  /** A6: teren i spływ wody z NMT (null = brak danych, powód w terrain_note); F3: { status: 'pending' } – liczone w tle */
+  terrain?: Terrain | TerrainPending | null
+  /** F3: woda w okolicy (cieki, rowy, zbiorniki, wodowskaz); pending → GET /api/hydro */
+  hydro?: Hydro | null
+  /** F3: ceny bieżące (ZSRIR) dla upraw z rankingu */
+  price_now?: PriceNow[] | null
+  /** F3: podsumowanie okresu (gdy w zapytaniu period / date_from+date_to) */
+  period?: PeriodSummary | null
   /** A6: dlaczego brak analizy terenu */
   terrain_note?: string | null
   /** A5b-2b: werdykt działki (null: grunt nierolny / brak danych) */
@@ -800,7 +1180,8 @@ export type AnalysisResponse = {
 
 // ── schemas/layers.py – GET /api/layers/{layer} (szkielet) ─────────────────────────────────
 
-export type LayerKey = 'kondycja' | 'wilgotnosc' | 'teren' | 'splyw' | 'gleba'
+/** F3: 'woda' – woda w okolicy (BDOT10k / MPHP) */
+export type LayerKey = 'kondycja' | 'wilgotnosc' | 'teren' | 'splyw' | 'gleba' | 'woda'
 
 export type RasterOverlay = {
   image_url: string
@@ -815,8 +1196,20 @@ export type LayerResponse = {
   raster?: RasterOverlay | null
   features?: GeoJSON.FeatureCollection | null
   value_range?: [number, number] | null
+  /** A11: kolory skali (wartość → kolor) – te same co na PNG warstwy */
+  legend?: LegendStop[] | null
+  legend_title?: string | null
+  legend_left?: string | null
+  legend_right?: string | null
+  /** A11: mediana NDVI / NDMI w obrysie */
+  value?: number | null
+  /** A11: data zdjęcia satelitarnego */
+  scene_date?: ISODate | null
+  note?: string | null
   source_tag: SourceTag
 }
+
+export type LegendStop = { value: number; color: string; label?: string | null }
 
 export type PointValue = { layer: LayerKey; text: string; value: number | null; source_tag: SourceTag }
 

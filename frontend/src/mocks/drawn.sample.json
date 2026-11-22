@@ -1,0 +1,79 @@
+{
+  "_opis": "A5c: własny obrys pola – treść POST /api/analysis (request) i fragment odpowiedzi (parcel). Zapis prawdziwej odpowiedzi z 2026-11-21 (Puszcza Notecka; gmina z geokodera OSM). Reszta odpowiedzi jak dla działki.",
+  "request": {
+    "geometry": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [
+            16.2588,
+            52.684
+          ],
+          [
+            16.2612,
+            52.684
+          ],
+          [
+            16.2612,
+            52.686
+          ],
+          [
+            16.2588,
+            52.686
+          ],
+          [
+            16.2588,
+            52.684
+          ]
+        ]
+      ]
+    },
+    "date": "2026-11-21"
+  },
+  "parcel": {
+    "id": "narysowane_9d6cec913e",
+    "wojewodztwo": "wielkopolskie",
+    "powiat": "powiat szamotulski",
+    "gmina": "Wronki",
+    "obreb": "Pożarowo",
+    "numer": "—",
+    "teryt_gminy": "",
+    "powierzchnia_ha": 3.6101,
+    "geometria": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [
+            16.2588,
+            52.684
+          ],
+          [
+            16.2612,
+            52.68399999999999
+          ],
+          [
+            16.2612,
+            52.68599999999999
+          ],
+          [
+            16.2588,
+            52.68600000000001
+          ],
+          [
+            16.2588,
+            52.684
+          ]
+        ]
+      ]
+    },
+    "zrodlo": {
+      "nazwa": "Pole narysowane przez rolnika",
+      "url": "https://nominatim.openstreetmap.org/",
+      "pobrano": "2026-11-21T21:10:03+00:00",
+      "uwagi": "Obrys narysowany na mapie – to nie jest działka ewidencyjna; powierzchnia z kształtu (EPSG:2180). Gmina, powiat i województwo z geokodera (© autorzy OpenStreetMap (ODbL))."
+    },
+    "source": "drawn",
+    "name": "Pole narysowane przez rolnika"
+  },
+  "verdict_headline": "Słaba, sucha działka – siej rośliny odporne na suszę"
+}

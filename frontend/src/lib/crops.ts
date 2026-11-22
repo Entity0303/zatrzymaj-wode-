@@ -50,3 +50,39 @@ export function irrigationShown(a: { crop: CropId | null; irrigation: { status: 
   if (a.irrigation.practice) return true
   return irrigationPracticed(a.crop)
 }
+
+/**
+ * Historia pola (B3, `crop_history`): 22 uprawy z crops.csv backendu – 15 upraw IUNG + 7 gatunków z rankingu.
+ * Ogólne „Zboża ozime/jare” zostają dla rolnika, który nie pamięta gatunku.
+ */
+export const HISTORY_CROPS = [
+  { id: 'pszenica_ozima', label: 'Pszenica ozima' },
+  { id: 'zyto', label: 'Żyto' },
+  { id: 'pszenzyto_ozime', label: 'Pszenżyto ozime' },
+  { id: 'jeczmien_ozimy', label: 'Jęczmień ozimy' },
+  { id: 'jeczmien_jary', label: 'Jęczmień jary' },
+  { id: 'owies', label: 'Owies' },
+  { id: 'zboza_ozime', label: 'Zboża ozime (inne)' },
+  { id: 'zboza_jare', label: 'Zboża jare (inne)' },
+  { id: 'kukurydza_ziarno', label: 'Kukurydza na ziarno' },
+  { id: 'kukurydza_kiszonka', label: 'Kukurydza na kiszonkę' },
+  { id: 'rzepak', label: 'Rzepak i rzepik' },
+  { id: 'rzepak_jesien', label: 'Rzepak i rzepik (jesień)' },
+  { id: 'ziemniak', label: 'Ziemniak' },
+  { id: 'burak_cukrowy', label: 'Burak cukrowy' },
+  { id: 'straczkowe', label: 'Rośliny strączkowe' },
+  { id: 'lubin', label: 'Łubin' },
+  { id: 'warzywa', label: 'Warzywa gruntowe' },
+  { id: 'drzewa_owocowe', label: 'Drzewa owocowe' },
+  { id: 'krzewy_owocowe', label: 'Krzewy owocowe' },
+  { id: 'truskawki', label: 'Truskawki' },
+  { id: 'chmiel', label: 'Chmiel' },
+  { id: 'tyton', label: 'Tytoń' },
+] as const
+
+export const HISTORY_UNKNOWN = 'nie_wiem'
+export const isHistoryCrop = (v: string) => v === HISTORY_UNKNOWN || HISTORY_CROPS.some((c) => c.id === v)
+export const historyLabel = (id: string) => {
+  const l = HISTORY_CROPS.find((c) => c.id === id)?.label
+  return l ? tr(l) : null
+}

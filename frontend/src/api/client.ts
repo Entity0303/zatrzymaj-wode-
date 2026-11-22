@@ -1,16 +1,29 @@
 /** Klient API: zapytania do backendu i tłumaczenie błędów na prosty polski. Typy: ./types.ts */
 import type {
+  AnalysisRequest,
   AnalysisResponse,
   CropId,
+  DemoExample,
   Forecast,
+  Hydro,
+  Terrain,
   InfraReport,
   InfraReportIn,
   LayerKey,
   LayerResponse,
   Parcel,
   PointValue,
+  Satellite,
+  SearchResponse,
 } from './types'
-import type { PlaceSearchResponse } from './places.proposal'
+import { periodParams } from '@/lib/period'
+
+/**
+ * Adres backendu: `VITE_API_URL` (wdrożenie: Vercel → Render), domyślnie pusty = względne `/api`
+ * (Docker, `npm run dev` z proxy). Wszystkie zapytania i pobieranie PDF przechodzą przez `apiUrl`.
+ */
+const API_BASE = (import.meta.env.VITE_API_URL ?? '').trim().replace(/\/+$/, '')
+export const apiUrl = (path: string) => `${API_BASE}${path}`
 
 export class ApiError extends Error {
   status: number
@@ -26,7 +39,7 @@ async function get<T>(path: string, params: Record<string, string | number>, sig
   const qs = new URLSearchParams(Object.entries(params).map(([k, v]) => [k, String(v)]))
   let res: Response
   try {
-    res = await fetch(`${path}?${qs}`, { signal })
+    res = await fetch(`${apiUrl(path)}?${qs}`, { signal })
   } catch (e) {
     if ((e as Error).name === 'AbortError') throw e
     throw new ApiError(0, null, 'Brak połączenia z serwerem aplikacji.')
@@ -36,11 +49,12 @@ async function get<T>(path: string, params: Record<string, string | number>, sig
   return body as T
 }
 
-async function post<T>(path: string, body: unknown): Promise<T> {
+async function post<T>(path: string, body: unknown, signal?: AbortSignal): Promise<T> {
   let res: Response
   try {
-    res = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
-  } catch {
+    res = await fetch(apiUrl(path), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal })
+  } catch (e) {
+    if ((e as Error).name === 'AbortError') throw e
     throw new ApiError(0, null, 'Brak połączenia z serwerem aplikacji.')
   }
   const data = await res.json().catch(() => null)
@@ -48,8 +62,60 @@ async function post<T>(path: string, body: unknown): Promise<T> {
   return data as T
 }
 
-/** bez polskich znaków i wielkości liter – do porównań nazw */
-const fold = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ł/g, 'l').replace(/Ł/g, 'L').toLowerCase().trim()
+/** Parametry analizy (GET /api/analysis, GET /api/report.pdf). */
+export type AnalysisQuery = {
+  parcelId?: string | null
+  point?: [number, number] | null
+  /** A5c: pole narysowane przez rolnika (GeoJSON Polygon WGS84) – zapytania idą POST-em */
+  geometry?: GeoJSON.Polygon | null
+  crop?: CropId | null
+  date: string
+  /** 1–3 lata wstecz (pierwsza = rok temu), puste = „nie wiem” */
+  cropHistory?: string[]
+  area?: number | null
+  /** A5e: „Co planujesz posiać?” – do 3 upraw lub grup (crop_id) */
+  plannedCrops?: string[]
+  /** A5e: raport PDF – skrócony (2 strony) / szczegółowy */
+  reportType?: 'short' | 'full'
+  /** F3: okres (znacznik z lib/period.ts) → period= albo date_from/date_to */
+  period?: string | null
+}
+
+/** Samo miejsce: działka albo punkt (teren, woda w okolicy). */
+function placeParams(q: AnalysisQuery): Record<string, string | number> {
+  if (q.point) return { lon: q.point[0].toFixed(7), lat: q.point[1].toFixed(7) }
+  return q.parcelId ? { parcel_id: q.parcelId } : {}
+}
+
+/** Treść POST (pole narysowane): te same pola co w GET, `geometry` zamiast działki / punktu. */
+function analysisBody(q: AnalysisQuery): AnalysisRequest {
+  const p = analysisParams({ ...q, parcelId: null, point: null, period: null })
+  return {
+    geometry: q.geometry,
+    date: q.date,
+    crop: q.crop ?? null,
+    crop_history: (p.crop_history as string | undefined) ?? null,
+    cultivated_area_ha: q.area && q.area > 0 ? q.area : null,
+    planned_crops: q.plannedCrops?.length ? q.plannedCrops.slice(0, 3) : null,
+    report_type: q.reportType ?? null,
+  }
+}
+
+/** Zapytanie analizy / raportu: działka albo punkt, uprawa, historia pola, powierzchnia. */
+function analysisParams(q: AnalysisQuery): Record<string, string | number> {
+  const params: Record<string, string | number> = { date: q.date }
+  if (q.point) {
+    params.lon = q.point[0].toFixed(7)
+    params.lat = q.point[1].toFixed(7)
+  } else if (q.parcelId) params.parcel_id = q.parcelId
+  if (q.crop) params.crop = q.crop
+  if (q.cropHistory?.some((c) => c && c !== 'nie_wiem')) params.crop_history = q.cropHistory.map((c) => c || 'nie_wiem').join(',')
+  if (q.area && q.area > 0) params.cultivated_area_ha = q.area
+  if (q.plannedCrops?.length) params.planned_crops = q.plannedCrops.slice(0, 3).join(',')
+  if (q.reportType) params.report_type = q.reportType
+  Object.assign(params, periodParams(q.period))
+  return params
+}
 
 export const api = {
   parcelById: (id: string) => get<Parcel>('/api/parcel', { id }),
@@ -57,12 +123,39 @@ export const api = {
     get<Parcel>('/api/parcel', { lon: lon.toFixed(7), lat: lat.toFixed(7) }),
   forecast: (lon: number, lat: number, signal?: AbortSignal) =>
     get<Forecast>('/api/forecast', { lon: lon.toFixed(3), lat: lat.toFixed(3), days: 7 }, signal),
-  /** GET /api/analysis – backend zwraca na razie 501 „w budowie” (kontrakt: types.ts AnalysisResponse) */
-  analysis: (parcelId: string, crop: CropId, date: string, signal?: AbortSignal) =>
-    get<AnalysisResponse>('/api/analysis', { parcel_id: parcelId, crop, date }, signal),
+  /**
+   * GET /api/analysis – działka (`parcelId`) albo punkt bez granic działki (`point` → obszar przybliżony);
+   * uprawa opcjonalna (bez uprawy = „Stan działki” + ranking „Co tu posiać?”).
+   */
+  analysis: (q: AnalysisQuery, signal?: AbortSignal) =>
+    q.geometry
+      ? post<AnalysisResponse>('/api/analysis', analysisBody({ ...q, reportType: undefined }), signal)
+      : get<AnalysisResponse>('/api/analysis', analysisParams(q), signal),
+  /**
+   * GET /api/satellite (A11) – zdjęcie Sentinel-2 dla działki albo punktu; liczone na żywo (ok. 6–15 s), potem z cache.
+   * Brak sceny / awaria = 200 ze `status: "brak_danych"`.
+   */
+  satellite: (q: AnalysisQuery, signal?: AbortSignal) => {
+    if (q.geometry) return post<Satellite>('/api/satellite', { geometry: q.geometry, date: q.date }, signal)
+    const p = analysisParams({ parcelId: q.parcelId, point: q.point, date: q.date })
+    return get<Satellite>('/api/satellite', p, signal)
+  },
+  /**
+   * F3: teren liczony w tle – GET /api/terrain?parcel_id= (lon/lat) albo POST { geometry } dla pola narysowanego.
+   */
+  terrain: (q: AnalysisQuery, signal?: AbortSignal) =>
+    q.geometry ? post<Terrain>('/api/terrain', { geometry: q.geometry }, signal) : get<Terrain>('/api/terrain', placeParams(q), signal),
+  /** F3: woda w okolicy – GET /api/hydro?parcel_id= (lon/lat) albo POST { geometry } */
+  hydro: (q: AnalysisQuery, signal?: AbortSignal) =>
+    q.geometry ? post<Hydro>('/api/hydro', { geometry: q.geometry }, signal) : get<Hydro>('/api/hydro', placeParams(q), signal),
+  /** GET /api/search?q= – jedno pole wyszukiwania: identyfikator, „obręb numer” albo nazwa miejscowości (A5c) */
+  search: (q: string, signal?: AbortSignal) => get<SearchResponse>('/api/search', { q }, signal),
   /** GET /api/layers/{layer} – warstwa przycięta do obrysu działki (raster PNG + bbox, GeoJSON) */
-  layer: (layer: LayerKey, parcelId: string, date: string, signal?: AbortSignal) =>
-    get<LayerResponse>(`/api/layers/${layer}`, { parcel_id: parcelId, date }, signal),
+  layer: (layer: LayerKey, parcelId: string, date: string, signal?: AbortSignal, geometry?: GeoJSON.Polygon | null) =>
+    // F3: pole narysowane – warstwy satelity POST-em z obrysem
+    geometry && (layer === 'kondycja' || layer === 'wilgotnosc')
+      ? post<LayerResponse>(`/api/layers/${layer}`, { geometry, date }, signal)
+      : get<LayerResponse>(`/api/layers/${layer}`, { parcel_id: parcelId, date }, signal),
   /** GET /api/layers/{layer}/point – wartość warstwy w klikniętym punkcie (SPEC 5.4) */
   layerPoint: (layer: LayerKey, lon: number, lat: number, date: string) =>
     get<PointValue>(`/api/layers/${layer}/point`, { lon: lon.toFixed(7), lat: lat.toFixed(7), date }),
@@ -73,28 +166,17 @@ export const api = {
   createInfraReport: (r: InfraReportIn) => post<InfraReport>('/api/infra-reports', r),
   /** POST /api/infra-reports/{id}/confirm – „Potwierdzam” */
   confirmInfraReport: (id: string) => post<InfraReport>(`/api/infra-reports/${encodeURIComponent(id)}/confirm`, {}),
-  /**
-   * GET /api/places?q= – miejsce (obręb / gmina) po nazwie. PROPOZYCJA kontraktu (api/places.proposal.ts).
-   * Tryb deweloperski + ?dane=przykladowe: mock z mocks/places.sample.json.
-   */
-  places: async (q: string, signal?: AbortSignal): Promise<PlaceSearchResponse> => {
-    if (import.meta.env.DEV && new URLSearchParams(window.location.search).get('dane') === 'przykladowe') {
-      const data = (await import('@/mocks/places.sample.json')).default as unknown as PlaceSearchResponse
-      const f = fold(q)
-      const places = data.places
-        .filter((p) => fold(p.name).startsWith(f))
-        .sort((a, b) => Number(fold(b.name) === f) - Number(fold(a.name) === f))
-      if (!places.length) throw new ApiError(404, { message: 'nie znaleziono miejsca' })
-      return { places, total: places.length }
-    }
-    return get<PlaceSearchResponse>('/api/places', { q }, signal)
-  },
+  /** GET /api/demo/examples – przykłady „jednym klikiem” (działki rozgrzane w pamięci serwera) */
+  demoExamples: (signal?: AbortSignal) => get<DemoExample[]>('/api/demo/examples', {}, signal),
   /** GET /api/report.pdf – te same parametry co analiza; odpowiedź to plik PDF */
-  reportPdf: async (parcelId: string, crop: CropId, date: string): Promise<Blob> => {
-    const params: Record<string, string> = { parcel_id: parcelId, crop, date }
+  reportPdf: async (q: AnalysisQuery): Promise<Blob> => {
+    // bez uprawy = raport „Stan działki”; punkt zamiast działki = obszar przybliżony
+    const params = Object.entries(analysisParams(q)).map(([k, v]) => [k, String(v)])
     let res: Response
     try {
-      res = await fetch(`/api/report.pdf?${new URLSearchParams(params)}`)
+      res = q.geometry
+        ? await fetch(apiUrl('/api/report.pdf'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(analysisBody(q)) })
+        : await fetch(`${apiUrl('/api/report.pdf')}?${new URLSearchParams(params)}`)
     } catch {
       throw new ApiError(0, null, 'Brak połączenia z serwerem aplikacji.')
     }
@@ -152,7 +234,13 @@ export function describeError(e: unknown, kind: 'number' | 'point'): ErrorInfo {
       retryable: true,
       vars: { source: detail?.source ?? 'zewnętrzna', detail: detail?.message ?? 'błąd usługi' },
     }
-  return { title: 'Błąd serwera', message: 'Serwer zwrócił błąd {status}.', stillWorks, retryable: true, vars: { status: e.status } }
+  // bez surowego kodu błędu – co się stało i co zrobić
+  return {
+    title: 'Serwer chwilowo nie odpowiada poprawnie',
+    message: e.status === 504 || e.status === 503 ? 'Liczenie trwało zbyt długo. Spróbuj ponownie za chwilę.' : 'Coś poszło nie tak po stronie serwera. Spróbuj ponownie za chwilę.',
+    stillWorks,
+    retryable: true,
+  }
 }
 
 /** Błąd GET /api/analysis po polsku – mapa, dane działki i prognoza działają dalej. */
@@ -163,6 +251,20 @@ export function describeAnalysisError(e: unknown): ErrorInfo {
   const detail = e.detail as { source?: string; message?: string } | null
   if (e.status === 0)
     return { title: 'Brak połączenia', message: 'Nie można połączyć się z serwerem aplikacji. Sprawdź internet.', retryable: true }
+  if (e.status === 422 && detail?.message)
+    return {
+      title: 'Nie można policzyć tego pola',
+      message: detail.message,
+      stillWorks: 'Kliknij „Narysuj swoje pole” i popraw obrys albo wybierz działkę z mapy.',
+      retryable: false,
+    }
+  if (e.status === 404)
+    return {
+      title: 'Brak danych dla tego miejsca',
+      message: detail?.message ?? 'Serwer nie znalazł danych dla tego miejsca.',
+      stillWorks: 'Kliknij inne pole na mapie albo wpisz numer działki.',
+      retryable: false,
+    }
   if (e.status === 501)
     return {
       title: 'Ocena sytuacji wodnej jest jeszcze w budowie',
@@ -178,5 +280,11 @@ export function describeAnalysisError(e: unknown): ErrorInfo {
       retryable: true,
       vars: { source: detail?.source ?? 'zewnętrzna' },
     }
-  return { title: 'Błąd serwera', message: 'Serwer zwrócił błąd {status}.', stillWorks, retryable: true, vars: { status: e.status } }
+  // bez surowego kodu błędu – co się stało i co zrobić
+  return {
+    title: 'Serwer chwilowo nie odpowiada poprawnie',
+    message: e.status === 504 || e.status === 503 ? 'Liczenie trwało zbyt długo. Spróbuj ponownie za chwilę.' : 'Coś poszło nie tak po stronie serwera. Spróbuj ponownie za chwilę.',
+    stillWorks,
+    retryable: true,
+  }
 }

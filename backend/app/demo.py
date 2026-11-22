@@ -30,18 +30,26 @@ class Example:
 
 
 EXAMPLES: tuple[Example, ...] = (
-    Example("susza-2018", "Susza 2018",
-            "Rekordowo sucha wiosna 2018 r. na Podlasiu: zboża ozime w pełni rozwoju, zboże po zbożu.",
-            "201305_2.0038.6/1", "zboza_ozime", dt.date(2018, 6, 10), "zboza_ozime"),
-    Example("mokry-rok-2021", "Mokry rok 2021",
-            "Ta sama działka w lipcu 2021 r. – porównanie z suszą 2018.",
-            "201305_2.0038.6/1", "zboza_ozime", dt.date(2021, 7, 15)),
-    Example("kukurydza-dzis", "Kukurydza – stan dziś",
-            "Kukurydza na ziarno na Lubelszczyźnie, analiza na dziś z prognozą pogody.",
-            "061704_2.0011.383/2", "kukurydza_ziarno", None),
-    Example("to-nie-jest-pole", "To nie jest pole",
-            "Działka w Kampinosie, w większości las – aplikacja mówi wprost, że ocena suszy rolniczej nie ma zastosowania.",
-            "143203_2.0027.112/11", "zboza_ozime", None),
+    # A8: 6 działek do pokazu (kandydaci osoby C + 201305), każda pokazuje co innego; analiza na dziś, zboża ozime
+    Example("dobra-dzialka", "Dobra działka",
+            "Podlasie: gleba średnia, trzyma wodę; 1/3 działki to wilgotne obniżenie – co siać i gdzie zatrzymać wodę.",
+            "201305_2.0038.6/1", "zboza_ozime", None),
+    Example("slaba-ziemia", "Słaba ziemia",
+            "Puszcza Notecka: piasek, najbardziej podatny na suszę – pszenica i rzepak odradzane, bezpieczniej żyto i łubin.",
+            "302408_5.0017.70/4", "zboza_ozime", None),
+    Example("stok-pogorze", "Stok na Pogórzu",
+            "Pogórze Dynowskie: 78% działki to stok, u góry sucha górka – woda spływa i zabiera glebę.",
+            "181605_2.0001.1552/2", "zboza_ozime", None),
+    Example("obnizenie-pojezierze", "Obniżenie z oczkiem",
+            "Pojezierze Mrągowskie: pagórki i obniżenia, w których zbiera się woda – gdzie zatrzymać ją na polu.",
+            "281003_2.0015.79/5", "zboza_ozime", None),
+    Example("susza-kujawy", "Susza na Kujawach",
+            "Dobra gleba w najsuchszym regionie Polski – plon ogranicza woda, nie gleba; opady ze stacji IMGW 6 km obok.",
+            "040704_2.0019.57", "zboza_ozime", None),
+    Example("less-drzewce", "Less – Drzewce-Kolonia 203 (gm. Nałęczów)",
+            "Stok i erozja na lessie: górka i stok na 86% działki – woda spływa i zabiera glebę, pas zieleni w poprzek "
+            "stoku.",
+            "061408_5.0008.203", "zboza_ozime", None),
 )
 
 
