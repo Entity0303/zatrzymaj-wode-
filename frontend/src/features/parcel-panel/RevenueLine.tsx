@@ -1,3 +1,4 @@
+import { fmtZlRange } from '@/lib/ranges'
 import { Coins } from 'lucide-react'
 import type { CropRevenue, PriceNow } from '@/api/types'
 import { formatArea, formatNum, formatZl } from '@/lib/format'
@@ -31,7 +32,7 @@ export function RevenueLine({
       <span className="flex items-start gap-1.5">
         <Coins className="mt-0.5 size-4 shrink-0 text-amber" aria-hidden />
         <span>
-          {t('ok. {zl} z pola (bez kosztów)', { zl: formatZl(r.typical_zl) })}
+          {t('ok. {zl} z pola (bez kosztów)', { zl: fmtZlRange(r) })}
           <span className="text-text-muted"> ({t('w słabym roku ok. {zl}', { zl: formatZl(r.weak_year_zl) })})</span>
         </span>
       </span>

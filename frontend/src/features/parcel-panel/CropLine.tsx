@@ -1,3 +1,4 @@
+import { fmtNumRange, fmtRisk, fmtZlRange } from '@/lib/ranges'
 import { CircleAlert, CircleCheck, CircleX, type LucideIcon } from 'lucide-react'
 import type { CropSuggestion, PriceNow, SuggestionCategory } from '@/api/types'
 import { formatNum, formatZl } from '@/lib/format'
@@ -40,11 +41,11 @@ export function CropLine({ s, priceNow }: { s: CropSuggestion; priceNow?: PriceN
   const Icon = c.icon
   const rev = s.revenue && okZl(s.revenue.typical_zl) ? s.revenue : null
   const note = (s as CropSuggestion & RevenueExtras).revenue_note
-  const typ = num(s.yield_typical_t_ha)
+  const typ = fmtNumRange(s.yield_typical_range, s.yield_typical_t_ha)
   const line2 = typ
     ? [t('typowo {v} t/ha', { v: typ }), ...(s.total_typical_t != null ? [t('ok. {v} t z pola', { v: num(s.total_typical_t) ?? '' })] : [])]
     : [t('Brak danych o plonie')]
-  const risk = t('ryzyko {n} na {of} lat', { n: s.drought_risk_years, of: s.years_simulated || 10 })
+  const risk = t('ryzyko {n} na {of} lat', { n: fmtRisk(s), of: s.years_simulated || 10 })
   const line3 = rev
     ? [...(okZl(rev.weak_year_zl) ? [t('słaby rok: ok. {zl}', { zl: formatZl(rev.weak_year_zl) })] : []), risk]
     : [
@@ -61,7 +62,7 @@ export function CropLine({ s, priceNow }: { s: CropSuggestion; priceNow?: PriceN
             {t(s.label)}
           </span>
           <span className={rev ? 'tabular shrink-0 text-base font-semibold whitespace-nowrap' : 'shrink-0 text-sm whitespace-nowrap text-text-muted'}>
-            {rev ? t('ok. {zl}', { zl: formatZl(rev.typical_zl) }) : t('brak ceny')}
+            {rev ? t('ok. {zl}', { zl: fmtZlRange(rev) }) : t('brak ceny')}
           </span>
         </span>
         <Parts parts={line2} className="block text-sm leading-5 text-text-muted" />

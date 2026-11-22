@@ -1296,6 +1296,7 @@ export default function Start() {
                     sowing={sowing}
                     onSowingChange={inPassport(refine.onSowingChange)}
                     typicalSowing={refine.crop ? (passportAnalysis.crop_season?.season_start ?? null) : null}
+                    sowingNote={passportAnalysis.crop_season?.sowing_note ?? null}
                     asOf={asOf}
                     historical={historical}
                   />

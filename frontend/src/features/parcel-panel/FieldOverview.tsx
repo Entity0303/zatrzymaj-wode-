@@ -114,6 +114,7 @@ export function FieldOverview({
         {...refine}
         period={refine.periodValue ?? refine.period}
         typicalSowing={crop ? (analysis.crop_season?.season_start ?? null) : null}
+        sowingNote={analysis.crop_season?.sowing_note ?? null}
         area={area}
         rotationHint={s?.rotation_hint}
         planOptions={planOptions}

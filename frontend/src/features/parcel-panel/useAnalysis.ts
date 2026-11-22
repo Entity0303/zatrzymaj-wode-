@@ -188,6 +188,22 @@ export function useAnalysis(
     }
     retryHydroRef.current = () => void loadHydro()
 
+    // F21: widełki rankingu (pola *_range) liczą się w tle – co ok. 2 s ponowne zapytanie (maks. 3 razy), bez ekranu
+    // ładowania; podmieniamy tylko ranking (suggestions), reszta wyniku zostaje
+    async function loadRanges() {
+      for (let i = 0; i < 3; i++) {
+        await new Promise<void>((res) => setTimeout(res, 2000))
+        if (ctrl.signal.aborted) return
+        const fresh = await api.analysis(q, ctrl.signal).catch(() => null)
+        if (ctrl.signal.aborted) return
+        if (fresh?.suggestions && !fresh.suggestions.ranges_pending) {
+          const sug = fresh.suggestions
+          update((a) => ({ ...a, suggestions: sug }))
+          return
+        }
+      }
+    }
+
     request.then(
       (analysis) => {
         current = analysis
@@ -195,6 +211,7 @@ export function useAnalysis(
         if (analysis.satellite?.status === 'pending') void loadSatellite(analysis)
         if (isPending(analysis.terrain)) void loadTerrain()
         if (analysis.hydro?.status === 'pending') void loadHydro()
+        if (analysis.suggestions?.ranges_pending && !mock) void loadRanges()
       },
       (e) => publish({ phase: 'error', error: describeAnalysisError(e) }),
     )

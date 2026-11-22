@@ -1,3 +1,4 @@
+import { fmtNumRange, fmtRisk } from '@/lib/ranges'
 import { ChevronDown, CircleAlert, CircleCheck, CircleX, TreeDeciduous, type LucideIcon } from 'lucide-react'
 import { useState } from 'react'
 import type { CropSuggestion, CropSuggestions, PerennialSuggestion, PriceNow, SuggestionCategory } from '@/api/types'
@@ -22,7 +23,7 @@ const num = (v: number | null | undefined, digits = 1) =>
 /** „typowo 3,2 t/ha · ≈ 3,2 t z pola” – liczby z rankingu, bez nawadniania. */
 function YieldLine({ s, area }: { s: CropSuggestion | PerennialSuggestion; area: number | null }) {
   const { t } = useLang()
-  const typ = num(s.yield_typical_t_ha)
+  const typ = fmtNumRange('yield_typical_range' in s ? s.yield_typical_range : null, s.yield_typical_t_ha)
   if (!typ) return <span className="text-text-muted">{t('Brak danych o plonie')}</span>
   return (
     <span>
@@ -51,11 +52,11 @@ function Details({ s, priceNow }: { s: CropSuggestion | PerennialSuggestion; pri
       )}
       {s.yield_weak_t_ha != null && (
         <li>
-          {t('w słabym roku ({rok}): {t} t/ha', { rok: s.weak_year, t: num(s.yield_weak_t_ha) ?? '' })}
+          {t('w słabym roku ({rok}): {t} t/ha', { rok: s.weak_year, t: fmtNumRange('yield_weak_range' in s ? s.yield_weak_range : null, s.yield_weak_t_ha) ?? '' })}
           {s.total_weak_t != null && ` · ${t('≈ {t} t z pola', { t: num(s.total_weak_t) ?? '' })}`}
         </li>
       )}
-      <li>{t('w symulacji na pogodzie z {of} lat plon spadał o ponad 20% w {n} latach', { n: s.drought_risk_years, of: s.years_simulated })}</li>
+      <li>{t('w symulacji na pogodzie z {of} lat plon spadał o ponad 20% w {n} latach', { n: 'drought_risk_range' in s ? fmtRisk(s as CropSuggestion) : s.drought_risk_years, of: s.years_simulated })}</li>
       {rot?.notes?.map((n) => (
         <li key={n} className={cn(rot.status === 'naruszenie' && 'text-danger', rot.status === 'ostrzezenie' && 'text-[#875a12]')}>
           {t(n)}

@@ -1,5 +1,6 @@
 import { CircleAlert, CircleCheck, CircleX, TreeDeciduous, type LucideIcon } from 'lucide-react'
-import type { ChoiceItem, CropSuggestions, PriceNow, SuggestionCategory } from '@/api/types'
+import type { ChoiceItem, CropSuggestion, CropSuggestions, PriceNow, SuggestionCategory } from '@/api/types'
+import { fmtNumRange, fmtRisk } from '@/lib/ranges'
 import { RevenueLine } from './RevenueLine'
 import { useLang } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
@@ -12,7 +13,7 @@ const CAT: Record<SuggestionCategory, { icon: LucideIcon; cls: string }> = {
 
 const num = (v: number | null | undefined) => (v == null ? null : v.toLocaleString('pl-PL', { minimumFractionDigits: 1, maximumFractionDigits: 1 }))
 
-function Choice({ c, priceNow }: { c: ChoiceItem; priceNow?: PriceNow | null }) {
+function Choice({ c, priceNow, ranked }: { c: ChoiceItem; priceNow?: PriceNow | null; /** F21: ta sama uprawa w rankingu – widełki */ ranked?: CropSuggestion }) {
   const { t } = useLang()
   const cat = c.category ? CAT[c.category] : null
   const Icon = cat?.icon ?? TreeDeciduous
@@ -31,16 +32,16 @@ function Choice({ c, priceNow }: { c: ChoiceItem; priceNow?: PriceNow | null }) 
       <ul className="space-y-0.5 text-sm leading-5">
         {c.yield_typical_t_ha != null && (
           <li>
-            {t('Typowo')} <b className="tabular">{num(c.yield_typical_t_ha)} t/ha</b>
+            {t('Typowo')} <b className="tabular">{fmtNumRange(ranked?.yield_typical_range, c.yield_typical_t_ha)} t/ha</b>
             {c.total_typical_t != null && <span className="text-text-muted"> · {t('≈ {t} t z pola', { t: num(c.total_typical_t) ?? '' })}</span>}
           </li>
         )}
         {c.yield_weak_t_ha != null && c.weak_year != null && (
-          <li className="text-text-muted">{t('w słabym roku ({rok}): {t} t/ha', { rok: c.weak_year, t: num(c.yield_weak_t_ha) ?? '' })}</li>
+          <li className="text-text-muted">{t('w słabym roku ({rok}): {t} t/ha', { rok: c.weak_year, t: fmtNumRange(ranked?.yield_weak_range, c.yield_weak_t_ha) ?? '' })}</li>
         )}
-        <li className="text-text-muted">{t('w symulacji na pogodzie z {of} lat plon spadał o ponad 20% w {n} latach', { n: c.drought_risk_years, of: c.years_simulated })}</li>
+        <li className="text-text-muted">{t('w symulacji na pogodzie z {of} lat plon spadał o ponad 20% w {n} latach', { n: ranked ? fmtRisk(ranked) : c.drought_risk_years, of: c.years_simulated })}</li>
       </ul>
-      <RevenueLine revenue={c.revenue} priceNow={priceNow} details />
+      <RevenueLine revenue={c.revenue && ranked?.revenue?.revenue_range ? { ...c.revenue, revenue_range: ranked.revenue.revenue_range } : c.revenue} priceNow={priceNow} details />
       <p className="text-sm leading-5">{t(c.why)}</p>
       {rotation.map((n) => (
         <p key={n} className={cn('text-sm leading-5', c.rotation.status === 'naruszenie' ? 'text-danger' : 'text-text-muted')}>
@@ -69,7 +70,12 @@ export function ChoiceCard({ suggestions, priceNow }: { suggestions: CropSuggest
       </header>
       <ul className="space-y-2">
         {choice.map((c) => (
-          <Choice key={`${c.requested_id ?? ''}-${c.crop_id}`} c={c} priceNow={priceNow?.find((p) => p.crop_id === c.crop_id)} />
+          <Choice
+            key={`${c.requested_id ?? ''}-${c.crop_id}`}
+            c={c}
+            priceNow={priceNow?.find((p) => p.crop_id === c.crop_id)}
+            ranked={suggestions.groups.flatMap((g) => g.items).find((i) => i.crop_id === c.crop_id)}
+          />
         ))}
       </ul>
       {suggestions.choice_notes?.map((n) => (

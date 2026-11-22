@@ -104,6 +104,7 @@ export function RefineCard({
   sowing = null,
   onSowingChange,
   typicalSowing = null,
+  sowingNote = null,
   asOf,
   historical,
 }: {
@@ -129,6 +130,8 @@ export function RefineCard({
   onSowingChange?: (d: string | null) => void
   /** typowy początek sezonu uprawy z analizy (crop_season.season_start) – podpowiedź */
   typicalSowing?: string | null
+  /** F21: uwaga z analizy o dacie siewu (crop_season.sowing_note), np. poza typowym zakresem */
+  sowingNote?: string | null
   /** data analizy – granice pól daty, okres */
   asOf?: string
   /** data analizy w przeszłości – „Co rosło w dniu analizy?” */
@@ -186,6 +189,7 @@ export function RefineCard({
               </button>
             )}
           </label>
+          {sowing && sowingNote && <p className="mt-1 text-sm leading-5 text-[#875a12]">{t(sowingNote)}</p>}
         </Field>
       )}
 

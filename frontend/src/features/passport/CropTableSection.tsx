@@ -1,3 +1,4 @@
+import { fmtNumRange, fmtRisk, riskSpan } from '@/lib/ranges'
 import { ChevronDown, PencilLine } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import type { AnalysisResponse, CropSuggestion, SuggestionCategory, VerdictStatementLevel } from '@/api/types'
@@ -19,15 +20,16 @@ const CAT_LEVEL: Record<SuggestionCategory, VerdictStatementLevel> = { polecane:
  * F6: zakres lat z dużą stratą, gdy backend go poda (pole opcjonalne – typ lokalny; dziś jest tylko liczba).
  * Przykład: [1, 3] → „1–3 na 10 lat”.
  */
-type RiskRange = CropSuggestion & { drought_risk_range?: [number, number] | null; risk_years_range?: [number, number] | null }
 
 /** Ryzyko suszy jako 10 kresek (wypełnione = lata ze stratą > 20%). */
-function RiskTicks({ n, of }: { n: number; of: number }) {
+/** 10 kresek: zamalowane do min, jaśniejsze (ten sam kolor, 40%) do max – F21 widełki ryzyka. */
+function RiskTicks({ n, max = n, of }: { n: number; max?: number; of: number }) {
   const total = Math.max(1, Math.min(10, of || 10))
+  const color = max >= 5 ? 'bg-pp-bad' : max >= 3 ? 'bg-pp-risk' : 'bg-pp-warn'
   return (
     <span className="flex gap-[3px]" aria-hidden>
       {Array.from({ length: total }, (_, i) => (
-        <span key={i} className={cn('h-3.5 w-1.5 rounded-sm', i < n ? (n >= 5 ? 'bg-pp-bad' : n >= 3 ? 'bg-pp-risk' : 'bg-pp-warn') : 'bg-paper-line')} />
+        <span key={i} className={cn('h-3.5 w-1.5 rounded-sm', i < n ? color : i < max ? cn(color, 'opacity-40') : 'bg-paper-line')} />
       ))}
     </span>
   )
@@ -85,9 +87,11 @@ export function CropTableSection({ analysis, refineForm }: { analysis: AnalysisR
         </div>
         <ul className="divide-y divide-paper-line">
           {shown.map((it) => {
-            // F18: nazwa pola z backendu – drought_risk_range, a gdyby inaczej – risk_years_range
-            const r = (it as RiskRange).drought_risk_range ?? (it as RiskRange).risk_years_range
-            const risk = r && r[0] !== r[1] ? `${r[0]}–${r[1]}` : String(it.drought_risk_years)
+            // F21: zakresy z wariantów (A21) – gdy min = max, jedna liczba
+            const rs = riskSpan(it)
+            const risk = fmtRisk(it)
+            const typ = fmtNumRange(it.yield_typical_range, it.yield_typical_t_ha)
+            const weak = fmtNumRange(it.yield_weak_range, it.yield_weak_t_ha)
             return (
               <li key={it.crop_id} className="px-5 py-3.5">
                 <div className="flex @min-[560px]:hidden">
@@ -103,18 +107,18 @@ export function CropTableSection({ analysis, refineForm }: { analysis: AnalysisR
                 </div>
                 <div className="tabular text-sm leading-5">
                   
-                  {num(it.yield_typical_t_ha) ? <b className="font-semibold">{num(it.yield_typical_t_ha)} t/ha</b> : <span className="text-text-muted">{t('brak danych')}</span>}
+                  {typ ? <b className="font-semibold">{typ} t/ha</b> : <span className="text-text-muted">{t('brak danych')}</span>}
                   {it.total_typical_t != null && <span className="block text-text-muted">{t('≈ {t} t z pola', { t: num(it.total_typical_t) ?? '' })}</span>}
                 </div>
                 <div className="tabular text-sm leading-5">
                   
-                  {num(it.yield_weak_t_ha) ? <>{num(it.yield_weak_t_ha)} t/ha</> : <span className="text-text-muted">—</span>}
+                  {weak ? <>{weak} t/ha</> : <span className="text-text-muted">—</span>}
                   {it.weak_year ? <span className="block text-text-muted">{t('({rok})', { rok: it.weak_year })}</span> : null}
                 </div>
                 <div className="text-sm leading-5">
                   
                   <span className="inline-flex flex-wrap items-center gap-2">
-                    <RiskTicks n={it.drought_risk_years} of={it.years_simulated} />
+                    <RiskTicks n={rs.min} max={rs.max} of={it.years_simulated} />
                     <span className="tabular">{t('{n} na {of} lat', { n: risk, of: it.years_simulated || 10 })}</span>
                   </span>
                 </div>
