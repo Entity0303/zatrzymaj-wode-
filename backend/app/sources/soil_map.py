@@ -116,23 +116,41 @@ async def soil_map_at(lon: float, lat: float) -> "SoilMapResult | None":
                                     timeout_s=settings.soil_map_timeout_s, retries=0)
         return parse_response(resp.text)
 
-    return await cached_fetch(_cache, key, SOURCE, download, timeout_s=7.5, breaker_s=300)
+    # A23: limit czasu dotyczy samego zapytania (`soil_map_timeout_s` w get_with_retry), NIE czekania w kolejce GUGiK
+    # (9 punktów × odstęp 0,5 s to już ok. 4,5 s kolejki – na wolniejszym serwerze ostatnie punkty przekraczały dawny
+    # łączny limit 7,5 s); bezpiecznik dopiero po 5 błędach w minucie, na 60 s (dawniej 5 minut po pierwszym błędzie –
+    # przez ten czas wynik liczył się bez mapy i wychodził inny werdykt dla tej samej działki)
+    return await cached_fetch(_cache, key, SOURCE, download, breaker_s=60, breaker_after=5, breaker_window_s=60)
 
 
 PARCEL_POINTS = 9  # punkt reprezentatywny + 8 rozłożonych w obrysie (udziały gleb, zgodność z IUNG – D49)
 
 
+class MapPoints(list):
+    """Lista wyników punktów (None = punkt poza mapą albo błąd) + `failed`: ile punktów nie odpowiedziało (A23)."""
+
+    failed: int = 0
+
+
 async def soil_map_for_parcel(geom_2180, n: int = PARCEL_POINTS) -> list["SoilMapResult | None"]:
     """Kontury mapy w kilku punktach działki (równolegle, każdy z cache). Pierwszy = punkt reprezentatywny.
-    Błąd w części punktów – pomijamy je; błąd we wszystkich – SourceError."""
+    A23: punkty, które nie odpowiedziały, są ponawiane jeden raz; wynik ma pole `failed` (ile punktów nadal bez
+    odpowiedzi – wtedy ocena gleby jest oznaczana jako niepełna). Błąd we wszystkich – SourceError."""
     pts = [geom_2180.representative_point()] + (sample_points(geom_2180, n - 1) if n > 1 else [])
     ll = [to_wgs84(p) for p in pts]
-    res = await asyncio.gather(*(soil_map_at(p.x, p.y) for p in ll), return_exceptions=True)
+    res = list(await asyncio.gather(*(soil_map_at(p.x, p.y) for p in ll), return_exceptions=True))
+    bad = [i for i, r in enumerate(res) if isinstance(r, BaseException)]
+    if bad and len(bad) < len(res):  # część punktów bez odpowiedzi – jedno ponowienie (udane są już w cache)
+        again = await asyncio.gather(*(soil_map_at(ll[i].x, ll[i].y) for i in bad), return_exceptions=True)
+        for i, r in zip(bad, again):
+            res[i] = r
     ok = [r for r in res if not isinstance(r, BaseException)]
     if not ok:
         err = next((r for r in res if isinstance(r, SourceError)), None)
         raise err or SourceError(SOURCE, "brak odpowiedzi")
-    return [None if isinstance(r, BaseException) else r for r in res]
+    out = MapPoints(None if isinstance(r, BaseException) else r for r in res)
+    out.failed = sum(isinstance(r, BaseException) for r in res)
+    return out
 
 
 def clear_cache() -> None:

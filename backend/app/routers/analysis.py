@@ -783,6 +783,9 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
     map_sum = None if isinstance(sm_res, SourceError) else soil_consistency.summarize_map(sm_res)
     sm_rep = sm_res if isinstance(sm_res, SourceError) else map_sum.representative
     sm_note = err(sm_res) or (None if sm_rep is not None else "brak konturu w tym miejscu")
+    sm_failed = 0 if isinstance(sm_res, SourceError) else getattr(sm_res, "failed", 0)
+    if sm_failed:  # A23: mapa odpowiedziała tylko dla części punktów – wynik gleby może się zmienić po dociągnięciu
+        sm_note = f"odpowiedź dla {len(sm_res) - sm_failed} z {len(sm_res)} punktów – reszta przy kolejnym przeliczeniu"
     steps.append(_step("soil_map", "Mapa glebowo-rolnicza (GUGiK)", state(sm_res), note=sm_note, ms=sm_ms))
     if is_today:
         steps.append(_step("forecast", "Prognoza pogody (Open-Meteo)", state(fc_res), note=err(fc_res), ms=fc_ms))
@@ -800,6 +803,9 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
     s = perf_counter()
     soil_a = assess_soil(iung_res, kieg_res)
     soil_c, soil_lim = enrich_soil(soil_to_contract(soil_a), sg_res, sm_rep)
+    if sm_failed:  # A23
+        soil_lim = [f"Mapa glebowo-rolnicza odpowiedziała tylko dla {len(sm_res) - sm_failed} z {len(sm_res)} punktów "
+                    "działki – ocena gleby może się zmienić po ponownym przeliczeniu."] + list(soil_lim)
     # zgodność źródeł gleby: mapa glebowo-rolnicza > IUNG > SoilGrids (D49) – kategoria i WOD do modelu
     cons = soil_consistency.assess(soil_a, map_sum, soil_c.texture)
     soil_consistency.apply(soil_a, cons)

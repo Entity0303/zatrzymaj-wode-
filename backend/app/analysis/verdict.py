@@ -250,10 +250,18 @@ def _water_statement(recs: list[Recommendation]) -> VerdictStatement:
 # ── nagłówek i całość ───────────────────────────────────────────────────────────────────────
 
 
-def _match(cond: dict, lv: dict[str, str], wet: float, dry: float) -> bool:
+def _match(cond: dict, lv: dict[str, str], wet: float, dry: float, n_bad: int | None = None) -> bool:
+    """`n_bad` – ile upraw polowych ranking odradza (A23: odradzane_gte / odradzane_lt); None = nieznane (warunek
+    spełniony – jak przed A23)."""
     for k, v in cond.items():
         if k == "uprawy_not":
             if lv.get("uprawy") == v:
+                return False
+        elif k == "odradzane_gte":
+            if n_bad is not None and n_bad < v:
+                return False
+        elif k == "odradzane_lt":
+            if n_bad is None or n_bad >= v:
                 return False
         elif k == "bad_count_gte":
             if sum(x == "bad" for x in lv.values()) < v:
@@ -306,7 +314,9 @@ def build(prof: SoilProfile, wod_mm: float | None, w: DailyWeather, last: date, 
     lv = {s.kind: ("warn" if s.level == "info" else s.level) for s in sts if s.kind in ("gleba", "opady", "teren", "uprawy")}
     wet = terrain.zone_share_pct.get("mokry_dolek", 0.0) if terrain else 0.0
     dry = terrain.zone_share_pct.get("sucha_gorka", 0.0) if terrain else 0.0
-    headline = next(h["text"] for h in cfg()["headlines"] if _match(h["if"], lv, wet, dry))
+    n_bad = None if sug is None or not sug.groups else sum(
+        i.category == "odradzane" for g in sug.groups if g.key == "polowe" for i in g.items)
+    headline = next(h["text"] for h in cfg()["headlines"] if _match(h["if"], lv, wet, dry, n_bad))
     level = max(lv.values(), key=LEVEL_ORDER.get, default="warn")
     if level == "bad" and lv.get("gleba") == "ok" and sum(v == "bad" for v in lv.values()) == 1:
         level = "warn"

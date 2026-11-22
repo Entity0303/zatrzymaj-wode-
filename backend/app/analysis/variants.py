@@ -28,7 +28,7 @@ from app.sources import iung
 Ranges = dict[str, dict[str, tuple[float, float]]]  # crop_id → {"typ": (min, max), "weak": …, "risk": …}
 _done: OrderedDict[tuple, Ranges] = OrderedDict()
 _tasks: dict[tuple, asyncio.Future] = {}
-MEMO_MAX = 64
+MEMO_MAX = 256  # A23
 
 
 def wod_bounds(category: int | None, wod_mm: float) -> tuple[float, float]:

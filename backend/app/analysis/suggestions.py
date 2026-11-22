@@ -156,7 +156,10 @@ def potential(crop_id: str, voivodeship: str | None, before_year: int | None = N
 
     pts = keep(data.get((crop_id, (voivodeship or "").strip().lower())) or {})
     scope = "wojewodztwo"
-    if len(pts) < 3:  # brak danych dla województwa (np. uprawa lokalna) – wszystkie województwa
+    # A23: nawet 1–2 lata plonów TEGO województwa są lepsze niż wszystkie województwa razem (dla dat 2017–2018 P90
+    # z całej Polski zawyżał plon w słabszych regionach, np. pszenica w podlaskim 5,6 zamiast ok. 3,5 t/ha).
+    # Wszystkie województwa – tylko gdy województwo nie ma żadnego roku (uprawa lokalna, nieznane województwo).
+    if not pts:
         pts = [p for (c, _w), d in data.items() if c == crop_id for p in keep(d)]
         scope = "kraj" if pts else "brak"
     if not pts:
@@ -242,7 +245,7 @@ def simulate(w: DailyWeather, crop: Crop, wod_mm: float, last: date, years: int 
             continue
         season = np.isin(np.array(tr.phase), SEASON_PHASES)
         out.append((y, rel, float((tr.etc[season] - tr.eta[season]).sum())))
-    if len(_sim_memo) > 2000:
+    if len(_sim_memo) > 8000:  # A23: ok. 0,25 kB na wpis; 17 upraw × warianty × działki
         _sim_memo.clear()
     _sim_memo[key] = out
     return out
@@ -444,7 +447,7 @@ class Context:
 # P1: wynik rankingu w pamięci – nie zależy od wybranej uprawy ani od okresu, więc ich zmiana nie liczy go od nowa.
 # Klucz: odcisk pogody, data analizy, kontekst działki (gleba, województwo, powierzchnia, historia), lata.
 _build_memo: OrderedDict[tuple, CropSuggestions | None] = OrderedDict()
-BUILD_MEMO_MAX = 64
+BUILD_MEMO_MAX = 256  # A23: jedna analiza z widełkami to do 6 wpisów (bazowy, 3–4 warianty, wynik z zakresami)
 
 
 RANGE_LIMITATION = "Zakres pokazuje, jak wynik zmienia się przy innych danych o opadach i pojemności gleby."

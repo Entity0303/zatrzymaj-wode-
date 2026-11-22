@@ -15,10 +15,15 @@ def get_client() -> httpx.AsyncClient:
     GUGiK przy limicie odsyła na integracja01.gugik.gov.pl/resp/uldk.php, który serwuje plik ~126 MB."""
     global _client
     if _client is None:
+        # A23: połączenia tylko po IPv4. W sieci Dockera zapytanie DNS o adres IPv6 (AAAA) dla services.gugik.gov.pl
+        # (NMT) kończy się błędem zamiast pustej odpowiedzi – rozwiązywanie nazwy „dowolnej rodziny” pada wtedy w całości
+        # („brak połączenia z usługą (ConnectError)”), choć adres IPv4 jest poprawny. Adres lokalny 0.0.0.0 wymusza IPv4.
+        transport = httpx.AsyncHTTPTransport(local_address="0.0.0.0") if settings.http_ipv4_only else None
         _client = httpx.AsyncClient(
             timeout=settings.http_timeout_s,
             headers={"User-Agent": settings.user_agent},
             follow_redirects=False,
+            transport=transport,
         )
     return _client
 

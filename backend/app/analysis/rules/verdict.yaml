@@ -80,13 +80,16 @@ verdict:
   # Nagłówek – pierwsza pasująca reguła (warunki: poziomy pozycji, liczba „źle”, udziały stref terenu)
   headlines:
     # A14: „Słaba…” tylko, gdy ranking coś odradza (uprawy ≠ ok) – inaczej nagłówek przeczyłby rankingowi
-    - {if: {gleba: bad, opady: bad, uprawy_not: ok}, text: "Słaba, sucha działka – siej rośliny odporne na suszę"}
-    - {if: {gleba: bad, uprawy_not: ok}, text: "Słaba, piaszczysta działka – siej rośliny odporne na suszę"}
+    # A23: „siej rośliny odporne…” i „mało wody dla wymagających upraw” tylko, gdy ranking FAKTYCZNIE coś odradza
+    # (odradzane_gte: 1); lekka gleba bez odradzanych upraw (np. 040106: pszenica „polecane”) → „Lekka ziemia…”
+    - {if: {gleba: bad, opady: bad, uprawy_not: ok, odradzane_gte: 1}, text: "Słaba, sucha działka – siej rośliny odporne na suszę"}
+    - {if: {gleba: bad, uprawy_not: ok, odradzane_gte: 1}, text: "Słaba, piaszczysta działka – siej rośliny odporne na suszę"}
+    - {if: {gleba: bad, odradzane_lt: 1}, text: "Lekka ziemia – uważaj w suche lata"}
     - {if: {bad_count_gte: 2}, text: "Trudna działka – mało wody dla wymagających upraw"}
     # A14/A15: „Trudna” tylko przy złych opadach ORAZ (ranking „źle” ALBO gleba gorsza niż ok) – same „uwaga” przy dobrej
     # glebie (np. kilka odradzanych upraw) nie dają tego nagłówka (Stryjno, Szczytno 126/3 – „Ziemia dobra”)
     - {if: {opady: bad, uprawy: bad}, text: "Trudna działka – mało wody dla wymagających upraw"}
-    - {if: {opady: bad, gleba: [warn, bad]}, text: "Trudna działka – mało wody dla wymagających upraw"}
+    - {if: {opady: bad, gleba: [warn, bad], odradzane_gte: 1}, text: "Trudna działka – mało wody dla wymagających upraw"}
     - {if: {gleba: ok, opady: [ok, warn], dry_pct_gte: 30}, text: "Dobra działka z suchą górką"}
     - {if: {gleba: ok, opady: [ok, warn], wet_pct_gte: 15}, text: "Dobra działka z wilgotnym obniżeniem"}
     - {if: {gleba: ok, opady: ok}, text: "Dobra działka – trzyma wodę"}
