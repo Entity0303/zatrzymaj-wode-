@@ -4,6 +4,10 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-22 13:30 · `main` · P1: pomiar i przyspieszenie przeliczania, odporność ULDK, Overpass równolegle
+Pamięć wyniku rankingu, wycinek serii NASA, ZSRIR czytany raz, PDF z wodą równolegle, Overpass równolegle + nowa instancja (ok. 1 s), bezpiecznik ULDK 5 błędów / 30 s + log przyczyny 502 (D108). Lokalnie: zmiana uprawy / okresu 0,2–0,3 s → 0,07 s; PDF nowej działki 66–79 s → 2,3 s; woda w okolicy 25–65 s → 1–7 s; JSON 201305 identyczny. Seed: 15 wpisów Overpass działek demo. Testy: 613 bez sieci (PDF – niezacommitowane zmiany raportu innej osoby nie wchodzą do commitów).
+**Pliki:** `backend/app/analysis/{suggestions,prices,hydro,approx_area}.py`, `core/{cache,http,config}.py`, `sources/{weather_power,overpass,uldk}.py`, `routers/{reports,analysis,search}.py`, `data/seed/cache_seed.sqlite.gz`, testy `test_p1*.py` (+ a5d, a5b2b, conftest). **Kontrakt:** nie (nowa treść `approximate_area.note` przy awarii ULDK).
+
 ## 2026-11-22 11:30 · `main` · A20: teksty V3, krótkie zdanie opadu, spójne stopnie braku wody, daty przy dacie historycznej
 Teksty rankingu (bez „będzie”, „najgorszym roku”, bez Ky / FAO-33 / percentyla); zdanie opadu ≤ 2 zdania + `details`; jedna funkcja progów `drought_level` (rules/status.yaml) dla obu ścieżek – 8 przypadków V4 spójnych; `data_date` ≤ data analizy (+ `fetched_at`), teren ≤ data analizy, „w dniu analizy”, bilans 30 dni z datami, data zapasu = koniec danych pogodowych (D107). Testy: 600 bez sieci.
 **Pliki:** `backend/app/analysis/{suggestions,precip,scoring,field_state,confidence,verdict,facts}.py`, `rules/{precip,status,verdict,retencja}.yaml`, `routers/{analysis,terrain}.py`, `schemas/analysis.py`, `frontend/src/api/types.ts`, testy `test_a20` (+ a5, a5b2, a7, a11, a15, analysis). **Kontrakt:** tak – `details`, `fetched_at`, `date` w /api/terrain.
