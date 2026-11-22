@@ -4,6 +4,10 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-22 16:00 · `main` · A22: SoilGrids z budżetem 5 s, rozgrzewka po 120 s, próg widełek 4 lata
+`soilgrids.texture_budget` (5 s, reszta w tle do cache), `DEMO_WARMUP_DELAY_S` = 120 i pomijanie przykładów z pogodą w cache, `wide_risk_years` 3 → 4 (D110). Testy: 625 bez sieci.
+**Pliki:** `backend/app/sources/soilgrids.py`, `routers/analysis.py`, `core/config.py`, `demo.py`, `analysis/rules/ranking.yaml`, testy `test_a22.py`, `conftest.py`. **Kontrakt:** nie.
+
 ## 2026-11-22 15:00 · `main` · A21: widełki wyniku rankingu, data siewu rolnika
 Warianty opadu i pojemności gleby → pola `*_range`, `revenue_range`, zdania z zakresami, ograniczenie, pewność niżej przy różnicy ryzyka ≥ 3 lata; czekanie najwyżej 1 s, potem w tle (`ranges_pending`); `sowing_date` w analizie i PDF (D109). 201305: rzepak 3,7 t/ha [3,4–3,9], ryzyko 3 [1–4]; na zimno 0,41 → 1,12 s, z pamięci 0,07 s. Testy: 621 bez sieci.
 **Pliki:** `backend/app/analysis/{variants,suggestions,prices,crops}.py`, `rules/ranking.yaml`, `core/config.py`, `routers/{analysis,reports}.py`, `schemas/analysis.py`, `frontend/src/api/types.ts`, testy `test_a21.py`, `conftest.py`. **Kontrakt:** tak – pola opcjonalne.

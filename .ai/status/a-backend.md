@@ -1,6 +1,6 @@
 # Status – osoba A (Dominik), backend
 
-_Stan na: 2026-11-22 15:00 (A21)_
+_Stan na: 2026-11-22 16:00 (A22)_
 
 ## Zrobione
 - **A19:** wyszukiwanie „gmina + numer” (obręby gminy z PRNG → ULDK sekwencyjnie, maks. 10, cache) i gmina jako filtr obrębu; `CORS_ORIGINS` JSON albo przecinki (błąd nie wywraca startu), `CORS_ORIGIN_REGEX` domyślnie *.vercel.app.
@@ -91,7 +91,8 @@ _Stan na: 2026-11-22 15:00 (A21)_
 - **A20:** jedne progi stopnia braku wody, daty źródeł ≤ data analizy, krótkie zdanie opadu (D107).
 - **P1:** pamięć rankingu, wycinek pogody, Overpass równolegle, odporność ULDK (D108).
 - **A21:** widełki rankingu (warianty opadu i gleby), `sowing_date` (D109).
-- Testy: **621 bez sieci** + 5 live.
+- **A22:** SoilGrids z budżetem 5 s, rozgrzewka po 120 s, próg widełek 4 lata (D110).
+- Testy: **625 bez sieci** + 5 live.
 
 ## W trakcie (gałąź)
 - **INT3 (22.11 ok. 00:55): `c/research`, `a/backend`, `b/frontend` scalone do `main` (bez konfliktów) i wypchnięte.** Od 22.11 00:45 praca bezpośrednio na `main` (zasady w CLAUDE.md); gałęzie `a/backend` itp. już nieużywane. Główny folder `zatrzymaj-wode-` przełączony na `main`, kontenery przebudowane.
