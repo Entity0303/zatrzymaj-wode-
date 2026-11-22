@@ -4,6 +4,10 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-22 08:30 · `main` · A29: czas polski („dziś” i godziny w raporcie)
+`core/clock.py` (D118); `date.today()` → `clock.today_pl()` w całym `backend/app`, stopka PDF i godziny w czasie Europe/Warsaw. Test: 23:30 UTC → stopka „23.11.2026 00:30”, „dziś” = 23.11. Cztery raporty w `reports/examples/` wygenerowane ponownie – stopka „wygenerowano 22.11.2026 08:26” (czas polski; wcześniej o godzinę mniej). Testy: 690 bez sieci.
+**Pliki:** `backend/app/core/clock.py` (nowy) + 18 plików z zamianą (routers, analysis, sources, report/builder.py, core/cache.py, demo.py), `backend/tests/test_a29.py` (nowy) i 5 testów („dziś” jak w aplikacji), `reports/examples/*.pdf`, `README.md` (liczba testów). **Kontrakt:** bez zmian.
+
 ## 2026-11-22 08:25 · `main` · F37: łamanie stron w raporcie pełnym (13 → 10 stron)
 Raport pełny płynie bez wymuszonych nowych stron między sekcjami (skrócony bez zmian – 2 strony): znikła prawie pusta str. 2 i samotne ramki na ostatniej stronie; ramki „Uziarnienie” i „Teren – szczegóły” przed wykresami; pojedynczy wykres „Deszcz w miesiącach” na pół szerokości (był na pół strony); pasek „Teren” cienki jak w skróconym; wykresy, karty i wiersze tabel nie są dzielone między strony. 201305 dziś: 13 → 10 stron, 30.06.2018: 9 stron; każda strona obejrzana jako obraz. Testy: `pytest -k "report or pdf"` 38.
 **Pliki:** `backend/app/report/templates/report.html`, `backend/app/report/report.css`. **Kontrakt:** bez zmian.
