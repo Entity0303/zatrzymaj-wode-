@@ -7,7 +7,7 @@ Zespół **Molekuły** · HackNation 2026 · zadanie Krajowego Ośrodka Wsparcia
 | Aplikacja | <https://wodoskop.vercel.app> |
 | API | <https://wodoskop-api.onrender.com> (dokumentacja: `/docs`, stan źródeł: `/api/status`). Pierwsze wywołanie po bezczynności albo po wdrożeniu może trwać dłużej. |
 | Film (do 3 min) | LINK_FILM |
-| Prezentacja | LINK_PREZENTACJA |
+| Prezentacja | [Wodoskop_Molekuly_prezentacja.pdf](docs/zgloszenie/Wodoskop_Molekuly_prezentacja.pdf) |
 | Przykładowe raporty PDF | katalog [`reports/examples/`](reports/examples/) |
 
 **Do szybkiego sprawdzenia** – wpisz numer działki na ekranie startowym albo otwórz link:
@@ -137,7 +137,7 @@ Testy: `docker compose exec backend pytest` (bez sieci; 5 testów na żywo: `pyt
 flowchart TB
   U["Przeglądarka (komputer / telefon)"] --> F["Frontend – Vercel<br/>React, Vite, TypeScript, Tailwind<br/>Leaflet (mapa), MapLibre GL (3D), Recharts"]
   F -- "/api (JSON, PDF)" --> B["Backend – Render (Docker)<br/>Python 3.12, FastAPI, numpy"]
-  B --> C[("Cache SQLite<br/>trwały dysk /data")]
+  B --> C[("Cache SQLite<br/>odtwarzany po restarcie")]
   B --> S["Źródła publiczne:<br/>GUGiK, IUNG-PIB, IMGW-PIB, NASA POWER,<br/>Open-Meteo, Earth Search, SoilGrids, Overpass"]
   B --> D["Dane w repo:<br/>opady IMGW, plony i ceny GUS,<br/>działki przykładowe, seed cache"]
 ```
@@ -234,8 +234,9 @@ Sentinel-2); testy: pytest (MIT), respx (BSD-3-Clause), pypdf (BSD-3-Clause).
 (BSD-2-Clause), MapLibre GL (BSD-3-Clause, widok 3D), Recharts (MIT), lucide-react (ISC), oxlint (MIT). Komponenty
 mapy to własna cienka warstwa nad Leafletem (bez react-leaflet). Krój pisma – systemowy (bez czcionek z sieci).
 
-**Usługi zewnętrzne:** Vercel (hosting frontendu), Render (backend w Dockerze z trwałym dyskiem), GitHub
-(repozytorium) oraz publiczne API źródeł danych z punktu 4.
+**Usługi zewnętrzne:** Vercel (hosting frontendu), Render (backend w Dockerze; na planie darmowym bez
+trwałego dysku – cache SQLite odtwarza się po restarcie, usługę utrzymuje w gotowości zapytanie kontrolne co
+10 min), GitHub (repozytorium) oraz publiczne API źródeł danych z punktu 4.
 
 **Narzędzia AI**
 - **Claude / Claude Code** (Anthropic) – pomoc przy pisaniu kodu frontendu i backendu, testów, tekstów interfejsu
@@ -365,7 +366,7 @@ mapy to własna cienka warstwa nad Leafletem (bez react-leaflet). Krój pisma �
 ## 10. Skalowalność i koszty (5.5)
 
 **Co już jest**
-- cache wszystkich źródeł w SQLite na trwałym dysku (dane niezmienne – bez wygasania; pogoda bieżąca, prognoza,
+- cache wszystkich źródeł w SQLite (na planie darmowym Render bez trwałego dysku – cache odtwarza się po restarcie; dane niezmienne – bez wygasania; pogoda bieżąca, prognoza,
   rowy – z czasem ważności); pamięć wyniku rankingu,
 - ograniczanie zapytań: najwyżej 2 zapytania do GUGiK naraz z odstępem 0,5 s, bezpieczniki dla źródeł (np. ULDK:
   przerwa po 5 błędach w minucie, próba po 30 s), ponowienia z limitem,
@@ -389,8 +390,9 @@ mapy to własna cienka warstwa nad Leafletem (bez react-leaflet). Krój pisma �
 na serwerze (do kilku sekund, gdy w tle liczą się jeszcze widełki rankingu); pierwsza analiza nowej działki – 7–13 s
 lokalnie, 7–22 s na serwerze (zależy od usług GUGiK i SoilGrids); raport PDF – 5–10 s na serwerze.
 
-**Koszty:** źródła danych są bezpłatne. Frontend na Vercel – plan darmowy. Backend na Render – płatny plan z trwałym
-dyskiem 1 GB (kilka USD miesięcznie); przy większym ruchu większa instancja – kilkadziesiąt USD miesięcznie. Dla
+**Koszty:** źródła danych są bezpłatne. Frontend na Vercel – plan darmowy. Backend na Render – obecnie plan darmowy
+(bez trwałego dysku – cache SQLite odtwarza się po restarcie, usługę utrzymuje w gotowości zapytanie kontrolne co
+10 min); płatny plan z trwałym dyskiem 1 GB to kilka USD miesięcznie; przy większym ruchu większa instancja – kilkadziesiąt USD miesięcznie. Dla
 rolnika aplikacja jest bezpłatna.
 
 ## 11. Dostępność, bezpieczeństwo i dane osobowe (5.4, 5.6)
@@ -408,7 +410,9 @@ rolnika aplikacja jest bezpłatna.
 
 ## 12. Zespół
 
-**Molekuły** – HackNation 2026:
+**Molekuły** – HackNation 2026: Mikołaj Pacyna (lider zespołu), Dominik Rdzanek, Maciej Barankiewicz, Marek Adamczyk,
+Mateusz Socko, Mathew Jan Deeone Amada.
+
 - Dominik – backend, dane i obliczenia,
 - Mefju – frontend i wygląd,
 - Mikołaj – research i prototypy (teren, satelita, walidacja).
