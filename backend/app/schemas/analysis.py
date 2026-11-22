@@ -408,6 +408,31 @@ class YearYield(Contract):
     water_deficit_mm: float | None = Field(None, description="Niedobór wody w sezonie: ETc − ETa, mm")
 
 
+class PeriodDay(Contract):
+    date: dt.date
+    precip_mm: float
+    et0_mm: float
+    balance_cum_mm: float = Field(description="Bilans (opad − ET0) narastająco od początku okresu, mm")
+
+
+class PeriodSummary(Contract):
+    """A9b: podsumowanie okresu (period=30d|since_sowing|season albo date_from + date_to)."""
+
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+    from_: dt.date = Field(alias="from", description="Początek okresu")
+    to: dt.date = Field(description="Koniec okresu (≤ ostatni dzień z danymi przed datą analizy)")
+    label: str = Field(description="Np. 'Ostatnie 30 dni (23.10–21.11.2026)'")
+    precip_mm: float
+    et0_mm: float
+    balance_mm: float
+    normal_balance_mm: float = Field(description="Średni bilans tego samego okresu w 10 poprzednich latach, mm")
+    percentile: float = Field(description="W ilu % z 10 poprzednich lat było suszej (niższy bilans) niż teraz")
+    sentence: str
+    stress_days: int | None = Field(None, description="Dni stresu wodnego uprawy w okresie (tylko z uprawą)")
+    daily: list[PeriodDay] = Field(default_factory=list)
+
+
 class CropRevenue(Contract):
     """A12: przychód z pola wg cen skupu GUS (bez kosztów, bez dopłat)."""
 
@@ -963,6 +988,9 @@ class AnalysisRequest(Contract):
     crop_history: str | None = None
     cultivated_area_ha: float | None = None
     planned_crops: list[str] | None = Field(None, description="Co rolnik planuje posiać: 1–3 uprawy z rankingu (A5e)")
+    period: Literal["30d", "since_sowing", "season"] | None = Field(None, description="A9b: okres podsumowania")
+    date_from: dt.date | None = Field(None, description="A9b: własny zakres – początek")
+    date_to: dt.date | None = Field(None, description="A9b: własny zakres – koniec (≤ data analizy)")
     report_type: Literal["short", "full"] | None = Field(None, description="Tylko POST /api/report.pdf: short (domyślnie) | full")
 
 
@@ -988,6 +1016,7 @@ class AnalysisResponse(Contract):
     terrain_note: str | None = Field(None, description="Dlaczego brak analizy terenu, np. 'NMT GUGiK nie odpowiada'")
     hydro: Hydro | None = Field(None, description="A9: woda w okolicy (z cache); {status: pending} → GET /api/hydro")
     price_now: list[PriceNow] | None = Field(None, description="A12: bieżące ceny ZSRIR (null = brak pliku z biuletynu)")
+    period: PeriodSummary | None = Field(None, description="A9b: okres z zapytania (period / date_from + date_to); bez – null")
     suggestions: CropSuggestions | None = Field(None, description="Ranking „Co tu posiać?” (null: grunt nierolny / brak danych)")
     crop_history: list[str] = Field(default_factory=list, description="Historia upraw z zapytania: 1–3 lata, indeks 0 = rok temu (crop_id albo 'nie_wiem')")
     cultivated_area_ha: float | None = Field(None, description="Powierzchnia uprawy użyta w rankingu, ha (podana albo oszacowana)")

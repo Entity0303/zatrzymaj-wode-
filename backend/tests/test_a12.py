@@ -37,3 +37,67 @@ def test_price_now_only_from_file(tmp_path, monkeypatch):
 def test_all_priced_crops_have_price_in_every_voivodeship(crop):
     for woj in ("podlaskie", "wielkopolskie", "lubelskie", "mazowieckie"):
         assert P.price(crop, woj) is not None
+
+
+# ── A9b: okres / zakres dat ────────────────────────────────────────────────────────────────
+
+from datetime import date  # noqa: E402
+
+import numpy as np  # noqa: E402
+
+from app.analysis import period as PR  # noqa: E402
+from app.analysis.crops import CROPS  # noqa: E402
+from test_water_model import synth  # noqa: E402
+
+
+def _rain(years, months, dates):
+    """2 mm/dzień; w 2026 tylko 0,5 mm (sucho) – reszta lat taka sama."""
+    return np.where(years == 2026, 0.5, 2.0)
+
+
+def _et0(years, months, dates):
+    return np.full(len(years), 2.5)
+
+
+W = synth(date(2015, 1, 1), date(2026, 11, 18), _rain, _et0)
+
+
+def test_resolve_presets_and_validation():
+    d = date(2026, 11, 22)
+    assert PR.resolve(None, None, None, d, None) is None
+    w = PR.resolve("season", None, None, d, None)
+    assert (w.start, w.end) == (date(2026, 4, 1), date(2026, 9, 30))
+    w = PR.resolve("30d", None, None, d, None)
+    assert w.end == date(2026, 11, 21) and (w.end - w.start).days == 29
+    with pytest.raises(PR.PeriodError):
+        PR.resolve("since_sowing", None, None, d, None)  # bez uprawy
+    with pytest.raises(PR.PeriodError):
+        PR.resolve(None, date(2026, 5, 1), date(2026, 12, 1), d, None)  # koniec po dacie analizy
+    with pytest.raises(PR.PeriodError):
+        PR.resolve(None, date(2026, 6, 1), date(2026, 5, 1), d, None)
+    with pytest.raises(PR.PeriodError):
+        PR.resolve("30d", date(2026, 5, 1), date(2026, 6, 1), d, None)
+
+
+def test_sowing_date_autumn_for_winter_crops_spring_for_others():
+    d = date(2026, 11, 22)
+    assert PR.sowing_date(CROPS["zboza_ozime"], d) == date(2026, 9, 25)
+    assert PR.sowing_date(CROPS["zboza_ozime"], date(2026, 6, 1)) == date(2025, 9, 25)
+    assert PR.sowing_date(CROPS["kukurydza_ziarno"], d).year == 2026
+
+
+def test_build_sums_normal_percentile_sentence_and_daily():
+    win = PR.resolve(None, date(2026, 5, 1), date(2026, 6, 30), date(2026, 11, 22), None)
+    p = PR.build(W, win, years=10, stress_dates=[date(2026, 6, 1), date(2026, 8, 1)], has_crop=True)
+    days = 61
+    assert p.precip_mm == round(0.5 * days) and p.et0_mm == round(2.5 * days) and p.balance_mm == round(-2.0 * days)
+    assert p.normal_balance_mm == round(-0.5 * days) and p.percentile == 0  # żaden z 10 lat nie był suszy
+    assert p.stress_days == 1 and len(p.daily) == days and p.daily[-1].balance_cum_mm == round(-2.0 * days, 1)
+    assert "zostało o 92 mm mniej niż zwykle" in p.sentence and "Tak sucho nie było w żadnym z 10 ostatnich lat." in p.sentence
+    assert p.label == "01.05–30.06.2026" and p.model_dump(by_alias=True)["from"] == date(2026, 5, 1)
+
+
+def test_30d_window_ends_at_last_data_day():
+    win = PR.resolve("30d", None, None, date(2026, 11, 22), None)
+    p = PR.build(W, win)
+    assert p.to == date(2026, 11, 18) and len(p.daily) == 30 and p.label.startswith("Ostatnie 30 dni (20.10–18.11.2026")

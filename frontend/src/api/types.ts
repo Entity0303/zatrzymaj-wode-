@@ -107,6 +107,11 @@ export type AnalysisRequest = {
   cultivated_area_ha?: number | null
   /** A5e: co planujesz posiać – 1–3 uprawy z rankingu albo grupy (zboza_ozime, zboza_jare, straczkowe…) */
   planned_crops?: string[] | null
+  /** A9b: okres podsumowania (albo date_from + date_to) – w odpowiedzi pole `period` */
+  period?: PeriodPreset | null
+  date_from?: ISODate | null
+  /** ≤ data analizy */
+  date_to?: ISODate | null
   /** A5e: tylko POST /api/report.pdf – 'short' = raport skrócony (2 strony, domyślnie) | 'full' = raport szczegółowy */
   report_type?: 'short' | 'full' | null
 }

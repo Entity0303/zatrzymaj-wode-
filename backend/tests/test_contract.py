@@ -77,6 +77,7 @@ def test_ts_types_name_every_contract_field():
             return
         seen.add(model)
         for name, field in model.model_fields.items():
+            name = field.alias or name  # A9b: PeriodSummary.from_ → „from” w JSON
             assert f"{name}:" in ts or f"{name}?:" in ts, f"pole '{name}' z {model.__name__} brak w types.ts"
             ann = field.annotation
             for sub in getattr(ann, "__args__", ()) or (ann,):

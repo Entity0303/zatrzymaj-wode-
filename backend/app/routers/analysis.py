@@ -10,6 +10,7 @@ Endpointy /api/dev/* – TYMCZASOWE (usunąć przy końcowym sprzątaniu).
 """
 
 import asyncio
+from typing import Literal
 import datetime as dt
 from dataclasses import dataclass, field
 from time import perf_counter
@@ -35,6 +36,7 @@ from app.analysis import verdict as verdict_mod
 from app.analysis import suggestions as sugg
 from app.analysis import terrain_interpret
 from app.analysis import hydro as hydro_mod
+from app.analysis import period as period_mod
 from app.analysis import prices as prices_mod
 from app.analysis import terrain as terrain_mod
 from app.analysis.terrain import terrain_for_parcel
@@ -592,11 +594,12 @@ async def run_analysis(
     crop_history: str | None = None, cultivated_area_ha: float | None = None,
     lon: float | None = None, lat: float | None = None, geometry: dict | None = None,
     planned_crops: str | list[str] | None = None,
+    period: str | None = None, date_from: dt.date | None = None, date_to: dt.date | None = None,
 ) -> AnalysisResponse:
     """Pełna analiza (wspólna dla /api/analysis, raportu PDF i rozgrzewki przykładów demo)."""
     with stale_scope() as stale_hits:
         return await _run(parcel_id, crop, analysis_date, previous_crop, stale_hits, crop_history, cultivated_area_ha,
-                          lon, lat, geometry, planned_crops)
+                          lon, lat, geometry, planned_crops, period, date_from, date_to)
 
 
 async def _resolve_point(lon: float, lat: float) -> tuple[uldk.Parcel, ApproximateArea | None]:
@@ -618,6 +621,7 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
                stale_hits: list, crop_history: str | None = None, cultivated_area_ha: float | None = None,
                lon: float | None = None, lat: float | None = None, geometry: dict | None = None,
                planned_crops: str | list[str] | None = None,
+               period: str | None = None, date_from: dt.date | None = None, date_to: dt.date | None = None,
                ) -> AnalysisResponse:
     t0 = perf_counter()
     today = dt.date.today()
@@ -785,6 +789,16 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
         out = model_to_contract(model or _no_model_result(crop_obj, analysis_date), crop_obj, analysis_date,
                                 no_model_note=no_model)
     ok_calc = bool(model) if crop_obj else bool(field and field.status == "ok")
+    # A9b: okres / zakres dat (period=30d|since_sowing|season albo date_from + date_to) – opad IMGW, ET0 NASA
+    period_c = None
+    try:
+        sowing = period_mod.sowing_date(crop_obj, analysis_date)
+        win = period_mod.resolve(period, date_from, date_to, analysis_date, sowing)
+        if win is not None:
+            period_c = period_mod.build(w, win, settings.history_years, model.stress_dates if model else None,
+                                        has_crop=crop_obj is not None)
+    except period_mod.PeriodError as exc:
+        raise HTTPException(status_code=422, detail={"message": str(exc)}) from exc
     steps.append(_step("balance", "Liczę bilans wody i wodę w glebie (FAO-56)", "done" if ok_calc else "error",
                        note=no_model, ms=int((perf_counter() - s) * 1000)))
 
@@ -938,6 +952,7 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
         terrain_note=terrain_note,
         hydro=hydro_c,
         price_now=prices_mod.price_now() if suggestions is not None else None,
+        period=period_c,
         verdict=verdict,
         approximate_area=approx,
         suggestions=suggestions,
@@ -976,6 +991,9 @@ async def get_analysis(
                                                        "(crop_id z crops.csv albo 'nie_wiem'), np. 'zyto,rzepak'"),
     cultivated_area_ha: float | None = Query(None, description="Powierzchnia uprawy w ha (domyślnie działka × udział gruntów rolnych)"),
     planned_crops: str | None = Query(None, description="Co planujesz posiać: 1–3 uprawy z rankingu po przecinku, np. 'pszenica_ozima,rzepak'"),
+    period: Literal["30d", "since_sowing", "season"] | None = Query(None, description="A9b: podsumowanie okresu"),
+    date_from: dt.date | None = Query(None, description="A9b: własny zakres – początek"),
+    date_to: dt.date | None = Query(None, description="A9b: własny zakres – koniec (≤ data analizy)"),
 ) -> AnalysisResponse:
     """Pełna analiza wodna działki: ULDK → równolegle pogoda 10 lat, gleba IUNG, klasy EGiB, SoilGrids, mapa
     glebowo-rolnicza, prognoza (dla dziś) → model wody w glebie → ocena → pewność → przyczyny → rekomendacje.
@@ -983,7 +1001,7 @@ async def get_analysis(
     Bez `crop` – stan działki (gleba, zapas wody pod pokryciem referencyjnym FAO-56, bilans opad − ET0),
     `crop`, `crop_season`, `irrigation` = null."""
     return await run_analysis(parcel_id, crop, date, previous_crop, crop_history, cultivated_area_ha, lon, lat,
-                              planned_crops=planned_crops)
+                              planned_crops=planned_crops, period=period, date_from=date_from, date_to=date_to)
 
 
 @router.post(
@@ -997,4 +1015,5 @@ async def post_analysis(req: AnalysisRequest) -> AnalysisResponse:
     GeoJSON Polygon w WGS84; zbyt długi na adres URL). Odpowiedź: `parcel.source = "drawn"`, nazwa „Pole narysowane
     przez rolnika”, powierzchnia z kształtu; cała analiza (werdykt, ranking, teren) jak dla działki."""
     return await run_analysis(req.parcel_id, req.crop, req.date, req.previous_crop, req.crop_history,
-                              req.cultivated_area_ha, req.lon, req.lat, req.geometry, req.planned_crops)
+                              req.cultivated_area_ha, req.lon, req.lat, req.geometry, req.planned_crops,
+                              req.period, req.date_from, req.date_to)

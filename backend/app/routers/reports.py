@@ -88,13 +88,17 @@ async def get_report_pdf_now(
     crop_history: str | None = Query(None, description="Historia pola: 1–3 uprawy po przecinku (pierwsza = rok temu)"),
     cultivated_area_ha: float | None = Query(None, description="Powierzchnia uprawy, ha"),
     planned_crops: str | None = Query(None, description="Co planujesz posiać: 1–3 uprawy z rankingu po przecinku"),
+    period: Literal["30d", "since_sowing", "season"] | None = Query(None, description="A9b: podsumowanie okresu"),
+    date_from: dt.date | None = Query(None, description="A9b: własny zakres – początek"),
+    date_to: dt.date | None = Query(None, description="A9b: własny zakres – koniec (≤ data analizy)"),
     report_type: Literal["short", "full"] = Query("short", description="short – 4–5 stron (domyślnie) | full – z pełną tabelą upraw i szczegółami"),
 ) -> Response:
     """Liczy analizę (jak GET /api/analysis) i zwraca „Paszport wodny działki” w PDF (A4, do druku)."""
     t0 = perf_counter()
     await _satellite_first(parcel_id, lon, lat, None, date)
     a = _no_pending(await run_analysis(parcel_id, crop, date, previous_crop, crop_history, cultivated_area_ha, lon,
-                                       lat, planned_crops=planned_crops))
+                                       lat, planned_crops=planned_crops, period=period, date_from=date_from,
+                                       date_to=date_to))
     pdf = await build_pdf(a, report_type)
     return Response(pdf, media_type="application/pdf", headers={
         "Content-Disposition": f'attachment; filename="{filename(a, report_type)}"',
@@ -111,7 +115,8 @@ async def post_report_pdf_now(req: AnalysisRequest) -> Response:
     t0 = perf_counter()
     await _satellite_first(req.parcel_id, req.lon, req.lat, req.geometry, req.date)
     a = _no_pending(await run_analysis(req.parcel_id, req.crop, req.date, req.previous_crop, req.crop_history,
-                                       req.cultivated_area_ha, req.lon, req.lat, req.geometry, req.planned_crops))
+                                       req.cultivated_area_ha, req.lon, req.lat, req.geometry, req.planned_crops,
+                                       req.period, req.date_from, req.date_to))
     rt = req.report_type or "short"
     pdf = await build_pdf(a, rt)
     return Response(pdf, media_type="application/pdf", headers={

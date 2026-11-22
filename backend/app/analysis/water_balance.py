@@ -653,6 +653,7 @@ class SoilWaterResult:
     risk: str | None = None
     irrigation: IrrigationResult | None = None
     season_deficit_mm: float | None = None  # ETc − ETa w fazach uprawy bieżącego sezonu [mm]
+    stress_dates: list[date] = field(default_factory=list)  # A9b: dni stresu (fazy wrażliwe) – do podsumowania okresu
     limitations: list[str] = field(default_factory=list)
 
 
@@ -726,6 +727,7 @@ def soil_water_model(
     # ── dni stresu w bieżącym sezonie (fazy wrażliwe, D32) ──
     in_season = tr.season_year == sy
     res.stress_days_season = int((tr.stress & in_season).sum())
+    res.stress_dates = [d for d, s in zip(_days(ws, L), tr.stress) if s]
     grow = in_season & np.isin(np.array(tr.phase), list(IN_SEASON_SCOPE))
     res.season_deficit_mm = round(float((tr.etc[grow] - tr.eta[grow]).sum()), 0)
     res.season_complete = L >= h
