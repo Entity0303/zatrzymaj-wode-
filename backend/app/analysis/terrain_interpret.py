@@ -17,7 +17,7 @@ import yaml
 from shapely.geometry import mapping, shape
 from shapely.geometry.base import BaseGeometry
 
-from app.core.format import num, volume_m3
+from app.core.format import num, plural, volume_m3
 from app.schemas.analysis import (
     SourceTag,
     Terrain,
@@ -38,6 +38,7 @@ POND_MAIN_MIN_DEPTH_M = 0.3  # zagłębienie wyraźne (3× precyzja NMT), nie sz
 POND_MIN_CATCHMENT_M2 = 5000.0  # zlewnia ≥ 0,5 ha – inaczej z ulewy 20 mm spłynie ledwie kilkanaście m³
 POND_MAIN_MIN_PARCEL_HA = 0.5  # na mniejszej działce oczko zajmie zbyt dużą część pola
 POND_OPTION_MIN_PARCEL_HA = 0.3
+SMALL_POND_MAX_M2 = 500.0  # A18: „małe oczko” tylko do 500 m², większe – „oczko”
 WET_SPOT_MIN_AREA_M2 = 500.0  # mokradło / podmokły fragment – realne zagłębienie bez odpływu w działce
 CULVERT_MIN_OUTLET_SHARE = 50.0  # zastawka: główny odpływ odprowadza ≥ 50% działki …
 CULVERT_MIN_INFLOW_RATIO = 1.0  # … i na działkę spływa woda z co najmniej takiej samej powierzchni z zewnątrz
@@ -104,9 +105,10 @@ def summary(facts: dict) -> str:
     if n:
         d = facts.get("largest_depression") or {}
         vol = d.get("volume_m3")
-        word = "zagłębienie" if n == 1 else "zagłębienia" if n < 5 else "zagłębień"
-        parts.append(f"Na działce jest {n} {word} bez odpływu, gdzie zbiera się woda"
-                     + (f" (największe zmieści orientacyjnie ok. {volume_m3(vol)})." if vol else "."))
+        word = plural(n, "zagłębienie", "zagłębienia", "zagłębień")
+        verb = plural(n, "jest", "są", "jest")
+        parts.append(f"Na działce {verb} {n} {word} bez odpływu, gdzie zbiera się woda"
+                     + (f" (największe zmieści ok. {volume_m3(vol)})." if vol else "."))
     else:  # o zagłębieniach bez odpływu mówimy tylko, gdy są (D66); obniżenia (strefa) – osobno
         wet = (facts.get("zone_share_pct") or {}).get("mokry_dolek") or 0.0
         if wet >= 5:
@@ -165,7 +167,8 @@ def to_contract(facts: dict, group: str | None, data_date: dt.date | None = None
 
 def rule_facts(facts: dict | None, soil_category: int | None) -> dict[str, Any]:
     """Fakty `terrain_*` dla silnika reguł. Brak terenu → same None (warunki fałszywe)."""
-    keys = ("terrain_pond", "pond_place_txt", "pond_inflow_runoff_m3", "pond_area_m2", "pond_catchment_ha",
+    keys = ("terrain_pond", "pond_place_txt", "pond_lead_txt", "pond_noun", "pond_noun_cap", "pond_where_short",
+            "pond_inflow_runoff_m3", "pond_area_m2", "pond_catchment_ha",
             "pond_depth_m", "outlet_direction", "outlet_share_pct", "inflow_ratio", "inflow_ha", "buffer_strip",
             "buffer_length_m", "steep_share_pct", "slope_max_pct", "wet_spot_area_m2", "wet_zone_pct",
             "culvert_candidate", "terrain_relief_m", "parcel_area_ha_terrain")
@@ -199,7 +202,16 @@ def rule_facts(facts: dict | None, soil_category: int | None) -> dict[str, Any]:
             v["terrain_pond"] = "glowna"
         elif catch >= POND_MIN_CATCHMENT_M2 and area_ha >= POND_OPTION_MIN_PARCEL_HA:
             v["terrain_pond"] = "opcja"
-        v["pond_place_txt"] = "w zagłębieniu, gdzie zbiera się woda" if in_dep else "przy miejscu, którędy woda ucieka z działki"
+        # A18: bez tautologii i bez sprzeczności „nie ma zagłębienia … w zagłębieniu”
+        v["pond_place_txt"] = "w zagłębieniu bez odpływu" if in_dep else "przy miejscu, gdzie wypływa z działki"
+        ha = num(round(catch / 10_000, 1))
+        v["pond_lead_txt"] = (f"Woda z ok. {ha} ha spływa do płytkiego zagłębienia na działce." if in_dep else
+                              f"Na działce nie ma zagłębienia bez odpływu, ale woda z ok. {ha} ha spływa do miejsca, "
+                              "gdzie wypływa z działki.")
+        v["pond_where_short"] = "w płytkim zagłębieniu" if in_dep else "przy odpływie"
+        small = (pond.get("suggested_pond_area_m2") or 0.0) <= SMALL_POND_MAX_M2
+        v["pond_noun"] = "małe oczko" if small else "oczko"
+        v["pond_noun_cap"] = v["pond_noun"].capitalize()
         v["pond_inflow_runoff_m3"] = pond.get("inflow_runoff_m3")
         v["pond_area_m2"] = pond.get("suggested_pond_area_m2")
         v["pond_catchment_ha"] = round(catch / 10_000, 1)

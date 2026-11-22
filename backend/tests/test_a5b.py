@@ -138,7 +138,7 @@ def test_off_season_status_from_soil_water_and_recent_balance(phase, scope):
     s = overall_status(f, SOIL_OK)
     assert s.scope == scope and s.level == "ok" and s.score >= 70
     assert "cierpią" not in s.headline and "zapas wody w glebie" in s.summary
-    assert "W ostatnich 30 dniach spadło minus wyparowało" in s.summary
+    assert "Bilans wody z ostatnich 30 dni (opad minus parowanie)" in s.summary
     assert reserve_score(80.0, 70.0) == round(0.6 * 80 + 0.4 * 70)  # zapas, gdy brak lat porównawczych (D52)
 
 
@@ -274,7 +274,7 @@ def test_analysis_without_crop(client):
     f = a.field_state
     assert f is not None and f.series_start == date(2017, 11, 1) and f.series and f.series[-1].date == date(2018, 6, 9)
     assert f.soil_water_pct.value == a.indicators.soil_water_pct.value and a.soil_water.scope == "profil"
-    assert f.balance_30d.value is not None and "FAO-56" in f.cover and f.status == a.status
+    assert f.balance_30d.value is not None and "typowego pola" in f.cover and "FAO-56" in f.soil_water_mm.source_tag.source and f.status == a.status
     assert a.indicators.risk_7d.label == "Nie dotyczy" and a.history.stress_days_by_year == []
     assert a.soil.consistency is not None and a.soil.wod_mm == 166.2
     assert a.recommendations and all(x.category == "retencja" for x in a.recommendations)

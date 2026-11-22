@@ -32,19 +32,19 @@ teren_gleba:
   sucha_gorka:
     lekka:
       rating: zle
-      sentence: "{pct}% działki to górka na lekkiej glebie – najsuchsze miejsce, w suche lata plon spada tu najbardziej."
+      sentence: "{pct}% działki to górka na lekkiej glebie – najsuchsze miejsce – w suche lata rośliny zwykle cierpią tu najpierw."
     srednia:
       rating: uwaga
-      sentence: "{pct}% działki to górka – najsuchsze miejsce na polu, w suche lata plon spada tu najbardziej."
+      sentence: "{pct}% działki to górka – najsuchsze miejsce na działce – w suche lata rośliny zwykle cierpią tu najpierw."
     ciezka:
       rating: uwaga
-      sentence: "{pct}% działki to górka – najsuchsze miejsce na polu, choć ciężka gleba trzyma wodę dłużej."
+      sentence: "{pct}% działki to górka – najsuchsze miejsce na działce, choć ciężka gleba trzyma wodę dłużej."
     organiczna:
       rating: uwaga
-      sentence: "{pct}% działki to górka – najsuchsze miejsce na polu."
+      sentence: "{pct}% działki to górka – najsuchsze miejsce na działce."
     nieznana:
       rating: uwaga
-      sentence: "{pct}% działki to górka – najsuchsze miejsce na polu."
+      sentence: "{pct}% działki to górka – najsuchsze miejsce na działce."
   stok:
     lekka:
       rating: uwaga
@@ -64,23 +64,23 @@ teren_gleba:
   plasko:
     lekka:
       rating: dobrze
-      sentence: "{pct}% działki jest płaska – woda rozkłada się równo (na lekkiej glebie i tak przesycha szybciej)."
+      sentence: "{pct}% działki to teren płaski – woda rozkłada się równo (na lekkiej glebie i tak przesycha szybciej)."
     srednia:
       rating: dobrze
-      sentence: "{pct}% działki jest płaska – tu są najlepsze warunki wodne."
+      sentence: "{pct}% działki to teren płaski – zwykle dobre warunki wodne."
     ciezka:
       rating: dobrze
-      sentence: "{pct}% działki jest płaska – dobre warunki, ale po długich deszczach woda wolno wsiąka."
+      sentence: "{pct}% działki to teren płaski – dobre warunki, ale po długich deszczach woda wolno wsiąka."
     organiczna:
       rating: dobrze
-      sentence: "{pct}% działki jest płaska – woda rozkłada się równo."
+      sentence: "{pct}% działki to teren płaski – woda rozkłada się równo."
     nieznana:
       rating: dobrze
-      sentence: "{pct}% działki jest płaska – woda rozkłada się równo."
+      sentence: "{pct}% działki to teren płaski – woda rozkłada się równo."
   mokry_dolek:
     lekka:
       rating: dobrze
-      sentence: "{pct}% działki to obniżenie, gdzie spływa i zbiera się woda – na lekkiej glebie to najwilgotniejsze i najlepsze miejsce w suszy."
+      sentence: "{pct}% działki to obniżenie, gdzie spływa i zbiera się woda – na lekkiej glebie to zwykle najwilgotniejsze miejsce w suszy."
     srednia:
       rating: uwaga
       sentence: "{pct}% działki to obniżenie, gdzie spływa i zbiera się woda – wilgotniej, po ulewach może być podmokło."

@@ -338,7 +338,7 @@ def test_analysis_with_terrain_from_nmt(client):
         assert steps["terrain"].state == "done"
         nmt_src = next(s for s in a.reliability.sources if s.name == "NMT GUGiK")
         assert nmt_src.status == "ok"
-        assert any(c.factor == "teren" and c.share > 0 for c in a.causes)
+        assert any(c.factor == "teren" and c.share == 0 and "informacyjnie" in c.description for c in a.causes)  # A18
 
 
 @respx.mock

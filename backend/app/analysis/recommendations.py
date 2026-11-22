@@ -29,7 +29,7 @@ from typing import Any
 import yaml
 
 from app.core.format import num
-from app.analysis.facts import FACT_META, Facts
+from app.analysis.facts import FACT_META, Facts, fact_source
 from app.schemas.analysis import EcoScheme, Evidence, Recommendation
 
 RULES_DIR = Path(__file__).parent / "rules"
@@ -219,7 +219,8 @@ def evidence(conds: list[dict], facts: Facts) -> list[Evidence]:
         if name in HIDDEN_FACTS or name in seen or facts.get(name) is None or name not in FACT_META:
             continue  # A14: fakt bez polskiej etykiety nie trafia do uzasadnienia (żadnych nazw technicznych)
         seen.add(name)
-        label, unit, source = FACT_META.get(name, (name, None, "analiza"))
+        label, unit, _src = FACT_META.get(name, (name, None, "analiza"))
+        source = fact_source(name, facts)  # A18: opad – IMGW albo NASA, wg faktycznej serii
         v = facts.get(name)
         out.append(Evidence(name=label, value=v if isinstance(v, (int, float)) and not isinstance(v, bool) else fmt_value(v),
                             unit=unit, source=source))

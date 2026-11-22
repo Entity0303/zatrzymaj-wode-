@@ -302,7 +302,7 @@ def test_both_sources_fail_raises():
     respx.get(settings.open_meteo_archive_url).mock(return_value=httpx.Response(429))
     with pytest.raises(SourceError) as e:
         _run(load_weather_history(22.6, 52.9, date(2018, 7, 15)))
-    assert "429" in e.value.message and "nie odpowiada" in e.value.message
+    assert "przeciążona" in e.value.message and "nie odpowiada" in e.value.message
 
 
 # ── endpoint deweloperski ───────────────────────────────────────────────────────────────────

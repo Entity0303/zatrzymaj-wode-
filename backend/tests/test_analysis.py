@@ -95,7 +95,7 @@ def test_score_components_and_thresholds():
 
 def test_stressed_plants_alarm_in_sensitive_phase():
     s = overall_status(facts(water_pct=15.0, days_to_stress=0, balance_percentile=0.0, water_rank_pct=0.0), SOIL_OK)
-    assert s.level == "danger" and s.score < 30 and "cierpią" in s.headline
+    assert s.level == "danger" and s.score < 30 and "brakuje wody" in s.headline
     assert "15% wody dostępnej w strefie korzeni" in s.summary and "o 10 mm mniej niż zwykle" in s.summary
     assert "już odczuwają brak wody" in s.summary
 
@@ -197,14 +197,15 @@ def test_autumn_rules_order_and_panel():
     assert len(panel) <= 3 and len({r.category for r in panel}) == len(panel)
     assert panel[0].id == "retencja.nie_zostawiaj_scierniska" and panel[0].when == "teraz"
     rec = next(r for r in ev.recommendations if r.id == "retencja.nie_zostawiaj_scierniska")
-    assert "−50 mm" in rec.description and "40% wody" in rec.why and rec.inputs and "Dane:" in rec.why
+    assert "−50 mm" in rec.description and "40% pełnego" in rec.why and rec.inputs and "Dane:" in rec.why
     assert not any(r.category == "nawadnianie" for r in ev.recommendations)
 
 
 def test_terrain_rules_disabled_until_data():
     ev = evaluate(facts())
     assert {"retencja.oczko_w_zaglebieniu", "retencja.zastawka_na_rowie", "retencja.pas_buforowy_na_stoku"} <= set(ev.disabled)
-    ev2 = evaluate(facts(terrain_pond="glowna", pond_catchment_ha=1.2, pond_place_txt="w zagłębieniu",
+    ev2 = evaluate(facts(terrain_pond="glowna", pond_catchment_ha=1.2, pond_place_txt="w zagłębieniu bez odpływu",
+                         pond_noun="małe oczko", pond_noun_cap="Małe oczko",
                          pond_area_m2=80.0, pond_inflow_runoff_m3=70.0, pond_depth_m=0.6), available={"terrain"})
     assert "retencja.oczko_w_zaglebieniu" in [r.id for r in ev2.recommendations]
 

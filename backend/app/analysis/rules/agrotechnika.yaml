@@ -10,8 +10,8 @@ rules:
     when:
       all:
         - {fact: strong_stress, eq: true}
-    title: "Odłóż nawożenie – przy suszy nawóz nie zadziała"
-    description: "W strefie korzeni jest {water_pct}% wody dostępnej, ryzyko niedoboru wody w 7 dni: {risk}. Bez wody korzenie nie pobiorą składników – nawóz (zwłaszcza azot pogłównie) podaj dopiero po wydatnym deszczu albo nawodnieniu."
+    title: "Odłóż nawożenie – w suchej glebie nawóz słabo działa"
+    description: "Zapas wody w strefie korzeni: {water_pct}% pełnego, ryzyko niedoboru wody w 7 dni: {risk}. Bez wody korzenie nie pobiorą składników – nawóz (zwłaszcza azot pogłównie) podaj dopiero po wydatnym deszczu albo nawodnieniu."
     why:
       - "Rośliny w fazie wrażliwej odczuwają już brak wody albo odczują go w ciągu kilku dni."
 
@@ -29,7 +29,7 @@ rules:
         - {fact: water_pct, lt: 60}
         - {fact: days_to_stress, lte: 7}
     title: "Ogranicz parowanie z międzyrzędzi"
-    description: "Płytkie spulchnienie międzyrzędzi po deszczu przerywa podsiąkanie wody do powierzchni i ogranicza jej parowanie. W strefie korzeni jest {water_pct}% wody dostępnej."
+    description: "Płytkie spulchnienie międzyrzędzi po deszczu przerywa podsiąkanie wody do powierzchni i ogranicza jej parowanie. Zapas wody w strefie korzeni: {water_pct}% pełnego."
     why:
       - "Uprawa rzędowa w fazie wrażliwej, a zapas wody maleje."
 
@@ -45,7 +45,7 @@ rules:
         - {fact: crop, in: [warzywa, truskawki, krzewy_owocowe, drzewa_owocowe]}
         - {fact: water_pct, lt: 70}
     title: "Ściółkuj glebę wokół roślin"
-    description: "Ściółka ze słomy, kory lub agrowłókniny ogranicza parowanie i nagrzewanie gleby. W strefie korzeni jest {water_pct}% wody dostępnej."
+    description: "Ściółka ze słomy, kory lub agrowłókniny ogranicza parowanie i nagrzewanie gleby. Zapas wody w strefie korzeni: {water_pct}% pełnego."
     why:
       - "Uprawa ogrodnicza w fazie wrażliwej przy malejącym zapasie wody."
 
@@ -63,7 +63,7 @@ rules:
         - {fact: water_pct, lt: 70}
         - {fact: balance_percentile, lt: 30}
     title: "Siej możliwie wcześnie w terminie optymalnym"
-    description: "Wczesny siew pozwala roślinom wykorzystać zimowy zapas wody, zanim przyjdą letnie niedobory. Teraz profil ma {water_pct}% wody dostępnej."
+    description: "Wczesny siew pozwala roślinom wykorzystać zimowy zapas wody, zanim przyjdą letnie niedobory. Teraz zapas wody w glebie: {water_pct}% pełnego."
     why:
       - "Zapas wody przed siewem jest mniejszy niż zwykle lub sezon zapowiada się sucho."
 
@@ -80,7 +80,7 @@ rules:
         - {fact: crop_kind, in: [ozima, jesienna]}
         - {fact: water_pct, lt: 50}
     title: "Uprawa przedsiewna płytko, z wałowaniem"
-    description: "W profilu jest tylko {water_pct}% wody dostępnej. Płytka uprawa i wałowanie po siewie zachowają wilgoć potrzebną do wschodów."
+    description: "Zapas wody w glebie to tylko {water_pct}% pełnego. Płytka uprawa i wałowanie po siewie pomagają zachować wilgoć potrzebną do wschodów."
     why:
       - "Mały zapas wody w okresie siewu ozimin."
 
@@ -112,7 +112,7 @@ rules:
         - {fact: stress_ratio, gte: 1.5}
         - {fact: stress_days_season, gte: 10}
     title: "Wybierz odmiany odporne na suszę"
-    description: "W tym sezonie było {stress_days_season} dni stresu wodnego, średnio w ostatnich 10 latach {stress_days_mean}. Odmiany tolerujące suszę lub wcześniejsze zmniejszą straty."
+    description: "W tym sezonie było {stress_days_season} dni stresu wodnego, średnio w ostatnich 10 latach {stress_days_mean}. Odmiany tolerujące suszę lub wcześniejsze mogą zmniejszyć straty."
     why:
       - "Stres wodny w sezonie był co najmniej półtora raza częstszy niż zwykle."
 
@@ -143,7 +143,7 @@ rules:
         - {fact: irrigation_practice, eq: not_practiced}
         - {fact: water_stress_7d, eq: true}
     title: "Ogranicz straty wody – bez uprawek i z odchwaszczaniem"
-    description: "{no_irrigation_txt}. W strefie korzeni jest {water_pct}% wody dostępnej{stress_when_txt}. Nie wykonuj teraz zabiegów mechanicznych, które przesuszają glebę, i nie dopuść do zachwaszczenia – chwasty zabierają wodę roślinom."
+    description: "{no_irrigation_txt}. Zapas wody w strefie korzeni: {water_pct}% pełnego{stress_when_txt}. Nie wykonuj teraz zabiegów mechanicznych, które przesuszają glebę, i nie dopuść do zachwaszczenia – chwasty zabierają wodę roślinom."
     why:
       - "Rośliny w fazie wrażliwej odczuwają już brak wody albo odczują go w ciągu 7 dni."
 
@@ -158,6 +158,6 @@ rules:
         - {fact: irrigation_practice, eq: not_practiced}
         - {fact: water_stress_7d, eq: true}
     title: "Zabiegi rano lub wieczorem"
-    description: "Opryski wykonuj wcześnie rano albo wieczorem, przy wyższej wilgotności powietrza – w upale rośliny w stresie wodnym gorzej znoszą zabiegi, a ciecz szybciej odparowuje. Parowanie (ET0) w ostatnich dniach: ok. {et0_recent_mm_day} mm na dobę."
+    description: "Opryski wykonuj wcześnie rano albo wieczorem, przy wyższej wilgotności powietrza – w upale rośliny w stresie wodnym gorzej znoszą zabiegi, a ciecz szybciej odparowuje. Parowanie w ostatnich dniach: ok. {et0_recent_mm_day} mm na dobę."
     why:
       - "Przy niedoborze wody i dużym parowaniu termin zabiegu decyduje o jego skuteczności."

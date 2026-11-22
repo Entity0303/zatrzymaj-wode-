@@ -12,7 +12,7 @@ from pathlib import Path
 import numpy as np
 import yaml
 
-from app.core.format import num, rain_area_ha, volume_m3
+from app.core.format import num, rain_area_ha, volume_m3, zl
 from app.analysis.et0 import DailyWeather
 from app.analysis.soil_label import SoilProfile
 from app.schemas.analysis import (
@@ -26,8 +26,7 @@ from app.schemas.analysis import (
 )
 
 RULES = Path(__file__).parent / "rules" / "verdict.yaml"
-NOTE = ("Zdania policzone z danych tej działki (gleba, pogoda z 10 lat, teren, symulacja upraw) według stałych "
-        "szablonów – bez modelu językowego; te same dane dają te same zdania.")
+NOTE = "Zdania liczy program z danych tej działki według stałych reguł. Te same dane dają te same zdania."
 LEVEL_ORDER = {"ok": 0, "warn": 1, "bad": 2}
 RATING_LEVEL = {"dobrze": "ok", "uwaga": "warn", "zle": "bad"}
 STATUS_LEVEL = {"ok": "ok", "warn": "warn", "risk": "bad", "danger": "bad"}
@@ -110,11 +109,15 @@ def precip_statement(st: dict | None, measured: bool = False) -> VerdictStatemen
         level, key = "warn", "low"
     elif low and level == "warn":
         key = "low"
+    if key == "ok" and st["deficit_years"] == 0:  # A18: nie „tylko w 0 z 10 lat”
+        key = "ok_none"
     text = c[key].format(**st)
     norm = t["precip_norm_year_mm"]
     if measured:  # A7: opad ze stacji IMGW – porównanie z normą wprost
         ratio = st["year_mm"] / norm
         key_n = "norm_low" if ratio < 0.95 else "norm_high" if ratio > 1.05 else "norm_same"
+        if key_n != "norm_low" and level != "ok":  # A18: „za mało wiosną” + „tyle co średnio” – bez sprzeczności
+            key_n += "_dry"
         text += c[key_n].format(norm_mm=norm)
     else:  # neutralnie – NASA POWER zawyża opad względem IMGW (D68)
         text += c["norm_tail"].format(norm_mm=norm)
@@ -140,7 +143,7 @@ def terrain_statement(t: Terrain | None, pending: bool = False) -> VerdictStatem
     text = " ".join(z.sentence for z in big)
     if t.depressions_count and t.largest_depression and t.largest_depression.volume_m3:
         vol = t.largest_depression.volume_m3
-        text += f" Jest tu zagłębienie bez odpływu – zmieści orientacyjnie ok. {volume_m3(vol)} wody"
+        text += f" Jest tu zagłębienie bez odpływu – zmieści ok. {volume_m3(vol)} wody"
         ha = rain_area_ha(vol)
         text += (f" (tyle, ile spada na ok. {num(round(ha, -1) if ha >= 20 else round(ha))} ha w ulewie 20 mm)."
                  if ha >= 2 else ".")
@@ -205,8 +208,11 @@ def crops_statement(sug: CropSuggestions | None, light: bool):
     if best_rev is not None:  # A12: tylko gdy jest cena skupu
         r = best_rev.revenue
         src = "ceny skupu GUS" if r.price_source.startswith("GUS") else r.price_source.split(" (")[0]  # A12b: ZSRIR
-        text += (f" Przychód z {num(r.for_area_ha, 2)} ha ({best_rev.label.lower()}): ok. {num(r.typical_zl, 0)} zł "
-                 f"w typowym roku, ok. {num(r.weak_year_zl, 0)} zł w słabym ({src}).")
+        if good and good[0] is not best_rev:  # A18: pierwsza polecona bez ceny – mówimy to wprost, bez cichej zamiany
+            why = getattr(good[0], "revenue_note", None)
+            text += f" {good[0].label}: brak ceny skupu" + (f" ({why})" if why else "") + "."
+        text += (f" Przychód z {num(r.for_area_ha, 2)} ha ({best_rev.label.lower()}): ok. {zl(r.typical_zl)} "
+                 f"w typowym roku, ok. {zl(r.weak_year_zl)} w słabym ({src}).")
     st = VerdictStatement(kind="uprawy", level=level, text=text.strip(),
                           numbers={"polecane": n_good, "odradzane": n_bad, "mozliwe": len(field) - n_good - n_bad})
     return st, [VerdictCrop(crop_id=i.crop_id, label=i.label) for i in good], bad_out

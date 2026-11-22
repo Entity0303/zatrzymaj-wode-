@@ -121,7 +121,7 @@ def test_status_reports_failing_source(client):
     _mock_probes(fail=settings.soilgrids_url)
     b = client.get("/api/status").json()
     sg = next(s for s in b["services"] if s["name"] == "SoilGrids (ISRIC)")
-    assert b["all_ok"] is False and sg["ok"] is False and "503" in sg["error"]
+    assert b["all_ok"] is False and sg["ok"] is False and "awari" in sg["error"]
 
 
 @respx.mock

@@ -176,7 +176,9 @@ def stale_text(h: StaleHit) -> str:
         local = h.stored_at.astimezone(ZoneInfo("Europe/Warsaw"))  # kontener działa w UTC
     except Exception:  # noqa: BLE001
         local = h.stored_at.astimezone()
-    return f"{h.source}: dane z cache z dnia {local:%d.%m.%Y %H:%M} (źródło nie odpowiadało)"
+    # A18: bez „cache” – co się stało i co rolnik może zrobić
+    return (f"{h.source}: źródło chwilowo nie odpowiada – pokazuję dane zapisane {local:%d.%m.%Y} o {local:%H:%M}. "
+            "Spróbuj za chwilę")
 
 
 def _dedupe(items: list[str]) -> list[str]:
@@ -192,10 +194,10 @@ def reliability(i: ConfidenceInputs) -> tuple[Reliability, list[Premise], int]:
     prem = premises(i)
     points = max(0, 100 - sum(p.points for p in prem))
     conf = level(points, capped=not (i.satellite and i.terrain), stale=bool(i.stale))
-    top = sorted(prem, key=lambda p: -p.points)[:3]
-    reason = ("Ograniczenia: " + "; ".join(p.text for p in top) + ".") if top else "Wszystkie źródła danych dostępne."
     if any(p.key == "opad_lata_rozne" for p in prem):  # A16: rozjazd IMGW / NASA w ≥ 2 z 5 ostatnich sezonów
         conf = ORDER[min(ORDER.index(conf) + 1, 2)]
+    top = sorted(prem, key=lambda p: -p.points)[:3]
+    reason = ("Ograniczenia: " + "; ".join(p.text for p in top) + ".") if top else "Wszystkie źródła danych dostępne."
     if i.stale:
         reason = "Część danych z pamięci podręcznej (źródło nie odpowiadało) – pewność obniżona. " + reason
 
@@ -205,7 +207,7 @@ def reliability(i: ConfidenceInputs) -> tuple[Reliability, list[Premise], int]:
     if i.weather_name:
         part = i.weather_fallback or any(p.key in ("pogoda_opoznienie", "et0_hargreaves") for p in prem)
         sources.append(SourceStatus(
-            name=i.weather_name, used_for="pogoda z 10 lat, bilans wody, parowanie (ET0)", data_date=i.weather_until,
+            name=i.weather_name, used_for="pogoda z 10 lat, bilans wody, parowanie", data_date=i.weather_until,
             resolution=i.weather_resolution, status="czesciowo" if part else "ok",
             note="źródło zapasowe" if i.weather_fallback else None,
         ))
@@ -242,17 +244,17 @@ def reliability(i: ConfidenceInputs) -> tuple[Reliability, list[Premise], int]:
         if s.name in stale_by_source else s for s in sources
     ]
     sources += [
-        SourceStatus(name="Sentinel-2 L2A", used_for="kondycja i wilgotność roślin (NDVI, NDMI)",
+        SourceStatus(name="Sentinel-2 L2A", used_for="kondycja upraw i wilgotność roślin",
                      data_date=i.satellite_date if i.satellite else None, resolution="10 m",
                      status="ok" if i.satellite else "brak",
                      note=None if i.satellite else "pobierane osobno" if i.satellite_status == "pending"
-                     else "brak bezchmurnej sceny z ostatnich 60 dni"),
+                     else "brak bezchmurnego zdjęcia z ostatnich 60 dni"),
         SourceStatus(name="NMT GUGiK", used_for="teren i spływ wody", data_date=None, resolution="1 m (siatka 3–15 m)",
                      status=("czesciowo" if i.terrain_saved else "ok") if i.terrain else "brak",
                      note=("zapisany wynik analizy z 21.11.2026" if i.terrain_saved else None) if i.terrain
                      else (i.terrain_error or "brak danych")),
         SourceStatus(name="BDOT10k", used_for="rowy, cieki i zbiorniki w okolicy", data_date=None,
-                     status="brak", note="w przygotowaniu"),
+                     status="brak", note="nie używamy – rowy i cieki w okolicy z OpenStreetMap"),
     ]
     core = [s for s in sources if not s.name.startswith("EGiB") and not s.name.startswith("Mapa glebowo")]
     completeness = Completeness(available=sum(s.status != "brak" for s in core), total=len(core))
@@ -266,7 +268,7 @@ def reliability(i: ConfidenceInputs) -> tuple[Reliability, list[Premise], int]:
                       "bonitacyjnych (EGiB); gleba i teren dla narysowanego obrysu.")
     if i.weather_name and not i.weather_fallback and _measured(i):
         names = ", ".join(f"{p.name} ({p.dist_km:.0f} km)" for p, _w in i.precip.stations)
-        lim.insert(0, f"Opad ze stacji IMGW: {names} – lokalna burza nad polem może ominąć stację; parowanie (ET0) "
+        lim.insert(0, f"Opad ze stacji IMGW: {names} – lokalna burza nad polem może ominąć stację; parowanie "
                       f"uśrednione dla obszaru {i.weather_resolution}.")
         if getattr(i.precip, "disagreement_years", None):  # A16
             lim.insert(1, precip_disagreement_text(i.precip))
@@ -283,8 +285,8 @@ def reliability(i: ConfidenceInputs) -> tuple[Reliability, list[Premise], int]:
         lim += i.model.limitations
     lim += i.soil.limitations + i.extra_limitations
     if i.satellite:
-        lim.append(f"Zdjęcie satelitarne z {i.satellite_date:%d.%m.%Y} (Sentinel-2, piksel 10 m) – NDVI i NDMI to mediany "
-                   "w obrysie; progi orientacyjne; zieleń zależy też od uprawy i terminu siewu.")
+        lim.append(f"Zdjęcie satelitarne z {i.satellite_date:%d.%m.%Y} (Sentinel-2). Kondycja upraw i wilgotność roślin "
+                   "to średnia z działki – ocena orientacyjna; zieleń zależy też od uprawy i terminu siewu.")
     elif i.satellite_status == "pending":
         lim.append("Zdjęcie satelitarne liczone osobno – w tej odpowiedzi jeszcze bez kondycji i wilgotności roślin.")
     else:

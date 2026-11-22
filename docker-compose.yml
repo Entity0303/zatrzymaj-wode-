@@ -12,8 +12,9 @@ services:
       - CACHE_DB=/data/cache.sqlite
       # tryb demo offline (D55): DEMO_OFFLINE=true docker compose up – tylko cache, zero zapytań zewnętrznych
       - DEMO_OFFLINE=${DEMO_OFFLINE:-false}
-      # źródła GUGiK tylko z cache (D89): domyślnie wszystkie blokujące sieć; z VPN: OFFLINE_SOURCES=uug,bdot
-      - OFFLINE_SOURCES=${OFFLINE_SOURCES-uldk,nmt,kieg,uug,bdot}
+      # źródła tylko z cache (D89): domyślnie (A18) tylko BDOT10k, GUGiK na żywo;
+      # w sieci, która blokuje GUGiK: OFFLINE_SOURCES=uldk,nmt,kieg,uug,bdot docker compose up
+      - OFFLINE_SOURCES=${OFFLINE_SOURCES-bdot}
     volumes:
       - ./backend/app:/app/app
       - ./backend/scripts:/app/scripts

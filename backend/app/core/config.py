@@ -46,8 +46,9 @@ class Settings(BaseSettings):
     demo_offline: bool = False
     # A8 (D89): źródła wyłączone pojedynczo – tylko cache (GUGiK blokuje sieć); reszta (IMGW, Earth Search, NASA, IUNG,
     # SoilGrids, prognoza Open-Meteo) działa normalnie. Klucze: uldk, nmt, kieg, uug, bdot, prng, soil_map, ortho.
-    # Pusty napis = wszystkie źródła włączone. Env: OFFLINE_SOURCES="uldk,nmt,kieg,uug,bdot".
-    offline_sources: str = "uldk,nmt,kieg,uug,bdot"
+    # Pusty napis = wszystkie źródła włączone. Domyślnie (A18) tylko BDOT10k – GUGiK na żywo; w sieci, która blokuje
+    # GUGiK: OFFLINE_SOURCES="uldk,nmt,kieg,uug,bdot".
+    offline_sources: str = "bdot"
     # A8 (D89): usługi GUGiK (nazwa źródła zawiera „GUGiK”) – wspólny limit: najwyżej tyle zapytań naraz i odstęp
     # między startami kolejnych zapytań; bezpiecznik (cached_fetch) jak dotąd
     gugik_parallel: int = 2

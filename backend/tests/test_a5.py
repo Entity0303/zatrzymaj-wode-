@@ -191,7 +191,7 @@ def test_now_before_next_season_in_panel():
 def test_postpone_fertilization_under_strong_stress():
     recs = evaluate(stress_facts()).recommendations
     odloz = next(r for r in recs if r.id == "agrotechnika.odloz_nawozenie")
-    assert odloz.in_panel and "nie zadziała" in odloz.title and "15% wody" in odloz.description
+    assert odloz.in_panel and "słabo działa" in odloz.title and "15% pełnego" in odloz.description
     assert odloz.eco_scheme is None  # A5b-1: bez ekoschematu przy „odłóż nawożenie”
     assert not any(r.id == "agrotechnika.odloz_nawozenie" for r in evaluate(facts()).recommendations)
 
@@ -349,9 +349,9 @@ def test_analysis_uses_stale_cache_when_sources_down(client):
     b = r.json()
     order = ["wysoka", "srednia", "ograniczona"]
     assert order.index(b["reliability"]["confidence"]) == min(order.index(first["reliability"]["confidence"]) + 1, 2)
-    assert any("dane z cache z dnia" in x for x in b["reliability"]["limitations"])
+    assert any("pokazuję dane zapisane" in x and "Spróbuj za chwilę" in x for x in b["reliability"]["limitations"])
     nasa = next(s for s in b["reliability"]["sources"] if s["name"] == "NASA POWER")
-    assert nasa["status"] == "czesciowo" and "dane z cache z dnia" in nasa["note"]
+    assert nasa["status"] == "czesciowo" and "dane zapisane" in nasa["note"] and "cache" not in nasa["note"]
     assert b["status"]["score"] == first["status"]["score"]  # te same dane – ten sam wynik
 
 

@@ -265,7 +265,7 @@ def test_seasonal_balance_by_year_consistent(client, long_weather):
 
 
 @pytest.mark.parametrize("lower,n,start", [
-    (0, 10, "Ten rok jest najsuchszy"), (2, 10, "Ten rok jest suchszy niż zwykle – suszej było tylko w 2 z ostatnich 10 lat"),
+    (0, 10, "Ten rok jest najsuchszy"), (2, 10, "Ten rok jest suchszy niż zwykle – mniej wody było tylko w 2 z ostatnich 10 lat"),
     (4, 10, "Ten rok jest trochę suchszy"), (5, 10, "Pod względem wody ten rok jest przeciętny"),
     (7, 10, "Ten rok jest trochę wilgotniejszy"), (9, 10, "Ten rok jest wilgotniejszy"), (10, 10, "Ten rok jest najwilgotniejszy"),
     (None, 0, "Brak lat porównawczych"),

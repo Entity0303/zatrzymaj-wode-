@@ -20,7 +20,7 @@ choice:
     drought_bad: "Na tej działce zbyt często zabraknie wody w okresie, w którym uprawa jej najbardziej potrzebuje."
     rotation_plus: "Po {prev_gen} ta uprawa rośnie dobrze – to korzystny przedplon."
     rotation_warn: "Przedplon ({prev_nom}) nie jest dobry dla tej uprawy – więcej chorób i szkodników."
-    ok_tolerant: "Dobrze znosi suszę i pasuje do tej gleby – bezpieczny wybór na tej działce."
+    ok_tolerant: "Dobrze znosi suszę i pasuje do tej gleby – mało ryzykowny wybór na tej działce."
     ok_soil: "Gleba jest odpowiednia dla tej uprawy, a wody zwykle wystarcza."
     possible_soil: "Pasuje do gleby, ale w suche lata plon wyraźnie spada."
     neutral: "Da się tu uprawiać, ale ta działka nie daje tej uprawie szczególnych zalet."

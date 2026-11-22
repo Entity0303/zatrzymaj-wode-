@@ -126,14 +126,16 @@ def _from_iung(r: SoilResult) -> SoilAssessment:
             unit="mm",
             label=CATEGORY_SHORT[dom_min] if dom_min else None,
             status=CATEGORY_STATUS.get(dom_min, "no_data") if dom_min else "no_data",
-            note=f"woda dostępna dla roślin (WOD) – {round(r.agricultural_share * 100)}% działki to gleby mineralne użytków rolnych",
-            source_tag=SourceTag(kind="pomiar", source=iung.SOURCE_SHORT),
+            note=f"gleba zmieści tyle wody – wartość typowa dla kategorii IUNG, nie pomiar na działce; "
+                 f"{round(r.agricultural_share * 100)}% działki to gleby mineralne użytków rolnych",
+            # A18: WOD to wartość tabelaryczna kategorii (środek przedziału IUNG) – obliczenia, nie pomiar
+            source_tag=SourceTag(kind="obliczenia", source=f"{iung.SOURCE_SHORT} – wartość typowa dla kategorii"),
         )
 
     if any(s.code not in MINERAL for s in shares):
         limitations.append(
             "Kategorie podatności IUNG obejmują tylko gleby mineralne użytków rolnych – lasy, wody, zabudowa, "
-            "drogi i gleby organiczne nie mają kategorii (pominięte w WOD)."
+            "drogi i gleby organiczne nie mają kategorii (pominięte przy liczeniu, ile wody zmieści gleba)."
         )
     if r.nodata_share > 0:
         limitations.append(f"{round(r.nodata_share * 100)}% działki poza zasięgiem mapy gleb IUNG.")
@@ -143,7 +145,7 @@ def _from_iung(r: SoilResult) -> SoilAssessment:
         )
     if wod is not None and non_agri is None:
         limitations.append(
-            "WOD to wartość typowa dla kategorii gleby (środek przedziału IUNG), nie pomiar na tej działce."
+            "Ile wody zmieści gleba – to wartość typowa dla kategorii gleby (środek przedziału IUNG), nie pomiar na tej działce."
         )
 
     dom = r.dominant

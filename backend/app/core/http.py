@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import time
 
 import httpx
@@ -53,7 +54,9 @@ class RedirectBlocked(SourceError):
 # D89: klucz OFFLINE_SOURCES → fragment nazwy źródła (SourceError.source / nazwa cache)
 OFFLINE_KEYS = {"uldk": "ULDK", "nmt": "NMT", "kieg": "KIEG", "uug": "UUG", "bdot": "BDOT", "prng": "PRNG",
                 "soil_map": "Mapa glebowo-rolnicza", "ortho": "Ortofotomapa"}
-SOURCE_OFF_MESSAGE = "usługa wyłączona na czas demo (OFFLINE_SOURCES) – tylko dane z pamięci podręcznej"
+# A18: dla rolnika bez nazw ustawień; nazwa zmiennej (OFFLINE_SOURCES) tylko w logu i w /api/status
+SOURCE_OFF_MESSAGE = "usługa chwilowo wyłączona – korzystam tylko z danych zapisanych wcześniej"
+log = logging.getLogger("uvicorn.error")
 
 
 def offline_keys() -> set[str]:
@@ -118,7 +121,7 @@ async def _request(
     Zwraca odpowiedź z wczytaną treścią (status 2xx/4xx/5xx – decyzja należy do wołającego).
     Wyjątki httpx (timeout, brak połączenia) przechodzą dalej – obsługują je wołający."""
     if settings.demo_offline:  # D55: w trybie demo offline nie wysyłamy żadnych zapytań zewnętrznych
-        raise SourceError(source, "tryb demo offline – bez połączenia z usługą")
+        raise SourceError(source, "tryb pokazowy bez internetu – korzystam tylko z danych zapisanych wcześniej")
     if source_offline(source):  # D89: pojedyncze źródło wyłączone (OFFLINE_SOURCES) – tylko cache
         raise SourceError(source, SOURCE_OFF_MESSAGE)
     client = get_client()
@@ -198,14 +201,18 @@ async def get_with_retry(
             last = f"usługa nie odpowiada (przekroczono {timeout_s:.0f} s)"
             continue
         except httpx.TransportError as exc:
-            last = f"brak połączenia z usługą ({exc.__class__.__name__})"
+            log.info("%s: %s (%s)", source, exc.__class__.__name__, url)  # A18: nazwa wyjątku tylko w logu
+            last = "brak połączenia z usługą – spróbuj za chwilę"
             continue
         if resp.status_code == 429:
-            raise SourceError(source, "przekroczony limit zapytań (HTTP 429)")
+            log.info("%s: HTTP 429 (%s)", source, url)
+            raise SourceError(source, "usługa jest przeciążona (za dużo zapytań) – spróbuj za kilka minut")
         if resp.status_code >= 500:
-            last = f"usługa zwróciła błąd HTTP {resp.status_code}"
+            log.info("%s: HTTP %s (%s)", source, resp.status_code, url)
+            last = "usługa ma chwilową awarię – spróbuj za chwilę"
             continue
         if resp.status_code >= 400:
-            raise SourceError(source, f"usługa zwróciła błąd HTTP {resp.status_code}")
+            log.info("%s: HTTP %s (%s)", source, resp.status_code, url)
+            raise SourceError(source, "usługa odrzuciła zapytanie – spróbuj za chwilę albo wybierz inną działkę")
         return resp
     raise SourceError(source, last)

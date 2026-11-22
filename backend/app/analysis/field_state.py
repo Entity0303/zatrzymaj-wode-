@@ -34,7 +34,8 @@ from app.analysis.water_balance import (
 
 REFERENCE_KC = 1.0
 REFERENCE_P = 0.5
-COVER_LABEL = ("pokrycie referencyjne FAO-56 (Kc = 1) od marca do lipca, po typowym terminie zbioru goła gleba; "
+# A18: dla rolnika bez symboli (Kc = 1 – tylko w źródle FIELD_SOURCE)
+COVER_LABEL = ("liczone dla typowego pola z roślinami od marca do lipca, a po typowym terminie zbioru – dla gołej gleby; "
                "profil ok. 1 m")
 FIELD_SOURCE = "Model wody w glebie FAO-56 – pokrycie referencyjne"
 MIN_SERIES_DAYS = 30
@@ -184,7 +185,7 @@ def water_indicators(res: FieldStateResult, analysis_date: date):
     tag = SourceTag(kind="szacunek_modelu", date=last_usable_day(analysis_date), source=FIELD_SOURCE)
     status = "warn" if (res.water_pct or 0) < 50 else "ok"
     pct = Indicator(value=res.water_pct, unit="%", label="stan działki", status=status,
-                    note=f"{res.description} (profil ok. 1 m, pokrycie referencyjne)", source_tag=tag)
+                    note=f"{res.description} (profil ok. 1 m, typowe pole z roślinami)", source_tag=tag)
     mm = Indicator(value=res.water_mm, unit="mm", status=status, note="woda dostępna dla roślin, profil ok. 1 m",
                    source_tag=tag)
     sw = SoilWaterState(scope="profil", depth_m=PROFILE_DEPTH_M, description=res.description,

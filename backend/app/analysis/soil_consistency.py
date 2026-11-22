@@ -186,7 +186,7 @@ def assess(soil: SoilAssessment, map_sum: MapSummary | None, tex: SoilTexture | 
     if len(votes) > 2 and not conflict and light(votes[2].category) != light(basis.category):
         note += f" Model SoilGrids (250 m) wskazuje glebę {CAT_ACC[votes[2].category]} – jest najmniej dokładny, pominięty."
     if soil.wod_mm is None and substituted:
-        note += f" Mapa IUNG niedostępna – kategorię gleby i WOD przyjęto z: {IN_TEXT[basis.source]}."
+        note += f" Mapa IUNG niedostępna – kategorię gleby (i to, ile wody zmieści gleba) przyjęto z: {IN_TEXT[basis.source]}."
     contract = SoilConsistency(status="conflict" if conflict else "ok", note=note, basis=basis.source,
                                category_used=used, by_source=votes)
     return ConsistencyResult(contract, conflict, used, wod, substituted)
@@ -204,17 +204,17 @@ def apply(soil: SoilAssessment, c: ConsistencyResult) -> None:
     soil.wod_mm = c.wod_used
     soil.dominant_mineral = c.category_used
     src = LABELS[basis]
-    kind = "szacunek_modelu" if basis == "soilgrids" else "pomiar"
+    kind = "szacunek_modelu" if basis == "soilgrids" else "obliczenia"  # A18: wartość typowa kategorii, nie pomiar
     soil.soil_capacity = Indicator(
         value=round(c.wod_used), unit="mm", label=CATEGORY_SHORT[c.category_used],
         status=CATEGORY_STATUS[c.category_used],
-        note=f"woda dostępna dla roślin (WOD) – wartość typowa dla kat. {ROMAN[c.category_used]}; kategoria wg: {src}",
+        note=f"gleba zmieści tyle wody – wartość typowa dla kat. {ROMAN[c.category_used]}; kategoria wg: {src}",
         source_tag=SourceTag(kind=kind, source=src),
     )
     if soil.method is None:  # IUNG nie odpowiedział – WOD z zastępczego źródła, nie „nie wiadomo”
         soil.limitations = [x for x in soil.limitations if "IUNG nie odpowiada" not in x]
         soil.limitations.append("Brak mapy gleb IUNG (usługa nie odpowiada) – pewność wyniku obniżona.")
     soil.limitations.append(
-        f"Kategoria gleby i WOD w obliczeniach wg: {src} (kat. {ROMAN[c.category_used]}) – "
+        f"Kategoria gleby i to, ile wody zmieści gleba, w obliczeniach wg: {src} (kat. {ROMAN[c.category_used]}) – "
         + ("źródła gleby się różnią." if c.conflict else "mapa IUNG niedostępna.")
     )

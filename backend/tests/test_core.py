@@ -105,7 +105,7 @@ def test_offline_sources_block_only_listed(monkeypatch):
         assert not H.source_offline(name) and not offline(name)
     with pytest.raises(H.SourceError) as e:  # zapytanie do wyłączonego źródła nie wychodzi z aplikacji
         _asyncio.run(H.request("GET", "https://uldk.gugik.gov.pl/", source="ULDK GUGiK", timeout_s=1))
-    assert "OFFLINE_SOURCES" in e.value.message
+    assert "chwilowo wyłączona" in e.value.message and "OFFLINE_SOURCES" not in e.value.message
     monkeypatch.setattr(H.settings, "offline_sources", "")
     assert not H.source_offline("ULDK GUGiK")
 

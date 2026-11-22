@@ -20,9 +20,9 @@ rules:
         - {fact: crop_kind, ne: wieloletnia}
         - {fact: balance_mm, exists: true}
     title: "Po zbiorze: międzyplon i słoma na polu"
-    description: "Od {season_start_txt} bilans wody (opad − parowanie) wynosi {balance_mm} mm – {balance_vs_mean_txt}. Po zbiorze wysiej międzyplon i zostaw rozdrobnioną słomę – gleba zatrzyma więcej wody z jesiennych i zimowych opadów na następny sezon."
+    description: "Od {season_start_txt} bilans wody (opad minus parowanie) wynosi {balance_mm} mm – {balance_vs_mean_txt}. Po zbiorze wysiej międzyplon i zostaw rozdrobnioną słomę – gleba może zatrzymać więcej wody z jesiennych i zimowych opadów na następny sezon."
     why:
-      - "Międzyplony i resztki pożniwne zwiększają próchnicę i infiltrację – to podstawowa metoda retencji glebowej."
+      - "Międzyplony i resztki pożniwne zwiększają próchnicę i wsiąkanie wody – to podstawowy sposób zatrzymania wody w glebie."
       - "W tym sezonie było już {stress_days_season} dni stresu wodnego (średnio {stress_days_mean})."
 
   - id: retencja.nie_zostawiaj_scierniska
@@ -42,7 +42,7 @@ rules:
     description: "Rozdrobnij i zostaw słomę, a jeśli następna uprawa będzie jara – wysiej teraz międzyplon. Okryta gleba mniej paruje i lepiej przyjmuje deszcz. Od {season_start_txt} bilans wody wynosi {balance_mm} mm ({balance_vs_mean_txt})."
     why:
       - "Pole po zbiorze bez okrywy traci wodę najszybciej."
-      - "Teraz w profilu gleby jest {water_pct}% wody dostępnej."
+      - "Teraz zapas wody w glebie: {water_pct}% pełnego."
 
   - id: retencja.zima_bez_orki
     category: retencja
@@ -58,10 +58,10 @@ rules:
         - {fact: crop_kind, ne: wieloletnia}
         - {fact: balance_mm, exists: true}
     title: "Zatrzymaj wodę z jesienno-zimowych opadów i roztopów"
-    description: "Nie orz na zimę – zostaw resztki pożniwne, szorstką powierzchnię albo międzyplon ozimy. Woda z deszczu i roztopów wsiąknie zamiast spłynąć i odbuduje zapas w glebie przed sezonem (bilans od {season_start_txt}: {balance_mm} mm, {balance_vs_mean_txt})."
+    description: "Nie orz na zimę – zostaw resztki pożniwne, szorstką powierzchnię albo międzyplon ozimy. Więcej wody z deszczu i roztopów wsiąknie zamiast spłynąć i pomoże odbudować zapas w glebie przed sezonem (bilans od {season_start_txt}: {balance_mm} mm, {balance_vs_mean_txt})."
     why:
       - "Jesień i zima to główny okres odbudowy zapasu wody w glebie."
-      - "Teraz w profilu gleby jest {water_pct}% wody dostępnej."
+      - "Teraz zapas wody w glebie: {water_pct}% pełnego."
 
   - id: retencja.zima_nie_ugniataj
     category: retencja
@@ -77,8 +77,8 @@ rules:
     title: "Nie ugniataj mokrej gleby jesienią i zimą"
     description: "Pole jest obsiane, więc zapas wody odbudowują teraz opady i roztopy. Nie wjeżdżaj ciężkim sprzętem na mokrą glebę – koleiny i zbita warstwa sprawiają, że woda spływa zamiast wsiąkać. Bilans od {season_start_txt}: {balance_mm} mm ({balance_vs_mean_txt})."
     why:
-      - "Ugnieciona gleba gorzej przyjmuje wodę – mniejsza infiltracja, większy spływ."
-      - "Teraz w profilu gleby jest {water_pct}% wody dostępnej."
+      - "Ugnieciona gleba gorzej przyjmuje wodę – mniej wsiąka, więcej spływa."
+      - "Teraz zapas wody w glebie: {water_pct}% pełnego."
 
   - id: retencja.wiosna_mniej_uprawek
     category: retencja
@@ -97,7 +97,7 @@ rules:
     description: "Nie odwracaj roli i rób jak najmniej przejazdów – każda uprawka przesusza wierzchnią warstwę gleby. Zachowasz zapas wody: od {season_start_txt} bilans wynosi {balance_mm} mm ({balance_vs_mean_txt})."
     why:
       - "Ograniczenie intensywnej uprawy zmniejsza straty wody przez parowanie."
-      - "Teraz w profilu gleby jest {water_pct}% wody dostępnej."
+      - "Teraz zapas wody w glebie: {water_pct}% pełnego."
 
   - id: retencja.sad_okryta_gleba
     category: retencja
@@ -128,8 +128,8 @@ rules:
     title: "Zatrzymaj wodę w glebie – zamiast nawadniania"
     description: "{no_irrigation_txt}. Nie ugniataj gleby ciężkim sprzętem i zostaw na polu resztki roślin – deszcz wsiąknie wtedy zamiast spłynąć. Po zbiorze od razu rozdrobnij słomę i wysiej międzyplon, żeby odbudować zapas wody na następny sezon."
     why:
-      - "W strefie korzeni jest {water_pct}% wody dostępnej{stress_when_txt}."
-      - "Od {season_start_txt} bilans wody (opad − parowanie) wynosi {balance_mm} mm – {balance_vs_mean_txt}."
+      - "Zapas wody w strefie korzeni: {water_pct}% pełnego{stress_when_txt}."
+      - "Od {season_start_txt} bilans wody (opad minus parowanie) wynosi {balance_mm} mm – {balance_vs_mean_txt}."
 
   # ── analiza bez uprawy (A5b-1): retencja niezależna od uprawy, wg pory roku ──
   - id: retencja.dzialka_jesien_zima
@@ -145,7 +145,7 @@ rules:
         - {fact: month, in: [11, 12, 1, 2, 3]}
         - {fact: water_pct, exists: true}
     title: "Zatrzymaj wodę z jesienno-zimowych opadów i roztopów"
-    description: "W profilu gleby jest {water_pct}% wody dostępnej ({water_description}). Nie orz na zimę – zostaw resztki pożniwne, szorstką powierzchnię albo międzyplon ozimy: woda z deszczu i roztopów wsiąknie zamiast spłynąć."
+    description: "Zapas wody w glebie: {water_pct}% pełnego ({water_description}). Nie orz na zimę – zostaw resztki pożniwne, szorstką powierzchnię albo międzyplon ozimy: więcej wody z deszczu i roztopów wsiąknie zamiast spłynąć."
     why:
       - "Jesień i zima to główny okres odbudowy zapasu wody w glebie."
       - "Bilans wody z ostatnich 30 dni: {kbw30_mm} mm ({kbw30_vs_mean_txt})."
@@ -163,7 +163,7 @@ rules:
         - {fact: month, in: [4, 5, 6]}
         - {fact: water_pct, exists: true}
     title: "Ogranicz uprawki i nie zostawiaj gołej gleby"
-    description: "W profilu gleby jest {water_pct}% wody dostępnej ({water_description}). Rób jak najmniej przejazdów i nie odwracaj roli – każda uprawka przesusza wierzchnią warstwę; goła gleba traci wodę najszybciej."
+    description: "Zapas wody w glebie: {water_pct}% pełnego ({water_description}). Rób jak najmniej przejazdów i nie odwracaj roli – każda uprawka przesusza wierzchnią warstwę; goła gleba traci wodę najszybciej."
     why:
       - "Ograniczenie intensywnej uprawy zmniejsza straty wody przez parowanie."
       - "Bilans wody z ostatnich 30 dni: {kbw30_mm} mm ({kbw30_vs_mean_txt})."
@@ -181,9 +181,9 @@ rules:
         - {fact: month, in: [7, 8, 9, 10]}
         - {fact: water_pct, exists: true}
     title: "Po zbiorze: międzyplon i słoma na polu"
-    description: "W profilu gleby jest {water_pct}% wody dostępnej ({water_description}). Po zbiorze zostaw rozdrobnioną słomę i wysiej międzyplon – okryta gleba mniej paruje i zatrzyma więcej wody z jesiennych opadów."
+    description: "Zapas wody w glebie: {water_pct}% pełnego ({water_description}). Po zbiorze zostaw rozdrobnioną słomę i wysiej międzyplon – okryta gleba mniej paruje i może zatrzymać więcej wody z jesiennych opadów."
     why:
-      - "Międzyplony i resztki pożniwne zwiększają próchnicę i infiltrację – to podstawowa metoda retencji glebowej."
+      - "Międzyplony i resztki pożniwne zwiększają próchnicę i wsiąkanie wody – to podstawowy sposób zatrzymania wody w glebie."
       - "Bilans wody z ostatnich 30 dni: {kbw30_mm} mm ({kbw30_vs_mean_txt})."
 
   # ── zależne od gleby ──
@@ -198,9 +198,9 @@ rules:
       all:
         - {fact: light_soil, eq: true}
     title: "Zwiększaj próchnicę – lekka gleba trzyma mało wody"
-    description: "Gleba ({soil_txt}) zatrzymuje mało wody. Każdy dodatkowy procent próchnicy zwiększa jej pojemność wodną – mieszaj słomę z glebą, wysiewaj międzyplony, stosuj obornik lub kompost."
+    description: "Gleba ({soil_txt}) zatrzymuje mało wody. Każdy dodatkowy procent próchnicy sprawia, że gleba zmieści więcej wody – mieszaj słomę z glebą, wysiewaj międzyplony, stosuj obornik lub kompost."
     why:
-      - "Gleby ubogie w materię organiczną szybciej przesychają; wzrost próchnicy poprawia pojemność wodną."
+      - "Gleby ubogie w materię organiczną szybciej przesychają; więcej próchnicy – gleba zmieści więcej wody."
       - "Gleba zmieści ok. {wod_mm} mm wody dostępnej dla roślin."
       - "Woda z ulewy: {rain_retention_label} (przepuszczalność ok. {ksat_mm_h} mm/h)."
 
@@ -216,7 +216,7 @@ rules:
     title: "Woda z ulewy spływa – pomóż jej wsiąknąć"
     description: "Gleba wolno przyjmuje wodę (przepuszczalność ok. {ksat_mm_h} mm/h) – przy ulewie część wody spłynie albo stanie w zagłębieniach. Nie ugniataj gleby, utrzymuj okrywę roślinną i uprawiaj w poprzek spadku."
     why:
-      - "Przepuszczalność policzona z frakcji gleby z modelu SoilGrids (250 m) – orientacyjnie."
+      - "Przepuszczalność policzona z udziału piasku, pyłu i iłu z mapy gleb świata (siatka ok. 250 m) – orientacyjnie."
 
   - id: retencja.zadrzewienia_srodpolne
     category: retencja
@@ -249,7 +249,7 @@ rules:
       all:
         - {fact: terrain_pond, eq: glowna}
     title: "Oczko wodne w zagłębieniu"
-    description: "Woda z ok. {pond_catchment_ha} ha zbiera się {pond_place_txt}. Małe oczko (ok. {pond_area_m2} m²) zatrzyma ją na działce – z jednej ulewy 20 mm spłynie tu ok. {pond_inflow_runoff_m3} m³ wody."
+    description: "Woda z ok. {pond_catchment_ha} ha zbiera się {pond_place_txt}. {pond_noun_cap} (ok. {pond_area_m2} m²) może zatrzymać ją na działce – z jednej ulewy 20 mm spływa tu do ok. {pond_inflow_runoff_m3} m³ wody."
     why:
       - "Zagłębienie bez odpływu ma ok. {pond_depth_m} m głębokości – woda i tak tu stoi."
 
@@ -264,8 +264,8 @@ rules:
     when:
       all:
         - {fact: terrain_pond, eq: opcja}
-    title: "Do rozważenia: małe oczko przy odpływie"
-    description: "Na działce nie ma wyraźnego zagłębienia, ale woda z ok. {pond_catchment_ha} ha zbiera się {pond_place_txt}. Jeśli to miejsce bywa podmokłe, małe oczko (ok. {pond_area_m2} m²) zatrzyma część wody – z ulewy 20 mm ok. {pond_inflow_runoff_m3} m³."
+    title: "Do rozważenia: {pond_noun} {pond_where_short}"
+    description: "{pond_lead_txt} Jeśli to miejsce bywa podmokłe, {pond_noun} (ok. {pond_area_m2} m²) może zatrzymać część wody – z ulewy 20 mm spływa tu do ok. {pond_inflow_runoff_m3} m³."
     why:
       - "To opcja, nie pierwsze działanie: najpierw zatrzymanie wody w glebie (resztki roślin, międzyplony, mniej uprawek)."
       - "Teren działki: różnica wysokości {terrain_relief_m} m, powierzchnia {parcel_area_ha_terrain} ha."
@@ -283,8 +283,8 @@ rules:
       all:
         - {fact: culvert_candidate, eq: true}
         - {fact: hydro_ditch_state, ne: brak}   # A9: brak rowu w 500 m (OSM) – zastawki nie proponujemy
-    title: "Sprawdź rów przy miejscu odpływu – zastawka zatrzyma wodę"
-    description: "Woda z {outlet_share_pct}% działki ucieka w jednym miejscu (kierunek: {outlet_direction}), a na działkę spływa woda z ok. {inflow_ha} ha powyżej. Jeśli tam biegnie rów melioracyjny, zastawka (w porozumieniu ze spółką wodną) przytrzyma wodę w okolicy."
+    title: "Sprawdź rów przy miejscu odpływu – zastawka może zatrzymać wodę"
+    description: "Woda z {outlet_share_pct}% działki ucieka w jednym miejscu (kierunek: {outlet_direction}), a na działkę spływa woda z ok. {inflow_ha} ha powyżej. Jeśli tam biegnie rów melioracyjny, zastawka (w porozumieniu ze spółką wodną) może przytrzymać wodę w okolicy."
     why:
       - "{hydro_ditch_txt}"
 
@@ -300,7 +300,7 @@ rules:
       all:
         - {fact: buffer_strip, eq: true}
     title: "Pas zieleni lub zadrzewienie w poprzek stoku"
-    description: "Spadek dochodzi do {slope_max_pct}%, a strome miejsca (ponad 5%) to {steep_share_pct}% działki. Pas trawy, roślin miododajnych albo krzewów (ok. {buffer_length_m} m, szer. ok. 10 m) w poprzek spływu zatrzyma wodę i glebę po ulewie."
+    description: "Spadek dochodzi do {slope_max_pct}%, a strome miejsca (ponad 5%) to {steep_share_pct}% działki. Pas trawy, roślin miododajnych albo krzewów (ok. {buffer_length_m} m, szer. ok. 10 m) w poprzek spływu hamuje spływ wody i gleby po ulewie."
     why:
       - "Na stoku woda z ulewy szybko odpływa i zabiera glebę – pas zieleni ją hamuje i pozwala wsiąknąć."
 

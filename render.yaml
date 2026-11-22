@@ -17,11 +17,11 @@ services:
       # Dockerfile uruchamia uvicorn na 8000 – Render kieruje ruch na port z PORT
       - key: PORT
         value: "8000"
-      # w chmurze GUGiK nie blokuje – wszystkie źródła na żywo
+      # w chmurze GUGiK nie blokuje – źródła na żywo; BDOT10k tylko z cache (jak domyślnie w config.py, A18)
       - key: DEMO_OFFLINE
         value: "false"
       - key: OFFLINE_SOURCES
-        value: ""
+        value: "bdot"
       # trwały cache SQLite. Plan free: system plików kontenera (znika przy restarcie / uśpieniu).
       # Plan płatny: odkomentuj `disk` niżej – wtedy /data przeżywa restarty.
       - key: CACHE_DB

@@ -161,7 +161,7 @@ def test_assess_agricultural_soil():
     ind = a.soil_capacity
     assert ind.value == round(0.6 * 148.7 + 0.4 * 186.2)
     assert ind.unit == "mm" and ind.label == "Kat. II – podatna na suszę" and ind.status == "warn"
-    assert ind.source_tag.kind == "pomiar" and ind.source_tag.source == "IUNG-PIB"
+    assert ind.source_tag.kind == "obliczenia" and ind.source_tag.source.startswith("IUNG-PIB")
     assert not a.not_agricultural and not a.degrades_confidence
 
 
@@ -229,7 +229,7 @@ def test_dev_soil_endpoint(client):
     assert r.status_code == 200
     b = r.json()
     assert b["dominant_code"] == 3 and b["method"] == "wcs" and b["cells"] == 236
-    assert b["soil_capacity"]["value"] == 166 and b["soil_capacity"]["source_tag"]["kind"] == "pomiar"
+    assert b["soil_capacity"]["value"] == 166 and b["soil_capacity"]["source_tag"]["kind"] == "obliczenia"
     assert b["classes"] == ["RIIIb", "RIVa", "RIVb"]
     assert "RIIIb" in b["soil_capacity"]["note"]
     assert {s["name"] for s in b["sources"]} == {"IUNG-PIB", "EGiB (KIEG)"}

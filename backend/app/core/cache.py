@@ -36,7 +36,8 @@ log = logging.getLogger("uvicorn.error")
 V = TypeVar("V")
 STALE_MAX_S = 30 * 24 * 3600
 FOREVER = math.inf
-OFFLINE_MESSAGE = "brak tych danych w pamięci podręcznej (tryb demo offline – bez połączenia z usługą)"
+OFFLINE_MESSAGE = ("brak zapisanych danych dla tego miejsca (tryb pokazowy bez internetu) – wybierz jeden z przykładów "
+                   "albo spróbuj później")
 
 # nazwa źródła -> cache (do /api/status: liczba wpisów i wiek najnowszego)
 REGISTRY: dict[str, list["TTLCache"]] = {}
@@ -382,7 +383,8 @@ def offline(source: str | None = None) -> bool:
 def offline_message(source: str | None = None) -> str:
     from app.core.http import SOURCE_OFF_MESSAGE
 
-    return OFFLINE_MESSAGE if settings.demo_offline else f"brak tych danych w pamięci podręcznej ({SOURCE_OFF_MESSAGE})"
+    return OFFLINE_MESSAGE if settings.demo_offline else (
+        f"brak zapisanych danych dla tego miejsca ({SOURCE_OFF_MESSAGE}) – wybierz jeden z przykładów albo spróbuj później")
 
 
 async def cached_fetch(

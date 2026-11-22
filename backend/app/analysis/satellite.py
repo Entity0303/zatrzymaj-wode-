@@ -31,14 +31,16 @@ from shapely.geometry.base import BaseGeometry
 
 from app.core.cache import FOREVER, TTLCache, offline
 from app.core.config import settings
+from app.core.format import plural
 from app.core.http import SourceError
 from app.schemas.analysis import Satellite, SatelliteScene, SatelliteSeriesPoint, SourceTag
 from app.sources import sentinel as S
 
 log = logging.getLogger(__name__)
 RULES = Path(__file__).parent / "rules" / "satellite.yaml"
-NOTE = ("Sentinel-2 L2A (ESA Copernicus, przez Earth Search / AWS), piksel 10 m. NDVI = kondycja roślin, NDMI = "
-        "wilgotność roślin – mediany w obrysie; chmury, cienie i śnieg wycięte maską SCL. Progi orientacyjne.")
+# A18: dla rolnika słowami; nazwy wskaźników (NDVI, NDMI) i wartości – w polach ndvi / ndmi / source_tag (tryb Doradca)
+NOTE = ("Zdjęcia satelitarne Sentinel-2 (ESA Copernicus), szczegóły co 10 m. Kondycja upraw i wilgotność roślin to "
+        "wartość typowa dla całej działki; chmury, cienie i śnieg pomijamy. Ocena orientacyjna.")
 
 # wynik na żywo (dict) i szereg (list) – trwały cache (D53); klucz z kształtu działki i daty analizy
 _cache: TTLCache[dict] = TTLCache(ttl_s=None, max_items=512, name=S.SOURCE_SHORT)
@@ -448,6 +450,7 @@ def _entry(geom: BaseGeometry, on: date) -> dict | None:
 
 
 def _with_series(sat: Satellite, geom: BaseGeometry, on: date) -> Satellite:
+    sat = sat.model_copy(update={"note": NOTE})  # A18: zapisane wyniki mają starą notatkę – zawsze aktualny tekst
     k = geom_key(geom)
     ser = _lookup(("series", k, on.isoformat()))
     if ser is None:
@@ -456,7 +459,7 @@ def _with_series(sat: Satellite, geom: BaseGeometry, on: date) -> Satellite:
             ser = _lookup(("series", k, latest["on"]))
     if ser:
         pts = [SatelliteSeriesPoint.model_validate(x) for x in ser["points"]]
-        return sat.model_copy(update={"series": pts, "series_note": f"{len(pts)} zdjęć bez chmur z 12 miesięcy "
+        return sat.model_copy(update={"series": pts, "series_note": f"{len(pts)} {plural(len(pts), 'zdjęcie', 'zdjęcia', 'zdjęć')} bez chmur z 12 miesięcy "
                                                                     "(1 na 15 dni)"})
     return sat
 
@@ -477,7 +480,7 @@ def cached_layers(geom: BaseGeometry, on: date) -> dict | None:
 
 def pending() -> Satellite:
     return Satellite(status="pending", sentence=cfg()["sentences"]["pending"],
-                     note="Zdjęcie satelitarne liczone osobno (GET /api/satellite) – analiza nie czeka.",
+                     note="Zdjęcie satelitarne liczę osobno – pojawi się za chwilę, reszta wyniku jest gotowa.",
                      source_tag=SourceTag(kind="brak_danych", source=S.SOURCE))
 
 

@@ -72,16 +72,16 @@ def test_verdict_good_parcel():
     kinds = [s.kind for s in v.statements]
     assert kinds == ["gleba", "opady", "teren", "uprawy", "woda"] and 4 <= len(kinds) <= 6
     soil = v.statements[0]
-    assert soil.level == "ok" and soil.text.startswith("Ziemia dobra") and "186 mm" in soil.text
+    assert soil.level == "ok" and soil.text.startswith("Gleba średnia") and "zmieści ok. 186 mm" in soil.text
     assert v.crops_good and 2 <= len(v.crops_good) <= 4
     assert v.headline.startswith("Dobra")
-    assert "bez modelu językowego" in v.note
+    assert "według stałych reguł" in v.note and "Te same dane dają te same zdania" in v.note
 
 
 def test_verdict_weak_parcel_bad_wheat_and_rapeseed_good_rye():
     v, sug = verdict(WEAK, 106.3, **WEAK_CTX)
     soil = v.statements[0]
-    assert soil.level == "bad" and soil.text.startswith("Ziemia słaba") and "mało trzyma wody" in soil.text
+    assert soil.level == "bad" and soil.text.startswith("Gleba lekka") and "mało trzyma wody" in soil.text
     bad = {c.crop_id for c in v.crops_bad}
     good = {c.crop_id for c in v.crops_good}
     assert {"pszenica_ozima", "rzepak"} <= bad
@@ -140,7 +140,8 @@ def test_precip_deficit_years_threshold_from_yaml():
     exp = "bad" if st["deficit_years"] >= 5 else "warn" if st["deficit_years"] >= 3 else None
     if exp:
         assert s.level == exp
-    assert f"w {st['deficit_years']} z 10 lat" in s.text and "600 mm" in s.text
+    n = st["deficit_years"]  # A18: przy 0 – „ani razu”, nie „w 0 z 10 lat”
+    assert (f"w {n} z 10 lat" in s.text if n else "ani razu" in s.text and "w 0 z" not in s.text) and "600 mm" in s.text
 
 
 def test_verdict_with_chosen_crop_adds_statement():

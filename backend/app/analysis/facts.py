@@ -9,6 +9,7 @@ from datetime import date
 from typing import Any
 
 from app.analysis.crops import CROPS, Crop, no_irrigation_sentence
+from app.core.format import days
 from app.analysis.field_state import FieldStateResult
 from app.analysis.soil import SoilAssessment
 from app.analysis.soil_label import SoilProfile
@@ -34,17 +35,17 @@ FACT_META: dict[str, tuple[str, str | None, str]] = {
     "phase_label": ("Faza uprawy", None, "kalendarz upraw (FAO-56, PL)"),
     "month": ("Miesiąc analizy", None, "data analizy"),
     "soil_category": ("Kategoria podatności gleby na suszę", None, "IUNG-PIB"),
-    "wod_mm": ("Woda dostępna dla roślin w glebie (WOD)", "mm", "IUNG-PIB"),
-    "water_pct": ("Woda w glebie", "%", "Model wody w glebie FAO-56"),
-    "water_mm": ("Woda w glebie", "mm", "Model wody w glebie FAO-56"),
+    "wod_mm": ("Gleba zmieści wody (wartość typowa dla kategorii)", "mm", "IUNG-PIB"),
+    "water_pct": ("Zapas wody w glebie", "% pełnego zapasu", "Model wody w glebie FAO-56"),
+    "water_mm": ("Zapas wody w glebie", "mm", "Model wody w glebie FAO-56"),
     "water_rank_pct": ("Lata z mniejszym zapasem wody tego dnia", "%", "Model wody w glebie FAO-56"),
-    "balance_mm": ("Bilans wody od początku sezonu (opad − parowanie)", "mm", "NASA POWER"),
+    "balance_mm": ("Bilans wody od początku sezonu (opad minus parowanie)", "mm", "NASA POWER"),
     "balance_deviation_mm": ("Bilans wody względem średniej z 10 lat", "mm", "NASA POWER"),
     "balance_percentile": ("Lata z niższym bilansem wody", "%", "NASA POWER"),
     "precip_mm": ("Opad od początku sezonu", "mm", "NASA POWER"),
     "precip_mean_mm": ("Średni opad w tym okresie (10 lat)", "mm", "NASA POWER"),
     "precip_pct_of_mean": ("Opad względem średniej", "%", "NASA POWER"),
-    "et0_mm": ("Parowanie (ET0) od początku sezonu", "mm", "NASA POWER, FAO-56"),
+    "et0_mm": ("Parowanie od początku sezonu", "mm", "NASA POWER, FAO-56"),
     "et0_mean_mm": ("Średnie parowanie w tym okresie (10 lat)", "mm", "NASA POWER, FAO-56"),
     "longest_dry_spell_days": ("Najdłuższy okres bez opadu w sezonie", "dni", "NASA POWER"),
     "days_to_stress": ("Dni do stresu wodnego roślin", "dni", "Model wody w glebie FAO-56"),
@@ -59,13 +60,13 @@ FACT_META: dict[str, tuple[str, str | None, str]] = {
     "previous_crop_label": ("Uprawa w poprzednim roku", None, "wybór rolnika"),
     "texture_label": ("Uziarnienie gleby", None, "Mapa glebowo-rolnicza / SoilGrids"),
     "sand_pct": ("Piasek w glebie (0–30 cm)", "%", "SoilGrids (ISRIC)"),
-    "ksat_mm_h": ("Przepuszczalność gleby (Ksat)", "mm/h", "SoilGrids + Saxton i Rawls (2006)"),
+    "ksat_mm_h": ("Przepuszczalność gleby", "mm/h", "SoilGrids + Saxton i Rawls (2006)"),
     "rain_retention_label": ("Woda z ulewy", None, "SoilGrids + Saxton i Rawls (2006)"),
     "soil_complex_label": ("Kompleks przydatności rolniczej", None, "Mapa glebowo-rolnicza (GUGiK)"),
     "soil_txt": ("Gleba", None, "IUNG-PIB, mapa glebowo-rolnicza, SoilGrids"),
-    "kbw30_mm": ("Bilans wody z ostatnich 30 dni (opad − parowanie)", "mm", "NASA POWER"),
+    "kbw30_mm": ("Bilans wody z ostatnich 30 dni (opad minus parowanie)", "mm", "NASA POWER"),
     "kbw30_percentile": ("Lata z niższym bilansem wody w ostatnich 30 dniach", "%", "NASA POWER"),
-    "et0_recent_mm_day": ("Parowanie (ET0) w ostatnich 7 dniach", "mm/dzień", "NASA POWER, FAO-56"),
+    "et0_recent_mm_day": ("Parowanie w ostatnich 7 dniach", "mm/dzień", "NASA POWER, FAO-56"),
     "season_deficit_mm": ("Niedobór wody uprawy w tym sezonie", "mm", "Model wody w glebie FAO-56"),
     # teren (A6, NMT GUGiK)
     "slope_max_pct": ("Największy spadek terenu", "%", "NMT GUGiK"),
@@ -76,6 +77,34 @@ FACT_META: dict[str, tuple[str, str | None, str]] = {
     "pond_catchment_ha": ("Zlewnia miejsca na oczko", "ha", "NMT GUGiK"),
     "terrain_relief_m": ("Różnica wysokości w działce", "m", "NMT GUGiK"),
 }
+# A18: fakty z opadu (i bilansu) – źródło z faktycznej serii pogody (IMGW albo NASA), nie na sztywno
+PRECIP_FACTS = {"balance_mm", "balance_deviation_mm", "balance_percentile", "precip_mm", "precip_mean_mm",
+                "precip_pct_of_mean", "longest_dry_spell_days", "kbw30_mm", "kbw30_percentile"}
+ET0_FACTS = {"et0_mm", "et0_mean_mm", "et0_recent_mm_day"}
+
+
+def weather_sources(weather_source: str | None) -> tuple[str | None, str | None]:
+    """„IMGW-PIB (opad) + NASA POWER (parowanie)” → („stacje IMGW-PIB”, „NASA POWER, FAO-56”); samo „NASA POWER” → oba NASA."""
+    if not weather_source:
+        return None, None
+    if "+" in weather_source:
+        p, e = (x.strip() for x in weather_source.split("+", 1))
+        precip = "stacje IMGW-PIB" if p.startswith("IMGW") else p.replace(" (opad)", "")
+        return precip, e.replace(" (parowanie)", "") + ", FAO-56"
+    return weather_source, weather_source + ", FAO-56"
+
+
+def fact_source(name: str, facts: "Facts") -> str:
+    """Źródło faktu do uzasadnienia: dla opadu / bilansu / parowania – z faktycznej serii pogody."""
+    src = FACT_META.get(name, (name, None, "analiza"))[2]
+    if name in PRECIP_FACTS and facts.get("precip_source"):
+        return facts.get("precip_source") if name.startswith("precip") or name == "longest_dry_spell_days" else (
+            f"{facts.get('precip_source')} (opad), {facts.get('et0_source')} (parowanie)")
+    if name in ET0_FACTS and facts.get("et0_source"):
+        return facts.get("et0_source")
+    return src
+
+
 OPTIONAL_IRRIGATION_NOTE = (" {crop} w Polsce nawadnia się rzadko – ma to sens tylko przy dostępnej wodzie i sprzęcie"
                             " (pozwolenie wodnoprawne).")
 RAIN_LABEL = {"ucieka": "szybko wsiąka i ucieka w głąb", "zatrzymuje": "dobrze ją zatrzymuje",
@@ -186,6 +215,9 @@ def build_facts(
         "precip_mean_mm": sums.precip_mean_mm if sums else None,
         "et0_mm": sums.et0_mm if sums else None,
         "et0_mean_mm": sums.et0_mean_mm if sums else None,
+        # A18: faktyczne źródła opadu i parowania (seria pogody po podmianie opadu na IMGW)
+        "precip_source": weather_sources(wb.history.source_tag.source if wb and wb.history.source_tag else None)[0],
+        "et0_source": weather_sources(wb.history.source_tag.source if wb and wb.history.source_tag else None)[1],
         # dane o terenie i wodach w okolicy – zadania A6/A7
         "terrain": None,
         "water_nearby": None,
@@ -222,7 +254,7 @@ def build_facts(
     d2s = v["days_to_stress"]
     v["water_stress_7d"] = bool(v["sensitive"] and d2s is not None and d2s <= 7)
     v["stress_when_txt"] = ("" if d2s is None else " – rośliny już odczuwają brak wody" if d2s == 0 else
-                            f" – rośliny odczują brak wody za ok. {d2s} dni")
+                            f" – rośliny odczują brak wody za ok. {days(d2s)}")
     v["no_irrigation_txt"] = no_irrigation_sentence(crop) if crop else None
     v["irrigation_practice_note"] = (OPTIONAL_IRRIGATION_NOTE.format(crop=crop.label) if crop and
                                      crop.irrigation_practice == "optional" else "")

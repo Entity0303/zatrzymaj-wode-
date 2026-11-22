@@ -206,7 +206,7 @@ def test_offline_missing_data_is_clear_502_not_500(client):
     settings.demo_offline = True
     routes = mock_all()
     r = client.get("/api/analysis", params={"parcel_id": "061704_2.0011.383/2"})
-    assert r.status_code == 502 and "tryb demo offline" in r.json()["detail"]["message"]
+    assert r.status_code == 502 and "tryb pokazowy bez internetu" in r.json()["detail"]["message"]
     r = client.get("/api/report.pdf", params={"parcel_id": "061704_2.0011.383/2"})
     assert r.status_code == 502
     assert not any(rt.called for rt in routes.values())  # ani jednego zapytania zewnętrznego

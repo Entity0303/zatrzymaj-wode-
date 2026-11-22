@@ -80,7 +80,8 @@ async def water_layer(parcel_id: str, date: dt.date | None) -> LayerResponse:
                          source_tag=SourceTag(kind="pomiar", date=on, source="OpenStreetMap (Overpass API)"))
 
 
-SAT_LEGEND = {"kondycja": ("NDVI – kondycja roślin", (0.0, 0.9)), "wilgotnosc": ("NDMI – wilgotność roślin", (-0.4, 0.4))}
+# A18: dla rolnika słowa (kondycja upraw / wilgotność roślin); wskaźnik i wartość – w polach value / source_tag
+SAT_LEGEND = {"kondycja": ("Kondycja upraw", (0.0, 0.9)), "wilgotnosc": ("Wilgotność roślin", (-0.4, 0.4))}
 
 
 @router.post("/{layer}", response_model=LayerResponse, responses={404: {"description": "Brak zdjęcia"}})
@@ -114,12 +115,13 @@ async def satellite_layer(layer: str, parcel_id: str, date: dt.date | None, parc
     c = satellite_mod.cfg()["colors"][layer]
     title, rng = SAT_LEGEND[layer]
     value = sat.ndvi if layer == "kondycja" else sat.ndmi
+    word = sat.ndvi_label if layer == "kondycja" else sat.ndmi_label
     return LayerResponse(
         parcel_id=p.id, layer=layer, analysis_date=on,
         raster=RasterOverlay(image_url="data:image/png;base64," + lay[layer], bbox=tuple(lay["bbox"])),
         value_range=rng, legend=[LegendStop(value=v, color=col) for v, col in c["stops"]], legend_title=title,
         legend_left=c["left"], legend_right=c["right"], value=value, scene_date=sat.date,
-        note=(f"{title}: mediana {value:.2f} · zdjęcie z {sat.date:%d.%m.%Y}" if value is not None else None),
+        note=(f"{title}: {word or 'bez oceny'} · zdjęcie z {sat.date:%d.%m.%Y}" if value is not None else None),
         source_tag=SourceTag(kind="pomiar", date=sat.date, source="Sentinel-2 L2A (Earth Search)"),
     )
 

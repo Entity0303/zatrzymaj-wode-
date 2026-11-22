@@ -15,6 +15,7 @@ i klimatycznego bilansu wodnego z ostatnich 30 dni na tle 10 lat: woda 0,6 + bil
 """
 
 from app.analysis.facts import OFF_SEASON_PHASES, Facts
+from app.core.format import days
 from app.analysis.water_balance import format_mm
 from app.schemas.analysis import OverallStatus, Soil, StatusLevel
 
@@ -41,7 +42,7 @@ HEADLINES_SENSITIVE: dict[StatusLevel, str] = {
     "ok": "Dobrze – wody w glebie wystarcza",
     "warn": "Uwaga – rośnie ryzyko suszy",
     "risk": "Ryzyko – rośliny wkrótce odczują brak wody",
-    "danger": "Susza – rośliny cierpią z braku wody",
+    "danger": "Susza – roślinom brakuje wody",
 }
 HEADLINES_OTHER: dict[StatusLevel, str] = {
     "ok": "Dobrze – zapas wody w glebie w normie",
@@ -109,7 +110,7 @@ def summary_sentence(f: Facts) -> str:
         if d2s == 0:
             text += " Rośliny już odczuwają brak wody."
         elif d2s is not None:
-            text += f" Rośliny zaczną odczuwać brak wody za ok. {d2s} dni, jeśli nie spadnie deszcz."
+            text += f" Rośliny zaczną odczuwać brak wody za ok. {days(d2s)}, jeśli nie spadnie deszcz."
     elif f.get("phase_label"):
         text += f" Uprawa: {f['phase_label']} – ocena dotyczy zapasu wody w glebie."
     return text[0].upper() + text[1:]
@@ -138,7 +139,7 @@ def reserve_summary(f: Facts, scope: str) -> str:
     else:
         text += f"; mniej wody było tego dnia w {lower} z {of} ostatnich lat."
     if f.get("kbw30_mm") is not None:
-        text += f" W ostatnich 30 dniach spadło minus wyparowało: {format_mm(f['kbw30_mm'])} mm"
+        text += f" Bilans wody z ostatnich 30 dni (opad minus parowanie): {format_mm(f['kbw30_mm'])} mm"
         text += f" ({f['kbw30_vs_mean_txt']})." if f.get("kbw30_vs_mean_txt") else "."
     if scope == "poza_sezonem" and f.get("phase_label"):
         text += f" Uprawa: {f['phase_label']} – poza sezonem oceniamy zapas wody w glebie, nie stres roślin."

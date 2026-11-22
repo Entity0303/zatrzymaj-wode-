@@ -31,6 +31,27 @@ def num(x: float | int | None, decimals: int | None = None, thousands_from: int 
     return out
 
 
+def plural(n: int, one: str, few: str, many: str) -> str:
+    """Forma liczebnika po polsku (A18): 1 dzień, 2–4 dni, 5 dni, 22 dni… – samo słowo, bez liczby.
+    Np. plural(n, "dzień", "dni", "dni"), plural(n, "zdjęcie", "zdjęcia", "zdjęć")."""
+    n = abs(int(n))
+    if n == 1:
+        return one
+    if n % 10 in (2, 3, 4) and n % 100 not in (12, 13, 14):
+        return few
+    return many
+
+
+def days(n: int) -> str:
+    """„1 dzień”, „3 dni”, „12 dni”."""
+    return f"{n} {plural(n, 'dzień', 'dni', 'dni')}"
+
+
+def zl(x: float | None) -> str:
+    """Kwota w złotych ze spacją tysięcy od 1 000 (A18 – jednolicie z objętościami): 2100 → „2 100 zł”."""
+    return "–" if x is None else f"{num(x, 0, thousands_from=1000)} zł"
+
+
 def volume_m3(x: float | None) -> str:
     """Objętość wody po ludzku (orientacyjnie): 380 → „380 m³”, 1546 → „1 500 m³”… ≥ 10 000 → „22 tys. m³”."""
     if x is None or not math.isfinite(float(x)):
