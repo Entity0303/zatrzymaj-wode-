@@ -380,10 +380,16 @@ def category(suit: str, risk: int, median_rel: float, rot: RotationCheck) -> str
 
 def reason(crop: Crop, cat: str, suit: str, risk: int, n: int, typ: float | None, weak: float | None, weak_year: int,
            worst_loss_pct: int, rot: RotationCheck, light_soil: bool, soil_txt: str,
-           complex_code: str | None = None, category_iung: int | None = None, cereal_override: bool = False) -> str:
-    """JEDNO zdanie prostym językiem – wyłącznie z policzonych liczb; powód zgodny z opisem gleby (A15)."""
+           complex_code: str | None = None, category_iung: int | None = None, cereal_override: bool = False,
+           typ_range: tuple[float, float] | None = None, risk_range: tuple[int, int] | None = None) -> str:
+    """JEDNO zdanie prostym językiem – wyłącznie z policzonych liczb; powód zgodny z opisem gleby (A15).
+    A21: z widełkami – „typowo ok. 4,1–4,4 t/ha”, „w 1–3 z 10 lat”; gdy min = max – jedna liczba."""
     name = crop.label.lower()
     yld = f"typowo {_n(typ)} t/ha" if typ is not None else "plon bez danych GUS"
+    if typ is not None and typ_range and round(typ_range[0], 1) != round(typ_range[1], 1):
+        yld = f"typowo ok. {_n(typ_range[0])}–{_n(typ_range[1])} t/ha"
+    risk_hi = risk_range[1] if risk_range else risk
+    rk = f"{risk_range[0]}–{risk_range[1]}" if risk_range and risk_range[0] != risk_range[1] else str(risk)
     k = (complex_code or "").strip()
     kname = COMPLEX_NAME.get(k)
     if rot.status == "naruszenie":
@@ -399,24 +405,24 @@ def reason(crop: Crop, cat: str, suit: str, risk: int, n: int, typ: float | None
                 f"okolicy{iung}.")
     if suit == "nieodpowiednia":
         if light_soil and risk > 0:
-            return (f"Słaba, lekka ziemia trzyma mało wody – {name}: w {risk} z {n} lat strata ponad 20% plonu "
+            return (f"Słaba, lekka ziemia trzyma mało wody – {name}: w {rk} z {n} lat strata ponad 20% plonu "
                     f"({soil_txt}).")
         if light_soil:
             return f"Słaba, lekka ziemia ({soil_txt}) nie nadaje się pod tę uprawę – plon zwykle jest dużo niższy niż w okolicy."
         return f"Ta gleba ({soil_txt}) nie pasuje do tej uprawy – plon zwykle jest wyraźnie niższy niż w okolicy."
     if cat == "odradzane":
-        return (f"Za mało wody dla tej uprawy: w {risk} z {n} lat susza zabrałaby ponad 20% plonu, w najgorszym roku "
+        return (f"Za mało wody dla tej uprawy: w {rk} z {n} lat susza zabrałaby ponad 20% plonu, w najgorszym roku "
                 f"({weak_year}) {worst_loss_pct}%.")
     if cat == "polecane":
-        if risk == 0:
+        if risk == 0 and risk_hi == 0:
             return (f"Gleba pasuje i wody wystarcza – {yld}, a nawet w najgorszym roku ({weak_year}) plon spadłby "
                     f"tylko o {worst_loss_pct}%.")
-        return (f"Gleba pasuje – {yld}; strata ponad 20% plonu zdarzyłaby się w {risk} z {n} lat "
+        return (f"Gleba pasuje – {yld}; strata ponad 20% plonu zdarzyłaby się w {rk} z {n} lat "
                 f"(najgorszy rok: {weak_year}).")
     if suit == "odpowiednia":
-        return (f"Gleba pasuje, ale wody bywa za mało – {yld}, strata ponad 20% plonu w {risk} z {n} lat "
+        return (f"Gleba pasuje, ale wody bywa za mało – {yld}, strata ponad 20% plonu w {rk} z {n} lat "
                 f"(najgorszy rok: {weak_year}).")
-    tail = (f"strata ponad 20% plonu w {risk} z {n} lat" if risk else
+    tail = (f"strata ponad 20% plonu w {rk} z {n} lat" if risk or risk_hi else
             f"w najgorszym roku ({weak_year}) plon niższy o {worst_loss_pct}%")
     return f"Da się uprawiać, choć ta gleba nie jest dla tej uprawy najlepsza – {yld}, {tail}."
 
@@ -441,13 +447,20 @@ _build_memo: OrderedDict[tuple, CropSuggestions | None] = OrderedDict()
 BUILD_MEMO_MAX = 64
 
 
-def build(w: DailyWeather, analysis_date: date, ctx: Context, years: int = 10) -> CropSuggestions | None:
-    key = (weather_key(w), analysis_date, years, repr(ctx), id(config()))
+RANGE_LIMITATION = "Zakres pokazuje, jak wynik zmienia się przy innych danych o opadach i pojemności gleby."
+
+
+def build(w: DailyWeather, analysis_date: date, ctx: Context, years: int = 10,
+          ranges: dict | None = None) -> CropSuggestions | None:
+    """`ranges` (A21, analysis/variants.py): crop_id → {"typ": (min, max), "weak": …, "risk": …} – widełki w polach
+    *_range, w zdaniach i w pewności; None – wynik bazowy bez widełek."""
+    rkey = None if ranges is None else repr(sorted((k, sorted(v.items())) for k, v in ranges.items()))
+    key = (weather_key(w), analysis_date, years, repr(ctx), id(config()), rkey)
     if key in _build_memo:
         _build_memo.move_to_end(key)
         hit = _build_memo[key]
         return None if hit is None else hit.model_copy(deep=True)
-    out = _build(w, analysis_date, ctx, years)
+    out = _build(w, analysis_date, ctx, years, ranges)
     _build_memo[key] = out
     while len(_build_memo) > BUILD_MEMO_MAX:
         _build_memo.popitem(last=False)
@@ -459,7 +472,8 @@ def clear_memo() -> None:
     _sim_memo.clear()
 
 
-def _build(w: DailyWeather, analysis_date: date, ctx: Context, years: int = 10) -> CropSuggestions | None:
+def _build(w: DailyWeather, analysis_date: date, ctx: Context, years: int = 10,
+           ranges: dict | None = None) -> CropSuggestions | None:
     t0 = perf_counter()
     cfg = config()
     last = last_usable_day(analysis_date)
@@ -508,13 +522,23 @@ def _build(w: DailyWeather, analysis_date: date, ctx: Context, years: int = 10) 
             low.append("krótka albo niepełna seria plonów GUS dla województwa")
         if n < 8:
             low.append(f"tylko {n} pełnych sezonów z danymi pogodowymi")
+        rg = (ranges or {}).get(crop.id, {})
+        typ_rg, weak_rg, risk_rg = rg.get("typ"), rg.get("weak"), rg.get("risk")
+        if risk_rg is not None:
+            risk_rg = (int(risk_rg[0]), int(risk_rg[1]))
+            if risk_rg[1] - risk_rg[0] >= cfg["variants"]["wide_risk_years"]:  # A21: szeroki zakres → pewność niżej
+                low.append(f"wynik zależy od danych o opadach i glebie (strata ponad 20% plonu w {risk_rg[0]}–{risk_rg[1]} "
+                           f"z {n} lat)")
         notes = ([PERENNIAL_NOTE] if crop.kind == "wieloletnia" else []) + \
                 ([YIELD_NOTE[crop.id].capitalize() + "."] if crop.id in YIELD_NOTE else [])
         item = CropSuggestion(
             crop_id=crop.id, label=crop.label, group_id=crop.group_id, category=cat, category_label=CATEGORY_LABEL[cat],
             rank=0, score=round(score, 1),
             reason=reason(crop, cat, suit, risk, n, typ, weak, weak_year, round(100 * (1 - weak_rel)), rot, light_soil,
-                          ctx.soil_txt, ctx.complex_code, ctx.category, cereal_override),
+                          ctx.soil_txt, ctx.complex_code, ctx.category, cereal_override, typ_rg, risk_rg),
+            yield_typical_range=None if typ is None or typ_rg is None else [round(typ_rg[0], 1), round(typ_rg[1], 1)],
+            yield_weak_range=None if weak is None or weak_rg is None else [round(weak_rg[0], 1), round(weak_rg[1], 1)],
+            drought_risk_range=None if risk_rg is None else [risk_rg[0], risk_rg[1]],
             yield_typical_t_ha=None if typ is None else round(typ, 1),
             yield_weak_t_ha=None if weak is None else round(weak, 1), weak_year=weak_year,
             yield_potential_t_ha=None if ym is None else round(ym, 1),
@@ -575,7 +599,7 @@ def _build(w: DailyWeather, analysis_date: date, ctx: Context, years: int = 10) 
             "Spadek plonu przy suszy: reakcja plonu na brak wody (metoda FAO), inna dla każdej uprawy; dla części upraw "
             "to szacunek – oznaczone niższą pewnością.",
             "Wymagania glebowe i płodozmian – ogólne zalecenia agrotechniczne (szacunek, do weryfikacji z doradcą).",
-        ],
+        ] + ([RANGE_LIMITATION] if ranges else []),
         compute_ms=int((perf_counter() - t0) * 1000),
         source_tag=SourceTag(kind="szacunek_modelu", date=last, source=f"{MODEL_SOURCE}; {GUS_SOURCE}"),
     )

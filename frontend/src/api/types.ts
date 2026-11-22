@@ -112,6 +112,8 @@ export type AnalysisRequest = {
   date_from?: ISODate | null
   /** ≤ data analizy */
   date_to?: ISODate | null
+  /** A21: data siewu wybranej uprawy – model wody startuje od niej zamiast od typowej (± 30 dni) */
+  sowing_date?: ISODate | null
   /** A5e: tylko POST /api/report.pdf – 'short' = raport skrócony (2 strony, domyślnie) | 'full' = raport szczegółowy */
   report_type?: 'short' | 'full' | null
 }
@@ -283,6 +285,10 @@ export type CropSeason = {
   /** faza wrażliwa na niedobór – liczymy stres, możliwe zalecenie nawadniania */
   sensitive: boolean
   root_depth_m?: number | null
+  /** A21: data siewu podana przez rolnika i użyta w modelu */
+  sowing_date?: ISODate | null
+  /** A21: np. „data siewu poza typowym zakresem – użyto typowej” */
+  sowing_note?: string | null
 }
 
 /** Podsumowanie zakończonego sezonu uprawy */
@@ -635,6 +641,12 @@ export type CropSuggestion = {
   revenue?: CropRevenue | null
   /** A12b: powód braku ceny (gdy revenue = null), np. „cena z umowy z cukrownią” */
   revenue_note?: string | null
+  /** A21: plon typowy [min, max] t/ha z wariantów opadu i pojemności gleby */
+  yield_typical_range?: number[] | null
+  /** A21: plon w słabym roku [min, max] t/ha */
+  yield_weak_range?: number[] | null
+  /** A21: lata ze stratą > 20% plonu [min, max] z wariantów */
+  drought_risk_range?: number[] | null
   group_id: string
   category: SuggestionCategory
   category_label: string
@@ -918,6 +930,8 @@ export type CropSuggestions = {
   rotation_hint?: string | null
   note: string
   limitations?: string[]
+  /** A21: widełki (pola *_range) jeszcze się liczą w tle – ponów zapytanie za chwilę */
+  ranges_pending?: boolean
   compute_ms?: number | null
   source_tag: SourceTag
 }
@@ -931,6 +945,8 @@ export type CropRevenue = {
   price_source: string
   /** przychód z pola w typowym roku, zł */
   typical_zl: number
+  /** A21: przychód w typowym roku [min, max] zł – z widełek plonu */
+  revenue_range?: number[] | null
   /** przychód w słabym roku, zł */
   weak_year_zl: number
   /** powierzchnia, dla której liczono, ha */

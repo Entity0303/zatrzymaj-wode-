@@ -30,6 +30,7 @@ settings.imgw_enabled = False  # A7: magazyn IMGW tylko w testach, które go jaw
 settings.prng_min_interval_s = 0.0  # A5c: bez odstępów między zapytaniami do geokoderów w testach
 settings.prng_retry_delay_s = 0.0
 settings.nominatim_min_interval_s = 0.0
+settings.ranking_variants = False  # A21: widełki rankingu liczone w wątku w tle – w testach włączane jawnie (test_a21)
 
 
 @pytest.fixture(autouse=True)
@@ -53,6 +54,9 @@ def _isolated_caches():
     from app.sources import overpass
 
     overpass._failed.clear()  # P1: 10-minutowa pamięć „Overpass nie odpowiada”
+    from app.analysis import variants
+
+    variants.clear()  # A21: pamięć widełek rankingu
     saved = (settings.cache_db, settings.demo_offline, settings.demo_parcels_preload, settings.terrain_saved_results)
     saved_imgw = (settings.imgw_enabled, settings.imgw_store, settings.sentinel_enabled)
     reset()

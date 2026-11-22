@@ -121,6 +121,9 @@ class Settings(BaseSettings):
     demo_parcels_preload: bool = True
     # ULDK: blokada (302 / 429 / HTML) – ponowienia po 1 s i 3 s, potem bezpiecznik na 60 s (D54)
     uldk_retry_delays_s: list[float] = [1.0, 3.0]
+    # A21: ile najwyżej analiza czeka na widełki rankingu (warianty opadu i gleby); dłużej – liczą się w tle
+    ranking_variants: bool = True
+    ranking_variants_wait_s: float = 1.0
     uldk_breaker_s: float = 30.0  # P1: próbne zamknięcie po 30 s (było 60 s po pierwszym błędzie)
     uldk_breaker_failures: int = 5  # P1: bezpiecznik ULDK dopiero po tylu błędach …
     uldk_breaker_window_s: float = 60.0  # … w tym oknie

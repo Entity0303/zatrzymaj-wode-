@@ -21,7 +21,7 @@ from pydantic import BaseModel, Field
 
 from app.core.format import date_pl, num
 from app.analysis.et0 import DailyWeather
-from app.analysis.crops import get_crop
+from app.analysis.crops import get_crop, with_sowing
 from app.analysis.soil import assess_soil
 from app.analysis.soil import to_contract as soil_to_contract
 from app.analysis.causes import build_causes
@@ -34,6 +34,7 @@ from app.analysis import precip as precip_mod
 from app.analysis import satellite as satellite_mod
 from app.analysis import verdict as verdict_mod
 from app.analysis import suggestions as sugg
+from app.analysis import variants as variants_mod
 from app.analysis import terrain_interpret
 from app.analysis import hydro as hydro_mod
 from app.analysis import period as period_mod
@@ -111,6 +112,7 @@ class WeatherLoad:
     fetch_ms: int
     notes: list[str] = field(default_factory=list)
     precip: "precip_mod.PrecipInfo | None" = None  # A7: skąd opad (stacje IMGW / NASA)
+    raw_precip: "np.ndarray | None" = None  # A21: opad źródła pogody (NASA) przed podmianą na stacje – wariant widełek
 
 
 async def load_weather_history(
@@ -137,8 +139,9 @@ async def load_weather_history(
             ) from backup
         fallback = True
     # A7 (D82): opad ze stacji IMGW (magazyn w repo, bez sieci); ET0 zostaje z modelu pogodowego
+    raw_precip = w.precip
     w, pinfo = precip_mod.apply(w, lon, lat, analysis_date)
-    return WeatherLoad(w, start, end, fallback, int((perf_counter() - t0) * 1000), notes, pinfo)
+    return WeatherLoad(w, start, end, fallback, int((perf_counter() - t0) * 1000), notes, pinfo, raw_precip)
 
 
 # ── TYMCZASOWE (deweloperskie) ──────────────────────────────────────────────────────────────
@@ -615,11 +618,14 @@ async def run_analysis(
     lon: float | None = None, lat: float | None = None, geometry: dict | None = None,
     planned_crops: str | list[str] | None = None,
     period: str | None = None, date_from: dt.date | None = None, date_to: dt.date | None = None,
+    sowing_date: dt.date | None = None, wait_variants: bool = False,
 ) -> AnalysisResponse:
-    """Pełna analiza (wspólna dla /api/analysis, raportu PDF i rozgrzewki przykładów demo)."""
+    """Pełna analiza (wspólna dla /api/analysis, raportu PDF i rozgrzewki przykładów demo). `wait_variants` (A21):
+    czekaj na widełki rankingu do końca (raport PDF); inaczej najwyżej `ranking_variants_wait_s`."""
     with stale_scope() as stale_hits:
         return await _run(parcel_id, crop, analysis_date, previous_crop, stale_hits, crop_history, cultivated_area_ha,
-                          lon, lat, geometry, planned_crops, period, date_from, date_to)
+                          lon, lat, geometry, planned_crops, period, date_from, date_to, sowing_date,
+                          None if wait_variants else settings.ranking_variants_wait_s)
 
 
 async def _resolve_point(lon: float, lat: float) -> tuple[uldk.Parcel, ApproximateArea | None]:
@@ -646,6 +652,7 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
                lon: float | None = None, lat: float | None = None, geometry: dict | None = None,
                planned_crops: str | list[str] | None = None,
                period: str | None = None, date_from: dt.date | None = None, date_to: dt.date | None = None,
+               sowing_date: dt.date | None = None, variants_wait_s: float | None = 1.0,
                ) -> AnalysisResponse:
     t0 = perf_counter()
     today = dt.date.today()
@@ -667,6 +674,9 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
         previous_crop = crop_hist[0]
     crop = crop or None
     crop_obj = get_crop(crop) if crop else None
+    sowing_note = None
+    if crop_obj is not None and sowing_date is not None:  # A21: data siewu rolnika – model wody tej uprawy od niej
+        crop_obj, sowing_note = with_sowing(crop_obj, sowing_date)
     steps: list[LoadingStep] = []
 
     # ── 1. działka (ULDK) ──
@@ -831,6 +841,9 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
     soil_prof = soil_label.profile(soil_a, map_sum, soil_c.texture)
     # A5e (D79): poza sezonem wybranej uprawy (przed siewem / po zbiorze) – JEDEN stan wody: stan działki (field_state)
     # jako status główny, jedna liczba wody w glebie; stan uprawy (stres, fazy, nawadnianie) tylko w jej sezonie.
+    if out is not None and out.crop_season is not None and sowing_date is not None:
+        out.crop_season = out.crop_season.model_copy(update={
+            "sowing_date": None if sowing_note else sowing_date, "sowing_note": sowing_note})
     crop_off = bool(crop_obj and out is not None and out.crop_season is not None
                     and out.crop_season.phase in CROP_OFF_PHASES and field is not None and field.status == "ok")
     crop_active = bool(crop_obj and out is not None and out.crop_season is not None
@@ -943,6 +956,15 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
         )
         try:
             suggestions = await asyncio.to_thread(sugg.build, w, analysis_date, ctx, settings.history_years)
+            if suggestions is not None and settings.ranking_variants:
+                # A21: widełki z wariantów opadu i gleby – z pamięci albo najwyżej `variants_wait_s`, potem w tle
+                pi = w_res.precip
+                rng = await variants_mod.ranges(w, w_res.raw_precip, pi.main if pi else None, pi.factor if pi else None,
+                                                analysis_date, ctx, settings.history_years, variants_wait_s)
+                if rng is None:
+                    suggestions = suggestions.model_copy(update={"ranges_pending": True})
+                else:
+                    suggestions = await asyncio.to_thread(sugg.build, w, analysis_date, ctx, settings.history_years, rng)
         except Exception as exc:  # noqa: BLE001 – ranking nie może wywrócić analizy
             steps.append(_step("suggestions", "Ranking „Co tu posiać?”", "error", note=exc.__class__.__name__))
     suggestions = choice_mod.attach(suggestions, planned, soil_prof.group == "lekka")
@@ -1025,6 +1047,7 @@ async def get_analysis(
     period: Literal["30d", "since_sowing", "season"] | None = Query(None, description="A9b: podsumowanie okresu"),
     date_from: dt.date | None = Query(None, description="A9b: własny zakres – początek"),
     date_to: dt.date | None = Query(None, description="A9b: własny zakres – koniec (≤ data analizy)"),
+    sowing_date: dt.date | None = Query(None, description="A21: data siewu wybranej uprawy (RRRR-MM-DD)"),
 ) -> AnalysisResponse:
     """Pełna analiza wodna działki: ULDK → równolegle pogoda 10 lat, gleba IUNG, klasy EGiB, SoilGrids, mapa
     glebowo-rolnicza, prognoza (dla dziś) → model wody w glebie → ocena → pewność → przyczyny → rekomendacje.
@@ -1032,7 +1055,8 @@ async def get_analysis(
     Bez `crop` – stan działki (gleba, zapas wody pod pokryciem referencyjnym FAO-56, bilans opad − ET0),
     `crop`, `crop_season`, `irrigation` = null."""
     return await run_analysis(parcel_id, crop, date, previous_crop, crop_history, cultivated_area_ha, lon, lat,
-                              planned_crops=planned_crops, period=period, date_from=date_from, date_to=date_to)
+                              planned_crops=planned_crops, period=period, date_from=date_from, date_to=date_to,
+                              sowing_date=sowing_date)
 
 
 @router.post(
@@ -1047,4 +1071,4 @@ async def post_analysis(req: AnalysisRequest) -> AnalysisResponse:
     przez rolnika”, powierzchnia z kształtu; cała analiza (werdykt, ranking, teren) jak dla działki."""
     return await run_analysis(req.parcel_id, req.crop, req.date, req.previous_crop, req.crop_history,
                               req.cultivated_area_ha, req.lon, req.lat, req.geometry, req.planned_crops,
-                              req.period, req.date_from, req.date_to)
+                              req.period, req.date_from, req.date_to, req.sowing_date)

@@ -321,6 +321,8 @@ class CropSeason(Contract):
     day_of_season: int | None = Field(None, description="Dzień sezonu w dacie analizy (1 = siew / wznowienie)")
     sensitive: bool = Field(description="Faza wrażliwa na niedobór wody – liczymy stres, możliwe zalecenie nawadniania")
     root_depth_m: float | None = Field(None, description="Głębokość korzeni w modelu w dacie analizy")
+    sowing_date: dt.date | None = Field(None, description="A21: data siewu podana przez rolnika i użyta w modelu")
+    sowing_note: str | None = Field(None, description="A21: np. 'data siewu poza typowym zakresem – użyto typowej'")
 
 
 class SeasonSummary(Contract):
@@ -439,6 +441,8 @@ class CropRevenue(Contract):
     price_zl_t: float = Field(description="Średnia cena skupu, zł/t (3 ostatnie lata, województwo działki)")
     price_source: str = Field(description="Np. 'GUS – ceny skupu, woj. podlaskie, 2023–2025'")
     typical_zl: float = Field(description="Przychód w typowym roku, zł (do 100 zł)")
+    revenue_range: list[float] | None = Field(None, description="A21: przychód w typowym roku [min, max] z wariantów "
+                                                                "opadu i pojemności gleby, zł (do 100 zł)")
     weak_year_zl: float = Field(description="Przychód w słabym roku, zł (do 100 zł)")
     for_area_ha: float = Field(description="Powierzchnia, dla której liczono, ha")
 
@@ -464,6 +468,9 @@ class CropSuggestion(Contract):
     label: str
     revenue: CropRevenue | None = Field(None, description="A12: przychód z pola wg cen skupu GUS (null = brak ceny)")
     revenue_note: str | None = Field(None, description="A12b: powód braku ceny (gdy revenue = null), np. 'cena z umowy z cukrownią'")
+    yield_typical_range: list[float] | None = Field(None, description="A21: plon typowy [min, max] t/ha z wariantów opadu i gleby")
+    yield_weak_range: list[float] | None = Field(None, description="A21: plon w słabym roku [min, max] t/ha")
+    drought_risk_range: list[int] | None = Field(None, description="A21: lata ze stratą > 20% plonu [min, max] z wariantów")
     group_id: str = Field(description="Uprawa IUNG, której modelem wody liczony jest gatunek, np. 'zboza_ozime'")
     category: SuggestionCategory
     category_label: str
@@ -595,6 +602,8 @@ class CropSuggestions(Contract):
     rotation_hint: str | None = Field(None, description="Bez historii: 'Podaj, co rosło w ostatnich latach…'")
     note: str
     limitations: list[str] = Field(default_factory=list)
+    ranges_pending: bool = Field(False, description="A21: widełki (pola *_range) jeszcze się liczą w tle – ponów "
+                                                    "zapytanie za chwilę (wynik z pamięci)")
     compute_ms: int | None = None
     source_tag: SourceTag
 
@@ -1001,6 +1010,8 @@ class AnalysisRequest(Contract):
     period: Literal["30d", "since_sowing", "season"] | None = Field(None, description="A9b: okres podsumowania")
     date_from: dt.date | None = Field(None, description="A9b: własny zakres – początek")
     date_to: dt.date | None = Field(None, description="A9b: własny zakres – koniec (≤ data analizy)")
+    sowing_date: dt.date | None = Field(None, description="A21: data siewu wybranej uprawy (RRRR-MM-DD) – model wody "
+                                                          "startuje od niej zamiast od typowej (± 30 dni)")
     report_type: Literal["short", "full"] | None = Field(None, description="Tylko POST /api/report.pdf: short (domyślnie) | full")
 
 

@@ -100,6 +100,7 @@ async def get_report_pdf_now(
     period: Literal["30d", "since_sowing", "season"] | None = Query(None, description="A9b: podsumowanie okresu"),
     date_from: dt.date | None = Query(None, description="A9b: własny zakres – początek"),
     date_to: dt.date | None = Query(None, description="A9b: własny zakres – koniec (≤ data analizy)"),
+    sowing_date: dt.date | None = Query(None, description="A21: data siewu wybranej uprawy (RRRR-MM-DD)"),
     report_type: Literal["short", "full"] = Query("short", description="short – 4–5 stron (domyślnie) | full – z pełną tabelą upraw i szczegółami"),
 ) -> Response:
     """Liczy analizę (jak GET /api/analysis) i zwraca „Paszport wodny działki” w PDF (A4, do druku)."""
@@ -107,7 +108,7 @@ async def get_report_pdf_now(
     await _satellite_first(parcel_id, lon, lat, None, date)
     a = _no_pending(await run_analysis(parcel_id, crop, date, previous_crop, crop_history, cultivated_area_ha, lon,
                                        lat, planned_crops=planned_crops, period=period, date_from=date_from,
-                                       date_to=date_to))
+                                       date_to=date_to, sowing_date=sowing_date, wait_variants=True))
     pdf = await build_pdf(a, report_type)
     return Response(pdf, media_type="application/pdf", headers={
         "Content-Disposition": f'attachment; filename="{filename(a, report_type)}"',
@@ -125,7 +126,7 @@ async def post_report_pdf_now(req: AnalysisRequest) -> Response:
     await _satellite_first(req.parcel_id, req.lon, req.lat, req.geometry, req.date)
     a = _no_pending(await run_analysis(req.parcel_id, req.crop, req.date, req.previous_crop, req.crop_history,
                                        req.cultivated_area_ha, req.lon, req.lat, req.geometry, req.planned_crops,
-                                       req.period, req.date_from, req.date_to))
+                                       req.period, req.date_from, req.date_to, req.sowing_date, wait_variants=True))
     rt = req.report_type or "short"
     pdf = await build_pdf(a, rt)
     return Response(pdf, media_type="application/pdf", headers={

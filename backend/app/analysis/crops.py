@@ -16,7 +16,7 @@ spoczynek zimowy poza 1 IV–31 X. Korzenie rosną liniowo od startu do końca f
 """
 
 import csv
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import date
 from pathlib import Path
 
@@ -178,6 +178,37 @@ class Crop:
         if d < s:
             return bare_before
         return DayInfo("spoczynek_zimowy", KC_DORMANT, self.root_depth_m, False, False, y, None)
+
+
+# ── data siewu podana przez rolnika (A21) ───────────────────────────────────────────────────
+SOWING_MAX_SHIFT_DAYS = 30  # o ile najwyżej data siewu może odbiegać od typowej dla uprawy
+SOWING_OUT_OF_RANGE = "data siewu poza typowym zakresem – użyto typowej"
+
+
+def typical_sowing(crop: "Crop") -> tuple[int, int] | None:
+    """(miesiąc, dzień) typowego siewu: ozime – siew jesienny, jare i rzepak jesienny – start sezonu;
+    wieloletnie – brak (None)."""
+    if crop.kind == "wieloletnia":
+        return None
+    return (crop.autumn_sowing or (9, 25)) if crop.kind == "ozima" else crop.start
+
+
+def with_sowing(crop: "Crop", sowing: date | None) -> tuple["Crop", str | None]:
+    """(uprawa do modelu wody, nota). Data siewu w granicach ± `SOWING_MAX_SHIFT_DAYS` od typowej → kopia uprawy
+    z przesuniętym siewem (fazy przeliczone na okres siew–zbiór); poza zakresem – uprawa typowa i nota."""
+    typ = typical_sowing(crop)
+    if sowing is None:
+        return crop, None
+    if typ is None:
+        return crop, "uprawa wieloletnia – data siewu nie dotyczy"
+    if (sowing.month, sowing.day) == typ:
+        return crop, None
+    ref = date(sowing.year, *typ)
+    if abs((sowing - ref).days) > SOWING_MAX_SHIFT_DAYS:
+        return crop, SOWING_OUT_OF_RANGE
+    md = (sowing.month, sowing.day) if (sowing.month, sowing.day) != (2, 29) else (2, 28)
+    shifted = replace(crop, autumn_sowing=md) if crop.kind == "ozima" else replace(crop, start=md)
+    return shifted, None
 
 
 # ── Konfiguracja upraw: JEDNO ŹRÓDŁO PRAWDY = app/data/crops/crops.csv (A5b-2a, D60) ─────────

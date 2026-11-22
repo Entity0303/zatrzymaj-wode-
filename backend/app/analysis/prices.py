@@ -119,14 +119,19 @@ def _round100(x: float) -> float:
 
 
 def revenue(crop_id: str, typical_t_ha: float | None, weak_t_ha: float | None, area_ha: float | None,
-            voivodeship: str | None, analysis_date: date | None = None) -> CropRevenue | None:
+            voivodeship: str | None, analysis_date: date | None = None,
+            typical_range: list[float] | None = None) -> CropRevenue | None:
     # A12b: GUS, a gdy brak – notowanie ZSRIR; A16: obie tylko sprzed daty analizy
     p = price(crop_id, voivodeship, analysis_date) or zsrir_price(crop_id, analysis_date)
     if p is None or typical_t_ha is None or not area_ha:
         return None
     zl_t, src = p
     weak = weak_t_ha if weak_t_ha is not None else typical_t_ha
+    rng = None  # A21: widełki przychodu z widełek plonu typowego
+    if typical_range and len(typical_range) == 2:
+        rng = [_round100(typical_range[0] * area_ha * zl_t), _round100(typical_range[1] * area_ha * zl_t)]
     return CropRevenue(price_zl_t=zl_t, price_source=src, typical_zl=_round100(typical_t_ha * area_ha * zl_t),
+                       revenue_range=rng,
                        weak_year_zl=_round100(weak * area_ha * zl_t), for_area_ha=round(area_ha, 2))
 
 
@@ -136,20 +141,21 @@ def attach(sug: CropSuggestions | None, voivodeship: str | None, analysis_date: 
     if sug is None:
         return None
     area = sug.area.value_ha if sug.area else None
-    yields: dict[str, tuple[float | None, float | None]] = {}
+    yields: dict[str, tuple] = {}
     groups = []
     for g in sug.groups:
         items = []
         for it in g.items:
-            yields[it.crop_id] = (it.yield_typical_t_ha, it.yield_weak_t_ha)
-            rv = revenue(it.crop_id, it.yield_typical_t_ha, it.yield_weak_t_ha, area, voivodeship, analysis_date)
+            yields[it.crop_id] = (it.yield_typical_t_ha, it.yield_weak_t_ha, it.yield_typical_range)
+            rv = revenue(it.crop_id, it.yield_typical_t_ha, it.yield_weak_t_ha, area, voivodeship, analysis_date,
+                         it.yield_typical_range)
             note = None if rv is not None else no_price_reason(it.crop_id, analysis_date, voivodeship)
             items.append(it.model_copy(update={"revenue": rv, "revenue_note": note}))
         groups.append(g.model_copy(update={"items": items}))
 
     def rev(crop_id: str) -> CropRevenue | None:
-        ty, wk = yields.get(crop_id, (None, None))
-        return revenue(crop_id, ty, wk, area, voivodeship, analysis_date)
+        ty, wk, rg = yields.get(crop_id, (None, None, None))
+        return revenue(crop_id, ty, wk, area, voivodeship, analysis_date, rg)
 
     choice = [c.model_copy(update={"revenue": rev(c.crop_id)}) for c in sug.choice]
     alts = [a.model_copy(update={"revenue": rev(a.crop_id)}) for a in sug.alternatives]
