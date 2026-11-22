@@ -1445,3 +1445,40 @@ export type PriceWeather = {
   /** A28c: lata pominięte we wniosku o CENIE (szok rynkowy, np. 2022); plon i wykres obejmują je normalnie */
   price_excluded_years?: number[]
 }
+
+/** A27 – GET / POST /api/groundwater: „Wody gruntowe i wsiąkanie” (PIG-PIB + obliczenia z naszych danych). */
+export type InfiltrationLevel = 'dobre' | 'slabe' | 'bardzo_slabe'
+
+export interface GroundwaterContext {
+  /** true – nie udało się policzyć wsiąkania ani sprawdzić PIG-PIB; wtedy `note_pl`, reszta pusta */
+  unavailable: boolean
+  note_pl?: string | null
+  /** wsiąkanie = ile wody z opadu zostaje w glebie dla roślin (nie szybkość przesiąkania) */
+  infiltration?: {
+    level: InfiltrationLevel
+    label_pl: string
+    sentence_pl: string
+    short_pl: string
+    precip_30d_mm: number
+    et0_30d_mm: number
+    precip_60d_mm?: number | null
+    et0_60d_mm?: number | null
+    /** kategoria gleby IUNG: 1–4 = kat. I–IV, 5 = organiczna */
+    soil_code?: number | null
+    slope_mean_pct?: number | null
+    index: number
+    data_until: string
+  } | null
+  flood_zone?: { in_zone: boolean; label_pl: string; water_region?: string | null } | null
+  /** głębokość do pierwszego zwierciadła – dziś zawsze null (PIG-PIB nie ma usługi punktowej) */
+  depth_m?: number | null
+  source_pig: { unavailable: boolean; note_pl?: string | null; depth_available: boolean }
+  flood_after_rain: boolean
+  may_reduce_drought: boolean
+  interpretation_pl?: string | null
+  limitation_pl: string
+  source: string
+  source_url: string
+  fetched_at?: string | null
+  analysis_date?: string | null
+}

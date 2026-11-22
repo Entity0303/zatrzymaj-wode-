@@ -15,6 +15,7 @@ import { SatelliteCard } from './SatelliteCard'
 import { HydroCard } from './HydroCard'
 import { PeriodCard } from '@/features/period/PeriodCard'
 import { DroughtTile } from '@/features/drought/DroughtTile'
+import { GroundwaterTile } from '@/features/groundwater/GroundwaterTile'
 import { useSettings } from '@/lib/storage'
 import { CropSeasonCard } from './CropSeasonCard'
 import { DetailSection } from './DetailSection'
@@ -130,6 +131,8 @@ export function FieldOverview({
           {analysis.status.level !== 'ok' && analysis.status.level !== 'no_data' && <NowLine analysis={analysis} />}
           {/* F31: niezależne tło suszowe dla okolicy (EDO) – pobierane w tle po analizie */}
           <DroughtTile analysis={analysis} />
+          {/* A27: wsiąkanie (z naszych danych) i obszary zagrożone podtopieniami (PIG-PIB) */}
+          <GroundwaterTile analysis={analysis} />
         </DetailSection>
         {full && (
           <DetailSection title="Gleba i woda w glebie" hint="Zapas wody, faza uprawy, kategoria gleby" icon={Layers}>

@@ -7,6 +7,7 @@ import { useLang } from '@/lib/i18n'
 import { FULL_RESERVE_PCT, FULL_RESERVE_TEXT } from '@/lib/ranges'
 import { cn } from '@/lib/utils'
 import { DroughtTile } from '@/features/drought/DroughtTile'
+import { GroundwaterTile } from '@/features/groundwater/GroundwaterTile'
 import { LevelDot } from './LevelDot'
 import { PassportCard } from './PassportCard'
 import { PassportSection } from './PassportSection'
@@ -185,6 +186,8 @@ export function VerdictSection({ analysis }: { analysis: AnalysisResponse }) {
       </div>
       {/* F31: tło suszowe w okolicy (EDO) – pod kaflami werdyktu, na całą szerokość */}
       <DroughtTile analysis={analysis} passport />
+      {/* A27: wody gruntowe i wsiąkanie – pod kaflem EDO */}
+      <GroundwaterTile analysis={analysis} passport />
     </PassportSection>
   )
 }
