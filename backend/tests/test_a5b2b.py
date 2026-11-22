@@ -274,12 +274,12 @@ def test_report_pdf_verdict_page_both_variants(client, long_weather, crop):
     pages = PdfReader(io.BytesIO(r.content)).pages
     assert len(pages) == 2  # A5e-2: raport skrócony
     p1 = pages[0].extract_text()
-    up = p1.upper()  # etykiety pozycji – wersaliki przez CSS
-    assert "Werdykt działki" in p1 and "GLEBA" in up and "OPADY" in up and "CO SIAĆ" in up
-    if crop:
-        assert "WYBRANA UPRAWA" in up
+    # F19: strona 1 – tytuł, punkty werdyktu (gleba, opady…), Siej / Unikaj, wybrana uprawa w nagłówku
+    assert "Paszport wodny działki" in p1 and "Gleba:" in p1 and "Opady:" in p1
+    assert "Siej:" in p1 or "Unikaj:" in p1 or "nie jest tu odradzana" in p1
+    assert ("Uprawa: Zboża ozime" if crop else "Uprawa: nie wybrano") in " ".join(p1.split())
     text = "\n".join(p.extract_text() for p in pages)
-    assert "Co tu posiać?" in text and "Co zrobić z wodą" in text and "Na tle 10 lat" in text
+    assert "Co tu posiać" in text and "Co mogę zrobić?" in text and "Bilans wody na tle 10 lat" in text
 
 
 # ── A5b-2c: drobne poprawki PDF ─────────────────────────────────────────────────────────────
