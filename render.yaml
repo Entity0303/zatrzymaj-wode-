@@ -1,0 +1,41 @@
+# Render Blueprint – backend Wodoskopu (FastAPI w Dockerze). Instrukcja: DEPLOY.md.
+# Render → New → Blueprint → to repozytorium → Apply. Wartości z `sync: false` Render poprosi wpisać ręcznie.
+services:
+  - type: web
+    name: wodoskop-api
+    runtime: docker
+    region: frankfurt
+    # darmowy plan: usypia się po ok. 15 min bez ruchu, brak trwałego dysku (cache znika przy restarcie) – patrz DEPLOY.md
+    plan: free
+    dockerContext: ./backend
+    dockerfilePath: ./backend/Dockerfile
+    # lekki health check (bez zapytań do źródeł). /api/status odpytuje wszystkie źródła (GUGiK, NASA…) –
+    # Render sprawdza zdrowie co kilka sekund, więc /api/status zasypałby usługi publiczne; służy do ręcznego budzenia.
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      # Dockerfile uruchamia uvicorn na 8000 – Render kieruje ruch na port z PORT
+      - key: PORT
+        value: "8000"
+      # w chmurze GUGiK nie blokuje – wszystkie źródła na żywo
+      - key: DEMO_OFFLINE
+        value: "false"
+      - key: OFFLINE_SOURCES
+        value: ""
+      # trwały cache SQLite. Plan free: system plików kontenera (znika przy restarcie / uśpieniu).
+      # Plan płatny: odkomentuj `disk` niżej – wtedy /data przeżywa restarty.
+      - key: CACHE_DB
+        value: /data/cache.sqlite
+      # rozgrzewka cache przykładów demo po starcie (w tle) – po wybudzeniu przykłady są szybkie
+      - key: DEMO_WARMUP
+        value: "true"
+      # adres frontendu na Vercelu jako lista JSON, np. ["https://wodoskop.vercel.app"]
+      - key: CORS_ORIGINS
+        sync: false
+      # publiczny adres aplikacji (kod QR w raporcie PDF), np. https://wodoskop.vercel.app
+      - key: PUBLIC_URL
+        sync: false
+    # disk:                     # tylko plan płatny (Starter i wyżej)
+    #   name: cache
+    #   mountPath: /data
+    #   sizeGB: 1

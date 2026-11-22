@@ -4,6 +4,11 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-22 · `main` · F4 cz. 2 (A za B): publiczny link – Vercel + Render (konfiguracja i instrukcja)
+**Co:** adres API z `VITE_API_URL` (`api/client.ts` – `apiUrl()`; wszystkie zapytania i pobieranie PDF idą przez klienta; pusty = względne `/api` jak w Dockerze), typ w `src/vite-env.d.ts`; `frontend/vercel.json` (Vite, `dist`, SPA → `index.html`, długi cache `/assets`); `render.yaml` w katalogu głównym (web service Docker z `backend/Dockerfile`, Frankfurt, plan free, `PORT=8000`, health check `/api/health` – nie `/api/status`, bo ten odpytuje wszystkie źródła; `DEMO_OFFLINE=false`, `OFFLINE_SOURCES=""`, `CACHE_DB`, `DEMO_WARMUP`, `CORS_ORIGINS` i `PUBLIC_URL` do wpisania; dysk tylko w planie płatnym – zakomentowany); `DEPLOY.md` – klik po kliku (Render → Vercel → CORS), 3 linki testowe, budzenie przed oceną, konsekwencje planu free, rozwiązywanie problemów, propozycja dla backendu (regex CORS dla podglądów Vercela, seed cache w obrazie). Backendu nie zmieniano.
+**Pliki:** `frontend/src/api/client.ts`, `frontend/src/vite-env.d.ts`, `frontend/vercel.json`, `render.yaml`, `DEPLOY.md`.
+**Kontrakt API:** nie.
+
 ## 2026-11-22 · `main` · F4 cz. 1 (A za B): karta powitalna chowa się przy ruchu mapy
 **Co:** karta powitalna chowa się po przybliżeniu o ≥ 1 poziom (względem poziomu, przy którym się pokazała) albo po przeciągnięciu mapy (`dragstart` – tylko ruch użytkownika); zostaje wąska wyszukiwarka + „Przykłady” (lista rozwijana). Wraca po oddaleniu do widoku całej Polski (zoom ≤ 6) albo po kliknięciu logo (pasek przeglądania, lewy pasek) / „Start” (lewy pasek, dolne zakładki) – wtedy zamyka działkę i pokazuje Polskę (bez ruchu, gdy Polska już widoczna). Przejście ok. 200 ms (przezroczystość + lekki zjazd, `inert` w trakcie), `prefers-reduced-motion` bez animacji.
 **Pliki:** `frontend/src/pages/Start.tsx`, `features/intro/{IntroHero,ExploreBar}.tsx`, `features/map/ParcelMap.tsx`, `layout/{Sidebar,BottomTabs}.tsx`.

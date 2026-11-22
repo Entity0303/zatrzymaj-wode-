@@ -18,6 +18,13 @@ import type {
 } from './types'
 import { periodParams } from '@/lib/period'
 
+/**
+ * Adres backendu: `VITE_API_URL` (wdrożenie: Vercel → Render), domyślnie pusty = względne `/api`
+ * (Docker, `npm run dev` z proxy). Wszystkie zapytania i pobieranie PDF przechodzą przez `apiUrl`.
+ */
+const API_BASE = (import.meta.env.VITE_API_URL ?? '').trim().replace(/\/+$/, '')
+export const apiUrl = (path: string) => `${API_BASE}${path}`
+
 export class ApiError extends Error {
   status: number
   detail: unknown
@@ -32,7 +39,7 @@ async function get<T>(path: string, params: Record<string, string | number>, sig
   const qs = new URLSearchParams(Object.entries(params).map(([k, v]) => [k, String(v)]))
   let res: Response
   try {
-    res = await fetch(`${path}?${qs}`, { signal })
+    res = await fetch(`${apiUrl(path)}?${qs}`, { signal })
   } catch (e) {
     if ((e as Error).name === 'AbortError') throw e
     throw new ApiError(0, null, 'Brak połączenia z serwerem aplikacji.')
@@ -45,7 +52,7 @@ async function get<T>(path: string, params: Record<string, string | number>, sig
 async function post<T>(path: string, body: unknown, signal?: AbortSignal): Promise<T> {
   let res: Response
   try {
-    res = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal })
+    res = await fetch(apiUrl(path), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal })
   } catch (e) {
     if ((e as Error).name === 'AbortError') throw e
     throw new ApiError(0, null, 'Brak połączenia z serwerem aplikacji.')
@@ -168,8 +175,8 @@ export const api = {
     let res: Response
     try {
       res = q.geometry
-        ? await fetch('/api/report.pdf', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(analysisBody(q)) })
-        : await fetch(`/api/report.pdf?${new URLSearchParams(params)}`)
+        ? await fetch(apiUrl('/api/report.pdf'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(analysisBody(q)) })
+        : await fetch(`${apiUrl('/api/report.pdf')}?${new URLSearchParams(params)}`)
     } catch {
       throw new ApiError(0, null, 'Brak połączenia z serwerem aplikacji.')
     }
