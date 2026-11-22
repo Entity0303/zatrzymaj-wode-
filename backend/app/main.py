@@ -10,17 +10,19 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.core.cache import store
+from app.core.cache import load_seed, store
 from app.core.config import settings
 from app.core.http import close_client
 from app.demo import warmup_loop
-from app.routers import analysis, demo, hydro, infra_reports, layers, parcel, reports, satellite, search, status, terrain, weather
+from app.routers import (analysis, demo, hydro, infra_reports, layers, parcel, reports, satellite, search, status,
+                         terrain, weather)
 from app.sources import uldk
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     store()  # trwały cache SQLite (D53) – otwarcie pliku przy starcie
+    load_seed()  # A13: pusty cache (hosting bez trwałego dysku) → gotowe dane działek demo z obrazu
     uldk.load_known()  # znane działki: cache + app/data/demo_parcels.json (D54) – bez zapytań do ULDK
     # rozgrzewka cache przykładów demo w tle – nie blokuje startu (DEMO_WARMUP=false wyłącza)
     task = asyncio.create_task(warmup_loop()) if settings.demo_warmup else None
@@ -41,6 +43,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
+    allow_origin_regex=settings.cors_origin_regex or None,
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
