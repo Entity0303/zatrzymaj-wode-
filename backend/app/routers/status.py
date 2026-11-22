@@ -66,8 +66,8 @@ async def _check(name: str, used_for: str, url: str, params, cache_name: str) ->
     ok, err = True, None
     n, age = cache_stats(cache_name)
     src_off = source_offline(name) or source_offline(cache_name)
-    skip = ("tryb demo offline – bez zapytania testowego; dane tylko z cache" if settings.demo_offline
-            else "wyłączone na czas demo (OFFLINE_SOURCES) – dane tylko z cache" if src_off
+    skip = ("tryb demo offline – bez zapytania testowego; dane tylko z cache (tryb offline)" if settings.demo_offline
+            else "wyłączone na czas demo (OFFLINE_SOURCES) – dane tylko z cache (tryb offline)" if src_off
             else _limited(cache_name))
     if skip:
         return ServiceStatus(name=name, used_for=used_for, ok=bool((settings.demo_offline or src_off) and n),

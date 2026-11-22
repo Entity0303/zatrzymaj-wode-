@@ -8,10 +8,13 @@ Brak wyników to nie błąd: 200 + pusta lista + podpowiedź. Awaria źródła t
 from __future__ import annotations
 
 import asyncio
+import time
 
 from fastapi import APIRouter, Query
 
+from app.core import parcel_search as ps
 from app.core.config import settings
+from app.core.format import plural
 from app.core.http import NotFoundError, SourceError
 from app.core.search_query import HINT, ParsedQuery, fold, parse
 from app.schemas.search import SearchResponse, SearchResult
@@ -91,6 +94,71 @@ async def _parcels(name: str, number: str, notices: list[str]) -> list[uldk.Parc
         return []
 
 
+def _gmina_hint(res: ps.GminaSearch, number: str, found: list[uldk.Parcel]) -> str:
+    """Podpowiedź po „gmina + numer” – co sprawdziliśmy i co rolnik może dopisać. `found` – wszystkie trafienia
+    (także obręb o nazwie gminy ze zwykłego „obręb numer”)."""
+    k, n = len(res.checked) + res.skipped, res.total
+    if found:
+        txt = (f"Działki nr {number} w gminie {res.gmina} – wybierz obręb (wieś)." if len(found) > 1 else
+               f"Działka nr {number} w gminie {res.gmina}, obręb {found[0].region} – sprawdź, czy to ta.")
+        if res.next_name:
+            txt += (f" Sprawdziłem {k} z {n} obrębów gminy – jeśli Twojej działki nie ma na liście, dopisz nazwę wsi "
+                    f"(obrębu), np. {res.next_name} {number}.")
+        return txt
+    if res.next_name:
+        return (f"Dopisz nazwę wsi (obrębu), np. {res.next_name} {number}. W gminie {res.gmina} "
+                f"{plural(n, 'jest', 'są', 'jest')} {n} {plural(n, 'obręb', 'obręby', 'obrębów')} – w {k} sprawdzonych "
+                f"nie ma działki nr {number}.")
+    return f"Nie znaleziono działki nr {number} w gminie {res.gmina} (sprawdzone obręby: {k} z {n})."
+
+
+async def _find_parcels(name: str, number: str, hints: list[str], notices: list[str],
+                        deadline: float) -> tuple[list[uldk.Parcel], str | None]:
+    """A19: „obręb numer” → działki; z gminą jako filtrem („Kobylin-Borzymy, Wnory-Wandy 6/1”, „Wnory-Wandy 6/1
+    Kobylin-Borzymy”) – tylko z tej gminy; gdy nazwa to gmina („Kobylin-Borzymy 6/1”, „Wronki 70/4”) – szukanie w
+    obrębach gminy (`parcel_search`). Zwraca (działki, podpowiedź)."""
+    hits = await _parcels(name, number, notices)
+    tried = {name}
+    if hints:
+        narrowed = [p for p in hits if ps.matches_area(p, hints)]
+        if narrowed:  # obręb o tej nazwie jest w kilku gminach – zostaje ten z podanej gminy
+            return narrowed, None
+        for h in hints:  # odwrotna kolejność: „Wnory-Wandy, Kobylin-Borzymy 6/1”
+            alt = [p for p in await _parcels(h, number, notices) if ps.matches_area(p, [name])]
+            tried.add(h)
+            if alt:
+                return alt, None
+        plan = [(h, name) for h in hints] + [(name, " ".join(hints))]
+        base: list[uldk.Parcel] = []
+    else:
+        # obręb znaleziony i to NIE jest siedziba gminy o tej samej nazwie – zwykłe „obręb numer”
+        if hits and not all(fold(p.commune) == fold(name) or fold(p.commune).startswith(fold(name) + " ") for p in hits):
+            return hits, None
+        plan, base = [(name, "")], hits
+    if any(n.startswith(uldk.SOURCE) for n in notices):  # ULDK już nie odpowiada – nie dokładamy kolejnych zapytań
+        return hits, None
+    for gmina, rest in plan:
+        try:
+            res = await ps.search_gmina(gmina, number, rest, skip=tried, deadline=deadline)
+        except SourceError as exc:
+            notices.append(f"{exc.source}: {exc.message}")
+            break
+        if res is None:  # to nie jest nazwa gminy
+            continue
+        if not res.checked and not res.parcels and not res.next_name:  # gmina = jeden obręb, już sprawdzony
+            break
+        if res.stop_reason == "uldk":
+            notices.append(f"{uldk.SOURCE}: sprawdziłem {len(res.checked)} z {res.total} obrębów gminy {res.gmina} – "
+                           "ewidencja przestała odpowiadać, spróbuj za chwilę.")
+        seen = {p.id for p in base}
+        found = base + [p for p in res.parcels if p.id not in seen]
+        return found, _gmina_hint(res, number, found)
+    if hints and hits:
+        return hits, (f"Nie znaleziono działki nr {number} w „{', '.join(hints)}” – pokazuję obręby „{name}” "
+                      "w innych gminach.")
+    return hits, None
+
+
 def _sorted_parcels(parcels: list[uldk.Parcel]) -> list[uldk.Parcel]:
     return sorted(parcels, key=lambda p: (fold(p.voivodeship), fold(p.county), fold(p.commune), fold(p.region)))
 
@@ -126,6 +194,7 @@ async def _addresses(locality: str, number: str, street: str | None, notices: li
 
 
 async def _search(pq: ParsedQuery) -> SearchResponse:
+    deadline = time.monotonic() + settings.search_gmina_budget_s  # A19: budżet na sprawdzanie obrębów gminy
     notices: list[str] = []
     attribution = None
     hint: str | None = None
@@ -150,17 +219,25 @@ async def _search(pq: ParsedQuery) -> SearchResponse:
 
     elif pq.kind == "obreb_numer":
         # A9: „miejscowość numer” – działka (ULDK) I adres (PRG / OSM) równolegle; „miejscowość, ul. ulica numer” – adres
-        if pq.street:
+        p_hint: str | None = None
+        if pq.street and pq.alt_parcel:  # A19: „gmina, obręb numer” bez „ul.” – adres ALBO działka
+            alt_name, alt_hints = pq.alt_parcel
+            (parcels, p_hint), (addrs, a_attr) = await asyncio.gather(
+                _find_parcels(alt_name, pq.number or "", alt_hints, notices, deadline),
+                _addresses(pq.name or "", pq.number or "", pq.street, notices))
+        elif pq.street:
             parcels, (addrs, a_attr) = [], await _addresses(pq.name or "", pq.number or "", pq.street, notices)
         else:
-            parcels, (addrs, a_attr) = await asyncio.gather(
-                _parcels(pq.name or "", pq.number or "", notices),
+            (parcels, p_hint), (addrs, a_attr) = await asyncio.gather(
+                _find_parcels(pq.name or "", pq.number or "", pq.area_hint, notices, deadline),
                 _addresses(pq.name or "", pq.number or "", None, notices))
         attribution = a_attr
         if parcels or addrs:
             results = [parcel_result(p) for p in _sorted_parcels(parcels)] + [address_result(a) for a in addrs]
             total = len(results)
-            if len(parcels) > 1:
+            if parcels and p_hint:
+                hint = p_hint
+            elif len(parcels) > 1:
                 hint = "Kilka obrębów o tej nazwie – wybierz właściwy (gmina i powiat są przy każdej pozycji)."
             elif addrs and not parcels and not pq.street:
                 hint = (f"Nie znaleziono działki nr {pq.number} w obrębie „{pq.name}”, ale jest taki adres – przybliż mapę "
@@ -174,7 +251,9 @@ async def _search(pq: ParsedQuery) -> SearchResponse:
             results = [place_result(p) for p in res.places]
             total, truncated = len(results), res.truncated
             uldk_down = any(n.startswith(uldk.SOURCE) for n in notices)
-            if results and uldk_down:
+            if p_hint:  # A19: gmina sprawdzona – mówimy, co sprawdziliśmy i co dopisać
+                hint = p_hint + (" Pokazuję miejscowość – przybliż mapę i kliknij swoje pole." if results else "")
+            elif results and uldk_down:
                 hint = (f"Nie udało się teraz sprawdzić numeru {pq.number} (ewidencja działek nie odpowiada). Pokazuję "
                         "miejscowość – przybliż mapę i kliknij swoje pole.")
             elif results:

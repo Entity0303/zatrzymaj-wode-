@@ -1,4 +1,48 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
+import json
+import logging
+import re
+from typing import Annotated, Any
+
+from pydantic import field_validator
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
+
+log = logging.getLogger("uvicorn.error")
+DEFAULT_CORS_ORIGIN_REGEX = r"^https://.*\.vercel\.app$"
+
+
+def parse_origins(value: Any) -> list[str]:
+    """A19: CORS_ORIGINS jako lista JSON (`["https://a", "https://b"]`) albo tekst z przecinkami (`https://a,https://b`);
+    pusty = brak. Błędna wartość NIE wywraca startu – ostrzeżenie w logu i pusta lista."""
+    if value is None:
+        return []
+    if isinstance(value, (list, tuple)):
+        items = list(value)
+    elif isinstance(value, str):
+        text = value.strip()
+        if not text:
+            return []
+        if text.startswith("{"):
+            log.warning("CORS_ORIGINS: oczekiwano listy, nie obiektu JSON (%r) – brak dozwolonych adresów", text[:200])
+            return []
+        if text.startswith("["):
+            try:
+                items = json.loads(text)
+            except ValueError:
+                log.warning("CORS_ORIGINS: niepoprawna lista JSON (%r) – brak dozwolonych adresów", text[:200])
+                return []
+            if not isinstance(items, list):
+                log.warning("CORS_ORIGINS: JSON nie jest listą (%r) – brak dozwolonych adresów", text[:200])
+                return []
+        else:
+            items = text.split(",")
+    else:
+        log.warning("CORS_ORIGINS: nieobsługiwany typ %s – brak dozwolonych adresów", type(value).__name__)
+        return []
+    out = [str(x).strip().strip("\"'").rstrip("/") for x in items if isinstance(x, str) and str(x).strip()]
+    bad = [x for x in out if not x.startswith(("http://", "https://"))]
+    if bad:
+        log.warning("CORS_ORIGINS: pomijam wartości, które nie są adresem http(s): %r", bad[:5])
+    return [x for x in out if x and x not in bad]
 
 
 class Settings(BaseSettings):
@@ -6,11 +50,31 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def _origins(cls, v: Any) -> list[str]:
+        return parse_origins(v)
+
+    @field_validator("cors_origin_regex", mode="before")
+    @classmethod
+    def _origin_regex(cls, v: Any) -> str:
+        """Błędne wyrażenie nie wywraca startu (CORSMiddleware kompiluje je przy starcie) – ostrzeżenie i brak regexu."""
+        text = (v or "").strip() if isinstance(v, str) else ""
+        if not text:
+            return ""
+        try:
+            re.compile(text)
+        except re.error as exc:
+            log.warning("CORS_ORIGIN_REGEX: niepoprawne wyrażenie %r (%s) – pomijam", text[:200], exc)
+            return ""
+        return text
+
     http_timeout_s: float = 20.0
     user_agent: str = "Wodoskop/0.1 (HackNation 2026)"  # uczciwy User-Agent dla wszystkich źródeł (A6)
-    cors_origins: list[str] = ["http://localhost:5173"]
-    # A13: podglądy Vercela mają zmienne adresy – np. CORS_ORIGIN_REGEX=https://wodoskop(-[a-z0-9-]+)?\.vercel\.app
-    cors_origin_regex: str = ""
+    # A19: JSON albo tekst z przecinkami (NoDecode – pydantic-settings nie dekoduje JSON-a sam, robi to parse_origins)
+    cors_origins: Annotated[list[str], NoDecode] = ["http://localhost:5173"]
+    # A13/A19: podglądy Vercela mają zmienne adresy; domyślnie każdy *.vercel.app (pusty napis = wyłączone)
+    cors_origin_regex: str = DEFAULT_CORS_ORIGIN_REGEX
     # A13: gotowy cache w obrazie (app/data/seed/cache_seed.sqlite.gz) – wczytywany, gdy trwały cache jest pusty
     cache_seed: bool = True
 
@@ -118,6 +182,10 @@ class Settings(BaseSettings):
     imgw_hydro_url: str = "https://danepubliczne.imgw.pl/api/data/hydro"
     hydro_background: bool = True        # A9: adresy w wyszukiwarce (testy A5c – bez, jawnie włączane w test_a9)
     search_timeout_s: float = 14.0        # łączny limit jednego wyszukiwania
+    # A19: „gmina + numer” – najwyżej tyle obrębów gminy sprawdzamy w ULDK na jedno zapytanie (sekwencyjnie) i tyle
+    # sekund (od startu wyszukiwania) na całe sprawdzanie – reszta budżetu zostaje na odpowiedź
+    search_gmina_max_obreby: int = 10
+    search_gmina_budget_s: float = 10.0
 
     # przykłady demo: rozgrzewka cache przy starcie (w tle) i co tyle godzin
     demo_warmup: bool = True

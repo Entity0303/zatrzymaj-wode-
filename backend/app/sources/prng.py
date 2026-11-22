@@ -125,12 +125,22 @@ def parse_response(xml_text: str) -> list[PrngPlace]:
     return [p for p in places if p.name]
 
 
+def build_gmina_filter(gmina: str) -> str:
+    """A19: wszystkie miejscowości gminy – pole GMINA (np. „Kobylin-Borzymy-gmina wiejska”) zawiera nazwę gminy."""
+    return ('<Filter xmlns="http://www.opengis.net/fes/2.0">' + _like("GMINA", "*" + _like_body(gmina, True) + "*")
+            + "</Filter>")
+
+
 async def _get(name: str, loose: bool = False, hints: tuple[str, ...] = ()) -> str:
+    return await _get_filter(build_filter(name, loose, hints))
+
+
+async def _get_filter(filter_xml: str) -> str:
     """Jedno zapytanie z odstępem między zapytaniami i jedną ponowną próbą po błędzie połączenia."""
     global _last_request
     params = {"service": "WFS", "version": "2.0.0", "request": "GetFeature",
               "typeNames": "ms:M1_UrzedoweNazwyMiejscowosci", "count": str(MAX_FEATURES), "srsName": "EPSG:4326",
-              "filter": build_filter(name, loose, hints)}
+              "filter": filter_xml}
     last = "brak odpowiedzi"
     for attempt in range(2):
         resp = None
@@ -180,6 +190,19 @@ async def search(name: str, hints: list[str] | None = None) -> tuple[list[PrngPl
         raw = await _search_pattern(name, True, hs)
         found = [p for p in raw if fold(p.name).startswith(want)]
     return found, len(raw) >= MAX_FEATURES
+
+
+async def in_gmina(gmina: str) -> list[PrngPlace]:
+    """A19: miejscowości gminy o nazwie `gmina` (porównanie bez polskich znaków, bez dopisku „-gmina wiejska”).
+    Pusta lista = nie ma takiej gminy. Cache bez wygasania; najwyżej 200 miejscowości (MAX_FEATURES)."""
+    want = fold(gmina)
+    key = ("gmina", want)
+
+    async def download() -> list[PrngPlace]:
+        return parse_response(await _get_filter(build_gmina_filter(gmina)))
+
+    raw = await cached_fetch(_cache, key, SOURCE, download, ttl_s=FOREVER, breaker_s=settings.prng_breaker_s)
+    return [p for p in raw if fold(p.gmina) == want]
 
 
 def clear_cache() -> None:

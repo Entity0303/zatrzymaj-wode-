@@ -51,7 +51,7 @@ def test_seed_skipped_without_store_or_disabled(tmp_path, monkeypatch):
 def test_health_is_light_and_cors_regex_setting_exists():
     with TestClient(app) as c:
         assert c.get("/api/health").json() == {"status": "ok"}
-    assert settings.cors_origin_regex == "" and "http://localhost:5173" in settings.cors_origins
+    assert settings.cors_origin_regex == r"^https://.*\.vercel\.app$" and "http://localhost:5173" in settings.cors_origins  # A19
 
 
 def test_seed_exclude_lists_short_lived_sources():
