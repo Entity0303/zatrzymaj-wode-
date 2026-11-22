@@ -4,6 +4,12 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-22 · `main` · dopiski po F6/F18 (A za B)
+**Co:** (1) `ReportActions` – „Raport PDF” / „Paszport wodny” w jednej linii, container query < 440 px = jeden pod drugim, „albo pełny raport” jedną linią. (2) „Zgłoszenia” (#zgloszenia, ikona fal) w lewym menu i dolnych zakładkach zamiast linku w panelu; pinezki `/api/infra-reports` tylko w tym widoku – wcześniej `InfraPins` pobierał je przy każdej wybranej działce (lokalnie ok. 6 ms). (3) Ranking „Co tu posiać?” – `CropLine` w 3 liniach w panelu i w paszporcie < 560 px (container query), jeden tytuł. (4) Obraz gleby IUNG nie zostaje po zmianie warstwy/działki – sprzątanie wszystkich `svg[data-soil-overlay]` (z clipPath), przerwane pobieranie, nakładka danych tylko dla bieżącej warstwy.
+**Też w tej sesji (backend, F19):** raporty PDF w stylu paszportu – `backend/app/report/*` + asercje testów raportu (commity 178e9b6, 712a40e); wpis w a-backend.md – do dopisania przez osobę A.
+**Sprawdzone:** tsc, build, oxlint; pytest -k "report or pdf" (30 passed). W przeglądarce – nie.
+**Kontrakt API:** nie.
+
 ## 2026-11-22 · `main` · F18 (A za B): drobne po F6
 **Co:** (1) `DateField` – data analizy zawsze dd.mm.rrrr (własne pole tekstowe, zatwierdzane Enterem / wyjściem z pola; błędna albo spoza zakresu dziś − 10 lat … dziś – wraca poprzednia), kalendarz z ukrytego `input type=date` pod ikoną (`showPicker`). (2) `RefineCard` – telefon (< 768 px): w formularzu tylko „Co rośnie teraz?” i „Co rosło w poprzednim sezonie?”, „Data siewu” i „Okres analizy” w „Dodatkowe”; komputer bez zmian. (3) Data siewu jako `sowing_date` w /api/analysis i /api/report.pdf (GET i POST, typ lokalny – backend dodaje parametr); okres „od siewu” dalej od tej daty; klucz analizy uwzględnia datę siewu. (4) Tabela upraw: zakres ryzyka z `drought_risk_range`, a bez niego `risk_years_range`.
 **Pliki:** `frontend/src/components/DateField.tsx`, `features/parcel-panel/{RefineCard.tsx,useAnalysis.ts}`, `api/client.ts`, `features/passport/CropTableSection.tsx`, `pages/Start.tsx`, `lib/i18n.en.ts`.
