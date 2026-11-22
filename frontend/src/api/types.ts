@@ -630,6 +630,8 @@ export type CropSuggestion = {
   label: string
   /** F3: przychód z pola wg cen skupu GUS (null = brak ceny) */
   revenue?: CropRevenue | null
+  /** A12b: powód braku ceny (gdy revenue = null), np. „cena z umowy z cukrownią” */
+  revenue_note?: string | null
   group_id: string
   category: SuggestionCategory
   category_label: string

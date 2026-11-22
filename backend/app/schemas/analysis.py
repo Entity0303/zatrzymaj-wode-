@@ -463,6 +463,7 @@ class CropSuggestion(Contract):
     crop_id: RankingCropId
     label: str
     revenue: CropRevenue | None = Field(None, description="A12: przychód z pola wg cen skupu GUS (null = brak ceny)")
+    revenue_note: str | None = Field(None, description="A12b: powód braku ceny (gdy revenue = null), np. 'cena z umowy z cukrownią'")
     group_id: str = Field(description="Uprawa IUNG, której modelem wody liczony jest gatunek, np. 'zboza_ozime'")
     category: SuggestionCategory
     category_label: str
