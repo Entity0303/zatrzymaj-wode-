@@ -4,6 +4,11 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-22 · `main` · F4b (A za B): ekran startowy – przyciski mapy, legenda gleb, krótkie tytuły przykładów
+**Co:** przyciski mapy (+/−, podkład) na ekranie startowym w prawym dolnym rogu, nad kartą powitalną (z-index wyżej), poziomo – też na telefonie (nad podpowiedzią); legenda „Podatność gleb na suszę” nad nimi, widoczna tylko gdy warstwa IUNG jest na mapie – wspólna reguła `soilLayerVisible` (zaokrąglony zoom ≤ `SOIL_MAX_ZOOM` = 11, jak dobór kafli w Leaflecie), zmienia się dopiero po zakończeniu ruchu (bez migania). Tytuły kart przykładów maks. 3 słowa: długi tytuł z API („Less – Drzewce-Kolonia 203 (gm. Nałęczów)”) → „Stok na lessie”, miejscowość na początek opisu („Drzewce-Kolonia 203, gm. Nałęczów · …”), opis obcięty do 2 linii (karty i lista „Przykłady”).
+**Pliki:** `frontend/src/pages/Start.tsx`, `features/map/SoilSusceptibilityLayer.tsx`, `features/intro/{useDemoExamples.ts,ExploreBar.tsx}`.
+**Kontrakt API:** nie.
+
 ## 2026-11-22 · `main` · F4 cz. 3 (A za B): README.md (wymagania KOWR B.1–B.9)
 **Co:** README w katalogu głównym: opis i problem, uruchomienie (docker compose, porty, `OFFLINE_SOURCES` / `DEMO_OFFLINE` – PowerShell i bash), architektura (schemat tekstowy), dane (na bieżąco / zapisane w repo z datami i warunkami), biblioteki z licencjami (z node_modules i requirements), narzędzia AI, licencja projektu (do uzupełnienia – propozycja MIT), ograniczenia (m.in. brak wód gruntowych), weryfikacja (IMGW vs NASA +15,7…+23,2%, IUNG SMSR 99,8% / 96,9%, kalibracja GUS ≤ 14%, test słabej ziemi), koszty, zespół. Hydrologia, adresy, ceny opisane jako „w trakcie”.
 **Uwaga – licencja:** react-leaflet 5.0.0 i @react-leaflet/core 3.0.0 mają licencję Hippocratic-2.1 (nie MIT/BSD/Apache) – do decyzji: zastąpienie własną warstwą nad Leafletem (BSD-2). Opisane w README pkt 5.

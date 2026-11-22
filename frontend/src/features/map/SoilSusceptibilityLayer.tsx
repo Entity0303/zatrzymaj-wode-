@@ -8,6 +8,15 @@ import { SOIL_COLOR } from '@/theme/soil'
  */
 const IUNG_WMS = 'https://sgeo.iung.pl/geoserver/Susza/wms'
 
+/** Największe przybliżenie, przy którym warstwa jest rysowana (z bliska piksele 5 m wyglądają topornie). */
+export const SOIL_MAX_ZOOM = 11
+
+/**
+ * Czy warstwa jest teraz na mapie – ta sama reguła co Leaflet (kafle dla zaokrąglonego przybliżenia ≤ maxZoom),
+ * żeby legenda pojawiała się i znikała razem z warstwą.
+ */
+export const soilLayerVisible = (zoom: number) => Math.round(zoom) <= SOIL_MAX_ZOOM
+
 const entry = (q: number, opacity: number) => `<ColorMapEntry color="${SOIL_COLOR[q]}" quantity="${q}" opacity="${opacity}"/>`
 const clear = (q: number) => `<ColorMapEntry color="#000000" quantity="${q}" opacity="0"/>`
 
@@ -41,7 +50,7 @@ export function SoilSusceptibilityLayer() {
       opacity={0.55}
       zIndex={5}
       // tylko przy oddaleniu (regiony) – z bliska piksele 5 m wyglądają topornie i zasłaniają pola
-      maxZoom={11}
+      maxZoom={SOIL_MAX_ZOOM}
       attribution='Podatność gleb na suszę: <a href="https://susza.iung.pulawy.pl">IUNG-PIB</a>'
     />
   )

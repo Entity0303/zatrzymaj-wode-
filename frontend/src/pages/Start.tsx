@@ -23,7 +23,7 @@ import { PanelCollapsed } from '@/features/parcel-panel/PanelCollapsed'
 import { ExploreBar } from '@/features/intro/ExploreBar'
 import { IntroHero } from '@/features/intro/IntroHero'
 import { useDemoExamples } from '@/features/intro/useDemoExamples'
-import { SOIL_SUSCEPTIBILITY_LEGEND } from '@/features/map/SoilSusceptibilityLayer'
+import { SOIL_SUSCEPTIBILITY_LEGEND, soilLayerVisible } from '@/features/map/SoilSusceptibilityLayer'
 import { LocateButton } from '@/features/search/LocateButton'
 import { Passport } from '@/features/passport/Passport'
 import { exampleDate, type Example } from '@/features/parcel-panel/examples'
@@ -45,6 +45,7 @@ import { MobileSheet, snapHeights, type Snap } from '@/layout/MobileSheet'
 import { Sidebar } from '@/layout/Sidebar'
 import { TopBar } from '@/layout/TopBar'
 import { todayIso } from '@/lib/dates'
+import { cn } from '@/lib/utils'
 import { formatHa } from '@/lib/format'
 import { BRAND_NAME, BRAND_TAGLINE } from '@/lib/brand'
 import { readLink, shareLink, writeLink } from '@/lib/deepLink'
@@ -865,26 +866,34 @@ export default function Start() {
                   <ErrorNotice {...search.error} onRetry={search.error.retryable ? retry : undefined} className="shadow-float" />
                 </div>
               )}
-              {/* legenda mapy startowej: podatność gleb na suszę (IUNG) – tylko gdy warstwa jest widoczna (zoom ≤ 11) */}
-              {zoom <= 11 && (
-              <LegendCard
-                title="Podatność gleb na suszę"
-                legend={SOIL_SUSCEPTIBILITY_LEGEND}
-                status="IUNG-PIB · tereny nierolnicze bez koloru"
-                compact={isMobile}
-                className={isMobile ? 'absolute right-3 bottom-20 z-[1100] w-52' : 'absolute right-4 bottom-4 z-[1300]'}
-              />
-              )}
-              <MapControls
-                className={isMobile ? 'absolute top-[76px] right-3 z-[1000]' : 'absolute bottom-4 left-4 z-[1000]'}
-                onZoomIn={() => mapRef.current?.zoomIn()}
-                onZoomOut={() => mapRef.current?.zoomOut()}
-                onBackToParcel={backToParcel}
-                onLocate={locate}
-                canGoBack={false}
-                baseMap={baseMap}
-                onBaseMapChange={setBaseMap}
-              />
+              {/* prawy dolny róg, nad kartą powitalną (z-index wyżej) – przyciski mapy zawsze widoczne; nad nimi legenda gleb,
+                  tylko gdy warstwa IUNG jest na mapie (ta sama reguła przybliżenia co warstwa – zoom zmienia się dopiero po ruchu) */}
+              <div
+                className={cn(
+                  'pointer-events-none absolute z-[1250] flex flex-col items-end gap-2 [&>*]:pointer-events-auto',
+                  isMobile ? 'right-3 bottom-20' : 'right-4 bottom-4',
+                )}
+              >
+                {soilLayerVisible(zoom) && (
+                  <LegendCard
+                    title="Podatność gleb na suszę"
+                    legend={SOIL_SUSCEPTIBILITY_LEGEND}
+                    status="IUNG-PIB · tereny nierolnicze bez koloru"
+                    compact={isMobile}
+                    className={isMobile ? 'w-52' : undefined}
+                  />
+                )}
+                <MapControls
+                  horizontal
+                  onZoomIn={() => mapRef.current?.zoomIn()}
+                  onZoomOut={() => mapRef.current?.zoomOut()}
+                  onBackToParcel={backToParcel}
+                  onLocate={locate}
+                  canGoBack={false}
+                  baseMap={baseMap}
+                  onBaseMapChange={setBaseMap}
+                />
+              </div>
             </>
           ) : (
           <div className="contents ui-appear">

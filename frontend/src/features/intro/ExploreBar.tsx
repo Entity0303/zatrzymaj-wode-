@@ -108,7 +108,7 @@ export function ExploreBar({
                 </span>
                 <span className="min-w-0">
                   <span className="block font-medium">{t(e.title)}</span>
-                  <span className="block text-xs text-text-muted">{t(e.text)}</span>
+                  <span className="line-clamp-2 text-xs text-text-muted">{t(e.text)}</span>
                 </span>
               </DropdownMenuItem>
             ))}
