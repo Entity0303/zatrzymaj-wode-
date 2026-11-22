@@ -819,6 +819,8 @@ export type PrecipSources = {
   confidence_lowered?: boolean
   /** A16: lata, w których suma IV–VII ze stacji IMGW różni się od NASA o > 30% */
   precip_disagreement?: number[]
+  /** A16b: 'nasa' – stacje zgodne z sąsiednimi, zawyża/zaniża NASA (pewność bez zmian); 'station' – stacja odstaje */
+  precip_disagreement_source?: 'nasa' | 'station' | null
   source_tag: SourceTag
 }
 

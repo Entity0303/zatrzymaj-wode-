@@ -10,7 +10,10 @@ z 10 lat i nie widzi lokalnych burz → model zaniżał suszę. Zmienia się TYL
 - zgodność źródeł na SUMACH z okien (doba IMGW 6:00–6:00 ≠ doba modeli): sezon od 1 marca i ostatnie 30 dni,
 - miejsce na trzecie źródło (ERA5-Land – dziś pominięte, limit archiwum Open-Meteo): `EXTRA_SOURCES`,
 - A16: rozjazd w sezonie – suma IV–VII ze stacji vs surowa NASA, rok po roku; > 30% → rok oznaczony
-  (`disagreement_years`, zdanie w sekcji źródeł); ≥ 2 oznaczone z ostatnich 5 → pewność o poziom niżej.
+  (`disagreement_years`, zdanie w sekcji źródeł),
+- A16b: kto się myli – stacje działki vs mediana pozostałych stacji do 50 km: zgodne (±25%) → „nasa” (NASA zawyża /
+  zaniża, przyjmujemy pomiar, pewność bez zmian); odstają albo brak sąsiadów → „station” (wynik dla tych lat mniej
+  pewny; ≥ 2 takie lata z ostatnich 5 → pewność o poziom niżej).
 
 Progi i zdania: rules/precip.yaml.
 """
@@ -73,7 +76,17 @@ class PrecipInfo:
     outdated: list[tuple[imgw.StationPick, date | None]] = field(default_factory=list)  # A14: stacje bez danych z ost. roku
     season_diff_pct: dict[int, float] = field(default_factory=dict)  # A16: rok → (IMGW − NASA) / NASA, IV–VII, %
     disagreement_years: list[int] = field(default_factory=list)       # A16: lata z |różnicą| > progu
-    disagreement_lowers: bool = False                                  # A16: ≥ 2 oznaczone z ostatnich 5 sezonów
+    disagreement_lowers: bool = False                                  # A16: ≥ 2 lata „station” z ostatnich 5 sezonów
+    season_sums: dict[int, tuple[float, float]] = field(default_factory=dict)  # A16b: rok → (IMGW, NASA) mm, IV–VII
+    neighbour_mm: dict[int, float] = field(default_factory=dict)       # A16b: rok → mediana sąsiednich stacji, mm
+    disagreement_by: dict[int, str] = field(default_factory=dict)      # A16b: rok → "nasa" | "station"
+
+    @property
+    def disagreement_source(self) -> str | None:
+        """„station”, gdy choć jeden oznaczony rok to odstająca stacja; „nasa”, gdy wszystkie – NASA; brak lat → None."""
+        if not self.disagreement_years:
+            return None
+        return "station" if any(self.disagreement_by.get(y) != "nasa" for y in self.disagreement_years) else "nasa"
 
 
 def rate(a: float, b: float) -> str:
@@ -98,30 +111,68 @@ def _join(items: list[str]) -> str:
     return items[0] if len(items) == 1 else ", ".join(items[:-1]) + " i " + items[-1]
 
 
-def season_diffs(dates: np.ndarray, station: np.ndarray, nasa: np.ndarray) -> dict[int, float]:
-    """A16: rok → (IMGW − NASA) / NASA [%] z sum IV–VII; tylko pełne okresy z ≥ 90% dni w obu źródłach."""
-    c = cfg()["season_disagreement"]
-    m0, m1 = c["months"]
+def _season_masks(dates: np.ndarray):
+    """(rok, maska dni IV–VII, liczba dni okresu) – tylko okresy zakończone przed końcem serii."""
+    m0, m1 = cfg()["season_disagreement"]["months"]
     if len(dates) == 0:
-        return {}
+        return
     yrs = dates.astype("datetime64[Y]").astype(int) + 1970
     mon = dates.astype("datetime64[M]").astype(int) % 12 + 1
     last = dates[-1].astype(object)
-    out = {}
     for y in sorted(set(yrs.tolist())):
         end = date(y + (m1 == 12), m1 % 12 + 1, 1) - timedelta(days=1)
         if end > last:  # okres jeszcze się nie skończył przed datą analizy
             continue
-        m = (yrs == y) & (mon >= m0) & (mon <= m1)
-        n_days = (end - date(y, m0, 1)).days + 1
+        yield y, (yrs == y) & (mon >= m0) & (mon <= m1), (end - date(y, m0, 1)).days + 1
+
+
+def season_sums(dates: np.ndarray, station: np.ndarray, nasa: np.ndarray) -> dict[int, tuple[float, float]]:
+    """A16b: rok → (suma IMGW, suma NASA) [mm] z IV–VII; tylko pełne okresy z ≥ 90% dni w obu źródłach."""
+    c = cfg()["season_disagreement"]
+    out = {}
+    for y, m, n_days in _season_masks(dates):
         both = m & ~np.isnan(station) & ~np.isnan(nasa)
-        if both.sum() < c["min_valid"] * n_days:
+        if both.sum() < c["min_valid"] * n_days or float(nasa[both].sum()) <= 0:
             continue
-        b = float(nasa[both].sum())
-        if b <= 0:
-            continue
-        out[y] = round(100.0 * (float(station[both].sum()) - b) / b, 1)
+        out[y] = (round(float(station[both].sum()), 1), round(float(nasa[both].sum()), 1))
     return out
+
+
+def season_diffs(dates: np.ndarray, station: np.ndarray, nasa: np.ndarray) -> dict[int, float]:
+    """A16: rok → (IMGW − NASA) / NASA [%] z sum IV–VII."""
+    return {y: round(100.0 * (a - b) / b, 1) for y, (a, b) in season_sums(dates, station, nasa).items()}
+
+
+def neighbour_medians(st, lon: float, lat: float, exclude: set[int], dates: np.ndarray) -> dict[int, float]:
+    """A16b: rok → mediana sum IV–VII stacji do `neighbour_km` od działki (bez stacji użytych do opadu), tylko stacje
+    z ≥ 90% dni okresu; mniej niż `neighbour_min` stacji w roku → rok pominięty."""
+    c = cfg()["season_disagreement"]
+    dist = imgw.haversine_km(lon, lat, st.lon, st.lat)
+    idx = [int(i) for i in np.argsort(dist) if dist[i] <= c["neighbour_km"] and int(i) not in exclude]
+    if not idx:
+        return {}
+    series = [st.series(i, dates) for i in idx]
+    out = {}
+    for y, m, n_days in _season_masks(dates):
+        sums = [float(s[m].sum()) for s in series if (m & ~np.isnan(s)).sum() >= c["min_valid"] * n_days
+                and not np.isnan(s[m]).any()]
+        if len(sums) >= c["neighbour_min"]:
+            out[y] = round(float(np.median(sums)), 1)
+    return out
+
+
+def classify_disagreement(info: PrecipInfo) -> None:
+    """A16b: dla oznaczonych lat – „nasa” (stacje zgodne z sąsiadami ±25%) albo „station”; pewność niżej tylko przy
+    ≥ 2 latach „station” z ostatnich 5 sezonów."""
+    c = cfg()["season_disagreement"]
+    info.disagreement_by = {}
+    for y in info.disagreement_years:
+        med = info.neighbour_mm.get(y)
+        a = info.season_sums.get(y, (None, None))[0]
+        ok = med is not None and med > 0 and a is not None and abs(a - med) / med * 100 <= c["neighbour_agree_pct"]
+        info.disagreement_by[y] = "nasa" if ok else "station"
+    last5 = sorted(info.season_diff_pct)[-c["recent_years"]:]
+    info.disagreement_lowers = sum(info.disagreement_by.get(y) == "station" for y in last5) >= c["recent_min"]
 
 
 def _years_text(years: list[int]) -> str:
@@ -137,7 +188,23 @@ def _years_text(years: list[int]) -> str:
 
 
 def disagreement_sentence(info: PrecipInfo) -> str:
-    years = info.disagreement_years
+    """A16b: lata „nasa” – „dane satelitarne NASA pokazują ok. X% więcej… – przyjmujemy pomiar ze stacji”; lata
+    „station” – zdanie o mniej pewnym wyniku (A16). Liczby i lata z danych."""
+    s = cfg()["sentences"]
+    nasa_years = [y for y in info.disagreement_years if info.disagreement_by.get(y) == "nasa"]
+    st_years = [y for y in info.disagreement_years if info.disagreement_by.get(y) != "nasa"]
+    txt = ""
+    if nasa_years:
+        rel = [(b - a) / a * 100 for a, b in (info.season_sums[y] for y in nasa_years) if a > 0]  # NASA względem stacji
+        if rel:
+            pct = int(5 * round(sum(abs(r) for r in rel) / len(rel) / 5)) or 5
+            same = all(r > 0 for r in rel) or all(r < 0 for r in rel)
+            txt += s["disagree_nasa"].format(years=_years_text(nasa_years), pct=pct,
+                                             direction=("więcej" if rel[0] > 0 else "mniej") if same else "inaczej")
+    return txt + _station_sentence(info, st_years)
+
+
+def _station_sentence(info: PrecipInfo, years: list[int]) -> str:
     if not years:
         return ""
     s = cfg()["sentences"]
@@ -250,10 +317,12 @@ def apply(w: DailyWeather, lon: float, lat: float, analysis_date: date) -> tuple
     recent = [x.rating for x in info.windows[:2] if x.rating != "brak_danych"]
     info.agreement = max(recent, key=RATING_ORDER.get) if recent else info.windows[2].rating
     sd = cfg()["season_disagreement"]
-    info.season_diff_pct = season_diffs(w.dates, station, nasa)
+    info.season_sums = season_sums(w.dates, station, nasa)
+    info.season_diff_pct = {y: round(100.0 * (a - b) / b, 1) for y, (a, b) in info.season_sums.items()}
     info.disagreement_years = [y for y, d in info.season_diff_pct.items() if abs(d) > sd["max_pct"]]
-    last5 = sorted(info.season_diff_pct)[-sd["recent_years"]:]
-    info.disagreement_lowers = sum(y in info.disagreement_years for y in last5) >= sd["recent_min"]
+    if info.disagreement_years:
+        info.neighbour_mm = neighbour_medians(st, lon, lat, {p.idx for p in picks}, w.dates)
+    classify_disagreement(info)
     info.confidence_lowered = main == "imgw_daleko" or info.agreement == "mocno_sie_roznia" or info.disagreement_lowers
     info.sentence = sentence(info)
 

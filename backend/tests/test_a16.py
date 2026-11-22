@@ -25,7 +25,9 @@ def test_potential_uses_only_gus_years_before_analysis_year():
 
 
 def test_prices_only_before_analysis_date(tmp_path, monkeypatch):
-    assert P.price("pszenica_ozima", "podlaskie", D2019) is None  # GUS w repo od 2021 r.
+    zl19, src19 = P.price("pszenica_ozima", "podlaskie", D2019)  # A16b: ceny GUS od 2013 r.
+    assert src19 == "GUS – ceny skupu, woj. podlaskie, 2016–2018" and 600 < zl19 < 750
+    assert P.price("pszenica_ozima", "podlaskie", date(2013, 6, 1)) is None  # brak lat sprzed 2013
     zl, src = P.price("pszenica_ozima", "podlaskie", date(2024, 5, 1))
     assert src.endswith("2021–2023")
     f = tmp_path / "z.csv"
@@ -33,7 +35,7 @@ def test_prices_only_before_analysis_date(tmp_path, monkeypatch):
     monkeypatch.setattr(P, "ZSRIR_FILES", (f,))
     assert P.zsrir_price("rzepak", D2019) is None and P.price_now(D2019) is None
     assert P.zsrir_price("rzepak", date(2026, 7, 4)) is None and P.price_now(date(2026, 7, 5))[0].zl_t == 2319
-    assert P.no_price_reason("pszenica_ozima", D2019, "podlaskie") == P.NO_PRICE_BEFORE
+    assert P.no_price_reason("pszenica_ozima", date(2013, 6, 1), "podlaskie") == P.NO_PRICE_BEFORE
     assert P.no_price_reason("pszenica_ozima", date(2026, 11, 22), "podlaskie") is None
 
 
@@ -43,8 +45,12 @@ def test_analysis_2019_uses_no_yields_or_prices_from_2019_or_later():
     assert gus_tags and all("2019" not in t and "202" not in t for t in gus_tags), gus_tags
     sug = P.attach(sug, "podlaskie", D2019)
     for it in sug.groups[0].items:
-        assert it.revenue is None and it.revenue_note is not None
         assert all(y.year <= 2018 for y in it.yields_by_year)
+        if it.revenue is not None:  # ceny GUS tylko z 2016–2018; rzepak (ZSRIR 2026) – bez ceny
+            assert it.revenue.price_source.endswith("2016–2018"), it.revenue.price_source
+        else:
+            assert it.revenue_note is not None
+    assert next(i for i in sug.groups[0].items if i.crop_id == "rzepak").revenue is None
 
 
 def test_season_disagreement_flag_and_sentence():
@@ -62,3 +68,32 @@ def test_season_disagreement_flag_and_sentence():
     part = PR.season_diffs(dates[dates < np.datetime64("2025-06-01")], station[: (dates < np.datetime64("2025-06-01")).sum()],
                            nasa[: (dates < np.datetime64("2025-06-01")).sum()])
     assert 2025 not in part  # sezon IV–VII niezakończony przed datą analizy
+
+
+def _info(sums: dict, neighbours: dict) -> PR.PrecipInfo:
+    info = PR.PrecipInfo(main="imgw", season_sums=sums, neighbour_mm=neighbours)
+    info.season_diff_pct = {y: round(100 * (a - b) / b, 1) for y, (a, b) in sums.items()}
+    info.disagreement_years = [y for y, d in info.season_diff_pct.items() if abs(d) > 30]
+    info.stations = [object()]
+    PR.classify_disagreement(info)
+    return info
+
+
+SUMS = {2021: (356, 308), 2022: (324, 327), 2023: (160, 251), 2024: (132, 245), 2025: (268, 251)}  # Burzyn / NASA
+
+
+def test_a16b_station_agrees_with_neighbours_nasa_overestimates():
+    info = _info(SUMS, {2023: 149, 2024: 153})  # mediany sąsiednich stacji (Burzyn: +7%, −14%)
+    assert info.disagreement_years == [2023, 2024] and info.disagreement_source == "nasa"
+    assert not info.disagreement_lowers  # pewność bez zmian
+    # NASA względem stacji: +57% i +86% → średnio ok. 70%
+    assert PR.disagreement_sentence(info) == (" W latach 2023–2024 dane satelitarne NASA pokazują ok. 70% więcej opadu "
+                                              "niż stacje IMGW w okolicy – przyjmujemy pomiar ze stacji.")
+
+
+def test_a16b_station_outlier_lowers_confidence():
+    info = _info(SUMS, {2023: 240, 2024: 230})  # sąsiedzi jak NASA – odstaje stacja
+    assert info.disagreement_source == "station" and info.disagreement_lowers
+    assert "wynik dla tych lat jest mniej pewny" in PR.disagreement_sentence(info)
+    info2 = _info(SUMS, {})  # brak sąsiadów – nie wiadomo, jak dotąd (A16)
+    assert info2.disagreement_source == "station" and info2.disagreement_lowers

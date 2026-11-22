@@ -9,8 +9,9 @@ Przychód: typowy plon (t/ha) × powierzchnia uprawy × cena, zaokrąglony do 10
 A12b: brak średniej GUS, a jest notowanie ZSRIR → przychód z ceny ZSRIR (źródło „ZSRIR, lipiec 2026 (notowanie
 05.07.2026)”); cena GUS jest – bez zmian (ZSRIR tylko jako price_now). Brak każdej ceny → `revenue_note` z powodem.
 A16: ceny zależne od daty analizy – średnia GUS z 3 lat POPRZEDZAJĄCYCH rok daty analizy, notowanie ZSRIR tylko gdy
-jego data ≤ data analizy (inaczej brak ceny bieżącej). Plik GUS ma lata 2021–2025 – dla analizy sprzed 2022 r. brak ceny
-(revenue_note: „brak ceny skupu sprzed daty analizy w danych aplikacji”).
+jego data ≤ data analizy (inaczej brak ceny bieżącej). Plik GUS ma lata 2013–2025 (A16b: 2013–2020 dopisane
+`scripts/build_prices.py --years 2013-2020 --append`); brak lat sprzed daty → revenue_note „brak ceny skupu sprzed daty
+analizy w danych aplikacji”.
 """
 
 from __future__ import annotations

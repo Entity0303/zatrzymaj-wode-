@@ -1,6 +1,8 @@
 """Ceny skupu z GUS BDL (A12) → app/data/prices/gus_prices.csv + gus_price_variables.csv.
 
     docker compose run --rm -e DEMO_OFFLINE=false backend python scripts/build_prices.py [--years 2021-2025]
+    … --years 2013-2020 --append   (A16b: dopisuje lata do istniejących plików, zmienne z gus_price_variables.csv,
+                                     pierwszy błąd / limit API → przerwanie bez zapisu i bez ponawiania)
 
 Temat P2967 „Przeciętne ceny skupu ważniejszych produktów rolnych (dane miesięczne)” – dla każdego produktu zmienna
 z wymiarem „rok” (średnia roczna, zł/dt), poziom województw (unit-level=2) i Polska (unit-level=0).
@@ -37,6 +39,12 @@ PRODUCTS = {
     "buraki": ("buraki", ["burak_cukrowy"]),
 }
 PAUSE = 1.5
+FIELDS = ["produkt", "var_id", "poziom", "jednostka_id", "nazwa", "rok", "zl_dt"]
+STRICT = False  # --append: pierwszy błąd → przerwanie (bez ponawiania)
+
+
+class Abort(Exception):
+    pass
 
 
 async def get(path: str, params: dict) -> dict | None:
@@ -45,8 +53,50 @@ async def get(path: str, params: dict) -> dict | None:
     await asyncio.sleep(PAUSE)
     if r.status_code != 200:
         print(f"  {path}: HTTP {r.status_code} {r.text[:120]}")
+        if STRICT:
+            raise Abort(f"HTTP {r.status_code}")
         return None
     return json.loads(r.text)
+
+
+def known_variables() -> dict[str, dict]:
+    with open(OUT / "gus_price_variables.csv", encoding="utf-8") as f:
+        return {r["produkt"]: r for r in csv.DictReader(f) if r["var_id"]}
+
+
+async def append(years: list[int]) -> None:
+    """Dopisuje lata `years` do gus_prices.csv – zmienne już znane (bez /variables/search), wiersze z istniejących
+    lat zostają; jakikolwiek błąd → nic nie jest zapisywane."""
+    global STRICT
+    STRICT = True
+    path = OUT / "gus_prices.csv"
+    with open(path, encoding="utf-8") as f:
+        old = list(csv.DictReader(f))
+    have = {(r["produkt"], r["poziom"], r["jednostka_id"], int(r["rok"])) for r in old}
+    new = []
+    try:
+        for key, v in known_variables().items():
+            for level in (2, 0):
+                d = await get(f"/data/by-variable/{v['var_id']}", {"unit-level": level, "year": years, "page-size": 100})
+                n = 0
+                for unit in (d or {}).get("results", []):
+                    for val in unit.get("values", []):
+                        k = (key, "woj" if level == 2 else "polska", unit["id"], int(val["year"]))
+                        if val.get("val") is None or k in have:
+                            continue
+                        new.append({"produkt": key, "var_id": v["var_id"], "poziom": k[1], "jednostka_id": unit["id"],
+                                    "nazwa": unit["name"].lower(), "rok": val["year"], "zl_dt": val["val"]})
+                        n += 1
+                print(f"{key} (poziom {level}): {n} wartości")
+    except Exception as exc:  # noqa: BLE001 – limit / błąd: przerwij, nie zapisuj
+        print(f"PRZERWANE: {exc} – plik bez zmian")
+        raise SystemExit(1) from exc
+    rows = sorted(old + new, key=lambda r: (r["produkt"], r["poziom"], r["jednostka_id"], int(r["rok"])))
+    with open(path, "w", encoding="utf-8", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=FIELDS)
+        w.writeheader()
+        w.writerows(rows)
+    print(f"dopisano {len(new)} cen (lata {years[0]}–{years[-1]}) → {path}")
 
 
 async def annual_variable(phrase: str, fragment: str) -> dict | None:
@@ -60,9 +110,13 @@ async def annual_variable(phrase: str, fragment: str) -> dict | None:
 async def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--years", default="2021-2025")
+    ap.add_argument("--append", action="store_true", help="dopisz lata do istniejącego pliku (A16b)")
     a = ap.parse_args()
     y0, y1 = (int(v) for v in a.years.split("-"))
     years = list(range(y0, y1 + 1))
+    if a.append:
+        await append(years)
+        return
     OUT.mkdir(parents=True, exist_ok=True)
     rows, vars_out = [], []
     t0 = time.monotonic()
@@ -89,7 +143,7 @@ async def main() -> None:
                          "uprawy": ";".join(crops), "uwagi": f"temat {SUBJECT}, wymiar „rok” – średnia roczna"})
         print(f"{key}: zmienna {vid} „{v.get('n2')}”, {n} wartości")
     with open(OUT / "gus_prices.csv", "w", encoding="utf-8", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=["produkt", "var_id", "poziom", "jednostka_id", "nazwa", "rok", "zl_dt"])
+        w = csv.DictWriter(f, fieldnames=FIELDS)
         w.writeheader()
         w.writerows(rows)
     with open(OUT / "gus_price_variables.csv", "w", encoding="utf-8", newline="") as f:

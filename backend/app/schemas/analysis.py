@@ -965,6 +965,9 @@ class PrecipSources(Contract):
     confidence_lowered: bool = Field(False, description="True: stacje daleko albo źródła mocno się różnią – pewność o poziom niżej")
     precip_disagreement: list[int] = Field(
         default_factory=list, description="A16: lata, w których suma IV–VII ze stacji IMGW różni się od NASA o > 30%")
+    precip_disagreement_source: Literal["nasa", "station"] | None = Field(
+        None, description="A16b: kto odstaje – 'nasa' (stacje zgodne z sąsiednimi ±25%, pewność bez zmian), "
+                          "'station' (stacja odstaje od sąsiadów – wynik dla tych lat mniej pewny); null = brak lat")
     source_tag: SourceTag
 
 

@@ -573,7 +573,7 @@ def precip_contract(info: "precip_mod.PrecipInfo | None", data_until: dt.date | 
         windows=[PrecipWindow(key=x.key, label=x.label, start=x.start, end=x.end, imgw_mm=x.imgw_mm, nasa_mm=x.nasa_mm,
                               difference_pct=x.difference_pct, rating=x.rating) for x in info.windows],
         sentence=info.sentence, confidence_lowered=info.confidence_lowered,
-        precip_disagreement=list(info.disagreement_years),
+        precip_disagreement=list(info.disagreement_years), precip_disagreement_source=info.disagreement_source,
         source_tag=SourceTag(kind="pomiar" if measured else "szacunek_modelu", date=data_until,
                              source=imgw.SOURCE if measured else precip_mod.NASA_LABEL))
 
