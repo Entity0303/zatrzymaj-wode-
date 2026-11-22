@@ -617,8 +617,10 @@ def crop_assessment(crop_id: str | None, ndvi: float | None, ndmi: float | None,
                                   hi=_dec(hi), ndvi=_dec(ndvi))
     return {"group": group, "phase": phase, "lo": lo, "hi": hi, "rating": rating, "label": s["labels"][rating],
             "sentence": sentence, "advisor": advisor, "bare": bare,
-            # wilgotność roślin (NDMI) tylko przy gęstym łanie tej uprawy – inaczej widać głównie glebę
-            "moisture_ok": ndmi is not None and ndvi >= dense}
+            # wilgotność roślin (NDMI) tylko w sezonie (IV–IX), gdy uprawa jest na polu i łan jest gęsty – poza
+            # sezonem niski NDMI nie oznacza stresu wodnego, a przy rzadkim łanie widać głównie glebę
+            "moisture_ok": (ndmi is not None and ndvi >= dense and not bare
+                            and scene_date.month in c["season_months"])}
 
 
 def for_crop(sat: Satellite, crop_id: str | None) -> Satellite:

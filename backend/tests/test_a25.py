@@ -67,8 +67,10 @@ def test_plant_moisture_only_for_dense_canopy_of_the_crop():
     assert ind.label == "poza sezonem albo za rzadki łan – nie oceniamy" and ind.index_value == -0.2
     dense = SAT.for_crop(sat(0.80, ndmi=-0.2, on=date(2026, 7, 15), level="ok"), "kukurydza_ziarno")
     assert dense.ndmi_class == "sucho" and "mało wody w liściach" in dense.sentence and dense.level == "warn"
-    rape = SAT.for_crop(sat(0.75, ndmi=0.3, on=date(2026, 11, 5)), "rzepak")  # gęsta rozeta w listopadzie – oceniamy
-    assert rape.ndmi_class == "dobrze"
+    rape = SAT.for_crop(sat(0.75, ndmi=-0.3, on=date(2026, 11, 5)), "rzepak")  # listopad – poza sezonem, bez alarmu
+    assert rape.ndmi_class is None and "mało wody w liściach" not in rape.sentence and rape.level == "ok"
+    late = _sat_indicator(sat(0.75, ndmi=-0.3, on=date(2026, 11, 5)), "ndmi", NO_SAT, "rzepak")
+    assert late.label == "poza sezonem albo za rzadki łan – nie oceniamy"
     health = _sat_indicator(sat(0.86), "ndvi", NO_SAT, "pszenica_ozima")
     assert health.label == "gęsta zieleń – wyżej niż typowo" and "po wschodach" in health.note
     assert _sat_indicator(sat(0.86), "ndvi", NO_SAT).label == "gęsta zieleń"  # bez uprawy jak dotąd
