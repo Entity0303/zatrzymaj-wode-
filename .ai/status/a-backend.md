@@ -1,8 +1,10 @@
 # Status – osoba A (Dominik), backend
 
-_Stan na: 2026-11-22 09:30 (A16b)_
+_Stan na: 2026-11-22 11:00 (A19)_
 
 ## Zrobione
+- **A19:** wyszukiwanie „gmina + numer” (obręby gminy z PRNG → ULDK sekwencyjnie, maks. 10, cache) i gmina jako filtr obrębu; `CORS_ORIGINS` JSON albo przecinki (błąd nie wywraca startu), `CORS_ORIGIN_REGEX` domyślnie *.vercel.app.
+- **A18:** teksty dla rolnika z audytu V3 (teren 0% w przyczynach, bez sprzeczności, „może”, WOD = obliczenia, źródło opadu z serii, `plural`/`zl`, komunikaty bez nazw technicznych); `OFFLINE_SOURCES` domyślnie „bdot”.
 - Wyszukiwanie działki ULDK: pełny identyfikator, „obręb numer”, punkt; `GET /api/parcel` (409 lista kandydatów, 404, 502 z nazwą źródła), timeout 10 s + jedna ponowna próba, cache 24 h.
 - Prognoza pogody: `GET /api/forecast` (Open-Meteo), cache 30 min.
 - Kontrakt `GET /api/analysis` w `schemas/analysis.py`; endpoint zwraca 501. Szkielety: `/api/layers`, `/api/reports`, `/api/infra-reports`.
