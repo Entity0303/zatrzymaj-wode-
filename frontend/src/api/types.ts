@@ -199,6 +199,45 @@ export type RainRetention = 'ucieka' | 'zatrzymuje' | 'splywa'
 
 export type StepState = 'done' | 'active' | 'error' | 'pending'
 export type SourceAvailability = 'ok' | 'czesciowo' | 'brak'
+/** A24: próchnica z węgla organicznego SoilGrids (0–30 cm) × 1,72 */
+export type OrganicMatter = {
+  value_pct: number
+  class_key: 'bardzo_niska' | 'niska' | 'srednia' | 'wysoka'
+  class_label: string
+  sentence: string
+  source_tag: SourceTag
+}
+
+/** A24: najdłuższy okres bez opadu (dni z opadem < 1 mm) w oknie i na tle 10 lat */
+export type DrySpellStats = {
+  window_from: ISODate
+  window_to: ISODate
+  longest_days: number
+  longest_from?: ISODate | null
+  longest_to?: ISODate | null
+  spells_10d: number
+  usual_days?: number | null
+  longer_in_years?: number | null
+  of_years?: number
+  sentence: string
+  source_tag: SourceTag
+}
+
+/** A24: dni upalne (≥ 30°C) i gorące (≥ 25°C) w sezonie – informacyjnie */
+export type Heat = {
+  window_from: ISODate
+  window_to: ISODate
+  days_30: number
+  days_25: number
+  usual_days_30?: number | null
+  usual_days_25?: number | null
+  of_years?: number
+  sensitive_days_30?: number | null
+  sensitive_phase_label?: string | null
+  sentence: string
+  source_tag: SourceTag
+}
+
 export type CauseFactor = 'opady' | 'parowanie' | 'gleba' | 'teren' | 'uprawa' | 'inne'
 
 export type SourceTag = {
@@ -359,6 +398,8 @@ export type Soil = {
   non_agricultural_note?: string | null
   /** frakcje i klasa uziarnienia 0–30 cm (SoilGrids) */
   texture?: SoilTexture | null
+  /** A24: próchnica – szacunek SoilGrids (informacyjnie, nie zmienia pojemności wodnej) */
+  organic_matter?: OrganicMatter | null
   /** przepuszczalność i zachowanie wody przy ulewie */
   permeability?: SoilPermeability | null
   /** mapa glebowo-rolnicza (GUGiK): kompleks i gatunek gleby */
@@ -484,6 +525,8 @@ export type Cause = {
   title: string
   /** 0–1 */
   share: number
+  /** A24: pozycja informacyjna (bez udziału %) – teren, okres bez deszczu, upał, próchnica */
+  informational?: boolean
   description: string
   source_tag: SourceTag
 }
@@ -1024,6 +1067,8 @@ export type PeriodSummary = {
   filled_days?: number
   /** A17: nota dla rolnika, gdy pomiary kończą się przed końcem okresu */
   note?: string | null
+  /** A24: najdłuższy okres bez opadu w tym okresie */
+  dry_spell?: DrySpellStats | null
 }
 
 // ── Werdykt działki (A5b-2b) ──────────────────────────────────────────────────────────────
@@ -1193,6 +1238,10 @@ export type AnalysisResponse = {
   seasonal_balance_label?: string | null
   /** A5e: ostatni dzień z danymi pogodowymi („dane pogodowe do 18.11”) */
   weather_data_until?: string | null
+  /** A24: najdłuższy okres bez opadu w sezonie (od 1 marca) */
+  dry_spell?: DrySpellStats | null
+  /** A24: dni upalne w sezonie (informacyjnie) */
+  heat?: Heat | null
   /** A7: skąd opad – stacje IMGW (źródło główne), zgodność z NASA, zdanie dla rolnika */
   precip_sources?: PrecipSources | null
   /** A11: Sentinel-2 – z cache albo { status: 'pending' } → dociągnij GET /api/satellite */

@@ -44,6 +44,24 @@ rules:
       - "Pole po zbiorze bez okrywy traci wodę najszybciej."
       - "Teraz zapas wody w glebie: {water_pct}% pełnego."
 
+  # A24: próchnica (SoilGrids – szacunek) – retencja glebowa; nie zmienia policzonej pojemności wodnej
+  - id: retencja.zwiekszaj_prochnice
+    category: retencja
+    priority: 70
+    confidence: ograniczona
+    timing: przed_sezonem
+    permit: none
+    eco_scheme: E_MPW
+    when:
+      all:
+        - {fact: humus_class, in: [bardzo_niska, niska]}
+        - {fact: balance_mm, exists: true}
+    title: "Zwiększaj próchnicę w glebie"
+    description: "Stosuj obornik lub kompost, siej międzyplony i zostawiaj resztki pożniwne – gleba z większą ilością próchnicy zatrzymuje więcej wody z deszczu. Bez formalności."
+    why:
+      - "Próchnica: ok. {humus_pct_txt}% ({humus_class_label}) – szacunek SoilGrids, siatka ok. 250 m."
+      - "Gleba uboga w próchnicę słabiej trzyma wodę."
+
   - id: retencja.zima_bez_orki
     category: retencja
     priority: 85

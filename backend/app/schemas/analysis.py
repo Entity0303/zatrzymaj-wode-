@@ -164,6 +164,7 @@ class Soil(Contract):
     non_agricultural_note: str | None = Field(None, description="Gotowy komunikat dla rolnika (SPEC 15.1)")
     texture: "SoilTexture | None" = Field(None, description="Frakcje i klasa uziarnienia 0–30 cm (SoilGrids)")
     permeability: "SoilPermeability | None" = Field(None, description="Przepuszczalność i zachowanie wody przy ulewie")
+    organic_matter: "OrganicMatter | None" = Field(None, description="A24: próchnica – szacunek SoilGrids (informacyjnie)")
     soil_map: "SoilMapInfo | None" = Field(None, description="Mapa glebowo-rolnicza (GUGiK): kompleks i gatunek gleby")
     texture_note: str | None = Field(None, description="Powód braku frakcji / mapy glebowo-rolniczej, np. 'SoilGrids nie odpowiada'")
     consistency: "SoilConsistency | None" = Field(None, description="Czy źródła gleby się zgadzają (mapa glebowo-rolnicza, IUNG, SoilGrids)")
@@ -202,6 +203,49 @@ class SoilTexture(Contract):
     texture_class: str = Field(description="Klasa uziarnienia po polsku (trójkąt USDA), np. 'glina piaszczysta'")
     texture_code: str = Field(description="Kod klasy USDA, np. 'sandy_loam'")
     depth: str = Field(description="Głębokość, np. '0–30 cm'")
+    source_tag: SourceTag
+
+
+class OrganicMatter(Contract):
+    """A24: próchnica wierzchniej warstwy gleby – szacunek z węgla organicznego SoilGrids (0–30 cm) × 1,72.
+    Informacyjnie – nie zmienia pojemności wodnej (WOD) ani bilansu."""
+
+    value_pct: float = Field(description="Próchnica, % (węgiel organiczny × 1,72)")
+    class_key: Literal["bardzo_niska", "niska", "srednia", "wysoka"]
+    class_label: str = Field(description="bardzo niska / niska / średnia / wysoka")
+    sentence: str = Field(description="Np. 'Próchnica: ok. 1,6% (niska) – szacunek SoilGrids, siatka ok. 250 m.'")
+    source_tag: SourceTag
+
+
+class DrySpellStats(Contract):
+    """A24: najdłuższy okres bez opadu (dni z opadem < 1 mm) w oknie i na tle tego samego okna w 10 latach."""
+
+    window_from: dt.date
+    window_to: dt.date
+    longest_days: int
+    longest_from: dt.date | None = None
+    longest_to: dt.date | None = None
+    spells_10d: int = Field(description="Ile było okresów bez opadu trwających co najmniej 10 dni")
+    usual_days: int | None = Field(None, description="Mediana najdłuższego okresu w poprzednich latach")
+    longer_in_years: int | None = Field(None, description="W ilu z poprzednich lat najdłuższy okres był dłuższy")
+    of_years: int = 0
+    sentence: str
+    source_tag: SourceTag
+
+
+class Heat(Contract):
+    """A24: dni upalne (temperatura maksymalna ≥ 30°C) i gorące (≥ 25°C) w sezonie na tle 10 lat – informacyjnie."""
+
+    window_from: dt.date
+    window_to: dt.date
+    days_30: int
+    days_25: int
+    usual_days_30: int | None = None
+    usual_days_25: int | None = None
+    of_years: int = 0
+    sensitive_days_30: int | None = Field(None, description="Dni ≥ 30°C w fazie wrażliwej wybranej uprawy")
+    sensitive_phase_label: str | None = None
+    sentence: str
     source_tag: SourceTag
 
 
@@ -437,6 +481,7 @@ class PeriodSummary(Contract):
     data_until: dt.date | None = Field(None, description="A17: ostatni dzień okresu z pomiarami (NASA / IMGW)")
     filled_days: int = Field(0, description="A17: ile ostatnich dni okresu uzupełniono danymi modelu Open-Meteo")
     note: str | None = Field(None, description="A17: nota dla rolnika, gdy pomiary kończą się przed końcem okresu")
+    dry_spell: "DrySpellStats | None" = Field(None, description="A24: najdłuższy okres bez opadu w tym okresie")
 
 
 class CropRevenue(Contract):
@@ -789,6 +834,8 @@ class Cause(Contract):
     factor: CauseFactor
     title: str = Field(description="Np. 'Mało opadów'")
     share: float = Field(ge=0, le=1, description="Udział w problemie (paski od największego)")
+    informational: bool = Field(False, description="A24: pozycja informacyjna (bez udziału %) – teren, okres bez "
+                                                   "deszczu, upał, próchnica; nie zmienia policzonego bilansu")
     description: str = Field(description="Z liczbą, np. 'od marca 212 mm, zwykle 296 mm'")
     source_tag: SourceTag
 
@@ -1051,6 +1098,8 @@ class AnalysisResponse(Contract):
     seasonal_balance_mean_mm: float | None = Field(None, description="Średnia z lat porównawczych, mm (linia na wykresie)")
     seasonal_balance_label: str | None = Field(None, description="Okres bilansu, np. 'od 1 marca do 18 listopada'")
     weather_data_until: dt.date | None = Field(None, description="Ostatni dzień z danymi pogodowymi („dane pogodowe do 18.11”)")
+    dry_spell: DrySpellStats | None = Field(None, description="A24: najdłuższy okres bez opadu w sezonie (od 1 marca)")
+    heat: Heat | None = Field(None, description="A24: dni upalne w sezonie (informacyjnie)")
     precip_sources: PrecipSources | None = Field(None, description="Skąd opad: stacje IMGW, zgodność z NASA, zdanie dla rolnika (A7)")
     satellite: Satellite | None = Field(None, description="Sentinel-2 (A11): z cache albo {status: pending} – dociągnij GET /api/satellite")
     history: History

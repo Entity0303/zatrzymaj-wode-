@@ -69,9 +69,21 @@ def build_causes(f: Facts) -> list[Cause]:
         if wet:
             desc += f"; obniżenia, gdzie zbiera się woda: {wet}%"
         desc += f" ({TERRAIN_NOTE})"
-    terrain = (Cause(factor="teren", title="Teren i spływ", share=0.0, description=desc,
+    terrain = (Cause(factor="teren", title="Teren i spływ", share=0.0, description=desc, informational=True,
                      source_tag=SourceTag(kind="obliczenia", source="NMT GUGiK – opis terenu")) if runoff is not None
                else None)
+    # A24: pozycje informacyjne (udział 0, jak teren) – nie zmieniają policzonego bilansu wody
+    info: list[Cause] = []
+    if f.get("dry_spell_cause"):
+        info.append(Cause(factor="opady", title="Okres bez deszczu", share=0.0, informational=True,
+                          description=f["dry_spell_cause"], source_tag=obl))
+    if f.get("heat_cause"):
+        info.append(Cause(factor="parowanie", title="Upał", share=0.0, informational=True, description=f["heat_cause"],
+                          source_tag=SourceTag(kind="obliczenia", source="NASA POWER (temperatura maksymalna)")))
+    if f.get("humus_cause"):
+        info.append(Cause(factor="gleba", title="Mało próchnicy", share=0.0, informational=True,
+                          description=f["humus_cause"],
+                          source_tag=SourceTag(kind="szacunek_modelu", source="SoilGrids (ISRIC) – węgiel organiczny")))
 
     total = sum(w for w, _ in raw)
     causes: list[Cause] = []
@@ -83,10 +95,11 @@ def build_causes(f: Facts) -> list[Cause]:
         for (w, c), s in zip(raw, shares):
             causes.append(c.model_copy(update={"share": max(0.0, s)}))
     causes.sort(key=lambda c: -c.share)
+    causes += info
     if terrain is not None:  # A18: zawsze na końcu, z udziałem 0
         causes.append(terrain)
         return causes
-    causes.append(Cause(factor="teren", title="Teren i spływ", share=0.0,
+    causes.append(Cause(factor="teren", title="Teren i spływ", share=0.0, informational=True,
                         description="brak danych o ukształtowaniu terenu – spróbuj ponownie za chwilę",
                         source_tag=SourceTag(kind="brak_danych", source="NMT GUGiK")))
     return causes

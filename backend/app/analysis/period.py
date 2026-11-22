@@ -152,6 +152,16 @@ def data_note(requested: date, measured: date | None, end: date, filled: int) ->
             "jeszcze opublikowane.")
 
 
+def _dry(w: DailyWeather, win: Window, years: int):
+    """A24: najdłuższy okres bez opadu w wybranym okresie (na tle tego samego okna w poprzednich latach)."""
+    from app.analysis import extremes
+
+    try:
+        return extremes.dry_spell(w, win.start, win.end, years)
+    except Exception:  # noqa: BLE001 – pozycja informacyjna
+        return None
+
+
 def build(w: DailyWeather, win: Window, years: int = 10, stress_dates: list[date] | None = None,
           has_crop: bool = False, forecast: list | None = None) -> PeriodSummary:
     """Podsumowanie okresu. A17: dni między końcem pomiarów a końcem okresu uzupełniane z Open-Meteo (`forecast` –
@@ -195,5 +205,6 @@ def build(w: DailyWeather, win: Window, years: int = 10, stress_dates: list[date
     return PeriodSummary(**{"from": win.start}, to=win.end, label=_label(win), precip_mm=round(p), et0_mm=round(e),
                          balance_mm=round(b), normal_balance_mm=round(normal) if normal is not None else 0,
                          percentile=pct, sentence=sentence(win, p, e, b, normal, prev), stress_days=stress, daily=daily,
+                         dry_spell=_dry(w, win, years),
                          requested_to=requested, data_until=min(measured, win.end) if measured else None,
                          filled_days=filled, note=data_note(requested, measured, win.end, filled))

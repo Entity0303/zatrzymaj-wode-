@@ -35,6 +35,7 @@ from app.analysis import satellite as satellite_mod
 from app.analysis import verdict as verdict_mod
 from app.analysis import suggestions as sugg
 from app.analysis import variants as variants_mod
+from app.analysis import extremes
 from app.analysis import terrain_interpret
 from app.analysis import hydro as hydro_mod
 from app.analysis import period as period_mod
@@ -881,6 +882,18 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
                        and out.crop_season.phase in IN_SEASON_PHASES)
     facts = build_facts(None if crop_off else crop_obj, analysis_date, soil_a, None if crop_off else model, wb, sums,
                         soil_c=soil_c, previous_crop=prev, field=field, recent=recent, soil_profile=soil_prof)
+    # A24: okres bez opadu, upał (sezon od 1 marca) i próchnica – informacyjnie (przyczyny, reguły), bez wpływu na bilans
+    dry_c = heat_c = om_c = None
+    try:
+        s_from, s_to = extremes.season_window(last_usable_day(analysis_date))
+        dry_c = extremes.dry_spell(w, s_from, s_to, settings.history_years)
+        heat_c = extremes.heat(w, s_from, s_to, settings.history_years, crop_obj, crop_obj.label if crop_obj else None)
+        om_c = extremes.organic_matter(getattr(sg_res, "soc_g_kg", None))
+    except Exception:  # noqa: BLE001 – pozycje informacyjne nie mogą wywrócić analizy
+        pass
+    facts.values.update(extremes.rule_facts(dry_c, heat_c, om_c))
+    if om_c is not None:
+        soil_c = soil_c.model_copy(update={"organic_matter": om_c})
     if crop_off:
         ok_calc = True
     # teren z NMT (A6): sekcja kontraktu + fakty dla reguł (requires: terrain)
@@ -923,7 +936,9 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
         weather_until=wb.data_until, forecast_ok=(None if not is_today else forecast is not None),
         forecast_error=err(fc_res), soil=soil_a, model=model, wb=wb,
         hg_share_season=_hg_share(w, sums),
-        extra_limitations=soil_lim + (field.limitations if field and (crop_obj is None or crop_off) else []),
+        extra_limitations=soil_lim + (field.limitations if field and (crop_obj is None or crop_off) else [])
+        + ([extremes.LIMITATION] if dry_c is not None or heat_c is not None else [])
+        + ([extremes.HUMUS_LIMITATION] if om_c is not None else []),
         soilgrids="brak" if isinstance(sg_res, SourceError) else "ok", soilgrids_error=err(sg_res),
         soil_map=sm_status or "brak", soil_map_error=err(sm_res),
         soil_map_year=sm_rep.mapped_year if sm_status == "ok" else None,
@@ -1018,6 +1033,12 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
                                     measured_precip=bool(w_res.precip and w_res.precip.main != "nasa"), satellite=sat,
                                     terrain_pending=tr_pending, hydro=hydro_c,
                                     now_word=HISTORICAL_NOW if analysis_date < today else "teraz")
+    if verdict is not None and dry_c is not None and dry_c.longest_days >= extremes.VERDICT_SPELL_DAYS:
+        # A24: punkt „Opady” werdyktu – jedno krótkie zdanie o najdłuższym okresie bez deszczu (od 14 dni)
+        extra = (f" Najdłuższy okres bez deszczu w tym sezonie: {dry_c.longest_days} dni "
+                 f"({dry_c.longest_from:%d.%m}–{dry_c.longest_to:%d.%m}).")
+        verdict = verdict.model_copy(update={"statements": [
+            st.model_copy(update={"text": st.text + extra}) if st.kind == "opady" else st for st in verdict.statements]})
     steps.append(_step("total", "Cała analiza", "done", ms=int((perf_counter() - t0) * 1000)))
 
     return AnalysisResponse(
@@ -1052,6 +1073,7 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
         seasonal_balance_label=(f"od {format_date_pl(wb.season_start, with_year=False)} do "
                                 f"{format_date_pl(wb.data_until, with_year=False)}" if wb.data_until else None),
         weather_data_until=wb.data_until,
+        dry_spell=dry_c, heat=heat_c,
         precip_sources=precip_contract(w_res.precip, wb.data_until),
         satellite=sat,
         history=history,
