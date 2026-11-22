@@ -50,6 +50,9 @@ def _isolated_caches():
 
     terrain.clear_memo()
     suggestions.clear_memo()  # P1: pamięć wyniku rankingu i symulacji
+    from app.sources import overpass
+
+    overpass._failed.clear()  # P1: 10-minutowa pamięć „Overpass nie odpowiada”
     saved = (settings.cache_db, settings.demo_offline, settings.demo_parcels_preload, settings.terrain_saved_results)
     saved_imgw = (settings.imgw_enabled, settings.imgw_store, settings.sentinel_enabled)
     reset()

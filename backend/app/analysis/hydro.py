@@ -33,7 +33,7 @@ SOURCES = [HydroSource(name="OpenStreetMap (Overpass API) – © autorzy OpenStr
 
 
 def search_bbox(parcel_4326: BaseGeometry) -> tuple[float, float, float, float]:
-    g = to_wgs84(to_2180(parcel_4326).buffer(RADIUS_M + 50))
+    g = to_wgs84(to_2180(parcel_4326).buffer(RADIUS_M))  # P1: obrys + 500 m, nie więcej
     return tuple(round(v, 4) for v in g.bounds)  # type: ignore[return-value]
 
 
@@ -43,7 +43,7 @@ def search_bbox(parcel_4326: BaseGeometry) -> tuple[float, float, float, float]:
 def _kind(tags: dict) -> str | None:
     if tags.get("waterway") in WATERWAY:
         return WATERWAY[tags["waterway"]]
-    if tags.get("natural") == "water":
+    if tags.get("natural") == "water" or tags.get("water") or tags.get("landuse") == "reservoir":  # P1: water=*, zbiornik
         return "rzeka" if tags.get("water") in ("river", "canal", "stream") else "zbiornik"
     return None
 

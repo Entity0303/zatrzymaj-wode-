@@ -179,8 +179,14 @@ class Settings(BaseSettings):
     # A9: woda w okolicy – Overpass (OSM) i stany wód IMGW, liczone w tle
     overpass_url: str = "https://overpass-api.de/api/interpreter"
     # rezerwowe instancje (po kolei przy 5xx / 429 / przekroczonym czasie) – publiczny Overpass bywa przeciążony
-    overpass_fallback_urls: str = "https://overpass.private.coffee/api/interpreter,https://maps.mail.ru/osm/tools/overpass/api/interpreter"
-    overpass_timeout_s: float = 55.0      # publiczny Overpass bywa przeciążony (22.11: 32 s dla 1 km²)
+    # P1 (pomiar 22.11.2026): overpass.openstreetmap.fr odpowiada w ok. 1 s, pozostałe 15–60 s albo wcale
+    overpass_fallback_urls: str = ("https://overpass.openstreetmap.fr/api/interpreter,"
+                                   "https://overpass.private.coffee/api/interpreter,"
+                                   "https://maps.mail.ru/osm/tools/overpass/api/interpreter")
+    overpass_timeout_s: float = 15.0      # P1: limit całej wody w okolicy (routery czekają +10 s); było 55 s
+    overpass_query_timeout_s: float = 10.0   # P1: [timeout:10] w zapytaniu Overpass
+    overpass_server_timeout_s: float = 8.0   # P1: najwyżej 8 s na serwer (wszystkie pytane równolegle)
+    overpass_total_timeout_s: float = 15.0   # P1: najwyżej 15 s łącznie
     overpass_breaker_s: float = 300.0
     imgw_hydro_url: str = "https://danepubliczne.imgw.pl/api/data/hydro"
     hydro_background: bool = True        # A9: adresy w wyszukiwarce (testy A5c – bez, jawnie włączane w test_a9)
