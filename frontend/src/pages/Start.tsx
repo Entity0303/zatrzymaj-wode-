@@ -27,6 +27,7 @@ import type { SoilImageStatus } from '@/features/map/SoilSusceptibilityLayer'
 import { SOIL_CLASS_LABELS, SOIL_COLOR } from '@/theme/soil'
 import { LocateButton } from '@/features/search/LocateButton'
 import { Passport } from '@/features/passport/Passport'
+import { RefineCard } from '@/features/parcel-panel/RefineCard'
 import { exampleDate, type Example } from '@/features/parcel-panel/examples'
 import { InfraReportWizard } from '@/features/infra-reports/InfraReportWizard'
 import { DrawLayer } from '@/features/draw/DrawLayer'
@@ -541,6 +542,13 @@ export default function Start() {
 
   // ── paszport wodny i „Pokaż na mapie” ──────────────────────────────────────────────────────
   /** F8: okres zmieniony w paszporcie – paszport zostaje otwarty, analiza liczy się od nowa */
+  /** F6: zmiana w formularzu „Podaj, co rosło” w paszporcie – paszport zostaje otwarty na nowym wyniku */
+  const inPassport =
+    <A,>(f: (a: A) => void) =>
+    (a: A) => {
+      if (parcel) setPassportCarry(parcel.id)
+      f(a)
+    }
   function changePeriodInPassport(v: string | null) {
     if (parcel) setPassportCarry(parcel.id)
     setPeriod(v)
@@ -1239,6 +1247,26 @@ export default function Start() {
           {/* paszport wodny – pełny ekran nad mapą i panelem (nic nie prześwituje) */}
           {passportOpen && passportAnalysis && (
             <Passport
+              refineForm={
+                passportAnalysis && (
+                  <RefineCard
+                    crop={refine.crop}
+                    onCropChange={inPassport(refine.onCropChange)}
+                    history={refine.history}
+                    onHistoryChange={inPassport(refine.onHistoryChange)}
+                    area={passportAnalysis.suggestions?.area ?? null}
+                    onAreaChange={inPassport(refine.onAreaChange)}
+                    rotationHint={passportAnalysis.suggestions?.rotation_hint}
+                    period={period}
+                    onPeriodChange={changePeriodInPassport}
+                    sowing={sowing}
+                    onSowingChange={inPassport(refine.onSowingChange)}
+                    typicalSowing={refine.crop ? (passportAnalysis.crop_season?.season_start ?? null) : null}
+                    asOf={asOf}
+                    historical={historical}
+                  />
+                )
+              }
               analysis={passportAnalysis}
               onClose={closePassport}
               report={passportLoading ? undefined : reportUi}

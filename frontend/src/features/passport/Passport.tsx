@@ -5,34 +5,37 @@ import type { ErrorInfo } from '@/api/client'
 import type { AnalysisResponse } from '@/api/types'
 import { ErrorNotice } from '@/components/ErrorNotice'
 import { LogoMark } from '@/components/LogoMark'
-import { WaveDivider } from '@/components/WaveDivider'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { BRAND_NAME } from '@/lib/brand'
 import { cropLabel } from '@/lib/crops'
-import { formatDatePl, formatArea } from '@/lib/format'
+import { formatDatePl, formatArea, shortCounty } from '@/lib/format'
 import { useLang } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
 import { NonAgriculturalCard } from '@/features/parcel-panel/NonAgriculturalCard'
 import { SoilCard } from '@/features/parcel-panel/SoilCard'
 import { TerrainCard } from '@/features/parcel-panel/TerrainCard'
 import { ApproxAreaBanner } from '@/features/parcel-panel/ApproxAreaBanner'
-import { SectionA } from './SectionA'
+import { HydroCard } from '@/features/parcel-panel/HydroCard'
+import { RankingCard } from '@/features/parcel-panel/RankingCard'
+import { SatelliteCard } from '@/features/parcel-panel/SatelliteCard'
+import { PassportSection } from './PassportSection'
 import { SectionB } from './SectionB'
 import { SectionC } from './SectionC'
 import { SectionD } from './SectionD'
 import { SectionE } from './SectionE'
+import { VerdictSection } from './VerdictSection'
 
-/** Zakładki bez liter = nagłówki sekcji A–E (F12: jedna wersja nazw). */
+/** Zakładki-kotwice (F6) – te same nazwy co nagłówki sekcji. */
 const NAV = [
-  ['pass-a', 'Stan obecny'],
-  ['pass-b', 'Na tle 10 lat'],
-  ['pass-c', 'Dlaczego?'],
-  ['pass-d', 'Co mogę zrobić?'],
-  ['pass-e', 'Skąd dane'],
+  ['pp-werdykt', 'Werdykt'],
+  ['pp-posiac', 'Co tu posiać'],
+  ['pp-woda', 'Woda na tle 10 lat'],
+  ['pp-teren', 'Teren i okolica'],
+  ['pp-satelita', 'Z satelity'],
+  ['pp-dzialania', 'Co mogę zrobić?'],
+  ['pp-zrodla', 'Skąd dane'],
 ] as const
 
-/** Treść paszportu – wspólna dla ekranu i wydruku. */
 /** F8: wybór okresu w pasku paszportu + stan przeliczania (stare dane przyciemnione) / błąd nowego okresu */
 export type PassportPeriod = {
   /** przycisk „Okres: …” (PeriodPicker) */
@@ -44,7 +47,9 @@ export type PassportPeriod = {
   onRetry?: () => void
 }
 
-function Content({ analysis, print, onShowOnMap }: { analysis: AnalysisResponse; print?: boolean; onShowOnMap?: (g: GeoJSON.Geometry) => void }) {
+/** Treść paszportu – wspólna dla ekranu i wydruku (F6: nowy układ sekcji). */
+function Content({ analysis, print, onShowOnMap, refineForm }: { analysis: AnalysisResponse; print?: boolean; onShowOnMap?: (g: GeoJSON.Geometry) => void; refineForm?: ReactNode }) {
+  const { t } = useLang()
   const approx = (analysis.parcel.source === 'approximate' || analysis.approximate_area) && <ApproxAreaBanner />
   if (analysis.soil.non_agricultural)
     // SPEC 15.1: grunt nierolny – bez oceny suszy, tylko gleba, teren i wiarygodność danych
@@ -54,31 +59,47 @@ function Content({ analysis, print, onShowOnMap }: { analysis: AnalysisResponse;
         <NonAgriculturalCard soil={analysis.soil} />
         <SoilCard soil={analysis.soil} />
         <TerrainCard terrain={analysis.terrain} note={analysis.terrain_note} />
-        <WaveDivider />
         <SectionE analysis={analysis} />
       </>
     )
+  const s = analysis.suggestions
   return (
     <>
       {approx}
-      <SectionA analysis={analysis} chartWidth={print ? 680 : undefined} />
-      <WaveDivider />
-      <SectionB analysis={analysis} chartWidth={print ? 680 : undefined} />
-      <WaveDivider />
-      <SectionC analysis={analysis} />
-      <WaveDivider />
-      <SectionD analysis={analysis} onShowOnMap={print ? undefined : onShowOnMap} />
-      <WaveDivider />
-      <SectionE analysis={analysis} />
+      <VerdictSection analysis={analysis} />
+      {/* sekcje 3–7: dotychczasowa treść w nowych kotwicach – wymieniana w kolejnych krokach F6 */}
+      {s && s.groups.some((g) => g.items.length) && (
+        <PassportSection id="pp-posiac" title={t('Co tu posiać')}>
+          {refineForm}
+          <RankingCard suggestions={s} priceNow={analysis.price_now} top={5} />
+        </PassportSection>
+      )}
+      <div id="pp-woda" className="space-y-6">
+        <SectionB analysis={analysis} chartWidth={print ? 680 : undefined} />
+        <SectionC analysis={analysis} />
+      </div>
+      <PassportSection id="pp-teren" title={t('Teren i okolica')}>
+        <TerrainCard terrain={analysis.terrain} note={analysis.terrain_note} />
+        <HydroCard hydro={analysis.hydro} passport historicalDate={analysis.historical ? analysis.analysis_date : null} />
+      </PassportSection>
+      <PassportSection id="pp-satelita" title={t('Z satelity')}>
+        {analysis.satellite ? <SatelliteCard satellite={analysis.satellite} passport chartWidth={print ? 680 : undefined} /> : <p className="text-sm text-text-muted">{t('Brak zdjęcia satelitarnego')}</p>}
+      </PassportSection>
+      <div id="pp-dzialania">
+        <SectionD analysis={analysis} onShowOnMap={print ? undefined : onShowOnMap} />
+      </div>
+      <div id="pp-zrodla">
+        <SectionE analysis={analysis} />
+      </div>
     </>
   )
 }
 
 /**
- * Paszport wodny (SPEC 7) – pełny ekran (nie w prawym panelu): nagłówek w jednej linii
- * („Działka 6/1 · Wnory-Wandy · 0,58 ha · kukurydza”) + PDF + menu ⋯ (Drukuj, Kopiuj link),
- * pod nim przyklejone zakładki bez liter. Nagłówek kurczy się przy przewijaniu; pełne tło – nic nie prześwituje.
- * `print` – wersja do wydruku (bez przycisków, wykresy o stałej szerokości).
+ * Paszport wodny (SPEC 7, F6 – widok analityczny działki) – pełny ekran na papierowym tle (#F8F6F1), maks. 1240 px.
+ * Pasek u góry (przyklejony): „Wróć do mapy” | nazwa działki + gmina/powiat · ha · data analizy | „Okres: …” |
+ * „Raport PDF” (główny) | ⋯ (Drukuj, Kopiuj link). Pod nim zakładki-kotwice z podkreśleniem aktywnej; sekcje mają
+ * scroll-margin-top, więc pasek nie zasłania nagłówków. `print` – wersja do wydruku (bez przycisków).
  */
 export function Passport({
   analysis,
@@ -88,6 +109,7 @@ export function Passport({
   onShowOnMap,
   print,
   period,
+  refineForm,
 }: {
   period?: PassportPeriod
   analysis: AnalysisResponse
@@ -96,23 +118,26 @@ export function Passport({
   onCopyLink?: () => void
   onShowOnMap?: (g: GeoJSON.Geometry) => void
   print?: boolean
+  /** „Podaj, co rosło” – ten sam formularz co w panelu (F6 sekcja 3) */
+  refineForm?: ReactNode
 }) {
   const { t } = useLang()
   const p = analysis.parcel
   const crop = cropLabel(analysis.crop)
   const approx = p.source === 'approximate' || p.source === 'drawn'
-  const title = (
-    approx
-      ? [parcelShortName(p), formatArea(p.powierzchnia_ha), crop?.toLowerCase()]
-      : [t('Działka {numer}', { numer: p.numer }), p.obreb, formatArea(p.powierzchnia_ha), crop?.toLowerCase()]
-  )
+  const title = approx ? parcelShortName(p) : t('Działka {numer}, obręb {obreb}', { numer: p.numer, obreb: p.obreb })
+  const sub = [
+    approx ? null : t('gm. {gmina}, {powiat}', { gmina: p.gmina, powiat: shortCounty(p.powiat) }),
+    formatArea(p.powierzchnia_ha),
+    `${t('data analizy')} ${formatDatePl(analysis.analysis_date)}`,
+    crop?.toLowerCase(),
+  ]
     .filter(Boolean)
     .join(' · ')
   const scroller = useRef<HTMLDivElement>(null)
-  const [small, setSmall] = useState(false)
-  const [active, setActive] = useState<string>('pass-a')
+  const [active, setActive] = useState<string>(NAV[0][0])
 
-  // aktywna zakładka = sekcja widoczna pod nagłówkiem
+  // aktywna zakładka = sekcja widoczna pod paskiem
   useEffect(() => {
     const root = scroller.current
     if (!root || print) return
@@ -121,7 +146,7 @@ export function Passport({
         const vis = entries.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)
         if (vis[0]) setActive(vis[0].target.id)
       },
-      { root, rootMargin: '-120px 0px -55% 0px' },
+      { root, rootMargin: '-140px 0px -55% 0px' },
     )
     NAV.forEach(([id]) => {
       const el = root.querySelector(`#${id}`)
@@ -140,61 +165,44 @@ export function Passport({
             <LogoMark className="size-6" /> {BRAND_NAME} · {t('Paszport wodny')} · {t('wygenerowano')} {formatDatePl(analysis.generated_at.slice(0, 10))}
           </p>
           <h2 className="font-name text-2xl leading-8 font-bold">{title}</h2>
-          <p className="text-sm text-text-muted">
-            {t('stan na')} {formatDatePl(analysis.analysis_date)} · {t('gm. {gmina}, obręb {obreb}', { gmina: p.gmina, obreb: p.obreb })}
-          </p>
+          <p className="text-sm text-text-muted">{sub}</p>
           {analysis.period && <p className="text-sm text-text-muted">{t('Okres: {label}', { label: t(analysis.period.label) })}</p>}
         </header>
         <Content analysis={analysis} print />
       </article>
     )
 
+  const visibleNav = analysis.soil.non_agricultural ? [] : NAV
   return (
-    <div
-      ref={scroller}
-      onScroll={(e) => setSmall((e.currentTarget as HTMLDivElement).scrollTop > 24)}
-      className="fixed inset-0 z-[1600] overflow-y-auto overscroll-contain bg-bg"
-      role="dialog"
-      aria-modal="true"
-      aria-label={t('Paszport wodny')}
-    >
-      {/* nagłówek + zakładki: pełne tło, przyklejone, kurczą się przy przewijaniu */}
-      <div className="sticky top-0 z-20 border-b bg-surface shadow-card">
-        <header className={cn('mx-auto flex max-w-5xl items-center gap-2 px-3 transition-[padding] md:px-6', small ? 'py-1.5' : 'py-3')}>
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex h-10 shrink-0 items-center gap-1.5 rounded-full pr-3 pl-2 text-sm font-semibold hover:bg-surface-2"
-          >
-            <ArrowLeft className="size-5 text-brand" aria-hidden /> <span className="max-sm:hidden">{t('Wróć do mapy')}</span>
+    <div ref={scroller} className="fixed inset-0 z-[1600] overflow-y-auto overscroll-contain bg-paper" role="dialog" aria-modal="true" aria-label={t('Paszport wodny')}>
+      {/* pasek + zakładki: przyklejone, pełne tło */}
+      <div className="sticky top-0 z-20 border-b border-paper-line bg-surface">
+        <header className="mx-auto flex max-w-[1240px] items-center gap-2 px-3 py-2.5 md:gap-3 md:px-6">
+          <button type="button" onClick={onClose} className="flex h-10 shrink-0 items-center gap-1.5 rounded-full pr-3 pl-2 text-sm font-semibold hover:bg-surface-2">
+            <ArrowLeft className="size-5 text-pp-brand" aria-hidden /> <span className="max-sm:hidden">{t('Wróć do mapy')}</span>
           </button>
           <div className="min-w-0 flex-1">
-            <p className={cn('text-xs leading-4 font-medium text-brand transition-all', small && 'h-0 overflow-hidden opacity-0')}>
-              {t('Paszport wodny')} · {t('stan na')} {formatDatePl(analysis.analysis_date)}
+            <h2 className="font-name truncate text-lg leading-6 font-bold md:text-xl md:leading-7">{title}</h2>
+            <p className="truncate text-sm leading-5 text-text-muted">
+              {sub}
               {analysis.historical && <> · {t('analiza historyczna')}</>}
             </p>
-            <h2 className={cn('font-name truncate font-bold transition-all', small ? 'text-base leading-6' : 'text-xl leading-7')}>{title}</h2>
           </div>
-          {period && !analysis.soil.non_agricultural && <div className="shrink-0 max-sm:hidden">{period.picker}</div>}
+          {period && !analysis.soil.non_agricultural && <div className="shrink-0 max-lg:hidden">{period.picker}</div>}
           {report && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  onClick={report.download}
-                  disabled={report.busy}
-                  aria-label={t('Pobierz PDF')}
-                  className="flex size-10 shrink-0 items-center justify-center rounded-full bg-brand-dark text-white hover:bg-brand disabled:opacity-60"
-                >
-                  {report.busy ? <Loader2 className="size-4 animate-spin" /> : <FileDown className="size-4" />}
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>{t('Pobierz PDF')}</TooltipContent>
-            </Tooltip>
+            <button
+              type="button"
+              onClick={report.download}
+              disabled={report.busy}
+              className="flex h-10 shrink-0 items-center gap-2 rounded-full bg-pp-brand px-4 text-sm font-semibold text-white hover:bg-brand disabled:opacity-60"
+            >
+              {report.busy ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <FileDown className="size-4" aria-hidden />}
+              <span className="max-sm:sr-only">{t('Raport PDF')}</span>
+            </button>
           )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button type="button" aria-label={t('Więcej opcji')} className="flex size-10 shrink-0 items-center justify-center rounded-full border hover:bg-surface-2">
+              <button type="button" aria-label={t('Więcej opcji')} className="flex size-10 shrink-0 items-center justify-center rounded-full border border-paper-line hover:bg-surface-2">
                 <MoreHorizontal className="size-5" />
               </button>
             </DropdownMenuTrigger>
@@ -210,18 +218,18 @@ export function Passport({
             </DropdownMenuContent>
           </DropdownMenu>
         </header>
-        {period && !analysis.soil.non_agricultural && <div className="px-3 pb-1 sm:hidden">{period.picker}</div>}
-        {!analysis.soil.non_agricultural && (
-          <nav aria-label={t('Sekcje paszportu')} className="scrollbar-none mx-auto flex max-w-5xl gap-1 overflow-x-auto px-3 pb-2 md:px-6">
-            {NAV.map(([id, label]) => (
+        {period && !analysis.soil.non_agricultural && <div className="mx-auto max-w-[1240px] px-3 pb-1.5 md:px-6 lg:hidden">{period.picker}</div>}
+        {visibleNav.length > 0 && (
+          <nav aria-label={t('Sekcje paszportu')} className="scrollbar-none mx-auto flex max-w-[1240px] gap-1 overflow-x-auto px-3 md:px-6">
+            {visibleNav.map(([id, label]) => (
               <button
                 key={id}
                 type="button"
                 onClick={() => jump(id)}
                 aria-current={active === id ? 'true' : undefined}
                 className={cn(
-                  'h-8 shrink-0 rounded-full px-3 text-sm font-medium transition-colors',
-                  active === id ? 'bg-brand text-white' : 'text-text-muted hover:bg-surface-2',
+                  'h-10 shrink-0 border-b-2 px-2.5 text-sm font-medium transition-colors',
+                  active === id ? 'border-pp-brand font-semibold text-pp-brand' : 'border-transparent text-text-muted hover:text-text',
                 )}
               >
                 {t(label)}
@@ -231,16 +239,16 @@ export function Passport({
         )}
       </div>
 
-      <article className="relative z-0 mx-auto max-w-5xl space-y-6 px-3 py-6 md:px-6 [&_section[id^=pass-]]:scroll-mt-28">
+      <article className="relative z-0 mx-auto max-w-[1240px] space-y-7 px-3 py-6 md:px-6 [&_[id^=pp-]]:scroll-mt-36 [&_section[id^=pass-]]:scroll-mt-36">
         {report?.error && <ErrorNotice {...report.error} onRetry={report.error.retryable ? report.download : undefined} />}
         {period?.error && <ErrorNotice {...period.error} onRetry={period.error.retryable ? period.onRetry : undefined} />}
         {period?.loading && (
-          <p role="status" className="sticky top-[136px] z-10 mx-auto flex w-fit items-center gap-2 rounded-full bg-surface px-4 py-2 text-sm font-medium shadow-float">
-            <Loader2 className="size-4 animate-spin text-brand" aria-hidden /> {t('Przeliczam dla wybranego okresu…')}
+          <p role="status" className="sticky top-[148px] z-10 mx-auto flex w-fit items-center gap-2 rounded-full bg-surface px-4 py-2 text-sm font-medium shadow-float">
+            <Loader2 className="size-4 animate-spin text-pp-brand" aria-hidden /> {t('Przeliczam dla wybranego okresu…')}
           </p>
         )}
-        <div aria-busy={period?.loading || undefined} className={cn('space-y-6 transition-opacity', period?.loading && 'pointer-events-none opacity-50')}>
-          <Content analysis={analysis} onShowOnMap={onShowOnMap} />
+        <div aria-busy={period?.loading || undefined} className={cn('space-y-7 transition-opacity', period?.loading && 'pointer-events-none opacity-50')}>
+          <Content analysis={analysis} onShowOnMap={onShowOnMap} refineForm={refineForm} />
         </div>
       </article>
     </div>

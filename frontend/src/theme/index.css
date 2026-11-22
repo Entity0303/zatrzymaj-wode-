@@ -43,6 +43,17 @@
   --color-nodata-soft: #f2f2ee;
   --color-legend: #1f2a24;
 
+  /* F6: paszport wodny (widok analityczny) – papierowe tło, ramki kart i paleta stanu z projektu paszportu */
+  --color-paper: #f8f6f1;
+  --color-paper-line: #e4e0d6;
+  --color-pp-brand: #2f6b47;
+  --color-pp-ok: #5bb37f;
+  --color-pp-warn: #e8b931;
+  --color-pp-risk: #e07b39;
+  --color-pp-bad: #c8453b;
+  --color-pp-water: #2f80c9;
+  --color-pp-earth: #8b6b4a;
+
   /* Typografia: 12 / 14 / 16 / 20 / 28 */
   /* F10: jeden systemowy krój dla całej aplikacji – jedyne miejsce z listą krojów */
   --font-sans: 'Segoe UI', system-ui, -apple-system, Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
