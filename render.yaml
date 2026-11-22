@@ -5,14 +5,19 @@ services:
     name: wodoskop-api
     runtime: docker
     region: frankfurt
-    # darmowy plan: usypia się po ok. 15 min bez ruchu, brak trwałego dysku (cache znika przy restarcie) – patrz DEPLOY.md
-    plan: free
+    # A16b: Starter – bez usypiania, z trwałym dyskiem /data (cache przeżywa restarty i wdrożenia); 512 MB RAM →
+    # 1 worker uvicorn (Dockerfile uruchamia uvicorn bez --workers)
+    plan: starter
     dockerContext: ./backend
     dockerfilePath: ./backend/Dockerfile
     # lekki health check (bez zapytań do źródeł). /api/status odpytuje wszystkie źródła (GUGiK, NASA…) –
     # Render sprawdza zdrowie co kilka sekund, więc /api/status zasypałby usługi publiczne; służy do ręcznego budzenia.
     healthCheckPath: /api/health
     autoDeploy: true
+    # budowanie tylko przy zmianach backendu (Dockerfile: backend/Dockerfile – w backend/**)
+    buildFilter:
+      paths: ["backend/**", "render.yaml"]
+      ignoredPaths: ["backend/tests/**", "**/*.md"]
     envVars:
       # Dockerfile uruchamia uvicorn na 8000 – Render kieruje ruch na port z PORT
       - key: PORT
@@ -22,8 +27,8 @@ services:
         value: "false"
       - key: OFFLINE_SOURCES
         value: "bdot"
-      # trwały cache SQLite. Plan free: system plików kontenera (znika przy restarcie / uśpieniu).
-      # Plan płatny: odkomentuj `disk` niżej – wtedy /data przeżywa restarty.
+      # trwały cache SQLite na dysku `cache` (/data). Pusty plik przy pierwszym starcie → load_seed() wczytuje
+      # app/data/seed/cache_seed.sqlite.gz z obrazu do /data/cache.sqlite (CACHE_SEED – domyślnie włączone)
       - key: CACHE_DB
         value: /data/cache.sqlite
       # rozgrzewka cache przykładów demo po starcie (w tle) – po wybudzeniu przykłady są szybkie
@@ -32,10 +37,13 @@ services:
       # adres frontendu na Vercelu jako lista JSON, np. ["https://wodoskop.vercel.app"]
       - key: CORS_ORIGINS
         sync: false
+      # podglądy i domeny Vercela (zmienne adresy *.vercel.app)
+      - key: CORS_ORIGIN_REGEX
+        value: ^https://.*\.vercel\.app$
       # publiczny adres aplikacji (kod QR w raporcie PDF), np. https://wodoskop.vercel.app
       - key: PUBLIC_URL
         sync: false
-    # disk:                     # tylko plan płatny (Starter i wyżej)
-    #   name: cache
-    #   mountPath: /data
-    #   sizeGB: 1
+    disk:                       # trwały dysk (plan Starter i wyżej)
+      name: cache
+      mountPath: /data
+      sizeGB: 1
