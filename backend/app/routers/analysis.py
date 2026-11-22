@@ -759,7 +759,7 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
         timed("KIEG / EGiB GUGiK", kieg.classes_for_parcel(p.id, p.geom_2180)) if approx is None and not drawn
         else asyncio.sleep(0, result=(None, 0)),
         timed("Open-Meteo (prognoza)", _forecast_days(c.x, c.y)) if is_today else asyncio.sleep(0, result=(None, 0)),
-        timed(soilgrids.SOURCE, soilgrids.texture_at(rp.x, rp.y)),
+        timed(soilgrids.SOURCE, soilgrids.texture_budget(rp.x, rp.y)),  # A22: najwyżej 5 s, reszta w tle
         timed(soil_map.SOURCE, soil_map.soil_map_for_parcel(p.geom_2180)),
         _terrain_step(p, timed),
     )

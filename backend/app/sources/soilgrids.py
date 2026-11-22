@@ -6,6 +6,7 @@ Rozdzielczość 250 m (model globalny) – wartości orientacyjne. Licencja dany
 Źródło nie liczy niczego poza średnią ważoną po głębokości (5, 10, 15 cm).
 """
 
+import asyncio
 from dataclasses import dataclass
 
 from app.core.cache import TTLCache, cached_fetch
@@ -84,5 +85,37 @@ async def texture_at(lon: float, lat: float) -> "SoilGridsResult | None":
                               breaker_s=300)
 
 
+# A22: analiza czeka na SoilGrids najwyżej `soilgrids_wait_s` (5 s); wolniejsza odpowiedź dociąga się w tle
+# (do `soilgrids_timeout_s`) i trafia do cache – kolejne zapytanie o tę działkę ma ją od razu (jak teren i satelita)
+PENDING_MESSAGE = "odpowiada wolno – dociągane w tle, będzie przy kolejnym przeliczeniu"
+_tasks: dict[tuple, asyncio.Future] = {}
+
+
+async def texture_budget(lon: float, lat: float, wait_s: float | None = None) -> "SoilGridsResult | None":
+    """Jak `texture_at`, ale czekamy najwyżej `wait_s`; po tym czasie SourceError(PENDING_MESSAGE), a pobieranie
+    trwa dalej w tle (wynik w cache)."""
+    wait_s = settings.soilgrids_wait_s if wait_s is None else wait_s
+    key = (round(lon, 4), round(lat, 4))
+    hit = _cache.get(key)
+    if hit is not None:
+        return hit
+    task = _tasks.get(key)
+    if task is None or task.done():
+        task = asyncio.ensure_future(texture_at(lon, lat))
+        _tasks[key] = task
+
+        def finish(t: asyncio.Future, key=key) -> None:
+            _tasks.pop(key, None)
+            if not t.cancelled():
+                t.exception()  # błąd odebrany – bez ostrzeżenia „exception was never retrieved”
+
+        task.add_done_callback(finish)
+    try:
+        return await asyncio.wait_for(asyncio.shield(task), wait_s)
+    except asyncio.TimeoutError as exc:
+        raise SourceError(SOURCE, PENDING_MESSAGE) from exc
+
+
 def clear_cache() -> None:
     _cache.clear()
+    _tasks.clear()

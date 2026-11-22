@@ -7,7 +7,7 @@ ranking:
   variants:
     precip_pct: 10        # gdy głównym źródłem opadu jest NASA: opad −10% / +10%
     wod_open_pct: 20      # kat. I i IV (przedział otwarty) albo WOD spoza przedziału kategorii: ±20% WOD z modelu
-    wide_risk_years: 3    # różnica lat ze stratą > 20% między wariantami ≥ 3 → pewność uprawy o poziom niżej
+    wide_risk_years: 4    # A22: rozrzut lat ze stratą > 20% między wariantami ≥ 4 → pewność uprawy o poziom niżej
   # A16: tylko plony GUS z lat < rok daty analizy; Ym(rok sezonu) = trend liniowy plonów województwa × P90 reszt
   # względnych (plon / trend; trend Theil–Sen – odporny na pojedyncze lata suszy) – bez trendu lata 2016–2019 były zawyżone, a 2023–2025 zaniżone (GUS +25–40% w 10 lat)
   yield_trend:

@@ -131,6 +131,7 @@ class Settings(BaseSettings):
 
     soilgrids_url: str = "https://rest.isric.org/soilgrids/v2.0/properties/query"
     soilgrids_timeout_s: float = 12.0
+    soilgrids_wait_s: float = 5.0  # A22: tyle czeka analiza; wolniejsza odpowiedź dociąga się w tle do cache
     soil_map_url: str = "https://mapy.geoportal.gov.pl/wss/service/pub/guest/MapaGlebowoRolnicza/MapServer/WMSServer"
     soil_map_timeout_s: float = 8.0
     ortho_wms_url: str = "https://mapy.geoportal.gov.pl/wss/service/PZGIK/ORTO/WMS/StandardResolution"
@@ -202,6 +203,7 @@ class Settings(BaseSettings):
     # przykłady demo: rozgrzewka cache przy starcie (w tle) i co tyle godzin
     demo_warmup: bool = True
     demo_warmup_interval_h: float = 6.0
+    demo_warmup_delay_s: float = 120.0  # A22: rozgrzewka startuje tyle sekund po uruchomieniu (DEMO_WARMUP_DELAY_S)
     # adres aplikacji w kodzie QR raportu PDF
     public_url: str = ""  # PUBLIC_URL – publiczny adres aplikacji; puste = bez kodu QR w raporcie PDF (A5b-2c)
 

@@ -12,6 +12,7 @@ import pytest  # noqa: E402
 from app.core.config import settings  # noqa: E402
 
 settings.demo_warmup = False
+settings.demo_warmup_delay_s = 0.0  # A22: w testach rozgrzewka (gdy włączona) bez opóźnienia startu
 settings.cache_db = ""
 settings.demo_offline = False
 settings.demo_parcels_preload = False

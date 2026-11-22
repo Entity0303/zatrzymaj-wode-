@@ -99,12 +99,36 @@ def warmup_state() -> list[WarmupItem]:
     return [_state.get(e.id) or WarmupItem(id=e.id, title=e.title, state="oczekuje") for e in EXAMPLES]
 
 
+def cached_for_today(ex: DemoExample) -> bool:
+    """A22: czy przykład ma już w cache pogodę dla swojej daty (to jedyne dane zmieniające się z dnia na dzień –
+    działka, gleba i teren przykładów są w cache bez wygasania / w seedzie). Tak → rozgrzewka go pomija."""
+    from app.routers.analysis import history_range  # import tu – unikamy cyklu
+    from app.sources import uldk, weather_power
+
+    p = uldk.known_by_id(ex.parcel_id)
+    if p is None:
+        return False
+    c = p.geom_4326.centroid
+    start, end = history_range(ex.date, None, settings.history_years)
+    return weather_power._cache.get(weather_power.cache_key(c.x, c.y, start, end)) is not None
+
+
 async def warmup_once() -> list[WarmupItem]:
-    """Liczy wszystkie przykłady po kolei przez run_analysis (wypełnia cache źródeł). Błąd = stan „blad”."""
+    """Liczy przykłady po kolei przez run_analysis (wypełnia cache źródeł). Błąd = stan „blad”. A22: przykład
+    z pogodą w cache dla bieżącej daty jest pomijany (stan „gotowe”, 0 ms) – bez obciążania procesora po starcie."""
     from app.routers.analysis import run_analysis  # import tu – unikamy cyklu przy starcie aplikacji
 
     t_all = perf_counter()
     for ex in examples():
+        try:
+            skip = cached_for_today(ex)
+        except Exception:  # noqa: BLE001 – kontrola cache nie może zatrzymać rozgrzewki
+            skip = False
+        if skip:
+            _state[ex.id] = WarmupItem(id=ex.id, title=ex.title, state="gotowe", duration_ms=0,
+                                       finished_at=dt.datetime.now(dt.timezone.utc).replace(microsecond=0))
+            log.info("Rozgrzewka: %s – pominięto (dane na dziś już w cache)", ex.title)
+            continue
         _state[ex.id] = WarmupItem(id=ex.id, title=ex.title, state="w_toku")
         t0 = perf_counter()
         try:
@@ -122,7 +146,10 @@ async def warmup_once() -> list[WarmupItem]:
 
 
 async def warmup_loop() -> None:
-    """Przy starcie i potem co `demo_warmup_interval_h` godzin (w tle – nie blokuje startu)."""
+    """`demo_warmup_delay_s` (domyślnie 120 s) po starcie i potem co `demo_warmup_interval_h` godzin – w tle, po
+    kolei; opóźnienie, żeby rozgrzewka nie konkurowała o procesor z pierwszymi zapytaniami po wdrożeniu (A22)."""
+    if settings.demo_warmup_delay_s > 0:
+        await asyncio.sleep(settings.demo_warmup_delay_s)
     while True:
         try:
             await warmup_once()
