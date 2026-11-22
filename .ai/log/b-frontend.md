@@ -4,6 +4,12 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-22 · `main` · F17 (A za B): bez dymka na wybranej działce
+**Co:** `ParcelMap` – usunięty stały tooltip z nazwą i statusem na wybranej działce (`ParcelLabel.tsx` usunięty, CSS `.parcel-label` usunięty, prop `parcelRisk` usunięty z ParcelMap i Start); obrys wybranej działki w kolorze statusu (`STATUS[...].hex`, brak danych = biały) nad ciemną poświatą. Podpowiedzi po najechaniu na inne działki (numerowane kandydatki przy kilku działkach o tym samym numerze – innych działek, np. z „Moich działek”, mapa nie rysuje) tylko przy `(hover: hover) and (pointer: fine)` – na telefonie wcale.
+**Sprawdzone:** `npx tsc --noEmit`, `npm run build`, `npx oxlint`. W przeglądarce – nie.
+**Pliki:** `frontend/src/features/map/ParcelMap.tsx`, `features/map/ParcelLabel.tsx` (usunięty), `pages/Start.tsx`, `theme/index.css`, `components/StatusRows.tsx` (komentarz).
+**Kontrakt API:** nie.
+
 ## 2026-11-22 · `main` · F14 (A za B): karta startowa – układ bez nakładania
 **Co:** `IntroHero` – nagłówek: logo + „Wodoskop” (700, 28 px), pod spodem podtytuł „Prześwietl swoją działkę pod kątem suszy” (16–17 px, szary); wiersz wyszukiwania jako siatka (gap 12 px, bez position:absolute między elementami): [pole „Wpisz numer działki lub adres” z lupą i „Moja lokalizacja” w środku pola] [data analizy 200 px] [„Sprawdź”, kolor marki, wysyła ten sam formularz przez `form=`] – wszystkie 48 px, ramka 1 px, `rounded-xl`, bez cieni; karta jako `@container` – poniżej 640 px szerokości karty pole na całą szerokość, pod nim data i przycisk obok siebie. Podpowiedź formatu i „albo kliknij swoje pole na mapie · Narysuj swoje pole” wyrównane do lewej krawędzi pola, odstępy 8 px; chipy przykładów `flex-wrap` gap 8 px, etykieta „lub zobacz przykład:” w pierwszej linii, maks. 6, długie nazwy zawijają się w chipie. Karta `max-w-[760px]`, padding 28 px (20 px na telefonie), wyśrodkowana. `SearchBar` `variant="field"` + `formId`, `DateField` `field` (48 px, ramka, bez cienia). Górny pasek nie dubluje daty – przy widocznej karcie nie ma TopBara ani daty w ExploreBar.
 **Sprawdzone:** `npx tsc --noEmit`, `npm run build` (reguły `@container (width>=640px)` w CSS), `npx oxlint`. W przeglądarce – nie.

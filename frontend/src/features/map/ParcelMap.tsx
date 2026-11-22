@@ -11,11 +11,12 @@ import {
   useMap,
   useMapEvents,
 } from './leaflet'
-import type { LayerResponse, Parcel, VerdictLevel } from '@/api/types'
+import type { LayerResponse, Parcel } from '@/api/types'
 import type { Status } from '@/theme/status'
 import { parcelBounds, type MapInsets } from './geo'
 import { layerByKey, type LayerKey } from './layers'
-import { ParcelLabel } from './ParcelLabel'
+import { STATUS } from '@/theme/status'
+import { useMediaQuery } from '@/lib/hooks'
 import { SoilParcelOverlay, type SoilImageStatus } from './SoilSusceptibilityLayer'
 import { InfraPins } from '@/features/infra-reports/InfraPins'
 import { useLang } from '@/lib/i18n'
@@ -111,7 +112,6 @@ const numberIcon = (n: number) =>
     html: `<div style="width:32px;height:32px;border-radius:9999px;background:#2E5B3F;border:2px solid #fff;color:#fff;font:600 14px/28px var(--font-sans);text-align:center;box-shadow:0 2px 8px rgb(30 42 35/.35)">${n}</div>`,
   })
 
-const anchorIcon = L.divIcon({ className: '', iconSize: [0, 0] })
 
 type Props = {
   baseMap: BaseMap
@@ -122,7 +122,6 @@ type Props = {
   parcel: Parcel | null
   parcelStatus: Status
   /** werdykt działki – „Na dłuższą metę: …” w etykiecie */
-  parcelRisk?: VerdictLevel | null
   candidates: Parcel[]
   pendingPoint: [number, number] | null
   userPoint: [number, number] | null
@@ -155,7 +154,6 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
     analysisDate,
     parcel,
     parcelStatus,
-    parcelRisk = null,
     candidates,
     pendingPoint,
     userPoint,
@@ -177,7 +175,10 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
 ) {
   const { t } = useLang()
   const ActiveOverlay = layerByKey(layer).Overlay
-  const labelPos = useMemo(() => (parcel ? parcelBounds(parcel).getCenter() : null), [parcel])
+  // F17: podpowiedzi po najechaniu (inne działki – kandydaci o tym samym numerze) tylko z myszą; na telefonie wcale
+  const hoverTips = useMediaQuery('(hover: hover) and (pointer: fine)')
+  // F17: bez dymka na wybranej działce – sygnałem jest kolor obrysu w barwie statusu (brak danych = biały)
+  const outline = parcelStatus === 'no_data' ? '#FFFFFF' : STATUS[parcelStatus].hex
   // obszar zgłoszeń: działka + ok. 1,5 km dookoła
   const infraBox = useMemo<[number, number, number, number] | null>(() => {
     if (!parcel) return null
@@ -235,7 +236,7 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
           )}
           {/* F10: gleba IUNG – jeden obraz WMS przycięty do obrysu (nowa działka = nowy obraz) */}
           {layer === 'gleba' && <SoilParcelOverlay key={parcel.id} geometry={parcel.geometria} onStatus={onSoilStatus} />}
-          {/* delikatna poświata pod białym obrysem 3 px (SPEC 5.1) */}
+          {/* delikatna poświata pod obrysem 3 px (SPEC 5.1) */}
           <GeoJSON
             key={`${parcel.id}-halo`}
             data={parcel.geometria}
@@ -246,15 +247,8 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
             key={parcel.id}
             data={parcel.geometria}
             interactive={false}
-            style={{ color: '#FFFFFF', weight: 3, opacity: 1, fillColor: '#FFFFFF', fillOpacity: 0.12 }}
+            style={{ color: outline, weight: 3, opacity: 1, fillColor: '#FFFFFF', fillOpacity: 0.12 }}
           />
-          {labelPos && (
-            <Marker position={labelPos} icon={anchorIcon} interactive={false} keyboard={false}>
-              <Tooltip permanent direction="center" className="parcel-label" opacity={1}>
-                <ParcelLabel number={parcel.numer} status={parcelStatus} source={parcel.source} longTerm={parcelRisk} />
-              </Tooltip>
-            </Marker>
-          )}
         </>
       )}
 
@@ -266,9 +260,11 @@ export const ParcelMap = forwardRef<LeafletMap, Props>(function ParcelMap(
           title={`${i + 1}. ${t('Działka {numer}', { numer: c.numer })}, ${t('obręb {obreb}, gm. {gmina}', { obreb: c.obreb, gmina: c.gmina })}`}
           eventHandlers={{ click: () => onSelectCandidate(c) }}
         >
-          <Tooltip direction="top" offset={[0, -16]}>
-            {i + 1}. {t('Działka {numer}', { numer: c.numer })} – {t('obręb {obreb}, gm. {gmina}', { obreb: c.obreb, gmina: c.gmina })}
-          </Tooltip>
+          {hoverTips && (
+            <Tooltip direction="top" offset={[0, -16]}>
+              {i + 1}. {t('Działka {numer}', { numer: c.numer })} – {t('obręb {obreb}, gm. {gmina}', { obreb: c.obreb, gmina: c.gmina })}
+            </Tooltip>
+          )}
         </Marker>
       ))}
 

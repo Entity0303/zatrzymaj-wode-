@@ -232,7 +232,6 @@
     margin-right: 12px;
   }
 }
-/* ParcelLabel – pigułka bez domyślnego dymka Leaflet */
 /* rysowanie pola: celownik zamiast łapki */
 .drawing .leaflet-container,
 .drawing .leaflet-grab {
@@ -244,17 +243,6 @@
   image-rendering: pixelated;
 }
 
-.leaflet-tooltip.parcel-label {
-  background: transparent;
-  border: 0;
-  box-shadow: none;
-  padding: 0;
-  /* F13: Leaflet daje tooltipom nowrap – etykieta działki łamie się w swoich 220–260 px (ParcelLabel) */
-  white-space: normal;
-}
-.leaflet-tooltip.parcel-label::before {
-  display: none;
-}
 .leaflet-tooltip {
   font-family: inherit;
   font-size: 14px;

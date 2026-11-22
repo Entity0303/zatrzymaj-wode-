@@ -1,8 +1,9 @@
 # Status – osoba B (Mefju), frontend
 
-_Stan na: 2026-11-22 (F14 – A za B, `main`)_
+_Stan na: 2026-11-22 (F17 – A za B, `main`)_
 
 ## Zrobione
+- **F17 (A za B)**: bez stałego dymka na wybranej działce – obrys w kolorze statusu; podpowiedzi po najechaniu (kandydaci) tylko z myszą.
 - **F14 (A za B)**: karta startowa bez rozjazdów – nagłówek w 2 liniach, wiersz [pole z lupą i lokalizacją | data | „Sprawdź”] jako siatka 48 px, chipy zawijane, karta maks. 760 px.
 - **F13 (A za B)**: „Co rośnie na tej działce?” na górze panelu (uprawa od razu, po wyborze jedna linia „Uprawa: … · zmień”, reszta pod „Więcej szczegółów”), przeliczanie bez skakania (poprzedni wynik przyciemniony, debounce 400 ms), dymek 220–260 px, powierzchnia `formatArea`.
 - **F12 (A za B)**: ekran startowy pod jury (duże pole numeru + data analizy, podpowiedź formatu, chipy przykładów), normalizacja numeru działki przed /api/search, teksty z audytu V3 (bilans wody / „zabrakło”, zapas wody w glebie, „Bardzo mało wody”, „Paszport wodny”, zakładki = nagłówki sekcji, bez „w budowie / wkrótce”), `formatArea` (ha z 2 miejscami, < 0,1 ha w m²).

@@ -7,7 +7,7 @@ import { LONG_TERM_LABEL, NOW_LABEL, STATUS, type Status } from '@/theme/status'
 const LONG_TERM_DOT: Record<VerdictLevel, string> = { ok: 'bg-ok', warn: 'bg-amber', bad: 'bg-danger' }
 
 /**
- * Stan działki w dwóch równych wierszach (F9/F10) – wspólny dla dymka na mapie (ParcelLabel) i panelu (RiskSummary):
+ * Stan działki w dwóch równych wierszach (F9/F10) – w panelu (RiskSummary); dymek na mapie usunięty w F17:
  * „Teraz: woda w normie” (ikona stanu) / „Na dłuższą metę: wysokie ryzyko suszy” (kropka koloru ryzyka).
  * Bez separatora-kropki; `no_data` / brak werdyktu – wiersz pominięty.
  */
