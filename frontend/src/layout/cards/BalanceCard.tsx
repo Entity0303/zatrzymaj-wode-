@@ -6,18 +6,10 @@ import { NoDataNote as NoData } from '@/components/NoDataNote'
 import { SourceTag } from '@/components/SourceTag'
 import { formatDayLong, formatNum, formatSigned } from '@/lib/format'
 import { useLang } from '@/lib/i18n'
+import { seasonBalance } from '@/lib/seasonBalance'
 
 const W = 220
 const H = 56
-
-/** Ostatnia niepusta wartość serii. */
-function last<T>(arr: T[], get: (x: T) => number | null | undefined): number | null {
-  for (let i = arr.length - 1; i >= 0; i--) {
-    const v = get(arr[i])
-    if (v != null) return v
-  }
-  return null
-}
 
 /**
  * Bilans wody (SPEC 4.5): podpisany, CZYJ to bilans („Działka 6/1”), ta sama liczba co w paszporcie –
@@ -59,22 +51,14 @@ export function BalanceCard({ analysis }: { analysis: AnalysisResponse | null })
       </Card>
     )
   const dev = h.balance_deviation_mm
-  const now = last(h.balance_cumulative, (p) => p.value)
-  const rank = h.balance_rank
-  const season =
-    rank && rank.of_years > 0
-      ? rank.lower_years <= Math.floor(rank.of_years * 0.3)
-        ? 'suchy sezon'
-        : rank.of_years - rank.lower_years <= Math.floor(rank.of_years * 0.3)
-          ? 'wilgotny sezon'
-          : 'zwykły sezon'
-      : null
+  // ta sama liczba co w paszporcie i raporcie (słupek bieżącego roku)
+  const { mm: now, kind: season, from } = seasonBalance(analysis)
   const whose = analysis.parcel.source === 'approximate' ? t('Obszar przybliżony') : t('Działka {numer}', { numer: analysis.parcel.numer })
   return (
     <Card icon={ChartNoAxesCombined} title="Bilans wody" aside={<span className="text-xs text-text-muted">{whose}</span>}>
       {now != null && (
         <p className="text-sm leading-5">
-          {t('od {d}:', { d: formatDayLong(h.season_start) })} <b className="tabular">{formatSigned(now, 0)} mm</b>
+          {t('od {d}:', { d: formatDayLong(from) })} <b className="tabular">{formatSigned(now, 0)} mm</b>
           {season && <span className="text-text-muted"> ({t(season)})</span>}
         </p>
       )}

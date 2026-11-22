@@ -7,10 +7,13 @@ export function StatusBadge({
   status,
   label,
   size = 'md',
+  now,
   className,
 }: {
   status: Status
   label?: string
+  /** stan wody dziś – „Teraz: dobrze” (werdykt działki mówi o latach, ten status o dzisiejszym dniu) */
+  now?: boolean
   size?: 'sm' | 'md'
   className?: string
 }) {
@@ -28,7 +31,7 @@ export function StatusBadge({
       )}
     >
       <Icon className={size === 'sm' ? 'size-3.5' : 'size-4'} aria-hidden />
-      {t(label ?? s.label)}
+      {now ? `${t('Teraz:')} ${t(label ?? s.label).toLocaleLowerCase()}` : t(label ?? s.label)}
     </span>
   )
 }

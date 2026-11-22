@@ -5,6 +5,7 @@ import { STATUS } from '@/theme/status'
 import { ChoiceCard } from './ChoiceCard'
 import { RankingCard } from './RankingCard'
 import { RefineCard } from './RefineCard'
+import { SatelliteCard } from './SatelliteCard'
 import { VerdictCard } from './VerdictCard'
 
 export type RefineProps = {
@@ -24,7 +25,7 @@ const PLAN_GROUPS = [
   { id: 'zboza_jare', label: 'Zboża jare (dowolne)' },
 ]
 
-/** „Teraz: …” – stan wody dziś jednym zdaniem (bez uprawy: dla typowego pola). */
+/** „Teraz: …” – stan wody dziś jednym zdaniem (bez uprawy: dla typowego pola); werdykt mówi o działce na lata. */
 export function NowLine({ analysis }: { analysis: AnalysisResponse }) {
   const { t } = useLang()
   const s = STATUS[analysis.status.level]
@@ -41,7 +42,7 @@ export function NowLine({ analysis }: { analysis: AnalysisResponse }) {
 
 /**
  * Zakładka „Przegląd” (B3, „mniej na ekranie”): zdania werdyktu (3 + „Pokaż wszystko”; nagłówek jest wyżej
- * w RiskSummary), stan wody teraz, „Co tu posiać?” (3 najlepsze), „Doprecyzuj” (zwinięte).
+ * w RiskSummary), stan wody teraz, „Z satelity” (A11), „Co tu posiać?” (3 najlepsze), „Doprecyzuj” (zwinięte).
  */
 export function FieldOverview({ analysis, refine, showNow = true }: { analysis: AnalysisResponse; refine: RefineProps; showNow?: boolean }) {
   const s = analysis.suggestions
@@ -51,8 +52,9 @@ export function FieldOverview({ analysis, refine, showNow = true }: { analysis: 
   const area = s?.area ?? (analysis.cultivated_area_ha ? { value_ha: analysis.cultivated_area_ha, estimated: false, note: '' } : null)
   return (
     <div className="space-y-3">
-      {analysis.verdict && <VerdictCard verdict={analysis.verdict} bare limit={3} hideCrops={!!s} />}
+      {analysis.verdict && <VerdictCard verdict={analysis.verdict} bare limit={3} hideCrops={!!s} precip={analysis.precip_sources} />}
       {showNow && <NowLine analysis={analysis} />}
+      {analysis.satellite && <SatelliteCard satellite={analysis.satellite} />}
       {s && <ChoiceCard suggestions={s} />}
       {s && s.groups.some((g) => g.items.length) && <RankingCard suggestions={s} />}
       <RefineCard {...refine} area={area} rotationHint={s?.rotation_hint} planOptions={planOptions} />

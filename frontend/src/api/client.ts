@@ -10,6 +10,7 @@ import type {
   LayerResponse,
   Parcel,
   PointValue,
+  Satellite,
   SearchResponse,
 } from './types'
 
@@ -90,6 +91,14 @@ export const api = {
    * uprawa opcjonalna (bez uprawy = „Stan działki” + ranking „Co tu posiać?”).
    */
   analysis: (q: AnalysisQuery, signal?: AbortSignal) => get<AnalysisResponse>('/api/analysis', analysisParams(q), signal),
+  /**
+   * GET /api/satellite (A11) – zdjęcie Sentinel-2 dla działki albo punktu; liczone na żywo (ok. 6–15 s), potem z cache.
+   * Brak sceny / awaria = 200 ze `status: "brak_danych"`.
+   */
+  satellite: (q: AnalysisQuery, signal?: AbortSignal) => {
+    const p = analysisParams({ parcelId: q.parcelId, point: q.point, date: q.date })
+    return get<Satellite>('/api/satellite', p, signal)
+  },
   /** GET /api/search?q= – jedno pole wyszukiwania: identyfikator, „obręb numer” albo nazwa miejscowości (A5c) */
   search: (q: string, signal?: AbortSignal) => get<SearchResponse>('/api/search', { q }, signal),
   /** GET /api/layers/{layer} – warstwa przycięta do obrysu działki (raster PNG + bbox, GeoJSON) */

@@ -18,7 +18,7 @@ export function PanelCollapsed({ parcel, status, onExpand, onClose }: { parcel: 
           <Leaf className="size-5" aria-hidden />
         </span>
         <span className="font-name min-w-0 flex-1 truncate text-lg leading-6 font-semibold">{title}</span>
-        {status && <StatusBadge status={status} size="sm" />}
+        {status && <StatusBadge status={status} size="sm" now={status !== 'no_data'} />}
         <ChevronDown className="size-5 shrink-0 text-text-muted" aria-label={t('Rozwiń panel')} />
       </button>
       <button

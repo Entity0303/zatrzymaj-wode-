@@ -23,6 +23,7 @@ export function LayerMenu({
   view,
   onViewChange,
   unavailable = [],
+  notes,
   canUse3d = true,
   side = 'top',
   className,
@@ -35,6 +36,8 @@ export function LayerMenu({
   onViewChange: (v: '2d' | '3d') => void
   /** warstwy bez danych z serwera (dziś 501) – wyszarzone, „wkrótce” */
   unavailable?: LayerKey[]
+  /** krótka uwaga przy dostępnej warstwie, np. „pobieram…” / „brak zdjęcia” (satelita, A11) */
+  notes?: Partial<Record<LayerKey, string>>
   /** 3D tylko przy wybranej działce */
   canUse3d?: boolean
   className?: string
@@ -80,6 +83,7 @@ export function LayerMenu({
                   <span className="flex items-center gap-2 text-sm leading-5 font-semibold">
                     {t(l.label)}
                     {off && <span className="rounded-full bg-surface-2 px-2 text-xs font-medium text-text-muted">{t('wkrótce')}</span>}
+                    {!off && notes?.[l.key] && <span className="rounded-full bg-surface-2 px-2 text-xs font-medium text-text-muted">{t(notes[l.key]!)}</span>}
                   </span>
                   <span className="block text-sm leading-5 text-text-muted">{t(DESCRIPTION[l.key])}</span>
                 </span>

@@ -1,8 +1,9 @@
 # Status – osoba B (Mefju), frontend
 
-_Stan na: 2026-11-21_
+_Stan na: 2026-11-22 (F1 – A za B)_
 
 ## Zrobione
+- **F1 (A za B)**: baner obszaru przybliżonego, źródła opadów IMGW (A7) w werdykcie i paszporcie, satelita (A11): karta „Z satelity”, dociąganie `/api/satellite`, warstwy Kondycja / Wilgotność z legendą z serwera, „Rośliny” w werdykcie; jedna liczba sezonu w „Bilans wody” i paszporcie; „Teraz: …” przy statusie.
 - Układ wg `design/SPEC_UI.md` – kroki 1–2 z sekcji 17: tokeny (paleta, Inter, cienie, zaokrąglenia, lucide), ekran Start (lewy pasek, górny pasek z wyszukiwarką / lokalizacją / pogodą / datą, pigułki warstw + 2D|3D, mapa, prawy panel, dolny pasek 5 kart), tablet, telefon (szuflada z 3 położeniami, dolne zakładki).
 - Panel działki i komponenty SPEC 14 (StatusBadge, MetricCard, SourceTag, ScoreRing, RecommendationCard, LoadingSteps, EmptyState, ErrorNotice, ParcelLabel, LegendCard, MapControls); stany pusty / ładowanie / błąd / brak danych.
 - Przełącznik języka PL | EN (D47), domyślnie polski; teksty z backendu zostają po polsku.
@@ -21,6 +22,7 @@ _Stan na: 2026-11-21_
 - `b/frontend` (jedna długa gałąź; B1 z `b/wyglad-grafiki` już scalone) – merge do `main` tylko przy kamieniach milowych, bez PR na zadanie
 
 ## Następne
+- F1 do dokończenia: przegląd literówek / żargonu w całej aplikacji; zrzut 390 px karty Werdyktu.
 0. **Uwagi mentora (jury ma 3 min):** karty „Zobacz przykład” są (B10, lista lokalna) – podmienić na `GET /api/demo/examples`; po merge `origin/a/backend` z nowym kontraktem – pole „Co rosło w zeszłym roku?” (+ `przedplon` w linku i raporcie), odznaki formalności / ostrzeżenie / ekoschemat w rekomendacjach (3 w panelu, 5 w paszporcie), gleba: piasek/pył/ił %, uziarnienie, przepuszczalność, ulewa, typ gleby.
 1. Widok 3D – zrobiony (B21) na kaflach ~30 m; dokładniej po endpoincie siatki NMT od A (propozycja w dzienniku B21).
 

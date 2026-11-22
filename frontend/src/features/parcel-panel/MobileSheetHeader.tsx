@@ -100,7 +100,7 @@ function ParcelHead({
             : `${t('gm. {gmina}, obręb {obreb}', { gmina: parcel.gmina, obreb: parcel.obreb })} · ${shortCounty(parcel.powiat)}`}
         </p>
         <div className="flex items-center gap-1 pl-[46px]">
-          <StatusBadge status={status} size="sm" />
+          <StatusBadge status={status} size="sm" now={status !== 'no_data'} />
           <span className="flex-1" />
           <ParcelActions parcel={parcel} saved={saved} onToggleSave={onToggleSave} onCopied={onCopied} />
           <button

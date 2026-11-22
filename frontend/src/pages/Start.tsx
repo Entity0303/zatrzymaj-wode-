@@ -10,6 +10,7 @@ import { SampleDataBanner } from '@/components/SampleDataBanner'
 import { parcelBounds, parcelContains, type MapInsets } from '@/features/map/geo'
 import { layerByKey, type LayerKey } from '@/features/map/layers'
 import { useLayerData } from '@/features/map/layers/useLayerData'
+import { layerLegend, layerStatusText, layerStatusVars } from '@/features/map/layers/responseLegend'
 import { LegendCard } from '@/features/map/LegendCard'
 import { MapControls } from '@/features/map/MapControls'
 import { POLAND_CENTER, ParcelMap, type BaseMap } from '@/features/map/ParcelMap'
@@ -38,14 +39,14 @@ import { MobileSheet, snapHeights, type Snap } from '@/layout/MobileSheet'
 import { Sidebar } from '@/layout/Sidebar'
 import { TopBar } from '@/layout/TopBar'
 import { todayIso } from '@/lib/dates'
-import { formatDatePl, formatHa, formatNum } from '@/lib/format'
+import { formatHa } from '@/lib/format'
 import { BRAND_NAME, BRAND_TAGLINE } from '@/lib/brand'
 import { readLink, shareLink, writeLink } from '@/lib/deepLink'
 import { rememberAnalysis, useSettings, useUiPrefs } from '@/lib/storage'
 import { useReportDownload } from '@/features/reports/useReportDownload'
 import { ReportForm } from '@/features/reports/ReportForm'
 import { useMediaQuery, useOnline, usePrefersReducedMotion, useSavedParcels } from '@/lib/hooks'
-import { mockRequested } from '@/mocks/useMockAnalysis'
+import { mockApproxParcel, mockApproxRequested, mockRequested } from '@/mocks/useMockAnalysis'
 import { locale, useLang } from '@/lib/i18n'
 
 /** Ekran Start (SPEC 4, 12): mapa + panel działki + dolny pasek kart / szuflada na telefonie. */
@@ -93,7 +94,7 @@ export default function Start() {
   // link z adresu (?dzialka=&uprawa=&data=) – czytany raz przy wejściu
   const [link] = useState(readLink)
   const [asOf, setAsOf] = useState(link.data ?? todayIso())
-  const [layer, setLayer] = useState<LayerKey>('teren') // Kondycja upraw nie ma jeszcze danych
+  const [layer, setLayer] = useState<LayerKey>('teren')
   const [view, setView] = useState<'2d' | '3d'>('2d')
   const [settings] = useSettings()
   const [ui, setUi] = useUiPrefs()
@@ -106,8 +107,9 @@ export default function Start() {
   const [toast, setToast] = useState<string | null>(null)
   const [mapCenter, setMapCenter] = useState<[number, number]>([round1(POLAND_CENTER[1]), round1(POLAND_CENTER[0])])
   const [areaH, setAreaH] = useState(600)
-  // paszport wodny: przypięty do konkretnego wyniku – nowa analiza go zamyka
-  const [passportFor, setPassportFor] = useState<object | null>(null)
+  // paszport wodny: przypięty do konkretnego przeliczenia (klucz) – nowa analiza go zamyka,
+  // dociągnięte zdjęcie satelitarne (ten sam klucz) – nie
+  const [passportFor, setPassportFor] = useState<string | null>(null)
   const [highlight, setHighlight] = useState<GeoJSON.Geometry | null>(null)
   // zgłoszenie rowu/zbiornika: otwarty kreator, wskazane miejsce, tryb wskazywania na mapie
   const [infra, setInfra] = useState<{ point: [number, number] | null; picking: boolean } | null>(null)
@@ -140,8 +142,13 @@ export default function Start() {
   const approxPoint = parcel ? (approxPoints[parcel.id] ?? null) : null
   const { run, retry: retryAnalysis } = useAnalysis(parcel?.id ?? null, crop, asOf, { point: approxPoint, cropHistory: history, area, plannedCrops: planned })
   const analysis = run.phase === 'done' ? run.analysis : null
-  const layerState = useLayerData(layer, parcel?.id ?? null, asOf)
-  const passportOpen = !!analysis && passportFor === analysis
+  const runKey = run.phase === 'done' ? run.key : null
+  // A11: zdjęcie satelitarne liczone osobno – warstwy Kondycja / Wilgotność odświeżamy, gdy przyjdzie
+  const satellite = analysis?.satellite ?? null
+  const satStatus = satellite?.status ?? null
+  const satLayer = layer === 'kondycja' || layer === 'wilgotnosc'
+  const layerState = useLayerData(layer, parcel?.id ?? null, asOf, satLayer ? (satStatus ?? '') : '', satLayer && satStatus === 'pending')
+  const passportOpen = !!analysis && passportFor === runKey
 
   // wysokość obszaru mapy – do położeń szuflady
   useLayoutEffect(() => {
@@ -240,6 +247,12 @@ export default function Start() {
   const searchByPoint = (lon: number, lat: number) => {
     setPendingPoint([lon, lat])
     find(async () => {
+      // mock (?dane=przykladowe&wariant=obszar): klik = obszar przybliżony, jak przy braku działki w ULDK
+      if (mockApproxRequested()) {
+        const p = mockApproxParcel(lon, lat)
+        setApproxPoints((m) => ({ ...m, [p.id]: [lon, lat] }))
+        return p
+      }
       try {
         return await api.parcelByPoint(lon, lat)
       } catch (e) {
@@ -292,24 +305,13 @@ export default function Start() {
       return
     }
     if (parcel && parcelContains(parcel, lon, lat)) {
-      // SPEC 5.4: klik wewnątrz działki = wartość aktywnej warstwy w punkcie
-      const name = t(layerByKey(layer).label)
-      setInsidePopup({ lon, lat, text: t('{layer}: sprawdzam wartość w tym punkcie…', { layer: name }) })
+      // SPEC 5.4: klik wewnątrz działki = wartość aktywnej warstwy w punkcie – tylko gdy warstwa ma dane;
+      // brak danych = bez dymka (legenda już to mówi)
+      setInsidePopup(null)
+      if (layerState.phase !== 'ok') return
       api.layerPoint(layer, lon, lat, asOf).then(
-        (v) => setInsidePopup((cur) => (cur && cur.lon === lon && cur.lat === lat ? { lon, lat, text: t(v.text) } : cur)),
-        (e) =>
-          setInsidePopup((cur) =>
-            cur && cur.lon === lon && cur.lat === lat
-              ? {
-                  lon,
-                  lat,
-                  text:
-                    e instanceof ApiError && (e.status === 404 || e.status === 501)
-                      ? t('{layer}: brak danych w tym punkcie – warstwa w budowie.', { layer: name })
-                      : t('{layer}: nie udało się pobrać wartości w tym punkcie.', { layer: name }),
-                }
-              : cur,
-          ),
+        (v) => v.text && setInsidePopup({ lon, lat, text: t(v.text) }),
+        () => undefined,
       )
       return
     }
@@ -400,8 +402,8 @@ export default function Start() {
 
   // ── paszport wodny i „Pokaż na mapie” ──────────────────────────────────────────────────────
   function openPassport() {
-    if (!analysis) return
-    setPassportFor(analysis)
+    if (!runKey) return
+    setPassportFor(runKey)
   }
   const closePassport = useCallback(() => setPassportFor(null), [])
   useEffect(() => {
@@ -412,10 +414,10 @@ export default function Start() {
   }, [passportOpen, closePassport])
   // link z ?widok=paszport: otwórz paszport, gdy analiza jest gotowa
   useEffect(() => {
-    if (!analysis || !pendingPassport.current) return
+    if (!runKey || !pendingPassport.current) return
     pendingPassport.current = false
-    setPassportFor(analysis)
-  }, [analysis, isMobile])
+    setPassportFor(runKey)
+  }, [runKey, isMobile])
   // adres pamięta otwarty paszport (link „Kopiuj” otworzy go od razu)
   useEffect(() => {
     if (analysis) writeLink({ widok: passportOpen ? 'paszport' : null })
@@ -426,7 +428,7 @@ export default function Start() {
   }, [analysis, mock])
 
   // nowa działka / analiza = bez podświetlenia starego miejsca
-  useEffect(() => setHighlight(null), [analysis])
+  useEffect(() => setHighlight(null), [runKey])
 
   function showOnMap(g: GeoJSON.Geometry) {
     setPassportFor(null)
@@ -525,27 +527,10 @@ export default function Start() {
     toastTimer.current = window.setTimeout(() => setToast(null), 2500)
   }
 
-  const legend = layerByKey(layer)
-  // stan danych warstwy jako tekst pod legendą (nigdy sam kolor)
-  const legendStatus =
-    layerState.phase === 'idle'
-      ? t('Wybierz działkę, aby zobaczyć warstwę')
-      : layerState.phase === 'loading'
-        ? t('Wczytuję warstwę…')
-        : layerState.phase === 'unavailable'
-          ? isMobile
-            ? t('Brak danych – w budowie')
-            : t('Brak danych dla działki – warstwa w budowie')
-          : layerState.phase === 'error'
-            ? t('Nie udało się pobrać warstwy – mapa działa dalej')
-            : layerState.data.layer === 'teren' && layerState.data.value_range
-              ? t('Wysokość od {a} do {b} m n.p.m.', {
-                  a: formatNum(layerState.data.value_range[0], 1),
-                  b: formatNum(layerState.data.value_range[1], 1),
-                })
-              : layerState.data.source_tag.date
-              ? t('Dane z {date}', { date: formatDatePl(layerState.data.source_tag.date) })
-              : (layerState.data.source_tag.source ?? '')
+  const legendBase = layerByKey(layer)
+  // legenda z odpowiedzi serwera (A11: kolory skali satelity), stan danych jako tekst pod nią (nigdy sam kolor)
+  const legend = { label: legendBase.label, legend: layerLegend(legendBase, layerState) }
+  const legendStatus = t(layerStatusText(layer, layerState, satStatus), layerState.phase === 'ok' ? layerStatusVars(layerState.data) : undefined)
   const refine = {
     crop,
     onCropChange: (c: CropId | null) => {
@@ -597,7 +582,14 @@ export default function Start() {
         // w 3D najciekawszy jest teren
         if (v === '3d' && (layer === 'kondycja' || layer === 'wilgotnosc')) setLayer('teren')
       }}
-      unavailable={['kondycja', 'wilgotnosc', 'gleba']}
+      unavailable={['gleba']}
+      notes={
+        satStatus === 'pending'
+          ? { kondycja: 'pobieram…', wilgotnosc: 'pobieram…' }
+          : satStatus === 'brak_danych'
+            ? { kondycja: 'brak zdjęcia', wilgotnosc: 'brak zdjęcia' }
+            : undefined
+      }
       canUse3d={!!parcel}
       side={side}
     />

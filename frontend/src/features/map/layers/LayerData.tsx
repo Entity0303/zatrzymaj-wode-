@@ -33,6 +33,7 @@ export function LayerData({ data, style = DEFAULT_STYLE, opacity = 0.85 }: Layer
           ]}
           opacity={opacity}
           interactive={false}
+          className="layer-pixelated"
         />
       )}
       {data.features && (

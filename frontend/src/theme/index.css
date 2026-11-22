@@ -222,6 +222,11 @@
   }
 }
 /* ParcelLabel – pigułka bez domyślnego dymka Leaflet */
+/* warstwy z satelity: piksele 10 m bez rozmycia */
+.layer-pixelated {
+  image-rendering: pixelated;
+}
+
 .leaflet-tooltip.parcel-label {
   background: transparent;
   border: 0;

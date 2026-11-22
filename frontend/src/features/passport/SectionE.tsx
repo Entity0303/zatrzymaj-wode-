@@ -4,6 +4,7 @@ import { formatDatePl } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { useLang } from '@/lib/i18n'
 import { PassportSection } from './PassportSection'
+import { PrecipSourceNote } from '@/features/parcel-panel/PrecipSourceNote'
 
 const CONFIDENCE: Record<Confidence, { label: string; cls: string }> = {
   wysoka: { label: 'Wysoka', cls: 'bg-ok-soft text-brand' },
@@ -78,6 +79,8 @@ export function SectionE({ analysis }: { analysis: AnalysisResponse }) {
           </tbody>
         </table>
       </div>
+
+      {analysis.precip_sources && <PrecipSourceNote sources={analysis.precip_sources} />}
 
       {r.limitations.length > 0 && (
         <div className="space-y-2">

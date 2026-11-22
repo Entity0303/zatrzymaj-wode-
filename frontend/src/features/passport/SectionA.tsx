@@ -8,6 +8,7 @@ import { STATUS } from '@/theme/status'
 import { useLang } from '@/lib/i18n'
 import { PassportSection } from './PassportSection'
 import { TerrainCard } from '@/features/parcel-panel/TerrainCard'
+import { SatelliteCard } from '@/features/parcel-panel/SatelliteCard'
 
 const val = (i: Indicator, digits = 0) => (i.value === null ? null : formatNum(i.value, digits))
 const tagDate = (i: Indicator) => (i.source_tag.date ? formatDatePl(i.source_tag.date) : undefined)
@@ -16,7 +17,7 @@ const tagDate = (i: Indicator) => (i.source_tag.date ? formatDatePl(i.source_tag
  * A. Stan obecny (SPEC 7.A): ogólny stan wodny 0–100 w okręgu, karty: woda w glebie (% i mm),
  * kondycja upraw, wilgotność roślin, ryzyko 7 dni, ile wody zmieści gleba; zdanie podsumowania.
  */
-export function SectionA({ analysis }: { analysis: AnalysisResponse }) {
+export function SectionA({ analysis, chartWidth }: { analysis: AnalysisResponse; chartWidth?: number }) {
   const { t } = useLang()
   const { status, indicators: ind } = analysis
   const s = STATUS[status.level]
@@ -32,7 +33,7 @@ export function SectionA({ analysis }: { analysis: AnalysisResponse }) {
           caption={status.score == null ? undefined : 'na 100'}
         />
         <div className="min-w-0 flex-1 basis-56 space-y-1.5">
-          <StatusBadge status={status.level} />
+          <StatusBadge status={status.level} now={status.level !== 'no_data'} />
           <p className="font-display text-xl leading-7 font-semibold">{t(status.headline)}</p>
           <p className="text-base leading-6">{t(status.summary)}</p>
           <p className="text-xs leading-4 text-text-muted">{t('Ogólny stan wodny: 100 = dużo wody, 0 = susza.')}</p>
@@ -95,6 +96,7 @@ export function SectionA({ analysis }: { analysis: AnalysisResponse }) {
           {ind.soil_capacity.label && <p className="text-sm leading-5 text-text-muted">{t(ind.soil_capacity.label)}</p>}
         </MetricCard>
       </div>
+      {analysis.satellite && <SatelliteCard satellite={analysis.satellite} passport chartWidth={chartWidth} />}
       <TerrainCard terrain={analysis.terrain} note={analysis.terrain_note} />
     </PassportSection>
   )

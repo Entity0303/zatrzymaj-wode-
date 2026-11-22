@@ -15,7 +15,7 @@ export function ParcelLabel({ number, status, approx }: { number: string; status
       {approx ? t('Obszar przybliżony') : t('Działka {numer}', { numer: number })}
       <span className={`flex items-center gap-1 text-xs font-medium ${s.fg}`}>
         <Icon className="size-4" aria-hidden />
-        {t(s.label)}
+        {status === 'no_data' ? t(s.label) : `${t('teraz:')} ${t(s.label).toLocaleLowerCase()}`}
       </span>
     </span>
   )

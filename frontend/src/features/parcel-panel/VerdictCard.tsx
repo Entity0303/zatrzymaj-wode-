@@ -1,8 +1,9 @@
-import { ChevronDown, Check, CircleAlert, CircleCheck, CircleX, Droplet, X, type LucideIcon } from 'lucide-react'
-import type { Verdict, VerdictStatementLevel } from '@/api/types'
+import { ChevronDown, Check, CircleAlert, CircleCheck, CircleX, Droplet, Sprout, X, type LucideIcon } from 'lucide-react'
+import type { PrecipSources, Verdict, VerdictStatementLevel } from '@/api/types'
 import { useState } from 'react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useLang } from '@/lib/i18n'
+import { PrecipSourceNote } from './PrecipSourceNote'
 
 /** Kolory werdyktu z kontraktu (A5b-2b) – te same co w raporcie PDF. */
 const LEVEL: Record<VerdictStatementLevel, { icon: LucideIcon; color: string; soft: string; label: string }> = {
@@ -15,7 +16,8 @@ const LEVEL: Record<VerdictStatementLevel, { icon: LucideIcon; color: string; so
 /**
  * Werdykt działki „w 10 sekund” (B3, kontrakt `verdict`): nagłówek w kolorze oceny, 4–6 zdań z ikoną poziomu
  * (ok / uwaga / źle / niebieska kropla = co zrobić z wodą), chipy „Siej ✓” i „Nie siej ✕” (powód w dymku), uwaga.
- * Deterministyczny – liczy backend, bez AI.
+ * Deterministyczny – liczy backend, bez AI. Pod „Opady” – skąd opad (stacja IMGW, zgodność z NASA; A7);
+ * „Rośliny” (A11, z satelity) – własna ikona kiełka w kolorze poziomu.
  */
 export function VerdictCard({
   verdict,
@@ -23,7 +25,10 @@ export function VerdictCard({
   limit,
   hideCrops,
   bare,
+  precip,
 }: {
+  /** A7: źródła opadu – drobnym tekstem pod pozycją „Opady” */
+  precip?: PrecipSources | null
   /** bez nagłówka i ramki – same zdania (nagłówek pokazuje RiskSummary nad zakładkami) */
   bare?: boolean
   verdict: Verdict
@@ -61,13 +66,15 @@ export function VerdictCard({
       <ul className="space-y-2.5 px-4 py-3">
         {shown.map((s, i) => {
           const l = LEVEL[s.level]
-          const Icon = l.icon
+          const Icon = s.kind === 'rosliny' ? Sprout : l.icon
           return (
             <li key={`${s.kind}-${i}`} className="flex gap-2.5 text-sm leading-5">
               <Icon className="mt-px size-[18px] shrink-0" style={{ color: l.color }} aria-hidden />
-              <span>
+              <span className="min-w-0">
                 <span className="sr-only">{t(l.label)}: </span>
+                {s.kind === 'rosliny' && <span className="font-semibold">{t('Rośliny (z satelity):')} </span>}
                 {t(s.text)}
+                {s.kind === 'opady' && precip && <PrecipSourceNote sources={precip} compact className="mt-1.5" />}
               </span>
             </li>
           )

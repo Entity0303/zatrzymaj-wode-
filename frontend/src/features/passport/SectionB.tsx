@@ -2,7 +2,9 @@ import { ChevronDown, CloudOff } from 'lucide-react'
 import { useState } from 'react'
 import type { AnalysisResponse } from '@/api/types'
 import { SourceTag } from '@/components/SourceTag'
-import { formatDatePl, formatSigned } from '@/lib/format'
+import { formatDatePl, formatDayLong, formatSigned } from '@/lib/format'
+import { seasonBalance } from '@/lib/seasonBalance'
+import { PrecipSourceNote } from '@/features/parcel-panel/PrecipSourceNote'
 import { cn } from '@/lib/utils'
 import { useLang } from '@/lib/i18n'
 import { BalanceChart } from './charts/BalanceChart'
@@ -55,6 +57,8 @@ export function SectionB({ analysis, chartWidth }: { analysis: AnalysisResponse;
   const yearsBars = analysis.seasonal_balance_by_year ?? []
   if (yearsBars.length && h.summary) sentence = t(h.summary)
   const until = analysis.weather_data_until ?? untilFromSeries
+  // ta sama liczba co w dolnej karcie „Bilans wody”
+  const season = seasonBalance(analysis)
 
   // słupki: ten rok, średnio, najsuchszy i najmokrzejszy rok (ten sam dzień sezonu)
   const bars = [
@@ -76,10 +80,16 @@ export function SectionB({ analysis, chartWidth }: { analysis: AnalysisResponse;
             {t('od {a} · dane pogodowe do {b}', { a: formatDatePl(h.season_start), b: formatDatePl(until) })}
           </span>
         </div>
-        {dev != null && (
+        {season.mm != null && (
           <p className="text-base leading-6">
-            <b className={cn('tabular text-xl', dev < 0 ? 'text-danger' : 'text-water')}>{formatSigned(dev, 0)} mm</b>{' '}
-            <span className="text-text-muted">{t('względem średniej z 10 lat')}</span>
+            {t('od {d}:', { d: formatDayLong(season.from) })}{' '}
+            <b className={cn('tabular text-xl', season.mm < 0 ? 'text-danger' : 'text-water')}>{formatSigned(season.mm, 0)} mm</b>
+            {season.kind && <span className="text-text-muted"> ({t(season.kind)})</span>}
+          </p>
+        )}
+        {dev != null && (
+          <p className="text-sm leading-5">
+            <b className="tabular">{formatSigned(dev, 0)} mm</b> <span className="text-text-muted">{t('względem średniej z 10 lat')}</span>
           </p>
         )}
         {yearsBars.length > 0 ? (
@@ -116,7 +126,7 @@ export function SectionB({ analysis, chartWidth }: { analysis: AnalysisResponse;
         <p className="text-xs leading-4 text-text-muted">{t('Na lewo od kreski – więcej wody wyparowało, niż spadło. 1 mm = 1 litr na m².')}</p>
         </>
         )}
-        {analysis.precip_sources?.sentence && <p className="text-xs leading-4 text-text-muted">{t(analysis.precip_sources.sentence)}</p>}
+        {analysis.precip_sources && <PrecipSourceNote sources={analysis.precip_sources} compact />}
       </div>
 
       <button

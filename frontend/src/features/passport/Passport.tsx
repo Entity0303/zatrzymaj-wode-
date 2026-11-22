@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils'
 import { NonAgriculturalCard } from '@/features/parcel-panel/NonAgriculturalCard'
 import { SoilCard } from '@/features/parcel-panel/SoilCard'
 import { TerrainCard } from '@/features/parcel-panel/TerrainCard'
+import { ApproxAreaBanner } from '@/features/parcel-panel/ApproxAreaBanner'
 import { SectionA } from './SectionA'
 import { SectionB } from './SectionB'
 import { SectionC } from './SectionC'
@@ -32,10 +33,12 @@ const NAV = [
 
 /** Treść paszportu – wspólna dla ekranu i wydruku. */
 function Content({ analysis, print, onShowOnMap }: { analysis: AnalysisResponse; print?: boolean; onShowOnMap?: (g: GeoJSON.Geometry) => void }) {
+  const approx = (analysis.parcel.source === 'approximate' || analysis.approximate_area) && <ApproxAreaBanner />
   if (analysis.soil.non_agricultural)
     // SPEC 15.1: grunt nierolny – bez oceny suszy, tylko gleba, teren i wiarygodność danych
     return (
       <>
+        {approx}
         <NonAgriculturalCard soil={analysis.soil} />
         <SoilCard soil={analysis.soil} />
         <TerrainCard terrain={analysis.terrain} note={analysis.terrain_note} />
@@ -45,7 +48,8 @@ function Content({ analysis, print, onShowOnMap }: { analysis: AnalysisResponse;
     )
   return (
     <>
-      <SectionA analysis={analysis} />
+      {approx}
+      <SectionA analysis={analysis} chartWidth={print ? 680 : undefined} />
       <WaveDivider />
       <SectionB analysis={analysis} chartWidth={print ? 680 : undefined} />
       <WaveDivider />

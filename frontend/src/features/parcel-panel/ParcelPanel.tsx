@@ -10,6 +10,7 @@ import { WaveDivider } from '@/components/WaveDivider'
 import { formatDatePl } from '@/lib/format'
 import { irrigationPracticed, irrigationShown } from '@/lib/crops'
 import { AnalysisLoading } from './AnalysisLoading'
+import { ApproxAreaBanner } from './ApproxAreaBanner'
 import { FieldOverview, type RefineProps } from './FieldOverview'
 import { RiskSummary } from './RiskSummary'
 import { CropSeasonCard } from './CropSeasonCard'
@@ -140,7 +141,12 @@ export function ParcelPanel({
     { label: 'Bilans wody', state: 'pending', note: 'w budowie' },
   ]
 
-  const header = !hideHeader && <ParcelHeader parcel={parcel} saved={saved} onToggleSave={onToggleSave} onCopied={onCopied} onClose={onClose} />
+  const header = (
+    <>
+      {!hideHeader && <ParcelHeader parcel={parcel} saved={saved} onToggleSave={onToggleSave} onCopied={onCopied} onClose={onClose} />}
+      {(parcel.source === 'approximate' || analysis?.approximate_area) && <ApproxAreaBanner />}
+    </>
+  )
 
   // ekran ładowania analizy: mapa już pokazuje działkę, w panelu kroki i szkielety (SPEC 15.1)
   if (run.phase === 'loading')

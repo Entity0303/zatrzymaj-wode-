@@ -2,6 +2,7 @@ import { BookOpenText, ChevronDown, ChevronUp, Leaf, Loader2, X } from 'lucide-r
 import type { Parcel } from '@/api/types'
 import { ErrorNotice } from '@/components/ErrorNotice'
 import { useLang } from '@/lib/i18n'
+import { ApproxAreaBanner } from './ApproxAreaBanner'
 import { FieldOverview, type RefineProps } from './FieldOverview'
 import { NonAgriculturalCard } from './NonAgriculturalCard'
 import { RiskSummary } from './RiskSummary'
@@ -71,6 +72,8 @@ export function ParcelSummary({
           </button>
         )}
       </div>
+
+      {(parcel.source === 'approximate' || analysis?.approximate_area) && <ApproxAreaBanner />}
 
       {run.phase === 'loading' && (
         <div className="space-y-2 rounded-xl bg-surface-2/60 p-3.5">
