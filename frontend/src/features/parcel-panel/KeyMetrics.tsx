@@ -79,7 +79,11 @@ function AnalysisMetrics({ analysis }: { analysis: AnalysisResponse }) {
         source={health.source_tag.kind}
         sourceDate={tagDate(health)}
       >
-        <ScoreRing value={health.value} size={56} stroke={6} caption="na 100" className="self-start" />
+        {/* F38: „na 100” obok okręgu – w środku małego okręgu nachodziło na obwódkę */}
+        <div className="flex items-center gap-2 self-start">
+          <ScoreRing value={health.value} size={56} stroke={6} />
+          <span className="text-sm leading-5 whitespace-nowrap text-text-muted">{t('na 100')}</span>
+        </div>
       </MetricCard>
       <MetricCard
         icon={ChartNoAxesCombined}

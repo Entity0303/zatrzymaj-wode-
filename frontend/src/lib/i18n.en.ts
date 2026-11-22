@@ -1368,4 +1368,8 @@ export const EN: Record<string, string> = {
   'Zapisz działkę gwiazdką ☆, a tu zobaczysz wszystkie swoje pola i alerty.': 'Save a parcel with the star ☆ and you will see all your fields and alerts here.',
   'Zapisz w Moich działkach': 'Save to My parcels',
   'Zapisana w tej przeglądarce – kliknij, aby usunąć': 'Saved in this browser – click to remove',
+  // F38: nazwy stopni jak w analizie
+  'W normie': 'Normal',
+  'Mało wody': 'Low water',
+  'uwaga – wody ubywa': 'caution – water is running low',
 }

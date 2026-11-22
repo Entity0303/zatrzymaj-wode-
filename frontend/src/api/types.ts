@@ -158,7 +158,7 @@ export type Forecast = {
 
 // ── schemas/analysis.py – GET /api/analysis?parcel_id=&crop=&date= ─────────────────────────
 
-/** Dobrze / Uwaga / Ryzyko / Susza / Brak danych (SPEC 2.2) */
+/** W normie / Uwaga / Mało wody / Bardzo mało wody / Brak danych (SPEC 2.2, nazwy z rules/status.yaml) */
 export type StatusLevel = 'ok' | 'warn' | 'risk' | 'danger' | 'no_data'
 
 /** Etykiety pochodzenia liczb (SPEC 15.2) */
