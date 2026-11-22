@@ -1283,4 +1283,7 @@ export const EN: Record<string, string> = {
   'Wyślij zgłoszenie na mapę': 'Send the report to the map',
   'Twoje zgłoszenie': 'Your report',
   'Zgłoszenie': 'Report',
+  // F23: stany terenu i spływu
+  'Liczę teren i spływ… (do ok. minuty)': 'Calculating terrain and runoff… (up to about a minute)',
+  'Brak danych o terenie – spróbuj za chwilę': 'No terrain data – try again in a moment',
 }

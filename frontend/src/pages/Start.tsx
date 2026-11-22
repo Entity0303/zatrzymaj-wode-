@@ -12,7 +12,7 @@ import { SampleDataBanner } from '@/components/SampleDataBanner'
 import { parcelBounds, parcelContains, type MapInsets } from '@/features/map/geo'
 import { layerByKey, type LayerKey } from '@/features/map/layers'
 import { useLayerData } from '@/features/map/layers/useLayerData'
-import { layerLegend, layerStatusText, layerStatusVars } from '@/features/map/layers/responseLegend'
+import { TERRAIN_PENDING, layerLegend, layerStatusText, layerStatusVars } from '@/features/map/layers/responseLegend'
 import { LegendCard } from '@/features/map/LegendCard'
 import { MapControls } from '@/features/map/MapControls'
 import { POLAND_CENTER, POLAND_ZOOM, ParcelMap, type BaseMap } from '@/features/map/ParcelMap'
@@ -214,15 +214,15 @@ export default function Start() {
   const satLayer = layer === 'kondycja' || layer === 'wilgotnosc'
   // F3: teren i woda w okolicy liczone w tle – warstwy Teren / Spływ / Woda czekają, potem przeładowanie
   const terrainPending = !!analysis?.terrain && 'status' in analysis.terrain
+  // F23: analiza jest, a terenu nie udało się policzyć (po ponawianiu)
+  const terrainFailed = !!analysis && analysis.terrain == null
   const hydroStatus = analysis?.hydro?.status ?? null
   const terrainLayer = layer === 'teren' || layer === 'splyw'
   const layerWaiting =
     satLayer && satStatus === 'pending'
       ? 'Pobieram zdjęcie satelitarne…'
       : terrainLayer && terrainPending
-        ? layer === 'splyw'
-          ? 'Liczę spływ…'
-          : 'Liczę ukształtowanie terenu…'
+        ? TERRAIN_PENDING
         : layer === 'woda' && hydroStatus === 'pending'
           ? 'Szukam wody w okolicy…'
           : null
@@ -856,7 +856,12 @@ export default function Start() {
           : satStatus === 'brak_danych'
             ? { kondycja: 'brak zdjęcia', wilgotnosc: 'brak zdjęcia' }
             : {}),
-        ...(terrainPending ? { teren: 'liczę…', splyw: 'liczę…' } : {}),
+        // F23: „liczę…” do czasu danych (teren w tle albo warstwa liczona na żywo), „brak danych” po nieudanej próbie
+        ...(terrainPending || (terrainLayer && layerState.phase === 'waiting')
+          ? { teren: 'liczę…', splyw: 'liczę…' }
+          : terrainFailed || (terrainLayer && (layerState.phase === 'error' || layerState.phase === 'unavailable'))
+            ? { teren: 'brak danych', splyw: 'brak danych' }
+            : {}),
         ...(hydroStatus === 'pending' ? { woda: 'szukam…' } : hydroStatus === 'none' ? { woda: 'brak w pobliżu' } : {}),
       }}
       canUse3d={!!parcel}

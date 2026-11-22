@@ -38,7 +38,7 @@ export function TerrainCard({
           <Mountain className="size-4 text-earth" aria-hidden /> {t('Teren działki')}
         </p>
         <p className="mt-1 flex items-center gap-2 text-sm leading-5 text-text-muted" role="status">
-          <Loader2 className="size-4 animate-spin text-brand" aria-hidden /> {t('Liczę ukształtowanie terenu…')}
+          <Loader2 className="size-4 animate-spin text-brand" aria-hidden /> {t('Liczę teren i spływ… (do ok. minuty)')}
         </p>
       </section>
     )
@@ -50,7 +50,7 @@ export function TerrainCard({
         <p className="flex items-center gap-2 text-sm font-medium">
           <Mountain className="size-4 text-earth" aria-hidden /> {t('Teren działki')}
         </p>
-        <p className="mt-1 text-sm leading-5 text-text-muted">{note ? t(note) : t('Brak danych o terenie dla tej działki')}</p>
+        <p className="mt-1 text-sm leading-5 text-text-muted">{t(note && !/HTTP|\b\d{3}\b/.test(note) ? note : 'Brak danych o terenie – spróbuj za chwilę')}</p>
       </section>
     )
 

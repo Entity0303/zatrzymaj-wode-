@@ -14,6 +14,11 @@ export type LayerState =
   | { phase: 'unavailable'; message?: string | null }
   | { phase: 'error'; message?: string | null }
 
+/** F23: teren „pending” – co ile i ile razy pytamy ponownie; limit czasu jednego zapytania o teren */
+const PENDING_WAIT_MS = 3000
+const PENDING_TRIES = 20
+const TERRAIN_TIMEOUT_MS = 45_000
+
 /** Mock (?dane=przykladowe): warstwy satelitarne z plików przykładowych A11. */
 async function mockLayer(layer: LayerKey): Promise<LayerResponse | null> {
   if (layer === 'kondycja') return (await import('@/mocks/layers.kondycja.sample.json')).default as unknown as LayerResponse
@@ -48,22 +53,58 @@ export function useLayerData(
       import.meta.env.DEV && mockRequested() && (layer === 'kondycja' || layer === 'wilgotnosc' || layer === 'woda')
         ? mockLayer(layer).then((d) => d ?? Promise.reject(new ApiError(404, null)))
         : api.layer(layer, parcelId, date, ctrl.signal, geometry)
-    request.then(
-      (data) => !ctrl.signal.aborted && setResult({ key, state: { phase: 'ok', data } }),
-      (e) => {
-        if (ctrl.signal.aborted) return
+    const terrain = layer === 'teren' || layer === 'splyw'
+    // F23: teren / spływ – odpowiedź „pending” (serwer jeszcze liczy) = „Liczę…” i ponowne zapytanie co 3 s, najwyżej
+    // 20 razy; brak odpowiedzi w 45 s = „brak danych” (nigdy wieczne „Wczytuję…”). Zmiana warstwy / działki / daty przerywa.
+    let tries = 0
+    let timedOut = false
+    const limit = terrain
+      ? setTimeout(() => {
+          timedOut = true
+          setResult({ key, state: { phase: 'error', message: null } })
+          ctrl.abort()
+        }, TERRAIN_TIMEOUT_MS)
+      : null
+    const done = () => {
+      if (limit) clearTimeout(limit)
+    }
+    const onData = (data: LayerResponse) => {
+      if (ctrl.signal.aborted) return
+      if (terrain && (data as LayerResponse & { status?: string }).status === 'pending') {
+        if (++tries >= PENDING_TRIES) {
+          done()
+          return setResult({ key, state: { phase: 'error', message: null } })
+        }
+        if (limit) clearTimeout(limit)
+        setResult({ key, state: { phase: 'waiting', reason: 'Liczę teren i spływ… (do ok. minuty)' } })
+        again = setTimeout(() => api.layer(layer, parcelId, date, ctrl.signal, geometry).then(onData, onError), PENDING_WAIT_MS)
+        return
+      }
+      done()
+      setResult({ key, state: { phase: 'ok', data } })
+    }
+    let again: ReturnType<typeof setTimeout> | null = null
+    const onError = (e: unknown) => {
+        done()
+        if (ctrl.signal.aborted || timedOut) return
         const unavailable = e instanceof ApiError && (e.status === 404 || e.status === 501)
         const detail = e instanceof ApiError ? (e.detail as { message?: unknown } | null) : null
         const message = typeof detail?.message === 'string' && detail.message.trim() ? detail.message.trim() : null
         setResult({ key, state: { phase: unavailable ? 'unavailable' : 'error', message } })
-      },
-    )
-    return () => ctrl.abort()
+    }
+    request.then(onData, onError)
+    return () => {
+      done()
+      if (again) clearTimeout(again)
+      ctrl.abort()
+    }
     // geometria należy do działki (parcelId w kluczu)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, layer, parcelId, date])
 
   if (!parcelId) return { phase: 'idle' }
   if (waiting) return { phase: 'waiting', reason: waiting }
-  return result?.key === key ? result.state : { phase: 'loading' }
+  if (result?.key === key) return result.state
+  // F23: teren / spływ liczone na żywo przez serwer (do ok. 30 s) – mówimy to wprost zamiast „Wczytuję…”
+  return layer === 'teren' || layer === 'splyw' ? { phase: 'waiting', reason: 'Liczę teren i spływ… (do ok. minuty)' } : { phase: 'loading' }
 }

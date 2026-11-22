@@ -5,6 +5,10 @@ import type { LayerState } from './useLayerData'
 
 const SATELLITE_LAYERS: LayerKey[] = ['kondycja', 'wilgotnosc']
 
+/** F23: teksty stanów terenu i spływu – te same w legendzie warstwy, panelu i paszporcie. */
+export const TERRAIN_PENDING = 'Liczę teren i spływ… (do ok. minuty)'
+export const TERRAIN_NODATA = 'Brak danych o terenie – spróbuj za chwilę'
+
 /**
  * Legenda aktywnej warstwy: gdy serwer podał skalę kolorów (A11: `legend`, `legend_left`, `legend_right`) –
  * pasek z tych samych kolorów co obraz warstwy; inaczej legenda zapisana przy warstwie.
@@ -70,19 +74,20 @@ export function layerStatusText(layer: LayerKey, state: LayerState, satellite: S
       return 'Wczytuję warstwę…'
     case 'unavailable':
       if (sat) return satelliteEmptyText(layer, state.message, satellite)
-      if (layer === 'splyw' || layer === 'teren') return state.message ?? 'Brak danych o terenie'
+      if (layer === 'splyw' || layer === 'teren') return TERRAIN_NODATA
       if (layer === 'woda') return state.message ?? 'Brak rzek i rowów w promieniu 500 m'
       return state.message ?? 'Brak danych dla tej działki'
     case 'error':
-      if (layer === 'splyw') return state.message ?? 'Brak danych o terenie'
+      if (layer === 'splyw' || layer === 'teren') return TERRAIN_NODATA
       return state.message ?? 'Nie udało się pobrać warstwy – mapa działa dalej'
     case 'ok': {
       const d = state.data
+      // F23: pusta odpowiedź warstwy terenu / spływu – nigdy pusta mapa bez słowa
+      if ((d.layer === 'teren' || d.layer === 'splyw') && !d.raster && !d.features?.features?.length) return TERRAIN_NODATA
       if (d.layer === 'teren' && d.value_range) return 'Wysokość od {a} do {b} m n.p.m.'
       // woda: `note` to atrybucja OSM, nie komunikat – pusta warstwa = nasz tekst
       if (d.layer === 'woda' && !d.features?.features?.length) return 'Brak rzek i rowów w promieniu 500 m'
       if (d.layer === 'woda' && d.note) return d.note
-      if (d.layer === 'splyw' && !d.raster && !d.features?.features?.length) return d.note ?? 'Brak danych o terenie'
       if (sat && !d.raster && !d.features?.features?.length) return satelliteEmptyText(layer, d.note, satellite)
       if (d.layer === 'wilgotnosc' && satellite?.in_season === false) return 'Poza sezonem – rośliny nie rosną'
       if (sat && (d.scene_date || d.source_tag.date)) return 'Zdjęcie satelitarne z {date}'

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { api, describeAnalysisError, type AnalysisQuery } from '@/api/client'
+import { ApiError, api, describeAnalysisError, type AnalysisQuery } from '@/api/client'
 import type { AnalysisResponse, CropId, Satellite, Terrain, TerrainPending } from '@/api/types'
 import type { Step } from '@/components/LoadingSteps'
 import { mockRequested, runMockAnalysis, runMockBackground, runMockSatellite } from '@/mocks/useMockAnalysis'
@@ -24,6 +24,10 @@ const REFINE_DEBOUNCE_MS = 400
 
 /** Overpass (woda w okolicy) bywa wolny – po tylu ms przestajemy czekać i pokazujemy „Ponów”. */
 const HYDRO_TIMEOUT_MS = 75_000
+
+/** F23: teren „pending” – co ile i ile razy pytamy ponownie (ok. 1 min) */
+const TERRAIN_WAIT_MS = 3000
+const TERRAIN_TRIES = 20
 
 const isPending = (t: Terrain | TerrainPending | null | undefined): t is TerrainPending => !!t && 'status' in t && t.status === 'pending'
 
@@ -142,9 +146,30 @@ export function useAnalysis(
     }
 
     // F3: ukształtowanie terenu w tle – 404/501/awaria = „brak danych” z powodem, nigdy błąd całej analizy
+    // F23: odpowiedź „pending” (teren jeszcze się liczy) albo 502/503/brak sieci – ponawiamy co 3 s, najwyżej 20 razy
+    // (ok. minuty), w tle; zmiana działki / daty przerywa (ctrl). 404/501 – od razu „brak danych”.
+    async function fetchTerrain(): Promise<Terrain> {
+      if (mock) return runMockBackground('terrain', ctrl.signal)
+      let last: unknown = null
+      for (let i = 0; i < TERRAIN_TRIES; i++) {
+        if (i > 0) await new Promise<void>((res) => setTimeout(res, TERRAIN_WAIT_MS))
+        if (ctrl.signal.aborted) throw new DOMException('przerwano', 'AbortError')
+        try {
+          const res = (await api.terrain(q, ctrl.signal)) as Terrain | TerrainPending
+          if (!isPending(res)) return res
+          last = null
+        } catch (e) {
+          if (aborted(e)) throw e
+          if (e instanceof ApiError && (e.status === 404 || e.status === 501)) throw e
+          last = e
+        }
+      }
+      throw last ?? new Error('teren nadal się liczy')
+    }
+
     async function loadTerrain() {
       try {
-        const terrain = mock ? await runMockBackground('terrain', ctrl.signal) : await api.terrain(q, ctrl.signal)
+        const terrain = await fetchTerrain()
         update((a) => ({ ...a, terrain }))
         if (mock) return
         // teren jest już w cache serwera – analiza jeszcze raz (werdykt „Teren”, reguły zastawki / oczka korzystają z terenu);
@@ -160,7 +185,7 @@ export function useAnalysis(
             hydro: fresh.hydro?.status === 'pending' ? a.hydro : fresh.hydro,
           }))
       } catch (e) {
-        if (!aborted(e)) update((a) => ({ ...a, terrain: null, terrain_note: 'Nie udało się policzyć ukształtowania terenu. Pozostała analiza jest kompletna.' }))
+        if (!aborted(e)) update((a) => ({ ...a, terrain: null, terrain_note: 'Brak danych o terenie – spróbuj za chwilę' }))
       }
     }
 
