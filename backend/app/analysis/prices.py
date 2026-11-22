@@ -157,7 +157,13 @@ def attach(sug: CropSuggestions | None, voivodeship: str | None, analysis_date: 
 
 
 def _zsrir_rows() -> list[dict]:
-    for f in ZSRIR_FILES:
+    return _zsrir_rows_cached(tuple(ZSRIR_FILES))
+
+
+@lru_cache(maxsize=8)
+def _zsrir_rows_cached(files: tuple) -> list[dict]:
+    """P1: plik notowań czytany raz na proces (dawniej kilkadziesiąt odczytów na analizę – ok. 200 ms)."""
+    for f in files:
         if f.exists():
             with open(f, encoding="utf-8") as fh:
                 return list(csv.DictReader(fh))
@@ -182,3 +188,4 @@ def price_now(analysis_date: date | None = None) -> list[PriceNow] | None:
 
 def clear() -> None:
     _table.cache_clear()
+    _zsrir_rows_cached.cache_clear()
