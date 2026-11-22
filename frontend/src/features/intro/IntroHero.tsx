@@ -1,4 +1,4 @@
-import { Loader2, PenLine } from 'lucide-react'
+import { Loader2, PenLine, Search } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { LogoMark } from '@/components/LogoMark'
 import type { Example } from '@/features/parcel-panel/examples'
@@ -7,15 +7,20 @@ import { BRAND_NAME, BRAND_TAGLINE } from '@/lib/brand'
 import { useLang } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
 
+/** id formularza wyszukiwarki na karcie – przycisk „Sprawdź” wysyła ten sam formularz (atrybut `form`) */
+export const HERO_SEARCH_FORM = 'hero-search'
+
 /**
- * Karta powitalna (F12 – pod jury KOWR: pierwsza sekunda = pole numeru działki i data analizy). Na środku duże pole
- * „Wpisz numer działki lub adres” z podpowiedzią formatu, obok data analizy (ta sama co w górnym pasku – jeden stan
- * `asOf`), pod spodem „albo kliknij swoje pole na mapie” i jedna linijka małych chipów z przykładami
- * (/api/demo/examples). Enter = szukaj. Chowa się przy przybliżaniu / przeciąganiu (wtedy wąski pasek z polem).
+ * Karta powitalna (F12, F14 – pod jury KOWR: pierwsza sekunda = pole numeru działki i data analizy).
+ * Nagłówek: logo + „Wodoskop”, pod spodem podtytuł. Wiersz wyszukiwania jako jedna siatka (gap 12 px, bez
+ * nakładania): [pole „Wpisz numer działki lub adres” z lupą i „Moja lokalizacja” w środku] [data analizy]
+ * [„Sprawdź”] – wszystkie 48 px, ramka 1 px, bez cieni; przy karcie < 640 px pole na całą szerokość, pod nim
+ * data i przycisk. Data – ten sam stan `asOf` co górny pasek (pasek nie jest pokazywany, gdy karta jest widoczna).
+ * Pod spodem podpowiedź formatu, „albo kliknij swoje pole na mapie · Narysuj swoje pole” i chipy przykładów
+ * (zawijane, maks. 6). Chowa się przy przybliżaniu / przeciąganiu (wtedy wąski pasek z polem).
  */
 export function IntroHero({
   search,
-  locate,
   date,
   examples,
   onExample,
@@ -24,9 +29,9 @@ export function IntroHero({
 }: {
   /** chowanie (ok. 200 ms): przezroczystość + lekki zjazd w dół, bez klikania */
   leaving?: boolean
+  /** SearchBar w wariancie „field” z formularzem `HERO_SEARCH_FORM` i lokalizacją w polu */
   search: ReactNode
-  locate: ReactNode
-  /** pole daty analizy (DateField – ten sam stan co w górnym pasku) */
+  /** pole daty analizy (DateField `field`) */
   date: ReactNode
   examples: DemoExamples
   onExample: (e: Example) => void
@@ -34,6 +39,7 @@ export function IntroHero({
   isMobile?: boolean
 }) {
   const { t } = useLang()
+  const tagline = t(BRAND_TAGLINE)
   return (
     <div
       className={cn(
@@ -48,38 +54,51 @@ export function IntroHero({
       <section
         aria-labelledby="hero-title"
         className={cn(
-          'relative max-h-full w-full max-w-2xl animate-in overflow-y-auto overscroll-contain rounded-[28px] bg-surface/95 px-5 pt-5 pb-4 shadow-float backdrop-blur-md transition-transform duration-200 fade-in slide-in-from-bottom-2 motion-reduce:animate-none md:px-8 md:pt-7 md:pb-6',
+          '@container relative max-h-full w-full max-w-[760px] animate-in overflow-y-auto overscroll-contain rounded-[28px] bg-surface/95 p-5 shadow-float backdrop-blur-md transition-transform duration-200 fade-in slide-in-from-bottom-2 sm:p-7 motion-reduce:animate-none',
           leaving ? 'pointer-events-none translate-y-2' : 'pointer-events-auto',
         )}
       >
+        {/* nagłówek: logo + nazwa w jednej linii, podtytuł pod spodem */}
         <div className="flex items-center gap-3">
-          <LogoMark className="size-10 shrink-0 md:size-12" />
-          <h1 id="hero-title" className="font-display text-xl leading-7 font-bold text-brand-dark md:text-[28px] md:leading-9">
-            {BRAND_NAME} <span className="font-normal text-text-muted">– {t(BRAND_TAGLINE)}</span>
-          </h1>
+          <LogoMark className="size-11 shrink-0" />
+          <div className="min-w-0">
+            <h1 id="hero-title" className="font-display text-[28px] leading-8 font-bold text-brand-dark">
+              {BRAND_NAME}
+            </h1>
+            <p className="text-base leading-6 text-text-muted sm:text-[17px]">{tagline.charAt(0).toUpperCase() + tagline.slice(1)}</p>
+          </div>
         </div>
 
-        {/* pole numeru działki + data analizy */}
-        <div className="mt-5 flex flex-col gap-2 md:flex-row md:items-start">
-          <div className="flex min-w-0 flex-1 items-start gap-2 [&_input]:h-14 [&_input]:text-lg">
-            {search}
-            {locate}
-          </div>
-          <div className="shrink-0 [&_label]:h-14">{date}</div>
+        {/* wiersz wyszukiwania: jedna siatka, bez nakładania */}
+        <div className="mt-6 grid grid-cols-2 gap-3 @min-[640px]:grid-cols-[minmax(0,1fr)_200px_auto]">
+          <div className="col-span-2 min-w-0 @min-[640px]:col-span-1">{search}</div>
+          <div className="min-w-0">{date}</div>
+          <button
+            type="submit"
+            form={HERO_SEARCH_FORM}
+            className="flex h-12 items-center justify-center gap-2 rounded-xl border border-brand-dark bg-brand-dark px-5 text-base font-semibold text-white hover:bg-brand"
+          >
+            <Search className="size-5" aria-hidden /> {t('Sprawdź')}
+          </button>
         </div>
-        <p className="mt-2 pl-1 text-sm leading-5 text-text-muted">{t('np. 201305_2.0038.6/1 albo: Kobylin-Borzymy, Wnory-Wandy 6/1')}</p>
-        <p className="mt-1 flex flex-wrap items-center gap-x-3 pl-1 text-sm leading-5">
+        <p className="mt-2 text-sm leading-5 text-text-muted">{t('np. 201305_2.0038.6/1 albo: Kobylin-Borzymy, Wnory-Wandy 6/1')}</p>
+        <p className="mt-2 flex flex-wrap items-center gap-x-2 text-sm leading-5">
           <span>{t('albo kliknij swoje pole na mapie')}</span>
           {onDraw && (
-            <button type="button" onClick={onDraw} className="inline-flex min-h-10 items-center gap-1.5 font-medium text-brand hover:underline">
-              <PenLine className="size-4" aria-hidden /> {t('Narysuj swoje pole')}
-            </button>
+            <>
+              <span className="text-text-muted" aria-hidden>
+                ·
+              </span>
+              <button type="button" onClick={onDraw} className="inline-flex min-h-10 items-center gap-1.5 font-medium text-brand hover:underline">
+                <PenLine className="size-4" aria-hidden /> {t('Narysuj swoje pole')}
+              </button>
+            </>
           )}
         </p>
 
-        {/* przykłady – jedna linijka małych chipów */}
-        <div className="mt-3 flex items-center gap-2 border-t pt-3">
-          <span className="shrink-0 text-sm text-text-muted">{t('lub zobacz przykład:')}</span>
+        {/* przykłady – chipy zawijane do kolejnej linii, etykieta w linii z pierwszymi chipami */}
+        <div className="mt-4 flex flex-wrap items-center gap-2 border-t pt-4" aria-label={t('Przykłady')}>
+          <span className="text-sm text-text-muted">{t('lub zobacz przykład:')}</span>
           {examples.state === 'loading' ? (
             <span className="flex items-center gap-1.5 text-sm text-text-muted" role="status">
               <Loader2 className="size-4 animate-spin text-brand" aria-hidden /> {t('Wczytuję przykłady…')}
@@ -87,20 +106,17 @@ export function IntroHero({
           ) : examples.state === 'error' || !examples.examples.length ? (
             <span className="text-sm text-text-muted">{t('chwilowo niedostępne')}</span>
           ) : (
-            <ul className="scrollbar-none flex min-w-0 flex-1 gap-1.5 overflow-x-auto" aria-label={t('Przykłady')}>
-              {examples.examples.slice(0, 6).map((e) => (
-                <li key={e.id} className="shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => onExample(e)}
-                    title={t(e.text)}
-                    className="flex h-9 items-center gap-1.5 rounded-full border bg-surface px-3 text-sm font-medium whitespace-nowrap hover:border-brand/50 hover:bg-sage-soft"
-                  >
-                    <e.icon className="size-4 text-brand" aria-hidden /> {t(e.title)}
-                  </button>
-                </li>
-              ))}
-            </ul>
+            examples.examples.slice(0, 6).map((e) => (
+              <button
+                key={e.id}
+                type="button"
+                onClick={() => onExample(e)}
+                title={t(e.text)}
+                className="flex min-h-9 max-w-full items-center gap-1.5 rounded-full border bg-surface px-3 py-1 text-left text-sm font-medium hover:border-brand/50 hover:bg-sage-soft"
+              >
+                <e.icon className="size-4 shrink-0 text-brand" aria-hidden /> <span className="min-w-0">{t(e.title)}</span>
+              </button>
+            ))
           )}
         </div>
       </section>

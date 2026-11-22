@@ -21,7 +21,7 @@ import { ParcelPanel } from '@/features/parcel-panel/ParcelPanel'
 import { ParcelSummary } from '@/features/parcel-panel/ParcelSummary'
 import { PanelCollapsed } from '@/features/parcel-panel/PanelCollapsed'
 import { ExploreBar } from '@/features/intro/ExploreBar'
-import { IntroHero } from '@/features/intro/IntroHero'
+import { HERO_SEARCH_FORM, IntroHero } from '@/features/intro/IntroHero'
 import { useDemoExamples } from '@/features/intro/useDemoExamples'
 import type { SoilImageStatus } from '@/features/map/SoilSusceptibilityLayer'
 import { SOIL_CLASS_LABELS, SOIL_COLOR } from '@/theme/soil'
@@ -909,10 +909,16 @@ export default function Start() {
               {heroMounted ? (
                 <IntroHero
                   leaving={!hero}
-                  search={searchBar}
-                  locate={<LocateButton locating={locating} onClick={locate} iconOnly />}
-                  // F12: data analizy na karcie powitalnej – ten sam stan co w górnym pasku
-                  date={<DateField value={asOf} onChange={setAsOf} />}
+                  // F14: jedna siatka – pole z lupą i „Moja lokalizacja” w środku, data, „Sprawdź” (ten sam formularz)
+                  search={cloneElement(searchBar, {
+                    variant: 'field',
+                    formId: HERO_SEARCH_FORM,
+                    // telefon: krótszy tekst – pole ma całą szerokość karty, ale obok są przyciski w polu
+                    placeholder: t(isMobile ? 'Numer działki lub adres' : 'Wpisz numer działki lub adres'),
+                    trailing: <LocateButton locating={locating} onClick={locate} inField />,
+                  })}
+                  // F12: data analizy na karcie powitalnej – ten sam stan co w górnym pasku (paska nie ma przy karcie)
+                  date={<DateField value={asOf} onChange={setAsOf} field />}
                   examples={demoExamples}
                   onExample={openExample}
                   onDraw={startDraw}

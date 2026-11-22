@@ -28,7 +28,13 @@ export function SearchBar({
   placeholder,
   trailing,
   className,
+  variant = 'pill',
+  formId,
 }: {
+  /** F14: 'field' – pole formularza na karcie startowej (48 px, ramka 1 px, bez cienia), 'pill' – nad mapą */
+  variant?: 'pill' | 'field'
+  /** id formularza – przycisk „Sprawdź” poza polem wysyła to samo wyszukiwanie (`form=`) */
+  formId?: string
   /** przycisk w prawej części pola (np. „Moja lokalizacja”) */
   trailing?: ReactNode
   /** trwa wczytywanie działki (po wyborze) */
@@ -144,6 +150,7 @@ export function SearchBar({
   return (
     <div className={cn('relative', className)}>
       <form
+        id={formId}
         role="search"
         onSubmit={(e) => {
           e.preventDefault()
@@ -189,7 +196,9 @@ export function SearchBar({
           autoComplete="off"
           placeholder={placeholder ?? t('Wpisz numer działki lub adres')}
           className={cn(
-            'h-12 w-full rounded-full border border-transparent bg-surface pl-12 text-base shadow-float outline-none placeholder:text-sm placeholder:text-text-muted/80',
+            variant === 'field'
+              ? 'h-12 w-full rounded-xl border border-line bg-surface pl-12 text-base outline-none placeholder:text-base placeholder:text-text-muted/80'
+              : 'h-12 w-full rounded-full border border-transparent bg-surface pl-12 text-base shadow-float outline-none placeholder:text-sm placeholder:text-text-muted/80',
             trailing ? 'pr-[5.5rem]' : 'pr-12',
             'focus-visible:border-brand focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-brand',
             error && 'border-danger/60',

@@ -1138,4 +1138,6 @@ export const EN: Record<string, string> = {
   'Więcej szczegółów': 'More details',
   'Wybierz uprawę – wynik będzie dokładniejszy': 'Choose a crop – the result will be more accurate',
   'Przeliczam…': 'Recalculating…',
+  // F14
+  'Sprawdź': 'Check',
 }

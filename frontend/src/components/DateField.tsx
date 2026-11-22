@@ -9,10 +9,13 @@ export function DateField({
   onChange,
   compact,
   bare,
+  field,
 }: {
   value: string
   onChange: (v: string) => void
   compact?: boolean
+  /** F14: pole formularza na karcie startowej – 48 px, ramka 1 px, bez cienia (jak wyszukiwarka obok) */
+  field?: boolean
   /** bez własnego tła i cienia – w grupie górnego paska */
   bare?: boolean
 }) {
@@ -23,6 +26,7 @@ export function DateField({
         'flex h-12 shrink-0 items-center gap-2 rounded-full bg-surface px-4 shadow-float',
         compact && 'h-11 w-full rounded-md border shadow-none',
         bare && 'rounded-none bg-transparent shadow-none',
+        field && 'h-12 w-full rounded-xl border border-line px-3 shadow-none focus-within:border-brand',
       )}
     >
       <CalendarDays className="size-5 shrink-0 text-amber" aria-hidden />
@@ -37,7 +41,7 @@ export function DateField({
         min={minAnalysisIso()}
         max={todayIso()}
         onChange={(e) => e.target.value && onChange(e.target.value)}
-        className={cn('tabular bg-transparent text-base font-semibold outline-none', compact ? 'min-w-0 flex-1' : 'w-[8.75rem] shrink-0')}
+        className={cn('tabular bg-transparent text-base font-semibold outline-none', compact || field ? 'min-w-0 flex-1' : 'w-[8.75rem] shrink-0')}
       />
     </label>
   )
