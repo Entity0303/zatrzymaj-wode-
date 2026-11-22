@@ -86,8 +86,9 @@ def products() -> dict[str, dict]:
 def product_for(crop: str | None) -> str | None:
     """Kod uprawy („pszenica_ozima”, „zboza_ozime”) albo nazwa produktu („pszenica”) → produkt z cenami GUS."""
     c = (crop or "").strip()
+    priced = {k[0] for k in load_prices()}  # tylko produkty, które MAJĄ ceny w pliku (rzepak i buraki – nie)
     for p, info in products().items():
-        if c in info["crops"] or _plain(c) == _plain(p):
+        if p in priced and (c in info["crops"] or _plain(c) == _plain(p)):
             return p
     return None
 

@@ -67,6 +67,7 @@ def test_crop_without_gus_price_is_unavailable_and_region_names():
     assert PW.region_key("mars") is None
     assert PW.region_phrase("kujawsko-pomorskie")[1] == "w województwie kujawsko-pomorskim" and PW.region_phrase("PL")[1] == "w Polsce"
     assert PW.product_for("zboza_ozime") == "pszenica" and PW.product_for("ziemniak") == "ziemniaki" and PW.product_for("chmiel") is None
+    assert PW.product_for("rzepak") is None and PW.product_for("burak_cukrowy") is None  # w pliku cen GUS nie ma tych produktów
 
 
 def test_season_precip_needs_90_pct_of_season_days():
