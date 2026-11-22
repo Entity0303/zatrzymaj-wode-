@@ -4,6 +4,17 @@ Nowe wpisy na górze. Wpis: data i godzina · gałąź · co zrobiono · zmienio
 
 ---
 
+## 2026-11-22 14:30 · `main` · A8: działki demo, teren NMT, tryb GUGiK per źródło
+**Co:** (ULDK przez VPN: 1 zapytanie testowe OK, potem po 1 zapytaniu na działkę; satelita tylko Earth Search)
+- **NMT** (D91): przyczyna braku terenu w UI – dopasowanie wysokości po kluczu 0,1 m przy innym zaokrągleniu współrzędnych w odpowiedzi NMT; `nmt.match_heights` (po kolejności, tolerancja 0,15 m) + test. 201305 i Drwinia 876: `terrain` w analizie, Teren 3 obiekty, Spływ 46 / 19. Porażki nie były w cache, bezpiecznik zamknięty.
+- **Działki demo** (D91): `scripts/fetch_demo_parcels.py`, 15 działek w `demo_parcels.json` (bez `needs_fetch`), less → Drzewce-Kolonia 203; teren NMT w cache dla wszystkich (3 długie – osobnym wywołaniem); 6 przykładów w `app/demo.py`; `warm_demo.py --no-satellite`.
+- **Wyszukiwanie na żywo:** „Tczów Borki 279” → 143604_2.0011.279; „Tczów 123” → brak takiej działki w obrębie Tczów, miejscowość + podpowiedź (`test-parcels.md`).
+- **Tryb GUGiK** (D89): `OFFLINE_SOURCES` + limit GUGiK 2 naraz / 0,5 s; przełączniki PowerShell w statusie. **Satelita** (D90): najnowsza scena ≤ data analizy, porażka 30 min, neutralny komunikat; cache scen dla 4 z 6 przykładów (Kujawy, Żuławy – brak widocznej sceny w 60 dniach).
+- **Obszar przybliżony / pole narysowane po id** w warstwach i raporcie (wcześniej 502 – szukane w ULDK).
+- PDF: `reports/examples/{dobra,slaba}-skrocony.pdf` + PNG (201305, Pożarowo 70/4) – po 2 strony. `demo_check.py`: wszystkie kroki 200 (409 dla „Szczytno 126/3” = dwie działki w Polsce, nasza na liście).
+**Pliki:** `backend/app/{sources/nmt.py, core/{http,cache,config}.py, analysis/{satellite,approx_area,drawn_field}.py, routers/{parcel,status}.py, demo.py, data/demo_parcels.json, data/terrain/{040703_5.0020.76,121601_5.0002.770}.*}`, `backend/scripts/{fetch_demo_parcels.py (nowy), warm_demo.py, warm_satellite.py, demo_check.py}`, testy (`test_a6`, `test_a11`, `test_core`, `test_a5d`, `test_demo_status_report`, `conftest`), `docker-compose.yml` (OFFLINE_SOURCES), `reports/examples/{dobra,slaba}-skrocony*`.
+**Kontrakt:** nie (lista przykładów to dane; `DemoExample` bez zmian).
+
 ## 2026-11-22 00:55 · `main` · INT3: integracja końcowa
 **Co:**
 - `main` (ea59a60) ← merge `origin/c/research` (dd2e70d) → `origin/a/backend` (e7a2dce) → `origin/b/frontend` (622d9c3) – **bez konfliktów**; CLAUDE.md: od 22.11 00:45 praca bezpośrednio na `main` (e5362e1); push `ea59a60..e5362e1`.

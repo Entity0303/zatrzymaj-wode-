@@ -1,6 +1,6 @@
 # Status – osoba A (Dominik), backend
 
-_Stan na: 2026-11-22 00:55 (INT3)_
+_Stan na: 2026-11-22 14:30 (A8)_
 
 ## Zrobione
 - Wyszukiwanie działki ULDK: pełny identyfikator, „obręb numer”, punkt; `GET /api/parcel` (409 lista kandydatów, 404, 502 z nazwą źródła), timeout 10 s + jedna ponowna próba, cache 24 h.
@@ -69,13 +69,21 @@ _Stan na: 2026-11-22 00:55 (INT3)_
   - `sources/sentinel.py` (Earth Search STAC, odczyt tylko kafli okna działki z COG przez tifffile – BSD-3, bez imagecodecs / GDAL), `analysis/satellite.py` + `rules/satellite.yaml`: NDVI / NDMI (mediany w obrysie, maska SCL, odrzucone zbyt ciemne piksele), ostatnia scena ≤ 60 dni z ≥ 70% widocznej działki + rok temu ±20 dni, zdanie i poziom z wartości (D86–D87);
   - `GET/POST /api/satellite` na żywo w budżecie 15 s / 10 MB (201305: 8,3 s / 8,4 MB; Notecka: 6,7 s / 7,35 MB), `/api/analysis` tylko z cache (`pending` + tło), `/api/layers/kondycja` i `/wilgotnosc` (PNG data URI + bbox + legenda), werdykt `rosliny`, wskaźniki crop_health / plant_moisture, pewność i źródła (D88);
   - raport szczegółowy – strona „Z satelity” (mapka NDVI, wartości, szereg 12 mies.); skrócony – jedno zdanie, nadal 2 strony; `scripts/warm_satellite.py`, satelita w `warm_demo.py`; cache 201305 i Notecka (scena + rok temu + szereg).
-- Testy: **485 bez sieci** (457 + 28 w `test_a11.py`) (`docker run --network none`) + 5 live. Analiza z cache: 0,04–0,7 s; PDF 0,5–1,3 s.
+- **A8 (na `main`) – działki demo, teren, tryb GUGiK:**
+  - NMT: naprawione dopasowanie wysokości (`nmt.match_heights` – „brak 51% wysokości”, teren i spływ w UI), paczki maks. 2 naraz z przerwą (D91);
+  - 15 działek demo z ULDK (kandydaci C, brakujące A5d, teren C; less → Drzewce-Kolonia 203), teren NMT w cache dla wszystkich; 6 przykładów `/api/demo/examples` (D91);
+  - `OFFLINE_SOURCES` (blokada GUGiK per źródło) + wspólny limit GUGiK 2 naraz / 0,5 s (D89); satelita z cache – najnowsza scena ≤ data analizy, porażki 30 min (D90);
+  - obszar przybliżony / pole narysowane rozpoznawane po id w warstwach i raporcie; `demo_check.py` – 409 z naszą działką na liście = OK.
+- Testy: **490 bez sieci** (`docker run --network none`) + 5 live.
 
 ## W trakcie (gałąź)
 - **INT3 (22.11 ok. 00:55): `c/research`, `a/backend`, `b/frontend` scalone do `main` (bez konfliktów) i wypchnięte.** Od 22.11 00:45 praca bezpośrednio na `main` (zasady w CLAUDE.md); gałęzie `a/backend` itp. już nieużywane. Główny folder `zatrzymaj-wode-` przełączony na `main`, kontenery przebudowane.
 
-## Uwaga (A5e)
-- Backend w kontenerze działa teraz w trybie **DEMO_OFFLINE** (tylko cache) – GUGiK oznaczył sieć jako nadużycie; przykłady PDF wygenerowane z cache. Powrót: `docker compose up -d backend` (bez zmiennej) – dopiero na innej sieci.
+## Tryb pracy (A8, D89) – przełączanie jedną komendą PowerShell (z katalogu repo)
+- **VPN włączony** (GUGiK dozwolony z limitem): `$env:DEMO_OFFLINE="false"; $env:OFFLINE_SOURCES="uug,bdot"; docker compose up -d backend`
+- **VPN wyłączony** (GUGiK tylko z cache): `$env:DEMO_OFFLINE="false"; $env:OFFLINE_SOURCES="uldk,nmt,kieg,uug,bdot"; docker compose up -d backend`
+- **Prezentacja** (wszystko z cache): `$env:DEMO_OFFLINE="true"; docker compose up -d backend`
+- Teraz (22.11 14:30): VPN włączony – `OFFLINE_SOURCES=uug,bdot`.
 
 ## Przed prezentacją (na dobrej sieci; w Git Bash poprzedź komendy `MSYS_NO_PATHCONV=1`)
 1. `docker compose up -d --build` – backend z wolumenem cache (`/data/cache.sqlite`).
