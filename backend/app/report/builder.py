@@ -566,6 +566,9 @@ def area_text(a: AnalysisResponse, short: bool = False) -> str:
     return ha
 
 
+# Teren nie zdążył się policzyć przed złożeniem raportu (routers/reports ustawia tę uwagę zamiast „pending”)
+TERRAIN_PENDING_NOTE = "Teren w trakcie liczenia – pełne dane w aplikacji."
+
 # Raport skrócony = dokładnie 2 strony. Gdy tekstu jest za dużo, kolejne stopnie skracają LISTY i zdania (nie czcionkę):
 # (znaki punktu werdyktu, punktów, upraw w „Unikaj”, grup „Unikaj”, znaki opisu działania, działań, wierszy rankingu)
 COMPACT = [
@@ -606,6 +609,7 @@ def render_html(a: AnalysisResponse, ortho: str | None, generated: dt.datetime |
         "chart_precip": Markup(charts.precip_chart(h.monthly_precip) or ""),
         "water_bar": Markup(charts.bar(a.indicators.soil_water_pct.value, "#2F80C9")),
         "terrain": a.terrain,
+        "terrain_missing": TERRAIN_PENDING_NOTE if a.terrain_note == TERRAIN_PENDING_NOTE else "Brak danych o terenie dla tej działki.",
         "v": a.verdict, "sug": a.suggestions, "LV": LEVEL, "CAT": CAT_ICON, "KIND": KIND_LABEL,
         "parcel_name": parcel_name(a)[0], "parcel_place": parcel_name(a)[1], "water_actions": water_actions(a),
         "history_labels": history_labels(a),

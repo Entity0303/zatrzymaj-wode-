@@ -45,7 +45,10 @@ def _no_pending(a):
 
     upd = {}
     if isinstance(a.terrain, TerrainPending):
+        from app.report.builder import TERRAIN_PENDING_NOTE
+
         upd["terrain"] = None
+        upd["terrain_note"] = TERRAIN_PENDING_NOTE  # raport mówi wprost, że teren jeszcze się liczy (nie „brak danych”)
     if a.hydro is not None and a.hydro.status == "pending":
         upd["hydro"] = None
     return a.model_copy(update=upd) if upd else a

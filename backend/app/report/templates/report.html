@@ -141,7 +141,7 @@
   <div class="zbar">{{ zone_bar }}</div>
   <div class="zleg">{% for z in terrain.zones if z.share_pct >= 1 %}<i style="background:{{ z.color }}"></i>{{ z.label if full else z.label.split(' – ')[0] }} {{ z.share_pct|num(0, '%') }}{% endfor %}</div>
   <p style="margin-top:2pt">{{ terrain.summary|first_sentence }}</p>
-  {% else %}<p class="muted">Brak danych o terenie dla tej działki.</p>{% endif %}
+  {% else %}<p class="muted">{{ terrain_missing }}</p>{% endif %}
 
     </div>
     {% if not full %}
@@ -252,7 +252,7 @@
         <tr><td>Spadek</td><td>średnio {{ t.slope_mean_pct|num(1, '%') }}</td></tr>
         <tr><td>Woda spływa</td><td>{{ t.main_flow_direction or 'brak wyraźnego kierunku' }}</td></tr>
       </table>
-      {% else %}<p class="muted">Brak danych o terenie dla tej działki.</p>{% endif %}
+      {% else %}<p class="muted">{{ terrain_missing }}</p>{% endif %}
     </div>
   </div>
 
