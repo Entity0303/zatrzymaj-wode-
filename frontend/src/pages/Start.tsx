@@ -12,7 +12,7 @@ import { SampleDataBanner } from '@/components/SampleDataBanner'
 import { parcelBounds, parcelContains, type MapInsets } from '@/features/map/geo'
 import { layerByKey, type LayerKey } from '@/features/map/layers'
 import { useLayerData } from '@/features/map/layers/useLayerData'
-import { TERRAIN_PENDING, layerLegend, layerStatusText, layerStatusVars } from '@/features/map/layers/responseLegend'
+import { TERRAIN_PENDING, layerInfoLine, layerLegend, layerStatusText, layerStatusVars } from '@/features/map/layers/responseLegend'
 import { LegendCard } from '@/features/map/LegendCard'
 import { MapControls } from '@/features/map/MapControls'
 import { POLAND_CENTER, POLAND_ZOOM, ParcelMap, type BaseMap } from '@/features/map/ParcelMap'
@@ -787,6 +787,8 @@ export default function Start() {
       : t(layerStatusText(layer, layerState, satellite), layerState.phase === 'ok' ? layerStatusVars(layerState.data) : undefined) +
         // dopisek po A23: pozycja w kolejce zadań w tle, gdy serwer ją poda
         (terrainLayer && layerState.phase === 'waiting' && terrainQueue != null ? ` · ${t('w kolejce: {n}', { n: terrainQueue })}` : '')
+  // F27: szara linia na dole legendy – skąd i z kiedy są dane warstwy
+  const legendInfo = layer === 'gleba' ? t('źródło: {src}', { src: 'IUNG-PIB' }) : layerInfoLine(layer, layerState, t, terrainQueue)
   const refine = {
     crop,
     onCropChange: (c: CropId | null) => {
@@ -1114,6 +1116,7 @@ export default function Start() {
               title={legend.label}
               legend={legend.legend}
               status={legendStatus}
+              info={legendInfo}
               onRetry={retryLayer}
               compact
               // F9/F10: gleba na telefonie – zwinięta pigułka „Podatność gleb ▾”, rozwijana kliknięciem
@@ -1129,6 +1132,7 @@ export default function Start() {
                   title={legend.label}
                   legend={legend.legend}
                   status={legendStatus}
+              info={legendInfo}
                   onRetry={retryLayer}
                   collapsed={!ui.legend}
                   onToggle={() => setUi({ legend: !ui.legend })}
@@ -1268,7 +1272,6 @@ export default function Start() {
                   <DateField value={asOf} onChange={setAsOf} compact />
                   {weather(true)}
                 </div>
-                {parcel && <PeriodPicker value={period} onChange={setPeriod} hasCrop={!!crop} asOf={asOf} align="left" />}
                 <ParcelPanel {...panelProps} hideHeader />
                 <FarmDrawer
                   inline

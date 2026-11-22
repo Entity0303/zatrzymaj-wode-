@@ -1324,4 +1324,10 @@ export const EN: Record<string, string> = {
   'Źródło: Open-Meteo': 'Source: Open-Meteo',
   'Według prognozy wody wystarczy na ok. {n} dni': 'According to the forecast, water will last for about {n} days',
   'Ryzyko braku wody w 7 dni:': 'Risk of water shortage in 7 days:',
+  // F27: linia informacji o danych w legendzie
+  'Liczę teren i spływ – zwykle 10–30 s, przy wolnym serwerze do ok. minuty': 'Calculating terrain and runoff – usually 10–30 s, up to about a minute on a slow server',
+  'Brak danych – spróbuj za chwilę': 'No data – try again in a moment',
+  'Policzono {date}': 'Calculated {date}',
+  'Zdjęcie z {date}': 'Image from {date}',
+  'źródło: {src}': 'source: {src}',
 }

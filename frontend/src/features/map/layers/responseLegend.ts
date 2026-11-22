@@ -31,6 +31,43 @@ export function layerLegend(base: MapLayer, state: LayerState): LegendSpec {
   }
 }
 
+/**
+ * F27: linia informacji o danych na dole legendy – gotowe: „Policzono / Zdjęcie z / Dane z dd.mm.rrrr · źródło: …”
+ * (z pól, które API zwraca; bez daty – samo źródło), w trakcie: „Liczę…”, błąd: komunikat z serwera albo nasz.
+ * Zwraca tekst już przetłumaczony (`t`).
+ */
+export function layerInfoLine(
+  layer: LayerKey,
+  state: LayerState,
+  t: (key: string, vars?: Record<string, string | number>) => string,
+  queue: number | null = null,
+): string | null {
+  const terrain = layer === 'teren' || layer === 'splyw'
+  switch (state.phase) {
+    case 'idle':
+      return null
+    case 'waiting':
+    case 'loading':
+      return terrain
+        ? t('Liczę teren i spływ – zwykle 10–30 s, przy wolnym serwerze do ok. minuty') + (queue != null ? ` · ${t('w kolejce: {n}', { n: queue })}` : '')
+        : null
+    case 'unavailable':
+    case 'error': {
+      const m = serverMessage(state.message)
+      return m ? t(m) : t('Brak danych – spróbuj za chwilę')
+    }
+    case 'ok': {
+      const d = state.data
+      const src = d.source_tag.source?.trim()
+      const date = d.scene_date ?? d.source_tag.date
+      const sat = SATELLITE_LAYERS.includes(layer)
+      const when = date ? t(terrain ? 'Policzono {date}' : sat ? 'Zdjęcie z {date}' : 'Dane z {date}', { date: formatDatePl(date) }) : null
+      const from = src ? t('źródło: {src}', { src }) : null
+      return [when, from].filter(Boolean).join(' · ') || null
+    }
+  }
+}
+
 /** Zmienne do tekstu stanu warstwy (daty, zakres wysokości). */
 export function layerStatusVars(d: LayerResponse): Record<string, string> {
   return {

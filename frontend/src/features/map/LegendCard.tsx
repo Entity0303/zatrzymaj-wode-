@@ -52,6 +52,7 @@ export function LegendCard({
   title,
   legend,
   status,
+  info,
   compact,
   className,
   style,
@@ -72,6 +73,8 @@ export function LegendCard({
   legend: LegendSpec
   /** komunikat o stanie danych warstwy (np. brak danych) – zawsze widoczny jako tekst */
   status?: string
+  /** F27: szara linia na dole – skąd i z kiedy są dane warstwy / „liczę…” / błąd (już przetłumaczona) */
+  info?: string | null
   className?: string
   style?: CSSProperties
 }) {
@@ -180,6 +183,7 @@ export function LegendCard({
           {t(status)}
         </p>
       )}
+      {info && info !== status && <p className="mt-1.5 text-xs leading-4 text-white/60">{info}</p>}
       {onRetry && (
         <button
           type="button"
