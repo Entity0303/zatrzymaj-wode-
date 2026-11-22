@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronUp, Leaf, Loader2, X } from 'lucide-react'
+import { ChevronDown, ChevronUp, Leaf, Loader2, X, Star } from 'lucide-react'
 import type { Parcel } from '@/api/types'
 import { ErrorNotice } from '@/components/ErrorNotice'
 import { useLang } from '@/lib/i18n'
@@ -27,7 +27,12 @@ export function ParcelSummary({
   onOpenPassport,
   onShowOnMap,
   report,
+  saved,
+  onToggleSave,
 }: {
+  /** F36: „Zapisz w Moich działkach” – gwiazdka obok nazwy działki (wcześniej tylko w rozwiniętym panelu) */
+  saved?: boolean
+  onToggleSave?: () => void
   /** F-MASTER A3: „Pobierz raport PDF” + „Otwórz paszport wodny” pod formularzem */
   report?: PanelReport
   /** zwija panel do samej belki z nazwą */
@@ -60,6 +65,18 @@ export function ParcelSummary({
           <h2 className="font-name line-clamp-2 text-xl leading-7 font-bold">{title}</h2>
           <p className="text-sm leading-5 text-text-muted">{sub}</p>
         </div>
+        {onToggleSave && (
+          <button
+            type="button"
+            onClick={onToggleSave}
+            aria-pressed={!!saved}
+            aria-label={saved ? t('Usuń z moich działek') : t('Zapisz w Moich działkach')}
+            title={saved ? t('Zapisana w tej przeglądarce – kliknij, aby usunąć') : t('Zapisz w Moich działkach')}
+            className="-mt-1 flex size-10 shrink-0 items-center justify-center rounded-full text-text-muted hover:bg-surface-2"
+          >
+            <Star className={cn('size-5', saved && 'fill-warn text-warn')} aria-hidden />
+          </button>
+        )}
         {onCollapse && (
           <button
             type="button"

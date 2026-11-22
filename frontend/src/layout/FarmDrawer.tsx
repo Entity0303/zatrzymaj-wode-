@@ -45,8 +45,10 @@ export function FarmDrawer({
 
   const summary = firstRun
     ? t('kliknij pole, aby zacząć')
-    : [n ? parcelsLabel(n, t) : null, alerts ? t(plForm(alerts, '{n} alert', '{n} alerty', '{n} alertów'), { n: alerts }) : null].filter(Boolean).join(' · ') ||
-      t('bez alertów')
+    : n === 0 && !alerts
+      ? t('Zapisz działkę gwiazdką ☆, a tu zobaczysz wszystkie swoje pola i alerty.') // F36: pusty stan – co zrobić, żeby pasek się wypełnił
+      : [n ? parcelsLabel(n, t) : null, alerts ? t(plForm(alerts, '{n} alert', '{n} alerty', '{n} alertów'), { n: alerts }) : null].filter(Boolean).join(' · ') ||
+        t('bez alertów')
 
   const bar = (
     <button
@@ -60,7 +62,9 @@ export function FarmDrawer({
     >
       <Tractor className="size-5 text-brand" aria-hidden />
       <span className="font-semibold whitespace-nowrap">{t('Moje gospodarstwo')}</span>
-      <span className="truncate text-text-muted">· {summary}</span>
+      <span className="truncate text-text-muted" title={summary}>
+        · {summary}
+      </span>
       {alerts > 0 && <span className="size-2 shrink-0 rounded-full bg-danger" aria-hidden />}
       {open ? <ChevronDown className="ml-auto size-4 shrink-0 text-text-muted" aria-hidden /> : <ChevronUp className="ml-auto size-4 shrink-0 text-text-muted" aria-hidden />}
     </button>

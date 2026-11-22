@@ -31,7 +31,7 @@ export function FarmCard({ saved }: { saved: SavedParcel[] }) {
         </span>
       </button>
       {n === 0 ? (
-        <p className="mt-auto text-sm leading-5 text-text-muted">{t('Zapisz działkę gwiazdką w panelu działki')}</p>
+        <p className="mt-auto text-sm leading-5 text-text-muted">{t('Zapisz działkę gwiazdką ☆, a tu zobaczysz wszystkie swoje pola i alerty.')}</p>
       ) : (
         <div className="mt-auto space-y-1.5">
           <div className="flex flex-wrap gap-1">

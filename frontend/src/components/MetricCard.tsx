@@ -58,7 +58,8 @@ export function MetricCard({
   return (
     <div
       className={cn(
-        'tabular flex min-w-0 flex-col gap-2 rounded-xl border bg-surface p-3.5',
+        // F36: @container – wielkość liczby zależy od szerokości kafla (clamp), nic nie wychodzi poza kartę
+        'tabular @container flex min-w-0 flex-col gap-2 overflow-hidden rounded-xl border bg-surface p-3.5',
         noData && 'hatch-nodata',
         className,
       )}
@@ -67,7 +68,7 @@ export function MetricCard({
         <span className={cn('flex size-8 shrink-0 items-center justify-center rounded-full', noData ? TONE.muted : TONE[tone])}>
           <Icon className="size-[18px]" aria-hidden />
         </span>
-        <span className="min-w-0 text-sm leading-5 font-medium">{t(title)}</span>
+        <span className="min-w-0 text-sm leading-5 font-medium [overflow-wrap:anywhere]">{t(title)}</span>
       </div>
       {loading ? (
         <div className="space-y-2">
@@ -82,10 +83,13 @@ export function MetricCard({
       ) : textual ? (
         <p className={cn('text-lg leading-6 font-semibold', tone === 'muted' && 'text-base font-medium text-text-muted')}>{value}</p>
       ) : (
-        <p className="tabular flex items-baseline gap-1 text-[32px] leading-10 font-semibold">
+        // F36: dopisek („zabrakło”) może przejść do osobnej linii; liczba + jednostka zawsze razem w jednej linii
+        <p className="tabular flex flex-wrap items-baseline gap-x-1 text-[clamp(1.375rem,17cqi,2rem)] leading-10 font-semibold">
           {valuePrefix}
-          {value}
-          {unit && <span className="text-base font-medium text-text-muted">{unit}</span>}
+          <span className="whitespace-nowrap">
+            {value}
+            {unit && <span className="text-base font-medium text-text-muted"> {unit}</span>}
+          </span>
         </p>
       )}
       {!loading && children}

@@ -14,7 +14,7 @@ const tagDate = (i: Indicator) => (i.source_tag.date ? formatDatePl(i.source_tag
 export function KeyMetrics({ loading, analysis }: { loading?: boolean; analysis?: AnalysisResponse | null }) {
   if (analysis && !loading) return <AnalysisMetrics analysis={analysis} />
   return (
-    <div className="grid grid-cols-2 gap-3">
+    <div className="grid grid-cols-[repeat(auto-fit,minmax(min(190px,100%),1fr))] gap-3">
       <MetricCard icon={Droplets} title="Zapas wody w glebie" value={null} unit="% pełnego" tone="water" source="szacunek_modelu" loading={loading}>
         <div className="h-1.5 rounded-full bg-surface-2" aria-hidden />
       </MetricCard>
@@ -40,7 +40,7 @@ function AnalysisMetrics({ analysis }: { analysis: AnalysisResponse }) {
   const { soil_water_pct: water, risk_7d: risk, crop_health: health, water_balance_season: balance } = analysis.indicators
   return (
     <div className="space-y-2">
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(190px,100%),1fr))] gap-3">
       <MetricCard
         icon={Droplets}
         title="Zapas wody w glebie"

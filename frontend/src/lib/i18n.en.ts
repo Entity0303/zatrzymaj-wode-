@@ -1364,4 +1364,8 @@ export const EN: Record<string, string> = {
   'Obejmuje działki ({obreb}):': 'Covers parcels ({obreb}):',
   'i {n} więcej': 'and {n} more',
   'pokaż mniej': 'show less',
+  // F36: gwiazdka i pusty stan gospodarstwa
+  'Zapisz działkę gwiazdką ☆, a tu zobaczysz wszystkie swoje pola i alerty.': 'Save a parcel with the star ☆ and you will see all your fields and alerts here.',
+  'Zapisz w Moich działkach': 'Save to My parcels',
+  'Zapisana w tej przeglądarce – kliknij, aby usunąć': 'Saved in this browser – click to remove',
 }

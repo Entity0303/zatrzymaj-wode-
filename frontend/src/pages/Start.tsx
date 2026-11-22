@@ -1204,6 +1204,8 @@ export default function Start() {
                       onOpenPassport={openPassport}
                       onShowOnMap={showOnMap}
                       report={reportUi}
+                      saved={panelProps.saved}
+                      onToggleSave={panelProps.onToggleSave}
                     />
                   </div>
                 ) : (
