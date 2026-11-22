@@ -1,147 +1,62 @@
 {
-  "_opis": "F3 – DANE PRZYKŁADOWE: revenue (crop_id → CropRevenue) i price_now; w mocku doklejane do analysis.choice.sample.json. Osobny plik, bo backend/tests/test_contract.py waliduje choice z extra=forbid, dopóki backend nie doda tych pól.",
+  "_opis": "A12 – PRAWDZIWE odpowiedzi backendu dla 201305 (0,58 ha, woj. podlaskie): revenue (crop_id → CropRevenue, tylko uprawy z ceną skupu GUS; rzepak, burak, kiszonka, łubin, warzywa – revenue = null) i price_now (null – brak pliku ZSRIR z biuletynu). Te same pola są w /api/analysis: suggestions.groups[].items[].revenue, choice[].revenue, alternatives[].revenue, price_now.",
   "revenue": {
-    "rzepak": {
-      "price_zl_t": 1900,
+    "pszenica_ozima": {
+      "price_zl_t": 876.0,
       "price_source": "GUS – ceny skupu, woj. podlaskie, 2023–2025",
-      "typical_zl": 3637,
-      "weak_year_zl": 2865,
-      "for_area_ha": 0.58
-    },
-    "kukurydza_kiszonka": {
-      "price_zl_t": 190,
-      "price_source": "GUS – ceny skupu, woj. podlaskie, 2023–2025",
-      "typical_zl": 5389,
-      "weak_year_zl": 3626,
-      "for_area_ha": 0.58
-    },
-    "burak_cukrowy": {
-      "price_zl_t": 260,
-      "price_source": "GUS – ceny skupu, woj. podlaskie, 2023–2025",
-      "typical_zl": 9757,
-      "weak_year_zl": 6650,
-      "for_area_ha": 0.58
-    },
-    "kukurydza_ziarno": {
-      "price_zl_t": 760,
-      "price_source": "GUS – ceny skupu, woj. podlaskie, 2023–2025",
-      "typical_zl": 3130,
-      "weak_year_zl": 1807,
+      "typical_zl": 2100.0,
+      "weak_year_zl": 1800.0,
       "for_area_ha": 0.58
     },
     "jeczmien_ozimy": {
-      "price_zl_t": 760,
+      "price_zl_t": 782.0,
       "price_source": "GUS – ceny skupu, woj. podlaskie, 2023–2025",
-      "typical_zl": 1719,
-      "weak_year_zl": 1411,
+      "typical_zl": 1800.0,
+      "weak_year_zl": 1500.0,
       "for_area_ha": 0.58
     },
-    "warzywa": {
-      "price_zl_t": 1500,
+    "kukurydza_ziarno": {
+      "price_zl_t": 727.0,
       "price_source": "GUS – ceny skupu, woj. podlaskie, 2023–2025",
-      "typical_zl": 18705,
-      "weak_year_zl": 11745,
+      "typical_zl": 3000.0,
+      "weak_year_zl": 1700.0,
       "for_area_ha": 0.58
     },
     "jeczmien_jary": {
-      "price_zl_t": 770,
+      "price_zl_t": 782.0,
       "price_source": "GUS – ceny skupu, woj. podlaskie, 2023–2025",
-      "typical_zl": 1742,
-      "weak_year_zl": 1295,
-      "for_area_ha": 0.58
-    },
-    "straczkowe": {
-      "price_zl_t": 1300,
-      "price_source": "GUS – ceny skupu, woj. podlaskie, 2023–2025",
-      "typical_zl": 1508,
-      "weak_year_zl": 905,
+      "typical_zl": 1800.0,
+      "weak_year_zl": 1300.0,
       "for_area_ha": 0.58
     },
     "pszenzyto_ozime": {
-      "price_zl_t": 720,
+      "price_zl_t": 740.0,
       "price_source": "GUS – ceny skupu, woj. podlaskie, 2023–2025",
-      "typical_zl": 1587,
-      "weak_year_zl": 1378,
+      "typical_zl": 1600.0,
+      "weak_year_zl": 1400.0,
       "for_area_ha": 0.58
     },
     "zyto": {
-      "price_zl_t": 640,
+      "price_zl_t": 624.0,
       "price_source": "GUS – ceny skupu, woj. podlaskie, 2023–2025",
-      "typical_zl": 1076,
-      "weak_year_zl": 928,
+      "typical_zl": 1000.0,
+      "weak_year_zl": 900.0,
       "for_area_ha": 0.58
     },
     "owies": {
-      "price_zl_t": 700,
+      "price_zl_t": 752.0,
       "price_source": "GUS – ceny skupu, woj. podlaskie, 2023–2025",
-      "typical_zl": 1177,
-      "weak_year_zl": 853,
+      "typical_zl": 1300.0,
+      "weak_year_zl": 900.0,
       "for_area_ha": 0.58
     },
     "ziemniak": {
-      "price_zl_t": 900,
+      "price_zl_t": 625.0,
       "price_source": "GUS – ceny skupu, woj. podlaskie, 2023–2025",
-      "typical_zl": 12215,
-      "weak_year_zl": 8613,
-      "for_area_ha": 0.58
-    },
-    "pszenica_ozima": {
-      "price_zl_t": 840,
-      "price_source": "GUS – ceny skupu, woj. podlaskie, 2023–2025",
-      "typical_zl": 2046,
-      "weak_year_zl": 1705,
-      "for_area_ha": 0.58
-    },
-    "lubin": {
-      "price_zl_t": 1150,
-      "price_source": "GUS – ceny skupu, woj. podlaskie, 2023–2025",
-      "typical_zl": 1201,
-      "weak_year_zl": 867,
+      "typical_zl": 8500.0,
+      "weak_year_zl": 6000.0,
       "for_area_ha": 0.58
     }
   },
-  "price_now": [
-    {
-      "crop_id": "pszenica_ozima",
-      "zl_t": 845,
-      "week": "10–16.11.2026",
-      "source": "ZSRIR MRiRW",
-      "url": "https://www.gov.pl/web/rolnictwo/zintegrowany-system-rolniczej-informacji-rynkowej"
-    },
-    {
-      "crop_id": "zyto",
-      "zl_t": 610,
-      "week": "10–16.11.2026",
-      "source": "ZSRIR MRiRW",
-      "url": "https://www.gov.pl/web/rolnictwo/zintegrowany-system-rolniczej-informacji-rynkowej"
-    },
-    {
-      "crop_id": "jeczmien_jary",
-      "zl_t": 790,
-      "week": "10–16.11.2026",
-      "source": "ZSRIR MRiRW",
-      "url": "https://www.gov.pl/web/rolnictwo/zintegrowany-system-rolniczej-informacji-rynkowej"
-    },
-    {
-      "crop_id": "rzepak",
-      "zl_t": 2010,
-      "week": "10–16.11.2026",
-      "source": "ZSRIR MRiRW",
-      "url": "https://www.gov.pl/web/rolnictwo/zintegrowany-system-rolniczej-informacji-rynkowej"
-    },
-    {
-      "crop_id": "kukurydza_ziarno",
-      "zl_t": 735,
-      "week": "10–16.11.2026",
-      "source": "ZSRIR MRiRW",
-      "url": "https://www.gov.pl/web/rolnictwo/zintegrowany-system-rolniczej-informacji-rynkowej"
-    },
-    {
-      "crop_id": "pszenzyto_ozime",
-      "zl_t": 705,
-      "week": "10–16.11.2026",
-      "source": "ZSRIR MRiRW",
-      "url": "https://www.gov.pl/web/rolnictwo/zintegrowany-system-rolniczej-informacji-rynkowej"
-    }
-  ]
+  "price_now": null
 }

@@ -1,0 +1,10 @@
+produkt,var_id,nazwa,jednostka,uprawy,uwagi
+pszenica,218206,ziarno zbóż (bez siewnego) - pszenica za 1 dt,zł,pszenica_ozima;zboza_ozime,"temat P2967, wymiar „rok” – średnia roczna"
+żyto,218186,ziarno zbóż (bez siewnego) - żyto za 1dt,zł,zyto,"temat P2967, wymiar „rok” – średnia roczna"
+jęczmień,283987,ziarno zbóż (bez siewnego) - jęczmień za 1dt,zł,jeczmien_ozimy;jeczmien_jary;zboza_jare,"temat P2967, wymiar „rok” – średnia roczna"
+owies,284027,ziarno zbóż (bez siewnego) - owies za 1dt,zł,owies,"temat P2967, wymiar „rok” – średnia roczna"
+pszenżyto,284007,ziarno zbóż (bez siewnego) - pszenżyto za 1dt,zł,pszenzyto_ozime,"temat P2967, wymiar „rok” – średnia roczna"
+kukurydza,284047,ziarno zbóż (bez siewnego) - kukurydza za 1dt,zł,kukurydza_ziarno,"temat P2967, wymiar „rok” – średnia roczna"
+rzepak,,,,rzepak;rzepak_jesien,brak zmiennej rocznej w temacie P2967
+ziemniaki,218166,ziemniaki za 1 dt,zł,ziemniak,"temat P2967, wymiar „rok” – średnia roczna"
+buraki,,,,burak_cukrowy,brak zmiennej rocznej w temacie P2967

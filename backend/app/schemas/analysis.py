@@ -408,6 +408,26 @@ class YearYield(Contract):
     water_deficit_mm: float | None = Field(None, description="Niedobór wody w sezonie: ETc − ETa, mm")
 
 
+class CropRevenue(Contract):
+    """A12: przychód z pola wg cen skupu GUS (bez kosztów, bez dopłat)."""
+
+    price_zl_t: float = Field(description="Średnia cena skupu, zł/t (3 ostatnie lata, województwo działki)")
+    price_source: str = Field(description="Np. 'GUS – ceny skupu, woj. podlaskie, 2023–2025'")
+    typical_zl: float = Field(description="Przychód w typowym roku, zł (do 100 zł)")
+    weak_year_zl: float = Field(description="Przychód w słabym roku, zł (do 100 zł)")
+    for_area_ha: float = Field(description="Powierzchnia, dla której liczono, ha")
+
+
+class PriceNow(Contract):
+    """A12: bieżąca cena (ZSRIR MRiRW, tydzień) – tylko z ręcznie przepisanego biuletynu."""
+
+    crop_id: str
+    zl_t: float
+    week: str = Field(description="Np. '10–16.11.2026'")
+    source: str
+    url: str | None = None
+
+
 class CultivatedArea(Contract):
     value_ha: float
     estimated: bool = Field(description="True = powierzchnia działki × udział gruntów rolnych wg IUNG (oszacowanie)")
@@ -417,6 +437,7 @@ class CultivatedArea(Contract):
 class CropSuggestion(Contract):
     crop_id: RankingCropId
     label: str
+    revenue: CropRevenue | None = Field(None, description="A12: przychód z pola wg cen skupu GUS (null = brak ceny)")
     group_id: str = Field(description="Uprawa IUNG, której modelem wody liczony jest gatunek, np. 'zboza_ozime'")
     category: SuggestionCategory
     category_label: str
@@ -487,6 +508,7 @@ class ChoiceItem(Contract):
 
     crop_id: RankingCropId
     label: str
+    revenue: CropRevenue | None = Field(None, description="A12: przychód z pola (null = brak ceny)")
     category: SuggestionCategory | None = Field(None, description="null = uprawa wieloletnia (bez oceny ✅/🟡/❌)")
     category_label: str | None = None
     perennial: bool = False
@@ -509,6 +531,7 @@ class AlternativeItem(Contract):
 
     crop_id: RankingCropId
     label: str
+    revenue: CropRevenue | None = Field(None, description="A12: przychód z pola (null = brak ceny)")
     category: SuggestionCategory
     category_label: str
     relation: AlternativeRelation = Field(
@@ -964,6 +987,7 @@ class AnalysisResponse(Contract):
     approximate_area: ApproximateArea | None = Field(None, description="Obszar przybliżony zamiast działki (analiza po punkcie)")
     terrain_note: str | None = Field(None, description="Dlaczego brak analizy terenu, np. 'NMT GUGiK nie odpowiada'")
     hydro: Hydro | None = Field(None, description="A9: woda w okolicy (z cache); {status: pending} → GET /api/hydro")
+    price_now: list[PriceNow] | None = Field(None, description="A12: bieżące ceny ZSRIR (null = brak pliku z biuletynu)")
     suggestions: CropSuggestions | None = Field(None, description="Ranking „Co tu posiać?” (null: grunt nierolny / brak danych)")
     crop_history: list[str] = Field(default_factory=list, description="Historia upraw z zapytania: 1–3 lata, indeks 0 = rok temu (crop_id albo 'nie_wiem')")
     cultivated_area_ha: float | None = Field(None, description="Powierzchnia uprawy użyta w rankingu, ha (podana albo oszacowana)")

@@ -199,6 +199,11 @@ def crops_statement(sug: CropSuggestions | None, light: bool):
         text += c["none_bad"]
     n_good, n_bad = len([i for i in field if i.category == "polecane"]), len(bad)
     level = "bad" if n_good == 0 and n_bad >= 3 else "warn" if n_good < 2 or n_bad >= 3 else "ok"
+    best_rev = next((i for i in good if getattr(i, "revenue", None) is not None), None)
+    if best_rev is not None:  # A12: tylko gdy jest cena skupu
+        r = best_rev.revenue
+        text += (f" Przychód z {num(r.for_area_ha, 2)} ha ({best_rev.label.lower()}): ok. {num(r.typical_zl, 0)} zł "
+                 f"w typowym roku, ok. {num(r.weak_year_zl, 0)} zł w słabym (ceny skupu GUS).")
     st = VerdictStatement(kind="uprawy", level=level, text=text.strip(),
                           numbers={"polecane": n_good, "odradzane": n_bad, "mozliwe": len(field) - n_good - n_bad})
     return st, [VerdictCrop(crop_id=i.crop_id, label=i.label) for i in good], bad_out

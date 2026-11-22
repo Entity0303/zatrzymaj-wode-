@@ -35,6 +35,7 @@ from app.analysis import verdict as verdict_mod
 from app.analysis import suggestions as sugg
 from app.analysis import terrain_interpret
 from app.analysis import hydro as hydro_mod
+from app.analysis import prices as prices_mod
 from app.analysis import terrain as terrain_mod
 from app.analysis.terrain import terrain_for_parcel
 from app.analysis.facts import CROP_OFF_PHASES, IN_SEASON_PHASES, build_facts, field_facts
@@ -901,6 +902,7 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
         except Exception as exc:  # noqa: BLE001 – ranking nie może wywrócić analizy
             steps.append(_step("suggestions", "Ranking „Co tu posiać?”", "error", note=exc.__class__.__name__))
     suggestions = choice_mod.attach(suggestions, planned, soil_prof.group == "lekka")
+    suggestions = prices_mod.attach(suggestions, p.voivodeship)  # A12: przychód z pola (ceny skupu GUS)
     if suggestions is not None:
         steps.append(_step("suggestions", "Ranking „Co tu posiać?” (17 upraw × 10 sezonów)", "done",
                            ms=int((perf_counter() - s) * 1000)))
@@ -935,6 +937,7 @@ async def _run(parcel_id: str | None, crop: str | None, date: dt.date | None, pr
         terrain=terrain_c if terrain_c is not None else (TerrainPending() if tr_pending else None),
         terrain_note=terrain_note,
         hydro=hydro_c,
+        price_now=prices_mod.price_now() if suggestions is not None else None,
         verdict=verdict,
         approximate_area=approx,
         suggestions=suggestions,
