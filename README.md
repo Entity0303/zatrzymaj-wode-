@@ -6,8 +6,8 @@ Zespół **Molekuły** · HackNation 2026 · zadanie Krajowego Ośrodka Wsparcia
 |---|---|
 | Aplikacja | <https://wodoskop.vercel.app> |
 | API | <https://wodoskop-api.onrender.com> (dokumentacja: `/docs`, stan źródeł: `/api/status`). Pierwsze wywołanie po bezczynności albo po wdrożeniu może trwać dłużej. |
-| Film (do 3 min) | [LINK] |
-| Prezentacja | [LINK] |
+| Film (do 3 min) | LINK_FILM |
+| Prezentacja | LINK_PREZENTACJA |
 | Przykładowe raporty PDF | katalog [`reports/examples/`](reports/examples/) |
 
 **Do szybkiego sprawdzenia** – wpisz numer działki na ekranie startowym albo otwórz link:
@@ -82,7 +82,8 @@ Testy: `docker compose exec backend pytest` (bez sieci; 5 testów na żywo: `pyt
 **Wybór działki**
 - numer z ewidencji (pełny identyfikator, np. `201305_2.0038.6/1`), „wieś numer” (np. `Szczytno 112/11`),
   „gmina numer”, adres (przybliża mapę – pole wybiera się kliknięciem), kliknięcie na mapie, „Moja lokalizacja”,
-- własny obrys pola narysowany na mapie (gdy działka z ewidencji nie pasuje do pola),
+- własny obrys pola narysowany na mapie (gdy działka z ewidencji nie pasuje do pola); aplikacja wypisuje wtedy
+  działki ewidencyjne, które pole obejmuje, z udziałem w % (sprawdza do 12 punktów w obrysie),
 - gdy ewidencja gruntów chwilowo nie odpowiada – wynik dla obszaru ok. 1 ha wokół wskazanego punktu, z wyraźną informacją.
 
 **Parametry analizy**
@@ -102,7 +103,19 @@ Testy: `docker compose exec backend pytest` (bez sieci; 5 testów na żywo: `pyt
 - działania w kolejności **retencja → agrotechnika → nawadnianie**, z informacją o formalnościach (zgłoszenie /
   pozwolenie) i ekoschematach; każda rekomendacja pokazuje dane, które ją uruchomiły,
 - przyczyny wyniku, pewność (wysoka / średnia / ograniczona) z uzasadnieniem, źródło i data przy każdej liczbie,
-  braki danych komunikowane wprost.
+  braki danych komunikowane wprost,
+- **okresy bez deszczu i upał** (informacyjnie, nie zmieniają bilansu): najdłuższy ciąg dni z opadem poniżej 1 mm
+  w sezonie i w wybranym okresie na tle 10 lat („23 dni, zwykle 14”), liczba dni z temperaturą od 30°C i od 25°C
+  na tle 10 lat – oba progi, bo dane z siatki ok. 50 km uśredniają upały,
+- **tło suszowe w okolicy** – niezależne potwierdzenie z Europejskiego Obserwatorium Suszy (Copernicus): łączny
+  wskaźnik suszy (brak / obserwacja / ostrzeżenie / alarm / regeneracja), wilgotność gleby i ryzyko dla rolnictwa
+  z ostatniej zakończonej dekady przed datą analizy, ze zdaniem „zgodne / niezgodne z naszą oceną”,
+- **wody gruntowe i zapas z opadów** – „Ile opadu zostaje w glebie: dużo / mało / bardzo mało” (liczone z opadu
+  i parowania z 30 i 60 dni, kategorii gleby i spadku terenu) oraz informacja, czy działka leży na obszarze
+  zagrożonym podtopieniami (PIG-PIB); przy płytkiej wodzie gruntowej dopisek „susza może być mniejsza niż z bilansu”,
+- **ceny i pogoda na tle lat** (w paszporcie i raporcie pełnym) – dla województwa albo całej Polski: opad IV–IX,
+  cena skupu i plon rok po roku; wniosek porównuje lata najsuchsze z pozostałymi jako odchylenia od trendu
+  (Theil–Sen), rok 2022 jest pominięty we wniosku o cenie (szok rynkowy).
 
 **Mapa**
 - warstwy: Kondycja upraw i Wilgotność roślin (Sentinel-2), Teren (sucha górka / stok / płasko / obniżenie),
@@ -164,7 +177,10 @@ sekcje dochodzą po chwili. Wynik rankingu jest pamiętany, więc zmiana uprawy 
 | OpenStreetMap (Overpass API) | rowy, cieki, kanały, zbiorniki | obrys działki + 500 m | warstwa „Rowy i zbiorniki”, rekomendacje retencji | ODbL, © autorzy OpenStreetMap |
 | OpenStreetMap (Nominatim) | adresy i miejsca | — | rezerwa wyszukiwarki | ODbL |
 | GUS BDL | plony z 1 ha wg województw (2016–2025), ceny skupu (temat P2967, 2013–2025) | województwa i Polska | plon potencjalny i przychód w rankingu | dane GUS, z podaniem źródła |
-| ZSRIR (MRiRW) | cena skupu rzepaku – notowanie z 05.07.2026 | Polska | przychód dla rzepaku (GUS nie podaje ceny) | informacja publiczna MRiRW |
+| ZSRIR (MRiRW) | cena skupu rzepaku – notowanie z 05.07.2026 | Polska | przychód dla rzepaku w rankingu (ceny miesięczne GUS w temacie P2967 nie obejmują rzepaku) | informacja publiczna MRiRW |
+| GUS BDL – ceny rzepaku | średnia roczna cena skupu rzepaku (zmienna 4868, temat P1458), 2013–2025 | województwa i Polska | tylko porównanie „Ceny i pogoda na tle lat” | dane GUS, z podaniem źródła |
+| Europejskie Obserwatorium Suszy – EDO (Copernicus, JRC), WMS | łączny wskaźnik suszy CDI v4.1 (od 2012 r.), anomalia wilgotności gleby (od 1995 r.), ryzyko skutków suszy dla rolnictwa (od 2010 r.) | Europa, co dekadę, siatka ok. 5 km (w aplikacji podpis „ok. 5–10 km”) | tło suszowe dla okolicy działki i porównanie z naszą oceną; wartość odczytywana z koloru piksela mapy (usługa nie odpowiada na zapytanie o punkt) | informacje Copernicus – bezpłatne, pełne i otwarte (rozporządzenie UE 2021/696), z podaniem źródła |
+| PIG-PIB (CBDG) – Mapa obszarów zagrożonych podtopieniami (MOZP) | obszary zagrożone powodzią od wód gruntowych w dolinach dużych rzek | Polska, warstwa poligonowa | czy środek działki leży w takim obszarze („Wody gruntowe i zapas z opadów”) | usługa publiczna PIG-PIB; metadane usługi nie podają warunków – **warunki licencji do potwierdzenia** |
 | Podkłady dodatkowe | EOX Sentinel-2 cloudless, AWS Terrain Tiles, kafle OSM | — | podkład poza zasięgiem ortofotomapy, rzeźba w widoku 3D | CC BY 4.0 (EOX) / dane otwarte / ODbL |
 
 **Open-Meteo:** darmowe API Open-Meteo jest przeznaczone do użytku niekomercyjnego; przy wdrożeniu produkcyjnym –
@@ -181,7 +197,8 @@ Nie ma gotowych tekstów ocen ani wyników zapisanych „na sztywno”.
 **Na bieżąco** (przy analizie; odpowiedzi trafiają do cache): granice działki (ULDK), gleba (IUNG, mapa
 glebowo-rolnicza, SoilGrids, EGiB), teren (NMT), pogoda i parowanie (NASA POWER; dni starsze niż tydzień bez
 wygasania, najnowsze 6 h), prognoza i ostatnie dni (Open-Meteo, 1 h), zdjęcia satelitarne (Earth Search), rowy
-i zbiorniki (Overpass, 30 dni), stany wód (IMGW), wyszukiwanie (PRNG, UUG, Nominatim).
+i zbiorniki (Overpass, 30 dni), stany wód (IMGW), wyszukiwanie (PRNG, UUG, Nominatim), tło suszowe (EDO: 24 h dla
+ostatnich dekad, 30 dni dla starszych), obszary podtopień (PIG-PIB, 30 dni).
 
 **Pobrane lub przetworzone wcześniej** (pliki w `backend/app/data/`):
 
@@ -193,9 +210,13 @@ i zbiorniki (Overpass, 30 dni), stany wód (IMGW), wyszukiwanie (PRNG, UUG, Nomi
 | `crops/crops.csv` | parametry upraw: kalendarz, współczynniki FAO-56 i FAO-33, wymagania glebowe, płodozmian | 21–22.11.2026 |
 | `prices/gus_prices.csv` | ceny skupu GUS BDL (P2967) dla 7 produktów, województwa i Polska, 2013–2025 (1547 wierszy) | 22.11.2026 (`scripts/build_prices.py`) |
 | `prices/prices_zsrir_latest.csv` | cena skupu rzepaku 2319 zł/t – notowanie ZSRIR z 05.07.2026 (przepisane ręcznie) | 22.11.2026 |
+| `prices/gus_prices_rzepak.csv` | średnia roczna cena skupu rzepaku GUS BDL (zmienna 4868), województwa i Polska, 2013–2025 (221 wierszy) – tylko do „Ceny i pogoda na tle lat” | 22.11.2026 |
 | `demo_parcels.json` | granice 15 działek przykładowych z ULDK | 21–22.11.2026 |
 | `terrain/*.geojson`, `*.facts.json` | zapisany wynik analizy terenu dla 4 działek (zapas, gdy NMT nie odpowiada) | 21–22.11.2026 |
 | `seed/cache_seed.sqlite.gz` | kopia cache dla działek przykładowych (739 wpisów: działki, gleba, pogoda, teren, satelita, rowy i zbiorniki, ortofotomapa, wyszukiwanie) – wczytywana tylko wtedy, gdy cache jest pusty | 22.11.2026 |
+
+„Ceny i pogoda na tle lat” korzysta wyłącznie z tych plików (ceny `prices/*.csv`, plony `crops/gus_yields_woj.csv`,
+opady `imgw/opady.npz`) – nie pyta GUS ani IMGW przy analizie.
 
 Opady IMGW są publikowane z opóźnieniem ok. 1–2 miesięcy. Dni po 31.10.2026 uzupełniamy opadem NASA przeliczonym do
 poziomu stacji – aplikacja pisze o tym przy opadach. Dla daty historycznej używane są tylko wiersze sprzed tej daty
@@ -253,7 +274,23 @@ mapy to własna cienka warstwa nad Leafletem (bez react-leaflet). Krój pisma �
 ## 8. Znane ograniczenia (4.2.8)
 
 - **Brak wód gruntowych.** Model nie zna płytkiej wody gruntowej – w dolinach rzek, na Żuławach i w obniżeniach
-  rośliny mogą mieć więcej wody, niż pokazuje ocena (zawyżenie suszy).
+  rośliny mogą mieć więcej wody, niż pokazuje ocena (zawyżenie suszy). Kafel „Wody gruntowe i zapas z opadów”
+  tylko o tym informuje (obszary podtopień PIG-PIB) – bilansu nie zmienia.
+- **Głębokość zwierciadła wód podziemnych jest niedostępna.** PIG-PIB nie udostępnia jej usługą, którą da się
+  odpytać dla punktu działki – aplikacja jej nie podaje i nie zgaduje. „Ile opadu zostaje w glebie” to nasz
+  szacunek z progami orientacyjnymi (do weryfikacji z agronomem).
+- **Tło suszowe EDO jest regionalne** (siatka ok. 5 km, dane co dekadę) – opisuje okolicę, nie samą działkę; gdy
+  różni się od naszej oceny, aplikacja mówi o tym wprost. Najnowsza dekada bywa opublikowana z opóźnieniem – wtedy
+  pokazujemy wcześniejszą i podajemy, z której dekady pochodzi wskaźnik.
+- **Próchnica z SoilGrids jest zawyżona dla gleb ornych** (w 56 sprawdzonych punktach 3,3–10,5%, ani razu klasa
+  „niska”), dlatego jest ukryta w trybie Rolnik i w PDF; w trybie Doradca widać ją z zastrzeżeniem. Nie wchodzi
+  do obliczeń.
+- **Upał i okresy bez deszczu są pokazywane informacyjnie** – model plonu uwzględnia je tylko przez parowanie.
+  Temperatura pochodzi z siatki ok. 50 km, która uśrednia upały (w 2018 r. dla 201305: 0 dni od 30°C, 18 dni od 25°C).
+- **„Ceny i pogoda na tle lat” to zestawienie lat w regionie, nie przyczyna** – cenę kształtuje rynek krajowy
+  i światowy. Stacje opadowe są przypisane do województwa po najbliższym środku województwa (przybliżenie).
+- **Dane pogodowe dla „dziś” kończą się kilka dni wcześniej** (opóźnienie źródeł) – odpowiedzi podają ostatni
+  dzień danych (np. pole `data_until`), a „30 dni” oznacza wtedy mniej dni z danymi.
 - **Teren nie zmienia policzonego bilansu.** Strefy terenu, spływ i miejsce na oczko to opis działki; bilans wody
   liczony jest dla całego pola ze spływem uproszczonym (20% opadu powyżej 20 mm na dobę). Model nie zna drenażu
   ani przepustów.
@@ -312,8 +349,15 @@ mapy to własna cienka warstwa nad Leafletem (bez react-leaflet). Krój pisma �
   porównany ze średnią GUS w 4 województwach.
 - **Test słabej ziemi:** na piasku w Pożarowie (`302408_5.0017.70/4`) pszenica, rzepak, jęczmień i kukurydza wychodzą
   jako odradzane, a żyto, łubin i ziemniak jako możliwe (najwyżej w rankingu) – zgodnie z oczekiwaniem dla takiej gleby.
-- **Testy automatyczne:** 625 testów backendu bez sieci (`pytest`) i 5 na żywo (`pytest -m live`), w tym zgodność
-  odpowiedzi z kontraktem API; frontend – kontrola typów i budowanie (`npm run build`).
+- **Zgodność z Europejskim Obserwatorium Suszy dla 2018 r.** (22.11.2026, 3 przypadki): 201305 na 30.06.2018 –
+  nasza ocena „Bardzo mało wody”, EDO „ostrzeżenie przed suszą” i wilgotność gleby „bardzo sucho” (dekada
+  11–20.06.2018); Pożarowo na 10.07.2018 – „Bardzo mało wody”, EDO „ostrzeżenie”, „bardzo sucho”, ryzyko dla
+  rolnictwa średnie (dekada 21–30.06.2018); 201305 na 22.11.2026 – „W normie”, EDO „brak suszy”. To kontrola na
+  trzech przypadkach, nie walidacja statystyczna.
+- **Testy automatyczne:** 686 testów backendu bez sieci (pełny `pytest`, stan na 22.11.2026) i 5 na żywo
+  (`pytest -m live`), w tym zgodność odpowiedzi z kontraktem API; frontend – kontrola typów i budowanie
+  (`npm run build`).
+- **Przykładowe raporty PDF:** katalog [`reports/examples/`](reports/examples/).
 - **W interfejsie:** przy każdym wyniku jest źródło, data danych, pewność i braki danych; aplikacja nie wstawia
   zera ani wartości przykładowej w miejsce braku.
 
@@ -324,7 +368,11 @@ mapy to własna cienka warstwa nad Leafletem (bez react-leaflet). Krój pisma �
   rowy – z czasem ważności); pamięć wyniku rankingu,
 - ograniczanie zapytań: najwyżej 2 zapytania do GUGiK naraz z odstępem 0,5 s, bezpieczniki dla źródeł (np. ULDK:
   przerwa po 5 błędach w minucie, próba po 30 s), ponowienia z limitem,
-- pobieranie źródeł równolegle, wolne części w tle (satelita, teren, rowy, SoilGrids, widełki rankingu),
+- pobieranie źródeł równolegle, wolne części w tle (satelita, teren, rowy, SoilGrids, widełki rankingu) – przez
+  wspólną kolejkę: najwyżej 2 zadania naraz (`BACKGROUND_WORKERS`), w kolejności teren → widełki → rowy → satelita
+  → SoilGrids, bez duplikatów; analiza główna na nie nie czeka,
+- jedno wspólne odświeżenie analizy po zadaniach w tle (najwyżej 2 ponowne analizy na działkę) zamiast osobnego
+  zapytania po każdym zadaniu; tło suszowe i wody gruntowe to osobne, lekkie zapytania,
 - opady IMGW, plony i ceny GUS jako pliki w repo – analiza nie pyta tych serwisów (GUS ma limit zapytań).
 
 **Co byłoby potrzebne dla wielu rolników w całej Polsce**
