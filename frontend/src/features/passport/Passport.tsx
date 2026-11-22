@@ -6,6 +6,7 @@ import type { AnalysisResponse } from '@/api/types'
 import { ErrorNotice } from '@/components/ErrorNotice'
 import { LogoMark } from '@/components/LogoMark'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { REPORT_KINDS } from '@/features/reports/reportKinds'
 import { BRAND_NAME } from '@/lib/brand'
 import { cropLabel } from '@/lib/crops'
 import { formatDatePl, formatArea, shortCounty } from '@/lib/format'
@@ -94,7 +95,7 @@ export function Passport({
   period?: PassportPeriod
   analysis: AnalysisResponse
   onClose?: () => void
-  report?: { download: () => void; busy: boolean; error: ErrorInfo | null }
+  report?: { download: () => void; downloadType?: (type: 'short' | 'full') => void; retry?: () => void; busy: boolean; busyType?: 'short' | 'full' | null; error: ErrorInfo | null }
   onCopyLink?: () => void
   onShowOnMap?: (g: GeoJSON.Geometry) => void
   print?: boolean
@@ -170,15 +171,34 @@ export function Passport({
           </div>
           {period && !analysis.soil.non_agricultural && <div className="shrink-0 max-lg:hidden">{period.picker}</div>}
           {report && (
-            <button
-              type="button"
-              onClick={report.download}
-              disabled={report.busy}
-              className="flex h-10 shrink-0 items-center gap-2 rounded-full bg-pp-brand px-4 text-sm font-semibold text-white hover:bg-brand disabled:opacity-60"
-            >
-              {report.busy ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <FileDown className="size-4" aria-hidden />}
-              <span className="max-sm:sr-only">{t('Raport PDF')}</span>
-            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  disabled={report.busy}
+                  className="flex h-10 shrink-0 items-center gap-2 rounded-full bg-pp-brand px-4 text-sm font-semibold whitespace-nowrap text-white hover:bg-brand disabled:opacity-60"
+                >
+                  {report.busy ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <FileDown className="size-4" aria-hidden />}
+                  <span className="max-sm:sr-only">{t(report.busy ? 'Generuję raport… (do ok. 30 s)' : 'Raport PDF')}</span>
+                </button>
+              </DropdownMenuTrigger>
+              {/* F25: te same dwie opcje co w panelu – skrócony / pełny, z opisami */}
+              <DropdownMenuContent align="end" className="z-[1700] w-[min(22rem,calc(100vw-1.5rem))] rounded-xl p-1.5">
+                {REPORT_KINDS.map((k) => (
+                  <DropdownMenuItem
+                    key={k.type}
+                    className="min-h-14 items-start gap-3 rounded-lg px-3 py-2"
+                    onSelect={() => (report.downloadType ? report.downloadType(k.type) : report.download())}
+                  >
+                    <k.icon className="mt-0.5 size-5 shrink-0 text-pp-brand" aria-hidden />
+                    <span className="min-w-0">
+                      <span className="block text-sm leading-5 font-semibold">{t(k.title)}</span>
+                      <span className="block text-sm leading-5 text-text-muted">{t(k.description)}</span>
+                    </span>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -220,7 +240,7 @@ export function Passport({
       </div>
 
       <article className="relative z-0 mx-auto max-w-[1240px] space-y-7 px-3 py-6 md:px-6 [&_[id^=pp-]]:scroll-mt-36 [&_section[id^=pass-]]:scroll-mt-36">
-        {report?.error && <ErrorNotice {...report.error} onRetry={report.error.retryable ? report.download : undefined} />}
+        {report?.error && <ErrorNotice {...report.error} onRetry={report.error.retryable ? (report.retry ?? report.download) : undefined} />}
         {period?.error && <ErrorNotice {...period.error} onRetry={period.error.retryable ? period.onRetry : undefined} />}
         {period?.loading && (
           <p role="status" className="sticky top-[148px] z-10 mx-auto flex w-fit items-center gap-2 rounded-full bg-surface px-4 py-2 text-sm font-medium shadow-float">

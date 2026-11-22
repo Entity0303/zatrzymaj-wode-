@@ -679,7 +679,7 @@ export default function Start() {
   // ── raport PDF: te same parametry co analiza ─────────────────────────────────────────────
   const report = useReportDownload(
     parcel && analysis
-      ? { parcelId: parcel.id, point: approxPoint, geometry: drawnGeom, numer: drawnGeom ? 'pole-narysowane' : approxPoint ? 'obszar' : parcel.numer, crop: analysis.crop, date: asOf, cropHistory: history, area, plannedCrops: planned, period: periodUsed, sowingDate: sowing }
+      ? { parcelId: parcel.id, point: approxPoint, geometry: drawnGeom, numer: drawnGeom ? 'pole-narysowane' : approxPoint ? 'obszar' : parcel.numer, obreb: parcel.obreb, gmina: parcel.gmina, crop: analysis.crop, date: asOf, cropHistory: history, area, plannedCrops: planned, period: periodUsed, sowingDate: sowing }
       : null,
   )
   // „Pobierz raport” otwiera formularz „Przygotuj raport” (skrócony / szczegółowy)

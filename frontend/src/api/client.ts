@@ -181,14 +181,14 @@ export const api = {
   /** GET /api/demo/examples – przykłady „jednym klikiem” (działki rozgrzane w pamięci serwera) */
   demoExamples: (signal?: AbortSignal) => get<DemoExample[]>('/api/demo/examples', {}, signal),
   /** GET /api/report.pdf – te same parametry co analiza; odpowiedź to plik PDF */
-  reportPdf: async (q: AnalysisQuery): Promise<Blob> => {
+  reportPdf: async (q: AnalysisQuery, signal?: AbortSignal): Promise<Blob> => {
     // bez uprawy = raport „Stan działki”; punkt zamiast działki = obszar przybliżony
     const params = Object.entries(analysisParams(q)).map(([k, v]) => [k, String(v)])
     let res: Response
     try {
       res = q.geometry
-        ? await fetch(apiUrl('/api/report.pdf'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(analysisBody(q)) })
-        : await fetch(`${apiUrl('/api/report.pdf')}?${new URLSearchParams(params)}`)
+        ? await fetch(apiUrl('/api/report.pdf'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(analysisBody(q)), signal })
+        : await fetch(`${apiUrl('/api/report.pdf')}?${new URLSearchParams(params)}`, { signal })
     } catch {
       throw new ApiError(0, null, 'Brak połączenia z serwerem aplikacji.')
     }
