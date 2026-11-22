@@ -264,6 +264,28 @@ const SHOTS: Shot[] = [
       await sheetTo(page, /pełny/)
     },
   },
+  {
+    // „Moje gospodarstwo”: cztery działki zapisane gwiazdką (prawdziwe analizy), dolny pasek rozwinięty;
+    // po drodze zapisuje też ekran „Moje działki” jako 14-moje-dzialki.png
+    name: '13-moje-gospodarstwo',
+    device: 'desktop',
+    run: async (page) => {
+      for (const id of [P2, '302408_5.0017.70/4', P_WATER, P1]) {
+        await openParcel(page, { dzialka: id, uprawa: 'zboza_ozime' })
+        const star = page.getByRole('button', { name: 'Zapisz w Moich działkach' })
+        if (await star.isVisible().catch(() => false)) await star.click()
+        await page.waitForTimeout(500)
+      }
+      await page.getByRole('button', { name: 'Moje działki', exact: true }).click()
+      await page.getByRole('heading', { name: /Moje działki/ }).first().waitFor({ timeout: 20_000 })
+      await settled(page, 30_000)
+      await save(page, '14-moje-dzialki')
+      await openParcel(page, TODAY)
+      await page.getByRole('button', { name: /^Moje gospodarstwo/ }).click()
+      await settled(page, 30_000)
+      await mapReady(page)
+    },
+  },
 ]
 
 async function context(browser: Browser, device: Shot['device']): Promise<BrowserContext> {
