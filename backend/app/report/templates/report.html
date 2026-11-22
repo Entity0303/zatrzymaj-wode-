@@ -120,6 +120,17 @@
     {% endfor %}
   </table>
   <p class="price">Plony bez nawadniania, sezony {{ sug.seasons|first }}–{{ sug.seasons|last }}. {% if price_sources %}Ceny: {{ price_sources|join('; ') }}. {% endif %}Przychód bez kosztów i dopłat.</p>
+  {% if full and pw %}
+  <div class="box nobreak" style="margin-top:8pt">
+    <h3>Ceny i pogoda na tle lat – {{ pw.crop_label|lower }}, {{ pw.region_label }}</h3>
+    <p class="muted">Porównanie dla regionu – nie dla tej działki.</p>
+    {% if pw.summary_pl %}<p><b>{{ pw.summary_pl }}</b></p>{% endif %}
+    <div class="chart">{{ pw.chart }}</div>
+    <div class="legend"><i style="background:#2F80C9"></i>opad IV–IX, mm<i class="hatch"></i>lata najsuchsze<i style="background:#1E2A23;height:2pt"></i>cena skupu, zł/t (prawa oś)<i class="dash" style="border-top-color:#2F6B47"></i>plon w regionie, t/ha</div>
+    {% if pw.note_pl %}<p style="margin-top:3pt">{{ pw.note_pl }}</p>{% endif %}
+    <p class="price">Źródła: {{ pw.sources|join('; ') }}.</p>
+  </div>
+  {% endif %}
   {% else %}<p class="muted">Ranking upraw niedostępny dla tej działki (grunt nierolny albo za mało danych pogodowych).</p>{% endif %}
 
   <h2>Co mogę zrobić?</h2>

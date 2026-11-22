@@ -286,6 +286,24 @@ def soil_short(a: AnalysisResponse) -> str:
     return a.soil.dominant_label or "brak danych"
 
 
+def price_weather_block(a: AnalysisResponse) -> dict | None:
+    """F32 (raport pełny): „Ceny i pogoda na tle lat” dla województwa działki i najwyższej w rankingu uprawy z ceną GUS –
+    te same dane co GET /api/price-weather (porównanie regionalne, nie dla działki). Brak danych → None (bez karty)."""
+    from app.analysis import price_weather as PW
+
+    try:
+        region = PW.region_key(a.parcel.wojewodztwo) or PW.PL
+        ranked = [i.crop_id for i in field_items(a)] + ([a.crop] if a.crop else [])
+        crop = next((c for c in ranked if PW.product_for(c)), "pszenica")
+        data = PW.cached(region, crop, a.analysis_date.year)
+    except Exception:  # noqa: BLE001 – karta dodatkowa; jej brak nie może wywrócić raportu
+        return None
+    if data.get("unavailable"):
+        return None
+    chart = charts.price_weather_chart(data["years"], data["dry_years"])
+    return {**data, "chart": Markup(chart)} if chart else None
+
+
 def top_items(a: AnalysisResponse) -> list:
     s = a.suggestions
     if not s:
@@ -683,6 +701,7 @@ def render_html(a: AnalysisResponse, ortho: str | None, generated: dt.datetime |
         "now_text": NOW_LABEL.get(a.status.level, ""),
         "long_text": LONG_LABEL.get(a.verdict.level) if a.verdict else None,
         "avoid": avoid_groups(a) if full_rep else avoid_groups(a, cp["avoid_groups"]),
+        "pw": price_weather_block(a) if report_type == "full" else None,
         "rank_rows": field_items(a) if report_type == "full" else (top_items(a) or field_items(a))[:cp["rank_n"]],
         "CATT": CAT_TEXT, "PERMIT_TEXT": PERMIT_TEXT,
         "acts": actions(a, None if full_rep else cp["act_n"]),

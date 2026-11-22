@@ -397,3 +397,54 @@ def precip_norm_chart(months: list[MonthlyPrecip], width: int = 340, height: int
         parts.append(f'<text x="{x0 + bwi / 2:.1f}" y="{height - 6}" text-anchor="middle" fill="{C["muted"]}">{MONTHS[m.month - 1]}</text>')
     parts.append("</svg>")
     return "".join(parts)
+
+
+def price_weather_chart(rows: list[dict], dry_years: list[int], width: int = 660, height: int = 210) -> str | None:
+    """F32: „Ceny i pogoda na tle lat” (porównanie regionalne): słupki = opad IV–IX [mm] (lata najsuchsze – kolor ryzyka
+    i kreskowanie), linia ciągła = cena skupu [zł/t, prawa oś], linia przerywana = plon w regionie [t/ha]."""
+    rows = [r for r in rows if r.get("precip_mm") is not None or r.get("price_pln_t") is not None or r.get("yield_t_ha") is not None]
+    if len(rows) < 2:
+        return None
+    pad_l, pad_r, pad_t, pad_b = 36, 44, 14, 22
+    w, hh = width - pad_l - pad_r, height - pad_t - pad_b
+    rain_max = max([r["precip_mm"] or 0 for r in rows] + [100]) * 1.08
+    price_max = max([r["price_pln_t"] or 0 for r in rows] + [500]) * 1.08
+    yield_max = max([r["yield_t_ha"] or 0 for r in rows] + [1]) * 1.25
+    bw = w / len(rows)
+
+    def cx(i: int) -> float:
+        return pad_l + bw * (i + 0.5)
+
+    def y(v: float, top: float) -> float:
+        return pad_t + hh * (1 - v / top)
+
+    parts = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}" '
+             f'{FONT} font-size="10">', _HATCH.format(id="pwdry", bg="#F6D2B8", fg="#E07B39")]
+    for t in _ticks(0, rain_max, 3):
+        yy = y(t, rain_max)
+        parts.append(f'<line x1="{pad_l}" x2="{width - pad_r}" y1="{yy:.1f}" y2="{yy:.1f}" stroke="{C["border"]}" stroke-width="0.6"/>')
+        parts.append(f'<text x="{pad_l - 4}" y="{yy + 3:.1f}" text-anchor="end" fill="{C["water"]}">{_num(t)}</text>')
+    for t in _ticks(0, price_max, 3):
+        parts.append(f'<text x="{width - pad_r + 4}" y="{y(t, price_max) + 3:.1f}" fill="{C["text"]}">{_num(t)}</text>')
+    parts.append(f'<text x="{pad_l - 4}" y="{pad_t - 4}" text-anchor="end" fill="{C["water"]}">mm</text>')
+    parts.append(f'<text x="{width - pad_r + 4}" y="{pad_t - 4}" fill="{C["text"]}">zł/t</text>')
+    dry = set(dry_years)
+    for i, r in enumerate(rows):
+        if r.get("precip_mm") is not None:
+            top = y(r["precip_mm"], rain_max)
+            is_dry = r["year"] in dry
+            parts.append(f'<rect x="{cx(i) - bw * 0.3:.1f}" y="{top:.1f}" width="{bw * 0.6:.1f}" height="{max(pad_t + hh - top, 0.8):.1f}" '
+                         f'fill="{"url(#pwdry)" if is_dry else C["water"]}" stroke="{"#E07B39" if is_dry else C["water"]}" '
+                         f'stroke-width="0.7" opacity="0.9"/>')
+        parts.append(f'<text x="{cx(i):.1f}" y="{height - 6}" text-anchor="middle" fill="{C["muted"]}">{r["year"]}</text>')
+    for key, top, color, dash, width_ in (("yield_t_ha", yield_max, C["brand"], ' stroke-dasharray="5 3"', 1.8),
+                                          ("price_pln_t", price_max, C["text"], "", 2.0)):
+        pts = [(cx(i), y(r[key], top)) for i, r in enumerate(rows) if r.get(key) is not None]
+        if len(pts) >= 2:
+            parts.append(f'<polyline points="{" ".join(f"{a:.1f},{b:.1f}" for a, b in pts)}" fill="none" stroke="{color}" '
+                         f'stroke-width="{width_}"{dash}/>')
+        for a, b in pts:
+            parts.append(f'<circle cx="{a:.1f}" cy="{b:.1f}" r="2.2" fill="{"#FFFFFF" if dash else color}" stroke="{color}" stroke-width="1.2"/>')
+    parts.append("</svg>")
+    return "".join(parts)
+
