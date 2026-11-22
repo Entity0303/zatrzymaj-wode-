@@ -59,6 +59,7 @@ import { ReportForm } from '@/features/reports/ReportForm'
 import { useMediaQuery, useOnline, usePrefersReducedMotion, useSavedParcels } from '@/lib/hooks'
 import { mockApproxParcel, mockApproxRequested, mockRequested } from '@/mocks/useMockAnalysis'
 import { locale, useLang } from '@/lib/i18n'
+import { queuePosition } from '@/lib/terrainState'
 import { goTo, usePage } from '@/lib/router'
 
 /** Ekran Start (SPEC 4, 12): mapa + panel działki + dolny pasek kart / szuflada na telefonie. */
@@ -231,6 +232,7 @@ export default function Start() {
   const layerRefresh = `${satLayer ? (satStatus ?? '') : ''}|${terrainLayer ? String(terrainPending) : ''}|${layer === 'woda' ? (hydroStatus ?? '') : ''}|${layerAttempt}`
   // F10: „Gleba” to obraz IUNG z WMS (SoilParcelOverlay), nie /api/layers – bez zapytania do serwera
   const layerState = useLayerData(layer, layer === 'gleba' ? null : (parcel?.id ?? null), asOf, layerRefresh, layerWaiting, drawnGeom)
+  const terrainQueue = (layerState.phase === 'waiting' ? layerState.queue : null) ?? queuePosition(analysis?.terrain)
   const retryLayer = layerState.phase === 'error' ? () => setLayerAttempt((n) => n + 1) : undefined
   const carrying = !!parcel && passportCarry === parcel.id && !!lastAnalysis
   const passportOpen = (!!analysis && passportFor === runKey) || carrying
@@ -782,7 +784,9 @@ export default function Start() {
   const legendStatus =
     layer === 'gleba'
       ? t(soilLegendStatus)
-      : t(layerStatusText(layer, layerState, satellite), layerState.phase === 'ok' ? layerStatusVars(layerState.data) : undefined)
+      : t(layerStatusText(layer, layerState, satellite), layerState.phase === 'ok' ? layerStatusVars(layerState.data) : undefined) +
+        // dopisek po A23: pozycja w kolejce zadań w tle, gdy serwer ją poda
+        (terrainLayer && layerState.phase === 'waiting' && terrainQueue != null ? ` · ${t('w kolejce: {n}', { n: terrainQueue })}` : '')
   const refine = {
     crop,
     onCropChange: (c: CropId | null) => {

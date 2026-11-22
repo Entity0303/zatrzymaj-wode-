@@ -5,6 +5,7 @@ import { SourceTag } from '@/components/SourceTag'
 import { formatDatePl, formatNum } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { useLang } from '@/lib/i18n'
+import { TERRAIN_NODATA, TERRAIN_PENDING, queuePosition, serverMessage } from '@/lib/terrainState'
 
 const RATING: Record<TerrainRating, { label: string; dot: string }> = {
   dobrze: { label: 'dobrze', dot: 'bg-ok' },
@@ -38,7 +39,8 @@ export function TerrainCard({
           <Mountain className="size-4 text-earth" aria-hidden /> {t('Teren działki')}
         </p>
         <p className="mt-1 flex items-center gap-2 text-sm leading-5 text-text-muted" role="status">
-          <Loader2 className="size-4 animate-spin text-brand" aria-hidden /> {t('Liczę teren i spływ… (do ok. minuty)')}
+          <Loader2 className="size-4 animate-spin text-brand" aria-hidden /> {t(TERRAIN_PENDING)}
+          {queuePosition(input) != null && <span className="tabular"> · {t('w kolejce: {n}', { n: queuePosition(input)! })}</span>}
         </p>
       </section>
     )
@@ -50,7 +52,7 @@ export function TerrainCard({
         <p className="flex items-center gap-2 text-sm font-medium">
           <Mountain className="size-4 text-earth" aria-hidden /> {t('Teren działki')}
         </p>
-        <p className="mt-1 text-sm leading-5 text-text-muted">{t(note && !/HTTP|\b\d{3}\b/.test(note) ? note : 'Brak danych o terenie – spróbuj za chwilę')}</p>
+        <p className="mt-1 text-sm leading-5 text-text-muted">{t(serverMessage(note) ?? TERRAIN_NODATA)}</p>
       </section>
     )
 

@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react'
 import { ApiError, api } from '@/api/client'
 import type { LayerKey, LayerResponse } from '@/api/types'
+import { queuePosition } from '@/lib/terrainState'
 import { mockRequested, mockWaterLayer } from '@/mocks/useMockAnalysis'
 
 /** Stan danych aktywnej warstwy: brak działki, czekanie na zdjęcie, ładowanie, gotowe, brak danych, błąd. */
 export type LayerState =
   | { phase: 'idle' }
   /** dane warstwy jeszcze się liczą (zdjęcie satelitarne, teren, woda w okolicy) – `reason` = tekst pod legendą */
-  | { phase: 'waiting'; reason: string }
+  | { phase: 'waiting'; reason: string; /** pozycja w kolejce zadań w tle, gdy serwer ją poda */ queue?: number | null }
   | { phase: 'loading' }
   | { phase: 'ok'; data: LayerResponse }
   /** F10: `message` – komunikat z API (detail.message), np. „Brak bezchmurnego zdjęcia … z ostatnich 60 dni” */
@@ -76,7 +77,7 @@ export function useLayerData(
           return setResult({ key, state: { phase: 'error', message: null } })
         }
         if (limit) clearTimeout(limit)
-        setResult({ key, state: { phase: 'waiting', reason: 'Liczę teren i spływ… (do ok. minuty)' } })
+        setResult({ key, state: { phase: 'waiting', reason: 'Liczę teren i spływ… (do ok. minuty)', queue: queuePosition(data) } })
         again = setTimeout(() => api.layer(layer, parcelId, date, ctrl.signal, geometry).then(onData, onError), PENDING_WAIT_MS)
         return
       }

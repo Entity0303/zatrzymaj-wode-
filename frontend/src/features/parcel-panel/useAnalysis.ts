@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { ApiError, api, describeAnalysisError, type AnalysisQuery } from '@/api/client'
+import { TERRAIN_NODATA, queuePosition, serverMessage } from '@/lib/terrainState'
 import type { AnalysisResponse, CropId, Satellite, Terrain, TerrainPending } from '@/api/types'
 import type { Step } from '@/components/LoadingSteps'
 import { mockRequested, runMockAnalysis, runMockBackground, runMockSatellite } from '@/mocks/useMockAnalysis'
@@ -157,6 +158,8 @@ export function useAnalysis(
         try {
           const res = (await api.terrain(q, ctrl.signal)) as Terrain | TerrainPending
           if (!isPending(res)) return res
+          // pozycja w kolejce (gdy serwer ją poda) – do „w kolejce: N” w karcie terenu i legendzie
+          if (queuePosition(res) != null) update((a) => (isPending(a.terrain) ? { ...a, terrain: res } : a))
           last = null
         } catch (e) {
           if (aborted(e)) throw e
@@ -185,7 +188,10 @@ export function useAnalysis(
             hydro: fresh.hydro?.status === 'pending' ? a.hydro : fresh.hydro,
           }))
       } catch (e) {
-        if (!aborted(e)) update((a) => ({ ...a, terrain: null, terrain_note: 'Brak danych o terenie – spróbuj za chwilę' }))
+        // komunikat błędu z serwera (detail.message), gdy jest – inaczej nasze zdanie
+        const detail = e instanceof ApiError ? (e.detail as { message?: unknown } | null) : null
+        const msg = serverMessage(typeof detail?.message === 'string' ? detail.message : null) ?? TERRAIN_NODATA
+        if (!aborted(e)) update((a) => ({ ...a, terrain: null, terrain_note: msg }))
       }
     }
 

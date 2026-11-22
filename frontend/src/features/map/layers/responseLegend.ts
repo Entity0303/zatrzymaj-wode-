@@ -2,12 +2,11 @@ import type { LayerKey, LayerResponse, Satellite } from '@/api/types'
 import { formatDatePl, formatNum } from '@/lib/format'
 import type { LegendSpec, MapLayer } from './types'
 import type { LayerState } from './useLayerData'
+import { TERRAIN_NODATA, serverMessage } from '@/lib/terrainState'
 
 const SATELLITE_LAYERS: LayerKey[] = ['kondycja', 'wilgotnosc']
 
-/** F23: teksty stanów terenu i spływu – te same w legendzie warstwy, panelu i paszporcie. */
-export const TERRAIN_PENDING = 'Liczę teren i spływ… (do ok. minuty)'
-export const TERRAIN_NODATA = 'Brak danych o terenie – spróbuj za chwilę'
+export { TERRAIN_PENDING } from '@/lib/terrainState'
 
 /**
  * Legenda aktywnej warstwy: gdy serwer podał skalę kolorów (A11: `legend`, `legend_left`, `legend_right`) –
@@ -74,11 +73,13 @@ export function layerStatusText(layer: LayerKey, state: LayerState, satellite: S
       return 'Wczytuję warstwę…'
     case 'unavailable':
       if (sat) return satelliteEmptyText(layer, state.message, satellite)
-      if (layer === 'splyw' || layer === 'teren') return TERRAIN_NODATA
+      // komunikat z serwera, gdy jest (np. „teren liczy się dłużej niż zwykle – spróbuj za chwilę”)
+      if (layer === 'splyw' || layer === 'teren') return serverMessage(state.message) ?? TERRAIN_NODATA
       if (layer === 'woda') return state.message ?? 'Brak rzek i rowów w promieniu 500 m'
       return state.message ?? 'Brak danych dla tej działki'
     case 'error':
-      if (layer === 'splyw' || layer === 'teren') return TERRAIN_NODATA
+      if (layer === 'splyw' || layer === 'teren') return serverMessage(state.message) ?? TERRAIN_NODATA
+      if (serverMessage(state.message)) return serverMessage(state.message)!
       return state.message ?? 'Nie udało się pobrać warstwy – mapa działa dalej'
     case 'ok': {
       const d = state.data
