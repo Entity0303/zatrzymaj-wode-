@@ -179,6 +179,17 @@ def test_nmt_chunks_parallel_and_cached(tmp_path):
     assert route.call_count == n_calls and np.allclose(h, h2)
 
 
+def test_match_heights_tolerates_service_rounding():
+    """A8: NMT odsyła współrzędne zaokrąglone po swojemu (448300.25 → 448300.2) – dopasowanie nie może ich gubić."""
+    e = np.array([448300.25, 448311.75, 448323.25])
+    n = np.array([541062.55, 541062.55, 541062.55])
+    txt = "541062.6 448300.2 85.7,541062.6 448311.8 85.8,541062.6 448323.2 85.9"
+    assert nmt.match_heights(e, n, txt).tolist() == [85.7, 85.8, 85.9]  # po kolejności
+    shuffled = "541062.6 448323.2 85.9,541062.6 448300.2 85.7"  # inna kolejność, jeden brak
+    h = nmt.match_heights(e, n, shuffled)
+    assert h[0] == 85.7 and np.isnan(h[1]) and h[2] == 85.9
+
+
 @respx.mock
 def test_nmt_mostly_missing_is_error():
     respx.post(settings.nmt_url).mock(return_value=httpx.Response(200, text=""))

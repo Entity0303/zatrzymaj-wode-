@@ -127,7 +127,14 @@ def main() -> int:
     ap.add_argument("--pause", type=float, default=2.0, help="przerwa po zapytaniu, które nie było z cache, s")
     ap.add_argument("--no-pdf", action="store_true")
     ap.add_argument("--no-satellite-series", action="store_true", help="bez szeregu Sentinel-2 z 12 miesięcy")
+    ap.add_argument("--no-satellite", action="store_true",
+                    help="bez Sentinel-2 w ogóle (np. przez VPN z limitem danych) – analiza i PDF bez zdjęcia")
     a = ap.parse_args()
+    # GUGiK spokojnie: NMT po kolei z przerwą ≥ 1 s, więcej czasu na całą siatkę (A8)
+    settings.nmt_parallel, settings.nmt_chunk_pause_s, settings.nmt_total_timeout_s = 1, 1.0, 120.0
+    if a.no_satellite:
+        settings.sentinel_enabled = False
+        a.no_satellite_series = True
     out = Path(a.out) if a.out else None
     print(f"Cache: {settings.cache_db or '(tylko pamięć – ustaw CACHE_DB, inaczej nic nie zostanie!)'}")
     for line in fill_missing_parcels(a.pause):
@@ -135,10 +142,12 @@ def main() -> int:
     rows = []
     with TestClient(app) as c:
         for name, q, slug in cases():
-            ts = time.perf_counter()
-            s = c.get("/api/satellite", params={"parcel_id": q["parcel_id"], "date": q["date"]})
-            sat_txt = (f"satelita: {s.json()['status']} {s.json().get('date') or ''} ({time.perf_counter() - ts:.1f} s)"
-                       if s.status_code == 200 else f"satelita: błąd {s.status_code}")
+            sat_txt = "satelita: pominięty"
+            if not a.no_satellite:
+                ts = time.perf_counter()
+                s = c.get("/api/satellite", params={"parcel_id": q["parcel_id"], "date": q["date"]})
+                sat_txt = (f"satelita: {s.json()['status']} {s.json().get('date') or ''} ({time.perf_counter() - ts:.1f} s)"
+                           if s.status_code == 200 else f"satelita: błąd {s.status_code}")
             t0 = time.perf_counter()
             r = c.get("/api/analysis", params=q)
             t_a = time.perf_counter() - t0

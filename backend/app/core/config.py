@@ -56,6 +56,10 @@ class Settings(BaseSettings):
     nmt_timeout_s: float = 12.0
     nmt_total_timeout_s: float = 15.0
     nmt_retry_delay_s: float = 0.3
+    # A8: najwyżej 2 paczki naraz (GUGiK spokojnie); 1 = po kolei z przerwą nmt_chunk_pause_s (warm_demo: 1 / 1,0 s).
+    # „Brak 51% wysokości” nie był winą równoległości, tylko dopasowania współrzędnych (nmt.match_heights).
+    nmt_parallel: int = 2
+    nmt_chunk_pause_s: float = 0.5
     # zapasowe wyniki terenu z app/data/terrain (prawdziwe NMT z 21.11, osoba C) – gdy NMT nie odpowiada (D57)
     terrain_saved_results: bool = True
 

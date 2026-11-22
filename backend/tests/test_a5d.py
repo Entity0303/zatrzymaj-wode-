@@ -261,7 +261,8 @@ def test_demo_examples_hide_unavailable_when_offline_or_uldk_blocked(db, client)
     assert len(client.get("/api/demo/examples").json()) == 4  # normalnie – wszystkie
     trip(uldk.SOURCE, 60, "usługa chwilowo ogranicza ruch")
     ids = [e["id"] for e in client.get("/api/demo/examples").json()]
-    assert ids == ["susza-2018", "mokry-rok-2021"]  # tylko działka znana z repo (201305)
+    # A8: wszystkie działki przykładów są już w repo (demo_parcels.json) – przy blokadzie ULDK widać wszystkie
+    assert ids == ["susza-2018", "mokry-rok-2021", "kukurydza-dzis", "to-nie-jest-pole"]
     BREAKERS.clear()
     mock_all()
     client.get("/api/analysis", params={"parcel_id": PID, "crop": "zboza_ozime", "date": "2018-06-10",
