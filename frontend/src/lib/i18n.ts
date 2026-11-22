@@ -11,12 +11,9 @@ export type Lang = 'pl' | 'en'
 
 const KEY = 'zw.lang.v1'
 
+/** Aplikacja jest tylko po polsku: zapisany wcześniej wybór „en” jest ignorowany (słownik EN zostaje w kodzie). */
 function load(): Lang {
-  try {
-    return localStorage.getItem(KEY) === 'en' ? 'en' : 'pl'
-  } catch {
-    return 'pl'
-  }
+  return 'pl'
 }
 
 let current: Lang = load()

@@ -1,4 +1,4 @@
-import { ChevronDown, FileText, Languages, Loader2, Map as MapIcon, Menu as MenuIcon, MousePointerClick, PenLine, Settings, Sparkles, X, type LucideIcon } from 'lucide-react'
+import { ChevronDown, FileText, Loader2, Map as MapIcon, Menu as MenuIcon, MousePointerClick, PenLine, Settings, Sparkles, X, type LucideIcon } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { LogoMark } from '@/components/LogoMark'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -53,7 +53,7 @@ export function ExploreBar({
   /** „Narysuj swoje pole” – przycisk drugorzędny */
   onDraw?: () => void
 }) {
-  const { t, lang, setLang } = useLang()
+  const { t } = useLang()
   const [menu, setMenu] = useState(false)
 
   const pages: { key: PageKey; icon: LucideIcon; label: string; hint: string }[] = [
@@ -156,12 +156,6 @@ export function ExploreBar({
             {pages.map((p) => (
               <RailButton key={p.key} icon={p.icon} label={t(p.label)} hint={t(p.hint)} onClick={() => goTo(p.key)} />
             ))}
-            <RailButton
-              icon={Languages}
-              label={lang === 'pl' ? 'English' : 'Polski'}
-              hint={lang === 'pl' ? 'Switch to English' : 'Przełącz na polski'}
-              onClick={() => setLang(lang === 'pl' ? 'en' : 'pl')}
-            />
           </div>
         )}
       </nav>

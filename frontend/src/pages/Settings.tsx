@@ -1,6 +1,5 @@
 import { Check, Map as MapIcon, Satellite, Sprout, Trash2, UserRound } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
-import { LanguageToggle } from '@/components/LanguageToggle'
 import { PageHeader } from '@/layout/PageShell'
 import { useLang } from '@/lib/i18n'
 import { HISTORY_KEY, SAVED_KEY, SETTINGS_KEY, useSettings, writeStored, type Settings as S } from '@/lib/storage'
@@ -95,10 +94,6 @@ export default function Settings() {
               text={t('Uzasadnienia zaleceń i postęp analizy rozwinięte od razu.')}
             />
           </div>
-        </Card>
-
-        <Card title={t('Język')} description={t('Teksty z serwera (np. zalecenia) zostają po polsku.')}>
-          <LanguageToggle className="w-fit" />
         </Card>
 
         <Card title={t('Zapisane dane')} description={t('Usuń to, co ta przeglądarka pamięta. Tego nie da się cofnąć.')}>
