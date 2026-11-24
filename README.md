@@ -412,7 +412,7 @@ rolnika aplikacja jest bezpłatna.
 
 ## 12. Zespół
 
-**Molekuły** – HackNation 2026: Mikołaj Pacyna (lider zespołu), Dominik Rdzanek, Maciej Barankiewicz, Marek Adamczyk,
+**Molekuły** – HackNation 2026: Dominik Rdzaneka (lider zespołu),Mikołaj Pacyna, Maciej Barankiewicz, Marek Adamczyk,
 Mateusz Socko, Mathew Jan Deeone Amada.
 
 - Dominik – backend, dane i obliczenia,
